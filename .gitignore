@@ -1,0 +1,5 @@
+# This .gitignore file should be placed at the root of your Unity project directory
+#
+# Do not upload test data or actual data
+WP10_testfiles
+WP10_testfiles.zip

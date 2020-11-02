@@ -1,0 +1,29 @@
+function sm_wp10_table_allTrials(folderOut,new_file, col_header, col_header_2, col_header_3, col_header_4)
+
+% Write Table for all trials of the current ID
+    d = dir(fullfile(folderOut, '*.xls')); % every .xlsx is detected
+    files = {d.name};
+
+for k=1:numel(files)
+name = files{k}; 
+row=k+1;
+row=int2str(row);
+x= ['A' row ':AA' row];
+y= ['A' row ':BV' row];
+z= ['A' row ':AK' row];
+
+        % reading in data for table per ID
+        d_path=xlsread( fullfile(folderOut, name),'path','A2:AA2');
+        d_zone=xlsread( fullfile(folderOut, name),'zone','A2:BV2');
+        d_explore=xlsread( fullfile(folderOut, name),'exploration','A2:AK2');
+
+     xlswrite(new_file,[col_header col_header_2 ],'path','A1');
+     xlswrite(new_file,[col_header col_header_3 ],'zone','A1');
+     xlswrite(new_file,[col_header col_header_4],'exploration','A1');
+
+     xlswrite(new_file,d_path,'path',x);
+     xlswrite(new_file,d_zone,'zone',y);
+     xlswrite(new_file,d_explore,'exploration',z);
+
+end   
+end
