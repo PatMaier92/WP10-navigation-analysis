@@ -14,10 +14,7 @@ elseif wp==10
         
         goal_x3= 371.9;    goal_y3=356.9; % real target
 %         goal_x2_width=369.9; goal_y2_length=356.35;
-%         goal_x2_nf=goal_x2;    goal_y2_nf=goal_y2;
-        
-
-        
+%         goal_x2_nf=goal_x2;    goal_y2_nf=goal_y2;   
 else
     askForStartpositions=input('Would you like to change goal-positions? 1=yes, otherwise = no');
     if askForStartpositions==1

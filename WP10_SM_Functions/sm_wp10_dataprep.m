@@ -1,5 +1,3 @@
-
-
 function sm_wp10_dataprep(folderIn,ID,Group, Session)
 
 %%%%%%%%%% data-preparation %%%%%%%

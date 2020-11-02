@@ -1,6 +1,13 @@
-%function sm_wp10_table(folder)
-%function sm_wp10_table()
-folder=['C:\Users\deetj\OneDrive\Dokumente\Wissenschaft\SFB1315\WP10_B04\WP10_data\WP10_results'];
+%% Script for creating group data file 
+% Takes individual data and creates one group file
+
+%% Preparation
+addpath(genpath(pwd)) % add subfolder functions to path
+
+%% Specify data folder
+[dataFolder]=sm_inputPath();
+
+folder=[dataFolder '\WP10_results'];
 d = dir(fullfile(folder, '*.xls')); % every .xls is detected
 files = {d.name}; 
 formatOut='yymmdd';
@@ -9,6 +16,7 @@ date=datestr(now, formatOut);
 new_name1 = ['WP10_results_table_' date];
 new_file1 = fullfile(folder, [new_name1 '.xlsx']);
 
+%% Write data sheets 
 for k=1:numel(files)
     name = files{k}; 
        name = strrep(name,'xls','xls');
@@ -122,7 +130,5 @@ for k=1:numel(files)
  writetable(table,new_file1,'Sheet','summary_exploration_training');
 
  clear table data
-
-
+ 
  clear
-% end

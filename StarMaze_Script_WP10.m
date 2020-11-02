@@ -1,9 +1,11 @@
+%% Preparation
 clear; close all; clc; format long;
+addpath(genpath(pwd)) % add subfolder functions to path
 
-%% starmaze-Analysis
+%% Starmaze-Analysis
 % @ date 20191001 @ author Deetje Iggena
-% @date 20201018 last update
-% for starmaze version Frankfurt wp10 
+% @ date 20201102 last update by @ Patrizia Maier
+% for starmaze version Frankfurt WP10 
 % The script requires .csv as input-files. 
 % For the path-analysis and body-rotations, xy-coordinates are required, 
 % for the time-analysis, a timestamp, for head-rotations, z-coordinates in degree are required.
@@ -53,7 +55,13 @@ wp=10;% default for B04
 %p=1; % participant for for-loop, default 1
 
 %% Get folder, log & trial.file
-folderOut2=['C:\Users\deetj\OneDrive\Dokumente\Wissenschaft\SFB1315\WP10_B04\WP10_data\WP10_results'];
+% folder with all data 
+[dataFolder]=sm_inputPath(); 
+
+% folder for results 
+%folderOut2=['C:\Users\deetj\OneDrive\Dokumente\Wissenschaft\SFB1315\WP10_B04\WP10_data\WP10_results'];
+folderOut2=[dataFolder '\WP10_results'];
+%folderOut2=['CHARITE'];
 if ~exist(folderOut2, 'dir')
     mkdir(folderOut2);
     disp('Your outputfolder for results didn''t exist, a new folder was created')
@@ -75,7 +83,7 @@ end
 [subject_start,subject_end]=sm_inputSubjectsNo();
 [sessionNo]=sm_wp10_inputSessionNo();
  
- %% Starmaze creation 
+%% Starmaze creation 
 % Min-Max-values
 values=table2array(readtable('wp10_values.csv'));
 [sm.coord.xmin,sm.coord.xmax,sm.coord.ymin,sm.coord.ymax]=sm_wp10_MinMaxValues(values);
@@ -120,14 +128,14 @@ polyshape_array=[alley_polyshape_1{1,1} alley_polyshape_2{1,1} alley_polyshape_1
     alley_polyshape_1{1,5} alley_polyshape_1{1,5} alley_polyshape_2{1,5} cP];
 
 % Test-Figure
- %sm_wp10_testfig(polyshape_array,sm.coord.goal_x,sm.coord.goal_y);
+% sm_wp10_testfig(polyshape_array,sm.coord.goal_x,sm.coord.goal_y);
 
 %% data-analysis
 for subject=subject_start:subject_end
 
 for session=1:sessionNo
     [finalFolderString]=sm_wp10_getFolderstring(session);
-    [folderIn,folderOut]=sm_wp10_folder(subject,finalFolderString);
+    [folderIn,folderOut]=sm_wp10_folder(dataFolder,subject,finalFolderString);
      % save data
      targetFileName_Subject         = ['\' num2str(subject) '_results_table.mat'];
      save(fullfile(folderOut, targetFileName_Subject));
@@ -485,7 +493,5 @@ end
 % % save data
 targetFilePath         = [folderOut2, targetFileName];  
 save(targetFilePath, 'sm', '-append')
-
-% sm_wp10_table(folderOut2)
 
 clear
