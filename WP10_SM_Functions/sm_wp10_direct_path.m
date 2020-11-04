@@ -1,4 +1,8 @@
+% UNUSED %
+
 function direct_path= sm_wp10_direct_path(start,goal,success,alley_entry,rectangle_entry,triangle_entry)
+
+disp('The function sm_wp10_direct_path is deactivated'); 
 %          [row,alleyNo]=size(alley_entry);
 % direct_path=0;
 % 

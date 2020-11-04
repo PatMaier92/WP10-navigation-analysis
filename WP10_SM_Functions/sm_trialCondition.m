@@ -1,4 +1,12 @@
 function [TC]=sm_trialCondition(wp,trial_type)
+% SM_TRIALCONDITION Function for assinging starmaze trial condition based
+% on work package.
+%
+% Input: 
+% wp is starmaze work package (integer)
+% trial_type is trial condition information (string) 
+%
+% Returns: TC is trial type (integer)
 
 if wp==3 || wp==6 || wp==31
     training='training';

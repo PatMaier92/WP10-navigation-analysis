@@ -1,4 +1,11 @@
 function [start]=sm_wp10_trialStart(trial_start)
+% SM_WP10_TRIALSTART Return start position information for this trial for Starmaze
+% WP10. 
+%
+% Input: 
+% trial_start ist start alley (string).
+%
+% Returns: start position information (integer).
 
 Start1='Player_MA';
 Start2='Player_MB';
@@ -9,7 +16,7 @@ Start6='Player_MF';
 Start7='Player_MG';
 Start8='Player_MH';
 Start9='Player_MI';
-Start10='Player_MJ';    
+Start10='Player_MJ';
 Start11='Player_MX';
 
 

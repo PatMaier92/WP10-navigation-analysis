@@ -1,7 +1,15 @@
-function pathScore=sm_wp10_pathScore(alley_zone_out,alley_zone_in, rectangle_zone, triangle_zone)
+function pathScore=sm_wp10_pathScore(alley_zone_out, alley_zone_in, rectangle_zone, triangle_zone)
+% SM_WP10_PATHSCORE Takes exploration information and returns a
+% path score for Starmaze WP10, indicating how many zones have been crossed. 
+%
+% Input: 
+% alley_zone_out, alley_zone_in, rectangle_zone, triangle_zone are zone
+% information
+%
+% Returns: Path score, indicating how many zones have been crossed
+% (integer).
 
 [row,col]=size(alley_zone_in);
-% determine path score, determine how many zones have been crossed
 pathScore=0;
 for c=1:col
     if alley_zone_out(1,c) > 0
@@ -17,4 +25,5 @@ for c=1:col
         pathScore= pathScore+1;
     end
 end
+
 end
