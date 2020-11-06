@@ -1,4 +1,4 @@
-function sm_wp10_table_allTrials(folderOut, new_file, col_header, col_header_2, col_header_3, col_header_4)
+function sm_wp10_table_allTrials(folderIn, new_file, col_header, col_header_2, col_header_3, col_header_4)
 % SM_WP10_TABLE_ALLTRIALS Write table for all trials of the current ID 
 % for Starmaze WP10. Save in individual folder. 
 %
@@ -7,7 +7,7 @@ function sm_wp10_table_allTrials(folderOut, new_file, col_header, col_header_2, 
 %
 % Returns: Writes a summary file.
 
-d = dir(fullfile(folderOut, '*.xls')); % every .xlsx is detected
+d = dir(fullfile(folderIn, '*.xls')); % every .xlsx is detected
 files = {d.name};
 
 for k=1:numel(files)
@@ -19,9 +19,9 @@ for k=1:numel(files)
     z=['A' row ':AK' row];
     
     % reading in data for table per ID
-    d_path=xlsread( fullfile(folderOut, name),'path','A2:AA2');
-    d_zone=xlsread( fullfile(folderOut, name),'zone','A2:BV2');
-    d_explore=xlsread( fullfile(folderOut, name),'exploration','A2:AK2');
+    d_path=xlsread( fullfile(folderIn, name),'path','A2:AA2');
+    d_zone=xlsread( fullfile(folderIn, name),'zone','A2:BV2');
+    d_explore=xlsread( fullfile(folderIn, name),'exploration','A2:AK2');
     
     xlswrite(new_file,[col_header col_header_2 ],'path','A1');
     xlswrite(new_file,[col_header col_header_3 ],'zone','A1');

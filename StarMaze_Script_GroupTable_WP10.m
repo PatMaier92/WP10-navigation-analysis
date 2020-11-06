@@ -50,84 +50,84 @@ for k=1:numel(files)
  clear table data
 
   
- for k=1:numel(files)
-    name = files{k}; 
-       new_name2 = strrep(name,'xls','xls');
-       new_file = fullfile(folder, new_name2);
-    data=readtable(new_file,'Sheet',5,'Range','A:AL');  
-    table=vertcat(table,data);
- end
- writetable(table,new_file1,'Sheet','summary_path');
- clear table data
- 
- for k=1:numel(files)
-    name = files{k}; 
-       new_name2 = strrep(name,'xls','xls');
-       new_file = fullfile(folder, new_name2);
-    data=readtable(new_file,'Sheet',12,'Range','A:AL');  
-    table=vertcat(table,data);
- end
- writetable(table,new_file1,'Sheet','summary_path_allo');
- clear table data
- 
-     for k=1:numel(files)
-    name = files{k}; 
-       new_name2 = strrep(name,'xls','xls');
-       new_file = fullfile(folder, new_name2);
-    data=readtable(new_file,'Sheet',6,'Range','A:AL');  
-    table=vertcat(table,data);
- end
- writetable(table,new_file1,'Sheet','summary_path_ego');
- clear table data
- 
-     for k=1:numel(files)
-    name = files{k}; 
-       new_name2 = strrep(name,'xls','xls');
-       new_file = fullfile(folder, new_name2);
-    data=readtable(new_file,'Sheet',7,'Range','A:AL');  
-    table=vertcat(table,data);
- end
- writetable(table,new_file1,'Sheet','summary_path_training');
- clear table data
- 
- for k=1:numel(files)
-    name = files{k}; 
-       new_name2 = strrep(name,'xls','xls');
-       new_file = fullfile(folder, new_name2);
-    data=readtable(new_file,'Sheet',8,'Range','A:BV');  
-    table=vertcat(table,data);
- end
- writetable(table,new_file1,'Sheet','summary_exploration');
- clear table data
- 
- for k=1:numel(files)
-    name = files{k}; 
-       new_name2 = strrep(name,'xls','xls');
-       new_file = fullfile(folder, new_name2);
-    data=readtable(new_file,'Sheet',9,'Range','A:BV');  
-    table=vertcat(table,data);
- end
- writetable(table,new_file1,'Sheet','summary_exploration_allo');
- clear table data
- 
- for k=1:numel(files)
-    name = files{k}; 
-       new_name2 = strrep(name,'xls','xls');
-       new_file = fullfile(folder, new_name2);
-    data=readtable(new_file,'Sheet',10,'Range','A:BV');  
-    table=vertcat(table,data);
- end
- writetable(table,new_file1,'Sheet','summary_exploration_ego');
- clear table data
- 
- for k=1:numel(files)
-    name = files{k}; 
-       new_name2 = strrep(name,'xls','xls');
-       new_file = fullfile(folder, new_name2);
-    data=readtable(new_file,'Sheet',11,'Range','A:BV');  
-    table=vertcat(table,data);
- end
- writetable(table,new_file1,'Sheet','summary_exploration_training');
+%  for k=1:numel(files)
+%     name = files{k}; 
+%        new_name2 = strrep(name,'xls','xls');
+%        new_file = fullfile(folder, new_name2);
+%     data=readtable(new_file,'Sheet',5,'Range','A:AL');  
+%     table=vertcat(table,data);
+%  end
+%  writetable(table,new_file1,'Sheet','summary_path');
+%  clear table data
+%  
+%  for k=1:numel(files)
+%     name = files{k}; 
+%        new_name2 = strrep(name,'xls','xls');
+%        new_file = fullfile(folder, new_name2);
+%     data=readtable(new_file,'Sheet',12,'Range','A:AL');  
+%     table=vertcat(table,data);
+%  end
+%  writetable(table,new_file1,'Sheet','summary_path_allo');
+%  clear table data
+%  
+%      for k=1:numel(files)
+%     name = files{k}; 
+%        new_name2 = strrep(name,'xls','xls');
+%        new_file = fullfile(folder, new_name2);
+%     data=readtable(new_file,'Sheet',6,'Range','A:AL');  
+%     table=vertcat(table,data);
+%  end
+%  writetable(table,new_file1,'Sheet','summary_path_ego');
+%  clear table data
+%  
+%      for k=1:numel(files)
+%     name = files{k}; 
+%        new_name2 = strrep(name,'xls','xls');
+%        new_file = fullfile(folder, new_name2);
+%     data=readtable(new_file,'Sheet',7,'Range','A:AL');  
+%     table=vertcat(table,data);
+%  end
+%  writetable(table,new_file1,'Sheet','summary_path_training');
+%  clear table data
+%  
+%  for k=1:numel(files)
+%     name = files{k}; 
+%        new_name2 = strrep(name,'xls','xls');
+%        new_file = fullfile(folder, new_name2);
+%     data=readtable(new_file,'Sheet',8,'Range','A:BV');  
+%     table=vertcat(table,data);
+%  end
+%  writetable(table,new_file1,'Sheet','summary_exploration');
+%  clear table data
+%  
+%  for k=1:numel(files)
+%     name = files{k}; 
+%        new_name2 = strrep(name,'xls','xls');
+%        new_file = fullfile(folder, new_name2);
+%     data=readtable(new_file,'Sheet',9,'Range','A:BV');  
+%     table=vertcat(table,data);
+%  end
+%  writetable(table,new_file1,'Sheet','summary_exploration_allo');
+%  clear table data
+%  
+%  for k=1:numel(files)
+%     name = files{k}; 
+%        new_name2 = strrep(name,'xls','xls');
+%        new_file = fullfile(folder, new_name2);
+%     data=readtable(new_file,'Sheet',10,'Range','A:BV');  
+%     table=vertcat(table,data);
+%  end
+%  writetable(table,new_file1,'Sheet','summary_exploration_ego');
+%  clear table data
+%  
+%  for k=1:numel(files)
+%     name = files{k}; 
+%        new_name2 = strrep(name,'xls','xls');
+%        new_file = fullfile(folder, new_name2);
+%     data=readtable(new_file,'Sheet',11,'Range','A:BV');  
+%     table=vertcat(table,data);
+%  end
+%  writetable(table,new_file1,'Sheet','summary_exploration_training');
 
  clear table data
  

@@ -26,7 +26,7 @@ if (~isempty(jump1))||(~isempty(jump2))
 end
     
 % read-in data into cell-array a, split and reshape into cell-array c
-[~,~,a] = xlsread( fullfile(folderIn, oldname));
+[~,~,a] = xlsread(fullfile(folderIn, oldname));
         b=regexp(a,',','split');
         c=reshape([b{:}],numel(b{1}),[])';
         c(:,3)=[]; % delete third coloumn, containing x-rotation
