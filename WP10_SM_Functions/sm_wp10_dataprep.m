@@ -36,8 +36,7 @@ end
         c(strcmp(c(:,6),'1'),:) = []; % ---> trialEvent ausschneiden
         c(1:3,:)=[]; % delete first three rows to get rid of header and false information
         c(:,5)=[]; % delete "gameIsPaused coloumn
-        % for some cases
-        % c = strrep(c, '.', ',');
+        c = strrep(c, '.', ','); % comma, not points as decimal character 
     new_name = strrep(['dt_' oldname],'csv','xlsx');
     new_file = fullfile(folderIn, [Group '_' ID '_' Session '_' new_name]);
 

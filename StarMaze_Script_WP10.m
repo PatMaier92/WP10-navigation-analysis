@@ -212,9 +212,10 @@ sm.sub{p}.session{s}.trial{k}.trial_startalley=trial_data.trial_player(k,1);
 %% Block 3: Data analysis, i.e. calculcation of variables 
 %% Time-Analysis using timestamp
     b=t(end,:); a=t(1,1);
-    sm.sub{p}.session{s}.trial{k}.result.time= sm_time(a,b); % total amount of time
+    sm.sub{p}.session{s}.trial{k}.result.time=sm_time(a,b); % total amount of time
     sm.sub{p}.session{s}.trial{k}.result.time_accuracy=sm_ac(sm.sub{p}.session{s}.trial{k}.result.time, sm.sub{p}.session{s}.trial{k}.ideal_time);% Time-Accuracy       
 
+    fprintf('Time analysis done for %d, session %d, file no %d.\n', subject, session, k);
 %% Coordinate-Analysis using x & y, z             
 % Path-Analysis  
    sm.sub{p}.session{s}.trial{k}.result.distance_traveled=0;dist_to_goal=0; % reset/initiate variables
@@ -230,7 +231,9 @@ sm.sub{p}.session{s}.trial{k}.trial_startalley=trial_data.trial_player(k,1);
    sm.sub{p}.session{s}.trial{k}.ideal_velocity=sm.sub{p}.session{s}.trial{k}.ideal_path/sm.sub{p}.session{s}.trial{k}.ideal_time;
 % Velocity-accuracy allocentric target
    sm.sub{p}.session{s}.trial{k}.result.velocity_accuracy=sm_ac(sm.sub{p}.session{s}.trial{k}.result.velocity, sm.sub{p}.session{s}.trial{k}.ideal_velocity);
-        
+   
+fprintf('Path analysis done for %d, session %d, file no %d.\n', subject, session, k);
+     
 % Distance-analysis 
 % AVERAGE DISTANCE TO REAL TARGET/ allocentric target
     dtat=dist_to_goal./sdata_length;
@@ -241,16 +244,17 @@ sm.sub{p}.session{s}.trial{k}.trial_startalley=trial_data.trial_player(k,1);
 % Cumulative ideal distance to real target/allocentric target  
     sm.sub{p}.session{s}.trial{k}.ideal_distance_traveled=0;id_dist_to_goal=0; % start-initiation
     xi_length=length(xi_al)-1;
-    for i=1:xi_length
-        sm.sub{p}.session{s}.trial{k}.ideal_distance_traveled=sm.sub{p}.session{s}.trial{k}.ideal_distance_traveled+sum(sm_distance(xi_al(i),xi_al(i+1),yi_al(i),yi_al(i+1)));% cumulative distance traveled
-        id_dist_to_goal=id_dist_to_goal+sum(sm_distance(xi_al(i),sm.sub{p}.session{s}.trial{k}.goal_x,yi_al(i),sm.sub{p}.session{s}.trial{k}.goal_y)); % cumulative distance to allocentric target
-    end
+%     for i=1:xi_length %%% THIS FUNCTION TAKES VERY LONG %%%
+%         sm.sub{p}.session{s}.trial{k}.ideal_distance_traveled=sm.sub{p}.session{s}.trial{k}.ideal_distance_traveled+sum(sm_distance(xi_al(i),xi_al(i+1),yi_al(i),yi_al(i+1)));% cumulative distance traveled
+%         id_dist_to_goal=id_dist_to_goal+sum(sm_distance(xi_al(i),sm.sub{p}.session{s}.trial{k}.goal_x,yi_al(i),sm.sub{p}.session{s}.trial{k}.goal_y)); % cumulative distance to allocentric target
+%     end
 % Ideal AVERAGE DISTANCE TO REAL TARGET/ allocentric target
     dtat=id_dist_to_goal/xi_length;
     sm.sub{p}.session{s}.trial{k}.ideal_avg_distance=dtat(1,1);
 % DISTANCE-ACCURACY target/ allocentric target
     sm.sub{p}.session{s}.trial{k}.result.distance_accuracy=sm_ac(sm.sub{p}.session{s}.trial{k}.result.avg_distance,sm.sub{p}.session{s}.trial{k}.ideal_avg_distance);
 
+    fprintf('Distance analysis done for %d, session %d, file no %d.\n', subject, session, k);
 %% Egocentric variables
 % Time
     sm.sub{p}.session{s}.trial{k}.result.time_accuracy_ego=sm_ac(sm.sub{p}.session{s}.trial{k}.result.time, sm.sub{p}.session{s}.trial{k}.ideal_time_ego);
@@ -267,17 +271,18 @@ sm.sub{p}.session{s}.trial{k}.trial_startalley=trial_data.trial_player(k,1);
     sm.sub{p}.session{s}.trial{k}.result.avg_distance_ego=dtet(1,1);
 % Cumulative ideal distance to egocentric target
     sm.sub{p}.session{s}.trial{k}.ideal_dist_to_goal_ego=0; xi_le=length(xi_eg);
-    if sm.sub{p}.session{s}.trial{k}.goal_y_ego <= yi_eg(1,1)
-        reference_y=yi_eg(1,1);
-        reference_x=xi_eg(1,1);
-    else
-        reference_y=sm.sub{p}.session{s}.trial{k}.goal_y_ego;
-        reference_x=sm.sub{p}.session{s}.trial{k}.goal_x_ego;
-    end
-        
-    for i=1:xi_le
-        sm.sub{p}.session{s}.trial{k}.ideal_dist_to_goal_ego=sm.sub{p}.session{s}.trial{k}.ideal_dist_to_goal_ego+sum(sm_distance(xi_eg(i),reference_x,yi_eg(i),reference_y));
-    end
+    %%% THIS FUNCTION TAKES VERY LONG %%%
+%     if sm.sub{p}.session{s}.trial{k}.goal_y_ego <= yi_eg(1,1)
+%         reference_y=yi_eg(1,1);
+%         reference_x=xi_eg(1,1);
+%     else
+%         reference_y=sm.sub{p}.session{s}.trial{k}.goal_y_ego;
+%         reference_x=sm.sub{p}.session{s}.trial{k}.goal_x_ego;
+%     end
+%         
+%     for i=1:xi_le
+%         sm.sub{p}.session{s}.trial{k}.ideal_dist_to_goal_ego=sm.sub{p}.session{s}.trial{k}.ideal_dist_to_goal_ego+sum(sm_distance(xi_eg(i),reference_x,yi_eg(i),reference_y));
+%     end
 
 % Average ideal distance to egoocentric target
     idtet=sm.sub{p}.session{s}.trial{k}.ideal_dist_to_goal_ego./xi_le;
@@ -289,6 +294,7 @@ sm.sub{p}.session{s}.trial{k}.trial_startalley=trial_data.trial_player(k,1);
 % Velocity-accuracy egocentric target
     sm.sub{p}.session{s}.trial{k}.result.velocity_accuracy_ego=sm_ac(sm.sub{p}.session{s}.trial{k}.result.velocity, sm.sub{p}.session{s}.trial{k}.ideal_velocity_ego);
 
+fprintf('Egocentric variable analysis done for %d, session %d, file no %d.\n', subject, session, k);
 %% Turn & Rotation- Analysis using xy-coordinates
 % Body-Rotation-Analysis
     sm.sub{p}.session{s}.trial{k}.result.body_rotation=0; br=zeros(1,data_length);
@@ -299,13 +305,16 @@ sm.sub{p}.session{s}.trial{k}.trial_startalley=trial_data.trial_player(k,1);
 % Ideal sum of body-roatations   
     l_xi_al=length(xi_al);
     sm.sub{p}.session{s}.trial{k}.ideal_body_rotation=0; br_i=zeros(1,l_xi_al);
-    for i=2:(l_xi_al-2)
-        br_i(i)=sm_b_rot(yi_al(i-1),xi_al(i-1),yi_al(i),xi_al(i));
-        sm.sub{p}.session{s}.trial{k}.ideal_body_rotation=sm.sub{p}.session{s}.trial{k}.ideal_body_rotation+br_i(i);
-    end
+     %%% THIS FUNCTION TAKES VERY LONG %%%
+%     for i=2:(l_xi_al-2)
+%         br_i(i)=sm_b_rot(yi_al(i-1),xi_al(i-1),yi_al(i),xi_al(i));
+%         sm.sub{p}.session{s}.trial{k}.ideal_body_rotation=sm.sub{p}.session{s}.trial{k}.ideal_body_rotation+br_i(i);
+%     end
 % Body-rotation-accuracy
     sm.sub{p}.session{s}.trial{k}.result.body_rotation_accuracy=sm_ac(sm.sub{p}.session{s}.trial{k}.result.body_rotation,sm.sub{p}.session{s}.trial{k}.ideal_body_rotation);
 
+fprintf('Body rotation analysis done for %d, session %d, file no %d.\n', subject, session, k);
+    
 % Body-Turn-Analysis           
 % Cumulative body turns
     body_turn=zeros(1,data_length);
@@ -324,20 +333,22 @@ sm.sub{p}.session{s}.trial{k}.trial_startalley=trial_data.trial_player(k,1);
 % Cumulative ideal body turns
     body_turn_i=zeros(1,l_xi_al);
     sm.sub{p}.session{s}.trial{k}.ideal_body_turn_left=0;sm.sub{p}.session{s}.trial{k}.ideal_body_turn_right=0;ideal_body_walk_straight=0;
-    for j=2:(length(br_i)-1)
-        body_turn_i(j)=heaviside((br_i(j+1)-br_i(j)));
-        if body_turn_i(j)==1 && (body_turn_i(j-1)==0 || body_turn_i(j-1)==0.5)
-            sm.sub{p}.session{s}.trial{k}.ideal_body_turn_right=sm.sub{p}.session{s}.trial{k}.ideal_body_turn_right+1;
-        elseif body_turn_i(j) ==0 &&(body_turn_i(j-1)==1 || body_turn_i(j-1)==0.5)
-            sm.sub{p}.session{s}.trial{k}.ideal_body_turn_left=sm.sub{p}.session{s}.trial{k}.ideal_body_turn_left+1;
-        else
-            ideal_body_walk_straight=ideal_body_walk_straight+1;
-        end
-    end
+     %%% THIS FUNCTION TAKES VERY LONG %%%
+%     for j=2:(length(br_i)-1)
+%         body_turn_i(j)=heaviside((br_i(j+1)-br_i(j)));
+%         if body_turn_i(j)==1 && (body_turn_i(j-1)==0 || body_turn_i(j-1)==0.5)
+%             sm.sub{p}.session{s}.trial{k}.ideal_body_turn_right=sm.sub{p}.session{s}.trial{k}.ideal_body_turn_right+1;
+%         elseif body_turn_i(j) ==0 &&(body_turn_i(j-1)==1 || body_turn_i(j-1)==0.5)
+%             sm.sub{p}.session{s}.trial{k}.ideal_body_turn_left=sm.sub{p}.session{s}.trial{k}.ideal_body_turn_left+1;
+%         else
+%             ideal_body_walk_straight=ideal_body_walk_straight+1;
+%         end
+%     end
     sm.sub{p}.session{s}.trial{k}.ideal_body_turn_total= sm.sub{p}.session{s}.trial{k}.ideal_body_turn_right+sm.sub{p}.session{s}.trial{k}.ideal_body_turn_left;
 % Body-turn-accuracy
     sm.sub{p}.session{s}.trial{k}.result.body_turn_accuracy=sm_ac(sm.sub{p}.session{s}.trial{k}.result.body_turn_total,sm.sub{p}.session{s}.trial{k}.ideal_body_turn_total);
-    
+
+fprintf('Body turn analysis done for %d, session %d, file no %d.\n', subject, session, k);
 %% Head-Rotation-Analysis using Z-coordinates
     r=M(:,4); % rotations in coloumn 6
 % Final deviation from start to target angle
@@ -370,7 +381,8 @@ sm.sub{p}.session{s}.trial{k}.trial_startalley=trial_data.trial_player(k,1);
     sm.sub{p}.session{s}.trial{k}.result.head_turn_total= sm.sub{p}.session{s}.trial{k}.result.head_turn_right+sm.sub{p}.session{s}.trial{k}.result.head_turn_left;                             
 % Head-turn-accuracy
     sm.sub{p}.session{s}.trial{k}.result.head_turn_accuracy=sm_ac(sm.sub{p}.session{s}.trial{k}.result.head_turn_total,sm.sub{p}.session{s}.trial{k}.ideal_headturnNo);
-                                                   
+    
+fprintf('Head turn analysis done for %d, session %d, file no %d.\n', subject, session, k);
 %% Zone-Analysis
 [sm.sub{p}.session{s}.trial{k}.zone.alley_zone,sm.sub{p}.session{s}.trial{k}.zone.rel_alley_zone,sm.sub{p}.session{s}.trial{k}.zone.alley_entry]= sm_wp10_coordinatesAlleys(x,y,alley_full_x,alley_full_y,data_length);
 
@@ -387,6 +399,7 @@ sm.sub{p}.session{s}.trial{k}.trial_startalley=trial_data.trial_player(k,1);
 [sm.sub{p}.session{s}.trial{k}.time.alley_time, sm.sub{p}.session{s}.trial{k}.time.pentagon_time, sm.sub{p}.session{s}.trial{k}.time.triangle_time, sm.sub{p}.session{s}.trial{k}.time.rectangle_time]=sm_wp10_time(sm.sub{p}.session{s}.trial{k}.result.time, sm.sub{p}.session{s}.trial{k}.zone.rel_alley_zone,...
 sm.sub{p}.session{s}.trial{k}.zone.rel_pentagon_zone, sm.sub{p}.session{s}.trial{k}.zone.rel_triangle_zone, sm.sub{p}.session{s}.trial{k}.zone.rel_rectangle_zone);
 
+fprintf('Zone analysis done for %d, session %d, file no %d.\n', subject, session, k);
 %% Exploration-Analysis 
 % Final position in outer area of alley
 [sm.sub{p}.session{s}.trial{k}.final_alley, sm.sub{p}.session{s}.trial{k}.final_pentagon]=sm_wp10_finalZone(x,y,alley_full_x,alley_full_y,cP_x, cP_y);
@@ -406,6 +419,8 @@ sm.sub{p}.session{s}.trial{k}.result.path_score=sm_wp10_pathScore(sm.sub{p}.sess
 [sm.sub{p}.session{s}.trial{k}.searchStrategy.direct_run,sm.sub{p}.session{s}.trial{k}.searchStrategy.reoriented,sm.sub{p}.session{s}.trial{k}.searchStrategy.serial,sm.sub{p}.session{s}.trial{k}.searchStrategy.central_focus,sm.sub{p}.session{s}.trial{k}.searchStrategy.random_search,sm.sub{p}.session{s}.trial{k}.searchStrategy.unclassified,sm.sub{p}.session{s}.trial{k}.searchStrategy.failed_strategy,...
  sm.sub{p}.session{s}.trial{k}.searchStrategy.allocentric,sm.sub{p}.session{s}.trial{k}.searchStrategy.egocentric,sm.sub{p}.session{s}.trial{k}.result.search_strategy_no]=sm_wp10_searchStrategy(sm.sub{p}.session{s}.trial{k}.trial_condition,sm.sub{p}.session{s}.trial{k}.result.direct_path,sm.sub{p}.session{s}.trial{k}.result.success,sm.sub{p}.session{s}.trial{k}.result.success_ego,...
  sm.sub{p}.session{s}.trial{k}.result.path_score,sm.sub{p}.session{s}.trial{k}.result.exploration,sm.sub{p}.session{s}.trial{k}.zone.rel_pentagon_zone, sm.sub{p}.session{s}.trial{k}.zone.alley_zone_out);
+
+fprintf('Exploration analysis done for %d, session %d, file no %d.\n', subject, session, k);
 
 % save data
 save(fullfile(folderOut, targetFileName_Subject),'sm', '-append'); 
