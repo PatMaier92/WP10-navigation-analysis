@@ -1,6 +1,5 @@
 function D=sm_distance(x1,x2,y1,y2)
-% SM_DISTANCE Calculates distance traveled from the beginning to the end of the
-% trial.
+% SM_DISTANCE Calculates distance traveled between two points.
 %
 % Input: 
 % y1, x1 coordinates.
