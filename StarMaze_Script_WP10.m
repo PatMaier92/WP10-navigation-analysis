@@ -171,12 +171,13 @@ M = xlsread(fullfile(folderIn, name),'A:D'); % Reading in data into matrix M
 %% Get info depending on single trial: Feedback, Trial-Type/Condition, Goal & Start Position from trial_results.csv
 sm.sub{p}.session{s}.trial{k}.block=trial_data.block_num(k,1);
 sm.sub{p}.session{s}.trial{k}.trial_num=trial_data.trial_num(k,1);
-sm.sub{p}.session{s}.trial{k}.trial_in_block=trial_data.trial_num_in_block(k,1);       
-sm.sub{p}.session{s}.trial{k}.trial_type=trial_data.trial_type(k,1);
-sm.sub{p}.session{s}.trial{k}.trial_condition=sm_trialCondition(sm.sub{p}.wp,sm.sub{p}.session{s}.trial{k}.trial_type);
+sm.sub{p}.session{s}.trial{k}.trial_in_block=trial_data.trial_num_in_block(k,1);     
 
 sm.sub{p}.session{s}.trial{k}.feedback=trial_data.trial_feedback(k,1);
 [sm.sub{p}.session{s}.trial{k}.fb]=sm_wp10_feedback(sm.sub{p}.session{s}.trial{k}.feedback);
+
+sm.sub{p}.session{s}.trial{k}.trial_type=trial_data.trial_type(k,1);
+sm.sub{p}.session{s}.trial{k}.trial_condition=sm_trialCondition(sm.sub{p}.wp,sm.sub{p}.session{s}.trial{k}.trial_type,sm.sub{p}.session{s}.trial{k}.fb);
 
 sm.sub{p}.session{s}.trial{k}.trial_goal_identity=trial_data.trial_goal_identity(k,1);
 sm.sub{p}.session{s}.trial{k}.trial_goal=trial_data.trial_goal(k,1);
