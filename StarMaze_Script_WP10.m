@@ -189,7 +189,7 @@ sm.sub{p}.session{s}.trial{k}.trial_startalley=trial_data.trial_player(k,1);
 
 %%  Variables depending on starting-positions
 % CHECK velocity value used to compute ideal time. Is this reliable? % 
-% CHECK ideal path compositions. Are all correct? Can we visualize them? Ego path for middle start points make sense? % 
+% CHECK ideal path compositions. Are all correct? Does ego path for middle start points make sense? % 
 [sm.sub{p}.session{s}.trial{k}.goal_x_ego,sm.sub{p}.session{s}.trial{k}.goal_y_ego, x_line, y_line,x_line_ego, y_line_ego,...
     sm.sub{p}.session{s}.trial{k}.ideal_path,sm.sub{p}.session{s}.trial{k}.ideal_path_ego,sm.sub{p}.session{s}.trial{k}.ideal_time,...
     sm.sub{p}.session{s}.trial{k}.ideal_time_ego,sm.sub{p}.session{s}.trial{k}.ideal_headturnNo,sm.sub{p}.session{s}.trial{k}.ideal_velocity]=sm_wp10_depStartVariables(sm.sub{p}.session{s}.trial{k}.start,...
@@ -250,7 +250,8 @@ fprintf('Path analysis done for %d, session %d, file no %d.\n', subject, session
 fprintf('Distance analysis done for %d, session %d, file no %d.\n', subject, session, k);
 %% Egocentric variables
 % Time
-    sm.sub{p}.session{s}.trial{k}.result.time_accuracy_ego=sm_ac(sm.sub{p}.session{s}.trial{k}.result.time, sm.sub{p}.session{s}.trial{k}.ideal_time_ego);
+%     sm.sub{p}.session{s}.trial{k}.result.time_accuracy_ego=sm_ac(sm.sub{p}.session{s}.trial{k}.result.time, sm.sub{p}.session{s}.trial{k}.ideal_time_ego);
+
 % Calculating PATH-ACCURACY to egocentric target
     sm.sub{p}.session{s}.trial{k}.result.path_accuracy_ego= sm_ac(sm.sub{p}.session{s}.trial{k}.result.distance_traveled,sm.sub{p}.session{s}.trial{k}.ideal_path_ego);
     dist_to_goal_ego=0;
@@ -259,12 +260,12 @@ fprintf('Distance analysis done for %d, session %d, file no %d.\n', subject, ses
     end
 % FINAL DISTANCE TO EGOCENTRIC TARGET
     sm.sub{p}.session{s}.trial{k}.result.final_distance_ego=sm_distance(sm.sub{p}.session{s}.trial{k}.goal_x_ego,x(end,:),sm.sub{p}.session{s}.trial{k}.goal_y_ego,y(end,:));
-% % AVERAGE DISTANCE TO EGOCENTRIC TARGET
+
+    % % AVERAGE DISTANCE TO EGOCENTRIC TARGET
 %     dtet=dist_to_goal_ego./sdata_length;
 %     sm.sub{p}.session{s}.trial{k}.result.avg_distance_ego=dtet(1,1);
 % % Cumulative ideal distance to egocentric target
 %     sm.sub{p}.session{s}.trial{k}.ideal_dist_to_goal_ego=0; xi_le=length(xi_eg);
-    %%% THIS FUNCTION TAKES VERY LONG %%%
 %     if sm.sub{p}.session{s}.trial{k}.goal_y_ego <= yi_eg(1,1)
 %         reference_y=yi_eg(1,1);
 %         reference_x=xi_eg(1,1);
@@ -298,7 +299,6 @@ fprintf('Egocentric variable analysis done for %d, session %d, file no %d.\n', s
 % % Ideal sum of body-roatations   
 %     l_xi_al=length(xi_al);
 %     sm.sub{p}.session{s}.trial{k}.ideal_body_rotation=0; br_i=zeros(1,l_xi_al);
-%      %%% THIS FUNCTION TAKES VERY LONG %%%
 %     for i=2:(l_xi_al-2)
 %         br_i(i)=sm_b_rot(yi_al(i-1),xi_al(i-1),yi_al(i),xi_al(i));
 %         sm.sub{p}.session{s}.trial{k}.ideal_body_rotation=sm.sub{p}.session{s}.trial{k}.ideal_body_rotation+br_i(i);
@@ -326,7 +326,6 @@ fprintf('Egocentric variable analysis done for %d, session %d, file no %d.\n', s
 % % Cumulative ideal body turns
 %     body_turn_i=zeros(1,l_xi_al);
 %     sm.sub{p}.session{s}.trial{k}.ideal_body_turn_left=0;sm.sub{p}.session{s}.trial{k}.ideal_body_turn_right=0;ideal_body_walk_straight=0;
-%      %%% THIS FUNCTION TAKES VERY LONG %%%
 %     for j=2:(length(br_i)-1)
 %         body_turn_i(j)=heaviside((br_i(j+1)-br_i(j)));
 %         if body_turn_i(j)==1 && (body_turn_i(j-1)==0 || body_turn_i(j-1)==0.5)
@@ -426,8 +425,9 @@ col_header={'wp','date_analysis','id','group','session','trial','trial_condition
 % col_header_2={'time_abs','time_accuracy','time_accuracy_ego','velocity_abs','velocity_accuracy','velocity_accuracy_ego','path_abs','path_accuracy','path_accuracy_ego',...
 %     'final_distance_to_goal_abs', 'final_distance_to_ego_abs','av_distance_to_goal_abs','av_distance_to_ego_abs',...
 %     'distance_accuracy','distance_accuracy_ego','path_score', 'direct_path'};
-col_header_2={'time_abs','time_accuracy','path_abs','path_accuracy',...
-    'final_distance_to_goal_abs','av_distance_to_goal_abs','distance_accuracy',...
+col_header_2={'time_abs','time_accuracy','path_abs','path_accuracy','final_distance_to_goal_abs',...
+    'path_accuracy_ego','final_distance_to_ego_abs',...
+    'av_distance_to_goal_abs','distance_accuracy',...
     'path_score', 'direct_path'};
 
 % zone analysis
@@ -469,8 +469,9 @@ new_file = fullfile(folderOut, file_name);
 %     sm.sub{p}.session{s}.trial{k}.result.final_distance_ego sm.sub{p}.session{s}.trial{k}.result.avg_distance sm.sub{p}.session{s}.trial{k}.result.avg_distance_ego...
 %     sm.sub{p}.session{s}.trial{k}.result.distance_accuracy sm.sub{p}.session{s}.trial{k}.result.distance_accuracy_ego sm.sub{p}.session{s}.trial{k}.result.path_score sm.sub{p}.session{s}.trial{k}.result.direct_path],'.', ','),'path','A2');
 xlswrite(new_file,strrep([group_var sm.sub{p}.session{s}.trial{k}.result.time sm.sub{p}.session{s}.trial{k}.result.time_accuracy ...
-    sm.sub{p}.session{s}.trial{k}.result.distance_traveled sm.sub{p}.session{s}.trial{k}.result.path_accuracy ...
-    sm.sub{p}.session{s}.trial{k}.result.final_distance sm.sub{p}.session{s}.trial{k}.result.avg_distance sm.sub{p}.session{s}.trial{k}.result.distance_accuracy ...
+    sm.sub{p}.session{s}.trial{k}.result.distance_traveled sm.sub{p}.session{s}.trial{k}.result.path_accuracy sm.sub{p}.session{s}.trial{k}.result.final_distance ...
+    sm.sub{p}.session{s}.trial{k}.result.path_accuracy_ego sm.sub{p}.session{s}.trial{k}.result.final_distance_ego ...
+    sm.sub{p}.session{s}.trial{k}.result.avg_distance sm.sub{p}.session{s}.trial{k}.result.distance_accuracy ...
     sm.sub{p}.session{s}.trial{k}.result.path_score sm.sub{p}.session{s}.trial{k}.result.direct_path],'.', ','),'path','A2');
 
 xlswrite(new_file,strrep([group_var sm.sub{p}.session{s}.trial{k}.zone.alley_zone(1,1) sm.sub{p}.session{s}.trial{k}.zone.alley_zone(1,2) sm.sub{p}.session{s}.trial{k}.zone.alley_zone(1,3) sm.sub{p}.session{s}.trial{k}.zone.alley_zone(1,4) sm.sub{p}.session{s}.trial{k}.zone.alley_zone(1,5)...
