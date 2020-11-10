@@ -6,8 +6,7 @@ function pathScore=sm_wp10_pathScore(alley_zone_out, alley_zone_in, rectangle_zo
 % alley_zone_out, alley_zone_in, rectangle_zone, triangle_zone have zone
 % information from wp10_coordinatesAlleys/wp10_coordinatesPentagon. 
 %
-% Returns: Path score, indicating how many zones have been crossed
-% (integer).
+% Returns: pathScore is number of explored zones (integer). 
 
 [row,col]=size(alley_zone_in);
 pathScore=0; % exploration mark
