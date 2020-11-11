@@ -1,18 +1,17 @@
-function direct_path=sm_wp10_directPath(start,goal,correct_alley,alley_entry,rectangle_entry,triangle_entry)
+function direct_path=sm_wp10_directPath(start,goal,success,alley_entry,rectangle_entry,triangle_entry)
 % SM_WP10_DIRECTPATH Determines whether participant took direct path to
 % goal location in Starmaze WP10. 
 % 
 % Input:
 % start is start alley (integer)
 % goal is goal location (integer)
-% correct_alley indicates chosen goal is in correct alley (boolean)
-% % alternatively use: success indicates chosen goal is close to actual goal (boolean)
+% success indicates chosen goal is close to actual goal (boolean)
 % alley_entry,rectangle_entry,triangle_entry is number of entries in each zone
 %
 % Returns: direct_path (boolean). 
 
 direct_path=0; % default no
-if correct_alley==1 % if trial successful
+if success==1 % if trial successful
     if start==1
         if goal==1 && alley_entry(1)==1 && triangle_entry(1)==0 % no option 
             direct_path=1;
