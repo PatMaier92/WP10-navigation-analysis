@@ -422,7 +422,8 @@ fprintf('Zone analysis done for %d, session %d, file no %d.\n', subject, session
 %[sm.sub{p}.session{s}.trial{k}.final_alley, sm.sub{p}.session{s}.trial{k}.final_pentagon]=sm_wp10_finalZone(x,y,alley_full_x,alley_full_y,cP_x,cP_y);
 
 % Arm score and Path score as indicators of alley-exploration
-sm.sub{p}.session{s}.trial{k}.result.arm_score=sm_wp10_armScore(sm.sub{p}.session{s}.trial{k}.zone.alley_zone);
+sm.sub{p}.session{s}.trial{k}.result.arm_explored=sm_wp10_armExplored(sm.sub{p}.session{s}.trial{k}.zone.alley_zone);
+sm.sub{p}.session{s}.trial{k}.result.arm_score=sm_wp10_armScore(sm.sub{p}.session{s}.trial{k}.zone.alley_entry);
 sm.sub{p}.session{s}.trial{k}.result.path_score=sm_wp10_pathScore(sm.sub{p}.session{s}.trial{k}.zone.alley_zone_out,...
     sm.sub{p}.session{s}.trial{k}.zone.alley_zone_in,...
     sm.sub{p}.session{s}.trial{k}.zone.rectangle_zone,...
