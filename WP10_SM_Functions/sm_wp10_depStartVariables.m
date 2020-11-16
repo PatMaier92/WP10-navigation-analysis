@@ -6,6 +6,7 @@ function [goal_x_ego, goal_y_ego, x_line, y_line, x_line_ego, y_line_ego,...
 % variables in Starmaze WP10. 
 %
 % Input: ?
+% goal==1 is MA, goal==3 is MC, goal==9 is MI
 %
 % Returns: ? 
 
@@ -25,7 +26,7 @@ if start==1
         ideal_ego_path=sm_distance(kx1, ekx2,ky1, eky2)+sm_distance(ekx2, ekx3,eky2, eky3)+sm_distance(ekx3, ekx4,eky3, eky4)+sm_distance(ekx4, ekx5,eky4, eky5);
         x_line=[kx1 kxf]; y_line=[ky1 kyf];
         x_line_ego=[kx1 ekx2 ekx3 ekx4 ekx5]; y_line_ego=[ky1 eky2 eky3 eky4 eky5];
-    elseif goal==2
+    elseif goal==3
         kx2=alley_x(3,1);ky2=alley_y(3,1);   kx3=alley_x(4,2); ky3=alley_y(4,2);
         ekx2=alley_x(4,1); eky2=alley_y(4,1); ekx3=pentagon_x(5); eky3=pentagon_y(5); ekx4=alley_x(3,4); eky4=alley_y(3,4);
         goal_x_ego=0.3;    goal_y_ego=0.225;
@@ -33,7 +34,7 @@ if start==1
         ideal_ego_path=sm_distance(kx1, ekx2,ky1, eky2)+sm_distance(ekx2, ekx3,eky2, eky3)+sm_distance(ekx3, ekx4,eky3, eky4)+sm_distance(ekx4, goal_x_ego,eky4, goal_y_ego);
         x_line=[kx1 kx2 kx3 kxf]; y_line=[ky1 ky2 ky3 kyf];
         x_line_ego=[kx1 ekx2 ekx3 ekx4 goal_x_ego]; y_line_ego=[ky1 eky2 eky3 eky4 goal_y_ego];
-    elseif goal==3
+    elseif goal==9
         kx2=alley_x(4,1);ky2=alley_y(4,1);   kx3=alley_x(3,5); ky3=alley_y(3,5);
         ekx2=alley_x(3,1); eky2=alley_y(3,1); ekx3=alley_x(4,2); eky3=alley_y(4,2); ekx4=start_x(3); eky4=start_y(3);
         goal_x_ego=ekx4;    goal_y_ego=eky4;
@@ -48,11 +49,11 @@ elseif start==2
         kx2=alley_x(3,1); ky2=alley_y(3,1);
         ideal_path=sm_distance(kx1, kx2,ky1, ky2)+sm_distance(kx2, kxf,ky2, kyf);
         x_line=[kx1 kx2 kxf]; y_line=[ky1 ky2 kyf];
-    elseif goal==2
+    elseif goal==3
         kx2=alley_x(4,2);ky2=alley_y(4,2);
         ideal_path=sm_distance(kx1, kx2,ky1, ky2)+sm_distance(kx2, kxf,ky2, kyf);
         x_line=[kx1 kx2 kxf]; y_line=[ky1 ky2 kyf];
-    elseif goal==3
+    elseif goal==9
         kx2=pentagon_x(1);ky2=pentagon_y(1);   kx3=alley_x(3,5); ky3=alley_y(3,5);
         ideal_path=sm_distance(kx1, kx2,ky1, ky2)+sm_distance(kx2, kx3,ky2, ky3)+sm_distance(kx3, kxf,ky3, kyf);
         x_line=[kx1 kx2 kx3 kxf]; y_line=[ky1 ky2 ky3 kyf];
@@ -70,14 +71,14 @@ elseif start==3
         ideal_ego_path=sm_distance(kx1, ekx2,ky1, eky2)+sm_distance(ekx2, ekx3,eky2, eky3)+sm_distance(ekx3, ekx4,eky3, eky4)+sm_distance(ekx4, ekx5,eky4, eky5);
         x_line=[kxf kx3 kx2 kx1]; y_line=[kyf ky3 ky2 ky1]; %
         x_line_ego=[kx1 ekx2 ekx3 ekx4 ekx5]; y_line_ego=[ky1 eky2 eky3 eky4 eky5];
-    elseif goal==2
+    elseif goal==3
         ekx2=alley_x(4,2); eky2=alley_y(4,2); ekx3=p1_x; eky3=p1_y; ekx4=alley_x(3,5); eky4=alley_y(3,5); ekx5=start_x(9); eky5=start_y(9);
         goal_x_ego=goal_x;    goal_y_ego=goal_y;
         ideal_path=sm_distance(kx1, kxf,ky1, kyf);
         ideal_ego_path=sm_distance(kx1, ekx2,ky1, eky2)+sm_distance(ekx2, ekx3,eky2, eky3)+sm_distance(ekx3, ekx4,eky3, eky4)+sm_distance(ekx4, ekx5,eky4, eky5);
         x_line=[kx1 kxf]; y_line=[ky1 kyf];
         x_line_ego=[kx1 ekx2 ekx3 ekx4 ekx5]; y_line_ego=[ky1 eky2 eky3 eky4 eky5];
-    elseif goal==3
+    elseif goal==9
         kx2=alley_x(4,2);ky2=alley_y(4,2);   kx3=pentagon_x(1); ky3=pentagon_y(1); kx4=alley_x(3,5); ky4=alley_y(3,5);
         ekx2=alley_x(3,2); eky2=alley_y(3,2); ekx3=alley_x(4,3); eky3=alley_y(4,3); ekx4=0.74; eky4=0.175;
         goal_x_ego=ekx4;    goal_y_ego=eky4;
@@ -92,11 +93,11 @@ elseif start==4
         kx2=pentagon_x(2);ky2=pentagon_y(2);   kx3=alley_x(3,1); ky3=alley_y(3,1);
         ideal_path=sm_distance(kx1, kx2,ky1, ky2)+sm_distance(kx2, kx3,ky2, ky3)+sm_distance(kx3, kxf,ky3, kyf);
         x_line=[kxf kx3 kx2 kx1]; y_line=[kyf ky3 ky2 ky1];
-    elseif goal==2
+    elseif goal==3
         kx2=alley_x(3,2);ky2=alley_y(3,2);
         ideal_path=sm_distance(kx1, kx2,ky1, ky2)+sm_distance(kx2, kxf,ky2, kyf);
         x_line=[kx1 kx2 kxf]; y_line=[ky1 ky2 kyf];
-    elseif goal==3
+    elseif goal==9
         kx2=pentagon_x(3);ky2=pentagon_y(3);   kx3=pentagon_x(4); ky3=pentagon_y(4); kx4=alley_x(4,5); ky4=alley_y(4,5);
         ideal_path=sm_distance(kx1, kx2,ky1, ky2)+sm_distance(kx2, kx3,ky2, ky3)+sm_distance(kx3, kx4,ky3, ky4)+sm_distance(kx4, kxf,ky4, kyf);
         x_line=[kx1 kx2 kx3 kx4 kxf]; y_line=[ky1 ky2 ky3 ky4 kyf];
@@ -114,7 +115,7 @@ elseif start==5
         ideal_ego_path=sm_distance(kx1, ekx2,ky1, eky2)+sm_distance(ekx2, ekx3,eky2, eky3)+sm_distance(ekx3, ekx4,eky3, eky4);%+sm_distance(ekx4, ekx5,eky4, eky5);
         x_line=[kxf kx4 kx3 kx2 kx1]; y_line=[kyf ky4 ky3 ky2 ky1];
         x_line_ego=[ekx4 ekx3 ekx2 kx1]; y_line_ego=[eky4 eky3 eky2 ky1];
-    elseif goal==2
+    elseif goal==3
         kx2=alley_x(4,3);ky2=alley_y(4,3);   kx3=alley_x(3,2); ky3=alley_y(3,2);
         ekx2=alley_x(4,3); eky2=alley_y(4,3); ekx3=pentagon_x(2); eky3=pentagon_y(2); ekx4=alley_x(3,1); eky4=alley_y(3,1); ekx5=start_x(1); eky5=start_y(1);
         goal_x_ego=ekx5;    goal_y_ego=eky5;
@@ -122,7 +123,7 @@ elseif start==5
         ideal_ego_path=sm_distance(kx1, ekx2,ky1, eky2)+sm_distance(ekx2, ekx3,eky2, eky3)+sm_distance(ekx3, ekx4,eky3, eky4)+sm_distance(ekx4, ekx5,eky4, eky5);
         x_line=[kx1 kx2 kx3 kxf]; y_line=[ky1 ky2 ky3 kyf];
         x_line_ego=[kx1 ekx2 ekx3 ekx4 ekx5]; y_line_ego=[ky1 eky2 eky3 eky4 eky5];
-    elseif goal==3
+    elseif goal==9
         kx2=alley_x(3,3);ky2=alley_y(3,3);   kx3=pentagon_x(4); ky3=pentagon_y(4); kx4=alley_x(4,5); ky4=alley_y(4,5);
         ekx2=alley_x(3,3); eky2=alley_y(3,3); ekx3=alley_x(4,4); eky3=alley_y(4,4); ekx4=0.28; eky4=0.175;
         goal_x_ego=ekx4;    goal_y_ego=eky4;
@@ -137,11 +138,11 @@ elseif start==6
         kx2=pentagon_x(4);ky2=pentagon_y(4);   kx3=pentagon_x(5); ky3=pentagon_y(5); kx4=alley_x(4,1); ky4=alley_y(4,1);
         ideal_path=sm_distance(kx1, kx2,ky1, ky2)+sm_distance(kx2, kx3,ky2, ky3)+sm_distance(kx3, kx4,ky3, ky4)+sm_distance(kx4, kxf,ky4, kyf);
         x_line=[kx1 kx2 kx3 kx4 kxf]; y_line=[ky1 ky2 ky3 ky4 kyf];
-    elseif goal==2
+    elseif goal==3
         kx2=pentagon_x(3);ky2=pentagon_y(3); kx3=alley_x(3,2); ky3=alley_y(3,2);
         ideal_path=sm_distance(kx1, kx2,ky1, ky2)+sm_distance(kx2, kx3,ky2, ky3)+sm_distance(kx3, kxf,ky3, kyf);
         x_line=[kxf kx3 kx2 kx1]; y_line=[kyf ky3 ky2 ky1   ];
-    elseif goal==3
+    elseif goal==9
         kx2=pentagon_x(4);ky2=pentagon_y(4); kx3=alley_x(4,5); ky3=alley_y(4,5);
         ideal_path=sm_distance(kx1, kx2,ky1, ky2)+sm_distance(kx2, kx3,ky2, ky3)+sm_distance(kx3, kxf,ky3, kyf);
         x_line=[kxf kx3 kx2 kx1]; y_line=[kyf ky3 ky2 ky1]; % ideal y-coordinates to allocentric target
@@ -155,11 +156,11 @@ elseif start==7
         kx2=alley_x(3,4);ky2=alley_y(3,4);   kx3=pentagon_x(5); ky3=pentagon_y(5);
         ideal_path=sm_distance(kx1, kx2,ky1, ky2)+sm_distance(kx2, kx3,ky2, ky3)+sm_distance(kx3, kxf,ky3, kyf);
         x_line=[kx1 kx2 kx3 kxf]; y_line=[ky1 ky2 ky3 kyf];
-    elseif goal==2
+    elseif goal==3
         kx2=alley_x(4,4);ky2=alley_y(4,4);   kx3=pentagon_x(3); ky3=pentagon_y(3); kx4=alley_x(3,2); ky4=alley_y(3,2);
         ideal_path=sm_distance(kx1, kx2,ky1, ky2)+sm_distance(kx2, kx3,ky2, ky3)+sm_distance(kx3, kx4,ky3, ky4)+sm_distance(kx4, kxf,ky4, kyf);
         x_line=[kx1 kx2 kx3 kx4 kxf]; y_line=[ky1 ky2 ky3 ky4 kyf];
-    elseif goal==3
+    elseif goal==9
         kx2=alley_x(3,4);ky2=alley_y(3,4);   kx3=alley_x(4,5); ky3=alley_y(4,5);
         ideal_path=sm_distance(kx1, kx2,ky1, ky2)+sm_distance(kx2, kx3,ky2, ky3)+sm_distance(kx3, kxf,ky3, kyf);
         x_line=[kxf kx3 kx2 kx1]; y_line=[kyf ky3 ky2 ky1];
@@ -173,11 +174,11 @@ elseif start==8
         kx2=pentagon_x(5); ky2=pentagon_y(5);   kx3=alley_x(4,1); ky3=alley_y(4,1);
         ideal_path=sm_distance(kx1, kx2,ky1, ky2)+sm_distance(kx2, kx3,ky2, ky3)+sm_distance(kx3, kxf,ky3, kyf);
         x_line=[kxf kx3 kx2 kx1]; y_line=[kyf ky3 ky2 ky1];
-    elseif goal==2
+    elseif goal==3
         kx2=pentagon_x(4);  ky2=pentagon_y(4); kx3=pentagon_x(3); ky3=pentagon_y(3); kx4=alley_x(3,2); ky4=alley_y(3,2);
         ideal_path=sm_distance(kx1, kx2,ky1, ky2)+sm_distance(kx2, kx3,ky2, ky3)+sm_distance(kx3, kx4,ky3, ky4)+sm_distance(kx4, kxf,ky4, kyf);
         x_line=[kx1 kx2 kx3 kxf]; y_line=[ky1 ky2 ky3 kyf];
-    elseif goal==3
+    elseif goal==9
         kx2=alley_x(4,5);ky2=alley_y(4,5);
         ideal_path=sm_distance(kx1, kx2,ky1, ky2)+sm_distance(kx2, kxf,ky2, kyf);
         x_line=[kxf kx2 kx1]; y_line=[kyf ky2 ky1];
@@ -195,7 +196,7 @@ elseif start==9
         ideal_ego_path=sm_distance(kx1, ekx2,ky1, eky2)+sm_distance(ekx2, ekx3,eky2, eky3)+sm_distance(ekx3, ekx4,eky3, eky4)+sm_distance(ekx4, ekx5,eky4, eky5);
         x_line=[kx1 kx2 kx3 kxf]; y_line=[ky1 ky2 ky3 kyf];
         x_line_ego=[kx1 ekx2 ekx3 ekx4 ekx5]; y_line_ego=[ky1 eky2 eky3 eky4 eky5];
-    elseif goal==2
+    elseif goal==3
         kx2=alley_x(3,5);ky2=alley_y(3,5);   kx3=pentagon_x(1); ky3=pentagon_y(1); kx4=alley_x(4,2); ky4=alley_y(4,2);
         ekx2=alley_x(4,5); eky2=alley_y(4,5); ekx3=pentagon_x(4); eky3=pentagon_y(4); ekx4=alley_x(3,3); eky4=alley_y(3,3); ekx5=0.68; eky5=0.2;
         goal_x_ego=ekx5;    goal_y_ego=eky5;
@@ -203,7 +204,7 @@ elseif start==9
         ideal_ego_path=sm_distance(kx1, ekx2,ky1, eky2)+sm_distance(ekx2, ekx3,eky2, eky3)+sm_distance(ekx3, ekx4,eky3, eky4)+sm_distance(ekx4, ekx5,eky4, eky5);
         x_line=[kx1 kx2 kx3 kx4 kxf]; y_line=[ky1 ky2 ky3 ky4 kyf];
         x_line_ego=[kx1 ekx2 ekx3 ekx4 ekx5]; y_line_ego=[ky1 eky2 eky3 eky4 eky5];
-    elseif goal==3
+    elseif goal==9
         ekx2=alley_x(3,5); eky2=alley_y(3,5); ekx3=alley_x(4,1); eky3=alley_y(4,1); ekx4=start_x(1); eky4=start_y(1);
         goal_x_ego=ekx4;    goal_y_ego=eky4;
         ideal_path=sm_distance(kx1, kxf,ky1, kyf);
@@ -216,11 +217,11 @@ elseif start==10
     if goal==1
         ideal_path=sm_distance(kx1, kxf,ky1, kyf);
         x_line=[kx1 kxf]; y_line=[ky1 kyf];
-    elseif goal==2
+    elseif goal==3
         kx2=pentagon_x(1);ky2=pentagon_y(1);   kx3=alley_x(4,2); ky3=alley_y(4,2);
         ideal_path=sm_distance(kx1, kx2,ky1, ky2)+sm_distance(kx2, kx3,ky2, ky3)+sm_distance(kx3, kxf,ky3, kyf);
         x_line=[kxf kx3 kx2 kx1]; y_line=[kyf ky3 ky2 ky1];
-    elseif goal==3
+    elseif goal==9
         kx2=alley_x(3,5);ky2=alley_y(3,5);
         ideal_path=sm_distance(kx1, kx2,ky1, ky2)+sm_distance(kx2, kxf,ky2, kyf);
         x_line=[kx1 kx2 kxf]; y_line=[ky1 ky2 kyf];
