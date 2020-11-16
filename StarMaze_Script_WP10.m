@@ -183,7 +183,7 @@ sm.sub{p}.session{s}.trial{k}.trial_goal_identity=trial_data.trial_goal_identity
 sm.sub{p}.session{s}.trial{k}.trial_goal=trial_data.trial_goal(k,1);
 [sm.sub{p}.session{s}.trial{k}.goal_x,sm.sub{p}.session{s}.trial{k}.goal_y,sm.sub{p}.session{s}.trial{k}.goal]=sm_wp10_trialGoal(sm.sub{p}.wp,sm.sub{p}.session{s}.trial{k}.trial_goal, sm.coord.goal_x,sm.coord.goal_y);
 
-[sm.sub{p}.session{s}.trial{k}.chosen_goal_str,sm.sub{p}.session{s}.trial{k}.chosen_goal_int]=sm_wp10_chosenGoalAlley(string(trial_data.chosen_goal(k,1)));
+[sm.sub{p}.session{s}.trial{k}.chosen_goal_int,sm.sub{p}.session{s}.trial{k}.chosen_goal_str]=sm_wp10_chosenGoalAlley(string(trial_data.chosen_goal(k,1)));
 
 sm.sub{p}.session{s}.trial{k}.trial_startalley=trial_data.trial_player(k,1);
 [sm.sub{p}.session{s}.trial{k}.start]=sm_wp10_trialStart(sm.sub{p}.session{s}.trial{k}.trial_startalley);
