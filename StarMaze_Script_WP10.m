@@ -4,7 +4,7 @@ addpath(genpath(pwd)) % add subfolder functions to path
 
 %% Starmaze Data Processing
 % @ date 20191001 @ author Deetje Iggena
-% @ date 20201106 update by @ Patrizia Maier
+% @ date 20201106 update by @ Patrizia Maier & now tracked by git 
 % for starmaze version WP10 Frankfurt
 
 % The script requires .csv as input-files. 
@@ -146,7 +146,7 @@ sm.sub{p}.id=subject;
 % id=trial_data.ppid(1,1);
 ID=num2str(sm.sub{p}.id);
 sm.sub{p}.wp=wp; 
-[sm.sub{p}.group,sm.sub{p}.Group]=sm_wp10_callGroup(sm.sub{p}.id); % provide group information
+[sm.sub{p}.group,sm.sub{p}.Group,sm.sub{p}.sex,sm.sub{p}.Sex]=sm_wp10_callGroup(sm.sub{p}.id); % provide group information
 sm.sub{p}.session{s}.session=trial_data.session_num(1,1); % provide session information
 
 %% Read-in and data preparation of individual tracker trial csv-files
@@ -477,7 +477,7 @@ save(fullfile(folderOut, targetFileName_Subject),'sm', '-append');
 
 %% Block 4: Writing data ---> result sheet XLSX for single trials %%
 % header
-col_header={'wp','date_analysis','id','group','session','trial','trial_condition','feedback','start_position','goal_position'};
+col_header={'wp','date_analysis','id','sex','group','session','trial','trial_condition','feedback','start_position','goal_position'};
 
 % main variables
 col_header_2={'time_abs','time_accuracy','path_abs','path_accuracy','final_distance_to_goal_abs',...
@@ -509,7 +509,8 @@ col_header_4={'search_strategy_no','direct','reoriented','serial','central_focus
 % name of excel-file
 Trial=num2str(sm.sub{p}.session{s}.trial{k}.trial_num);
 Session=num2str(sm.sub{p}.session{s}.session);
-group_var=[sm.sub{p}.wp convertCharsToStrings(date) sm.sub{p}.id sm.sub{p}.group s sm.sub{p}.session{s}.trial{k}.trial_num sm.sub{p}.session{s}.trial{k}.trial_condition...
+group_var=[sm.sub{p}.wp convertCharsToStrings(date) sm.sub{p}.id sm.sub{p}.Sex sm.sub{p}.Group s ...
+    sm.sub{p}.session{s}.trial{k}.trial_num sm.sub{p}.session{s}.trial{k}.trial_condition ...
     sm.sub{p}.session{s}.trial{k}.fb sm.sub{p}.session{s}.trial{k}.start sm.sub{p}.session{s}.trial{k}.goal];
 file_name = ['results_' num2str(wp) '_' sm.sub{p}.Group '_' ID '_' Session '_' Trial '.xls'];
 new_file = fullfile(folderOut, file_name);
