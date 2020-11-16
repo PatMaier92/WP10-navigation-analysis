@@ -9,27 +9,28 @@ function sm_wp10_table_allTrials(folderIn, new_file, col_header, col_header_2, c
 
 d = dir(fullfile(folderIn, '*.xls')); % every .xlsx is detected
 files = {d.name};
-
 for k=1:numel(files)
     name = files{k};
     row=k+1;
     row=int2str(row);
-    x=['A' row ':AA' row];
-    y=['A' row ':BV' row];
-    z=['A' row ':AK' row];
+    x=['A' row ':AD' row];
+    y=['A' row ':AI' row];
+    z=['A' row ':CR' row];
     
     % reading in data for table per ID
-    d_path=xlsread( fullfile(folderIn, name),'path','A2:AA2');
-    d_zone=xlsread( fullfile(folderIn, name),'zone','A2:BV2');
-    d_explore=xlsread( fullfile(folderIn, name),'exploration','A2:AK2');
+    d_path=xlsread(fullfile(folderIn, name),'path','A2:AD2'); 
+    d_explore=xlsread(fullfile(folderIn, name),'exploration','A2:AI2');
+    d_support=xlsread(fullfile(folderIn, name),'support_vars','A2:CR2');
     
+    % header
     xlswrite(new_file,[col_header col_header_2 ],'path','A1');
-    xlswrite(new_file,[col_header col_header_3 ],'zone','A1');
-    xlswrite(new_file,[col_header col_header_4],'exploration','A1');
-    
+    xlswrite(new_file,[col_header col_header_3 ],'exploration','A1');
+    xlswrite(new_file,[col_header col_header_4 ],'support_vars','A1');
+
+    % data
     xlswrite(new_file,d_path,'path',x);
-    xlswrite(new_file,d_zone,'zone',y);
-    xlswrite(new_file,d_explore,'exploration',z);
-end   
+    xlswrite(new_file,d_explore,'exploration',y);
+    xlswrite(new_file,d_support,'support_vars',z);
+end 
 
 end
