@@ -2,46 +2,60 @@
 ### Statistical analysis and plots ### 
 # Cross-sectional comparison: YoungKids (6-7), OldKids (9-10), 
 #   YoungAdults (18-35), OldAdults (68-75)
-# Two time points of testing: 
+# Two time pointslibrary(tidyverse) of testing: 
 #   1: S003 (Practise) + S001 (T1); 2. S002 (T2) + S004 (PostMemoryTests)
 
 
 ## install packages
-# install.packages("tidyverse")
 # install.packages("readxl")
 # install.packages("openxlsx")
+# install.packages("tidyverse")
 
 
-# ## get packages
-library(tidyverse)
+## get packages
 library(readxl)
 library(openxlsx)
+library(tidyverse)
 
 
-## set directory and filename
-path <- "D:/PhD/Temp Home Office Charité/Analysis/WP10/Matlab/WP10_SM_Analysis/WP10_testfiles/WP10_results"
+## set directory
+path <- "D:/PhD/Temp Home Office Charité/Analysis/WP10/WP10_testfiles/WP10_results"
 setwd(path)
 
 
 ## read data 
-date = "201109"
-sm_file <- "WP10_results_table_" + date + ".xlsx"; 
-
-sm_path <- read_xlsx(sm_file, sheet = "path", col_names = T)
-sm_explore <- read_xlsx(sm_file, sheet = "exploration", col_names = T)
-
-
-## create single data frame  
-# make sure order is equal
-sm_path <- sm_path[order(sm_path$ID),]
-sm_explore <- sm_explore[order(sm_explore$ID),]
-
-# data frame 
-data_individual <- data.frame(sm_path, sm_explore) 
-rm(sm_path, np_data, sm_explore)
+date = "201118"
+sm_file <- paste("WP10_results_table_", date, ".xlsx", sep="")
+sm_data <- read_xlsx(sm_file, sheet = "data_vars", col_names = T)
+# sm_support <- read_xlsx(sm_file, sheet = "support_vars", col_names = T)
+rm(date)
 
 
-## add factor information, convert classes 
+## tidy data 
+# sort correct order with arrange()
+sm_data <- arrange(sm_data, id, session, trial) 
+# sm_support <- arrange(sm_support, id, session, trial)
+
+# add factor information
+sm_data$sex <- factor(sm_data$sex, levels=c(1, 2), 
+                      labels=c("male", "female"))
+sm_data$group <- factor(sm_data$group, levels=c(1, 2, 5, 6), 
+                        labels=c("YoungKids", "OldKids", "YoungAdults", "OldAdults"))
+sm_data$session <- factor(sm_data$session)
+sm_data$trial_condition <- factor(sm_data$trial_condition, levels=c(0, 3, 1, 2), 
+                                  labels=c("main_learn", "main_ret", "allo_ret", "ego_ret"))
+sm_data$feedback <- factor(sm_data$feedback)
+sm_data$goal_identity <- factor(sm_data$goal_identity, levels=c(1, 2, 3, 4),
+                                labels=c("01-Fussball", "02-Globus", "03-Geige", "04-Stuhl"))
+sm_data$search_strategy_no <- factor(sm_data$search_strategy_no, levels=c(1,2,3,4,5,6), 
+                                     labels=c("direct_strategy","central_focus","reoriented","serial","random","unclassified"))
+
+sm_data %>% 
+  group_by(group, trial_condition) %>%
+  summarise(m_success=mean(success),
+            m_finalDist=mean(final_distance_to_goal_abs),
+            m_directPath=mean(direct_path),
+            m_path=mean(path_abs))
 
 
 ## create plots 
