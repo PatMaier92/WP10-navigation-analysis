@@ -1,0 +1,29 @@
+---
+title: "WP10 Data Overview"
+author: "Patrizia Maier"
+date: "`r format(Sys.time(), '%d %B, %Y')`"
+output: html_document
+---
+
+```{r, include=FALSE, cache=FALSE}
+knitr::read_chunk('WP10_PlotCreator.R')
+```
+
+Descriptive analysis and plots 
+
+Sample: Cross-sectional comparison between  
+
+* young kids (6-7 yrs)  
+* older kids (9-10 yrs)  
+* young adults (18-35 yrs)   
+* older adults (68-75 yrs)  
+
+Time points of testing:  
+
+* T1: S003 (Practise) + S001 (Learning + Baseline Retrieval)  
+* T2: S002 (Retrieval) + S004 (PostMemoryTests)  
+
+
+``` {r, test}
+
+```

@@ -2,7 +2,7 @@
 ### Statistical analysis and plots ### 
 # Cross-sectional comparison: YoungKids (6-7), OldKids (9-10), 
 #   YoungAdults (18-35), OldAdults (68-75)
-# Two time pointslibrary(tidyverse) of testing: 
+# Two time points of testing: 
 #   1: S003 (Practise) + S001 (T1); 2. S002 (T2) + S004 (PostMemoryTests)
 
 
@@ -18,6 +18,9 @@ library(readxl)
 library(openxlsx)
 library(tidyverse)
 library(arsenal)
+
+## ---- test --------
+1+1
 
 
 ## set directory
@@ -63,7 +66,6 @@ sm_trial_data$search_strategy_no <- factor(sm_trial_data$search_strategy_no, lev
 #             sd_directPath=sd(direct_path),
 #             m_path=mean(path_abs),
 #             sd_path=sd(path_abs))
-
 
 # summary tables 
 mycontrols  <- tableby.control(test=FALSE, 
