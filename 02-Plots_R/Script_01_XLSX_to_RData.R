@@ -16,8 +16,7 @@ library(arsenal)
 
 
 ## set directory
-path <- "D:/PhD/Temp Home Office Charité/Analysis/WP10/WP10_testfiles/WP10_results"
-setwd(path)
+setwd("../WP10_data/WP10_results")
 
 
 ## read xlsx data 
@@ -66,5 +65,6 @@ filename <- "WP10_results_table.RData"
 save(sm_trial_data, file = filename)
 
 
-## clear workspace
+## clear workspace & reset directory
 rm(list = ls())
+setwd("../../02-Plots_R")

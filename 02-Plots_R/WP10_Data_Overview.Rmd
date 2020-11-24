@@ -36,9 +36,9 @@ library(arsenal)
 
 
 ```{r, load_data_script, include=FALSE, cache=FALSE}
-filepath <- "D:/PhD/Temp Home Office Charité/Analysis/WP10/WP10_testfiles/WP10_results/WP10_results_table.RData"
-load(filepath)
-rm(filepath)
+file <- "../WP10_data/WP10_results/WP10_results_table.RData"
+load(file)
+rm(file)
 
 knitr::read_chunk('Script_02_Table_Plot_Creator.R')
 ```

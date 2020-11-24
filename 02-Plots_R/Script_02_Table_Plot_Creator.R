@@ -16,14 +16,13 @@ library(arsenal)
 
 
 ## set directory
-path <- "D:/PhD/Temp Home Office Charité/Analysis/WP10/WP10_testfiles/WP10_results"
-setwd(path)
+setwd("../WP10_data/WP10_results")
 
 
 ## load data 
 filename <- "WP10_results_table.RData"
 load(filename)
-rm(filename, path)
+rm(filename)
 
 
 
@@ -101,3 +100,8 @@ summary(sum_table_ego, labelTranslations=my_labels,
 # rename severalcolumns   
 # data <- plyr::rename(data, c("PT-1...86" = "t1_ss_mixed_pt_1", # t1 mixed
 #                        "PT-2...87" = "t1_ss_mixed_pt_2"))
+
+
+## clear workspace & reset directory
+rm(list = ls())
+setwd("../../02-Plots_R")
