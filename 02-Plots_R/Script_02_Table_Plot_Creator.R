@@ -15,14 +15,10 @@ library(tidyverse)
 library(arsenal)
 
 
-## set directory
-setwd("../WP10_data/WP10_results")
-
-
 ## load data 
-filename <- "WP10_results_table.RData"
-load(filename)
-rm(filename)
+in_file <- "../WP10_data/WP10_results/WP10_results_table.RData"
+load(in_file)
+rm(in_file)
 
 
 
@@ -102,6 +98,5 @@ summary(sum_table_ego, labelTranslations=my_labels,
 #                        "PT-2...87" = "t1_ss_mixed_pt_2"))
 
 
-## clear workspace & reset directory
+## clear workspace
 rm(list = ls())
-setwd("../../02-Plots_R")

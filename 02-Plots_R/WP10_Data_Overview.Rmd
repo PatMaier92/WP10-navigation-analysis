@@ -36,9 +36,9 @@ library(arsenal)
 
 
 ```{r, load_data_script, include=FALSE, cache=FALSE}
-file <- "../WP10_data/WP10_results/WP10_results_table.RData"
-load(file)
-rm(file)
+in_file <- "../WP10_data/WP10_results/WP10_results_table.RData"
+load(in_file)
+rm(in_file)
 
 knitr::read_chunk('Script_02_Table_Plot_Creator.R')
 ```

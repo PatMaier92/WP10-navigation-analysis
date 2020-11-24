@@ -15,16 +15,12 @@ library(tidyverse)
 library(arsenal)
 
 
-## set directory
-setwd("../WP10_data/WP10_results")
-
-
 ## read xlsx data 
 date = "201118"
-sm_file <- paste("WP10_results_table_", date, ".xlsx", sep="")
-sm_trial_data <- read_xlsx(sm_file, sheet = "data_vars", col_names = T)
-# sm_support <- read_xlsx(sm_file, sheet = "support_vars", col_names = T)
-rm(date)
+in_file <- paste("../WP10_data/WP10_results/WP10_results_table_", date, ".xlsx", sep="")
+sm_trial_data <- read_xlsx(in_file, sheet = "data_vars", col_names = T)
+# sm_support <- read_xlsx(in_file, sheet = "support_vars", col_names = T)
+rm(date, in_file)
 
 
 ## tidy data 
@@ -61,10 +57,9 @@ sm_trial_data$search_strategy_no <- factor(sm_trial_data$search_strategy_no, lev
 
 
 ## save as RData
-filename <- "WP10_results_table.RData"
-save(sm_trial_data, file = filename)
+out_file <- "../WP10_data/WP10_results/WP10_results_table.RData"
+save(sm_trial_data, file=out_file)
 
 
-## clear workspace & reset directory
+## clear workspace
 rm(list = ls())
-setwd("../../02-Plots_R")
