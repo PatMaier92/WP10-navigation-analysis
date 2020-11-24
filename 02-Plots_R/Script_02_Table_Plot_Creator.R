@@ -26,57 +26,60 @@ load(filename)
 rm(filename, path)
 
 
-## summary tables 
-# controls  
-mycontrols  <- tableby.control(test=FALSE, 
-                               total=FALSE,
-                               digits=2,
-                               digits.n=NA,
-                               numeric.stats=c("meansd"),
-                               numeric.simplify=TRUE)
-# labels 
-labels <- c(success="Success in %", final_distance_to_goal_abs="Final distance in virtual m",
-            direct_path="Direct path in %", path_abs="Path length in virtual m",
-            session="Session")
 
-# table allocentric 
+## summary tables
+## ---- table_settings
+my_settings  <- tableby.control(test=FALSE, 
+                                total=FALSE,
+                                digits=2,
+                                digits.n=NA,
+                                numeric.stats=c("meansd"),
+                                numeric.simplify=TRUE)
+
+my_labels <- c(success="Success in %", 
+               final_distance_to_goal_abs="Final distance in virtual m",
+               direct_path="Direct path in %", path_abs="Path length in virtual m",
+               session="Session")
+## ----
+
+## ---- table_learn
+# (not including retrieval)
+sum_table_learn <- tableby(group ~ success + final_distance_to_goal_abs + direct_path + path_abs, 
+                           data=sm_trial_data,
+                           subset=c(trial_condition=="main_learn"),
+                           control=my_settings)
+summary(sum_table_learn, labelTranslations=my_labels, 
+        title="Mean (sd) for learning")
+# write2html(output_learn, "test_table.html")
+## ----
+
+
+## ---- table_allo
 sum_table_allo <- tableby(group ~ success + final_distance_to_goal_abs + direct_path + path_abs, 
                           data=sm_trial_data,
                           subset=c(trial_condition=="allo_ret"),
                           strata=session,
-                          control=mycontrols)
-output <- summary(sum_table_allo, labelTranslations=labels, 
-                  title="Mean (SD) for Allocentric retrieval")
-# write2html(output, "test_table.html")
+                          control=my_settings)
+summary(sum_table_allo, labelTranslations=my_labels, 
+                  title="Mean (sd) for allocentric retrieval")
+# write2html(output_allo, "test_table.html")
+## ----
 
-# table egocentric 
+
+## ---- table_ego
 sum_table_ego <- tableby(group ~ success + final_distance_to_goal_abs + direct_path + path_abs, 
                          data=sm_trial_data,
                          subset=c(trial_condition=="ego_ret"),
                          strata=session,
-                         control=mycontrols)
-output <- summary(sum_table_ego, labelTranslations=labels, 
-                  title="Mean (SD) for Egocentric retrieval")
-# write2html(output, "test_table.html")
-
-# table learning (not including retrieval)
-sum_table_learn <- tableby(group ~ success + final_distance_to_goal_abs + direct_path + path_abs, 
-                           data=sm_trial_data,
-                           subset=c(trial_condition=="main_learn"),
-                           control=mycontrols)
-output <- summary(sum_table_learn, labelTranslations=labels, 
-                  title="Mean (SD) for Learning")
-# write2html(output, "test_table.html")
+                         control=my_settings)
+summary(sum_table_ego, labelTranslations=my_labels, 
+                  title="Mean (sd) for egocentric retrieval")
+# write2html(output_ego, "test_table.html")
+## ----
 
 
 
 ## create plots 
-
-
-## ---- test --------
-1+1
-
-
 
 
 ## useful functions

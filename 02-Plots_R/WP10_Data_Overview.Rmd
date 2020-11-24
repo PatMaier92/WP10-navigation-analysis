@@ -1,29 +1,59 @@
 ---
-title: "WP10 Data Overview"
+title: "Preliminary Descriptives & Plots of Starmaze Data"
 author: "Patrizia Maier"
 date: "`r format(Sys.time(), '%d %B, %Y')`"
-output: html_document
+output: pdf_document
 ---
 
-```{r, include=FALSE, cache=FALSE}
-knitr::read_chunk('WP10_PlotCreator.R')
+### Task
+Navigating a star-shaped maze environment ("Starmaze") with three goal locations.
+
+### Time points of testing
+
+Day 1
+
+* Practise trials, including motor control (joystick) and task explanation.
+* Navigation to and remembering the position of three goal locations. Baseline retrieval in egocentric (observer-dependent, i.e. from same starting point but without landmark cues) and allocentric (observer-independent, i.e. from new starting points) navigation condition.
+  
+Day 14
+
+* Consolidated retrieval in egocentric and allocentric navigation condition.
+* Non-navigational memory retrieval: Recognitve maze shape, recognize landmarks and goal objects, reconstruct location of landmarks and goal object.
+
+### Sample
+Cross-sectional comparison between
+
+* young kids (6-7 yrs)
+* older kids (9-10 yrs)
+* young adults (18-35 yrs)
+* older adults (68-75 yrs)
+
+
+```{r setup, include = FALSE}
+library(tidyverse)
+library(arsenal)
 ```
 
-Descriptive analysis and plots 
 
-Sample: Cross-sectional comparison between  
+```{r, load_data_script, include=FALSE, cache=FALSE}
+filepath <- "D:/PhD/Temp Home Office Charité/Analysis/WP10/WP10_testfiles/WP10_results/WP10_results_table.RData"
+load(filepath)
+rm(filepath)
 
-* young kids (6-7 yrs)  
-* older kids (9-10 yrs)  
-* young adults (18-35 yrs)   
-* older adults (68-75 yrs)  
-
-Time points of testing:  
-
-* T1: S003 (Practise) + S001 (Learning + Baseline Retrieval)  
-* T2: S002 (Retrieval) + S004 (PostMemoryTests)  
-
-
-``` {r, test}
-
+knitr::read_chunk('Script_02_Table_Plot_Creator.R')
 ```
+
+
+### Tables with descriptive values 
+``` {r, table_settings, include=FALSE}
+```
+
+``` {r, table_learn, echo=FALSE, results="asis"}
+```
+
+``` {r, table_ego, echo=FALSE, results="asis"}
+```
+
+``` {r, table_allo, echo=FALSE, results="asis"}
+```
+
