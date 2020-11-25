@@ -58,6 +58,9 @@ sm_trial_data <- sm_trial_data %>%
                       ifelse(block=="4" & goal_position==sm_trial_data$goal_position[14], 2,
                              ifelse(block=="4" & goal_position==sm_trial_data$goal_position[27], 3, block))))
 
+sm_trial_data$block <- factor(sm_trial_data$block, levels=c(1, 2, 3), 
+                            labels=c("1", "2", "3"))
+
 
 # add variable with trial in block info (ADD THIS TO MATLAB)
 assign_trial_in_block <- function(s, b, t){
