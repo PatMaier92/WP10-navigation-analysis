@@ -6,7 +6,10 @@ output: pdf_document
 ---
 
 ### Task
+
 Navigating a star-shaped maze environment ("Starmaze") with three goal locations.
+
+![Map of the environment](./pics/Starmaze_Environment.jpg){width=450px}
 
 ### Time points of testing
 
@@ -14,19 +17,18 @@ Day 1
 
 * Practise trials, including motor control (joystick) and task explanation.
 * Navigation to and remembering the position of three goal locations. Baseline retrieval in egocentric (observer-dependent, i.e. from same starting point but without landmark cues) and allocentric (observer-independent, i.e. from new starting points) navigation condition.
-  
+
+![Trial order at Day 1](./pics/Overview_Session1.jpg){width=500px}
+
 Day 14
 
 * Consolidated retrieval in egocentric and allocentric navigation condition.
 * Non-navigational memory retrieval: Recognitve maze shape, recognize landmarks and goal objects, reconstruct location of landmarks and goal object.
 
-### Sample
-Cross-sectional comparison between
+![Trial order at Day 2](./pics/Overview_Session2.jpg){width=500px}
 
-* young kids (6-7 yrs)
-* older kids (9-10 yrs)
-* young adults (18-35 yrs)
-* older adults (68-75 yrs)
+![Non-navigational memory retrieval at Day 2](./pics/Overview_Session2_PostTest.jpg){width=500px}
+
 
 
 ```{r setup, include = FALSE}
@@ -42,6 +44,14 @@ rm(in_file)
 
 knitr::read_chunk('Script_02_Table_Plot_Creator.R')
 ```
+
+### Sample
+Cross-sectional comparison between
+
+* Young kids (6-7 yrs, n = `r length(unique(sm_trial_data$id[sm_trial_data$group=="YoungKids"]))`) 
+* Older kids (9-10 yrs, n = `r length(unique(sm_trial_data$id[sm_trial_data$group=="OldKids"]))`)
+* Young adults (18-35 yrs, n = `r length(unique(sm_trial_data$id[sm_trial_data$group=="YoungAdults"]))`)
+* Older adults (68-75 yrs, n = `r length(unique(sm_trial_data$id[sm_trial_data$group=="OldAdults"]))`)
 
 
 ### Tables with descriptive values 
