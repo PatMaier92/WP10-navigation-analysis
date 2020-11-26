@@ -19,7 +19,7 @@ library(arsenal)
 
 
 ## read xlsx data 
-date = "201118"
+date = "201126"
 in_file <- paste("../WP10_data/WP10_results/WP10_results_table_", date, ".xlsx", sep="")
 sm_trial_data <- read_xlsx(in_file, sheet = "data_vars", col_names = T)
 rm(date, in_file)
