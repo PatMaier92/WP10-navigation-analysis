@@ -63,54 +63,51 @@ sm_trial_data$block <- factor(sm_trial_data$block, levels=c(1, 2, 3),
 
 
 # add variable with trial in block info (ADD THIS TO MATLAB)
-assign_trial_in_block <- function(s, b, t){
+assign_trial_in_block <- function(i, s, b, t){
   
-  orig_trial <- unique(sm_trial_data$trial[(sm_trial_data$session==s & sm_trial_data$block==b)])
+  temp <- sm_trial_data %>%
+    filter(session==s, block==b, id==i)
+  
+  orig_trial <- sort(unique(temp %>% pull(trial)))
   index <- which(orig_trial==t)
   
   return (index)
 }
 
 sm_trial_data <- sm_trial_data %>%
-  rowwise() %>% 
-  mutate(trial_in_block=assign_trial_in_block(session, block, trial))
-
-# sm_trial_data_g <- sm_trial_data %>%
-#   mutate(trial_in_block=purrr::pmap_dbl(list(session, block, trial), assign_trial_in_block))
+  mutate(trial_in_block=purrr::pmap_dbl(list(id, session, block, trial), assign_trial_in_block))
 
 
 # add variable with trial in condition info (ADD THIS TO MATLAB)
-assign_trial_in_cond <- function(s, c, t){
+assign_trial_in_cond <- function(i, s, c, t){
   
-  orig_trial <- unique(sm_trial_data$trial[(sm_trial_data$session==s & sm_trial_data$trial_condition==c)])
+  temp <- sm_trial_data %>%
+    filter(session==s, trial_condition==c, id==i)
+  
+  orig_trial <- sort(unique(temp %>% pull(trial)))
   index <- which(orig_trial==t)
   
   return (index)
 }
 
 sm_trial_data <- sm_trial_data %>%
-  rowwise() %>% 
-  mutate(trial_in_cond=assign_trial_in_cond(session, trial_condition, trial))
-
-# sm_trial_data <- sm_trial_data %>%
-#   mutate(trial_in_cond=purrr::pmap_dbl(list(session, trial_condition, trial), assign_trial_in_cond))
+  mutate(trial_in_cond=purrr::pmap_dbl(list(id, session, trial_condition, trial), assign_trial_in_cond))
 
 
 # add variable with trial in block in condition info (ADD THIS TO MATLAB)
-assign_trial_in_block_in_cond <- function(s, b, c, t){
+assign_trial_in_block_in_cond <- function(i, s, b, c, t){
   
-  orig_trial <- unique(sm_trial_data$trial[(sm_trial_data$session==s & sm_trial_data$block==b & sm_trial_data$trial_condition==c)])
+  temp <- sm_trial_data %>%
+    filter(session==s,  block==b, trial_condition==c, id==i)
+  
+  orig_trial <- sort(unique(temp %>% pull(trial)))
   index <- which(orig_trial==t)
   
   return (index)
 }
 
 sm_trial_data <- sm_trial_data %>%
-  rowwise() %>% 
-  mutate(trial_in_block_in_cond=assign_trial_in_block_in_cond(session, block, trial_condition, trial))
-
-# sm_trial_data <- sm_trial_data %>%
-#   mutate(trial_in_block_in_cond=purrr::pmap_dbl(list(session, block, trial_condition, trial), assign_trial_in_block_in_cond))
+  mutate(trial_in_block_in_cond=purrr::pmap_dbl(list(id, session, block, trial_condition, trial), assign_trial_in_block_in_cond))
 
 
 
