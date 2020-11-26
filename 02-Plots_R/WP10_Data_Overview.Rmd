@@ -34,6 +34,7 @@ Day 14
 ```{r setup, include = FALSE}
 library(tidyverse)
 library(arsenal)
+library(cowplot)
 ```
 
 
@@ -64,6 +65,17 @@ In learning trials, the goal is visible, i.e. is always found except if the part
 * Direct path (yes/no): Being successful and additionally taking the shortest path without entering any additional alleys.
 * Path (metric): Absolute length of traveled path to chosen goal location. 
 * Strategy classification, e.g. direct strategy to chosen goal (no detours), reorientation (going back same path), serial strategy, central focus (circling), random or unclassified strategy. 
+
+
+### Plots 
+``` {r, plots_settings, include=FALSE}
+```
+
+``` {r, content_trial_wise, include=FALSE}
+```
+
+``` {r, plots_trial_wise, echo=FALSE, fig.heigth=4 }
+```
 
 
 ### Tables with descriptive values 

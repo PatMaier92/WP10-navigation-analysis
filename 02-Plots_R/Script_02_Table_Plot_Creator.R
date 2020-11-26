@@ -101,21 +101,23 @@ rm(my_labels, my_settings)
 
 
 ## create plots
+## ---- plots_settings
 # labels
 mylabels <- as_labeller(c(`YoungKids` = "Young Kids", `OldKids` = "Old Kids", 
                           `YoungAdults` = "Young Adults", `OldAdults` = "Old Adults",
                           `main_learn` = "Main Learn", `main_ret` = "Main Retrieval", 
                           `allo_ret` = "Allo Retrieval", `ego_ret` = "Ego Retrieval",
                           `1`="1", `2`="2"))
+## ----
 
-
+## ---- content_trial_wise
 # function for trial-wise bar plots (separate blocks or conditions)
-bar_trials <- function(data, xvar, yvar, fillby, title, xlabel, ylabel, fillbylabel, facetlabels){
+bar_trials <- function(data, xvar, yvar, fillby, title, xlabel, ylabel, fillbylabel, facetlabels) {
   p <- ggplot(data, aes(x=data[[xvar]],y=data[[yvar]], fill=data[[fillby]])) + 
     geom_col() + # identity bars
     facet_grid(data$group, labeller=facetlabels) + # groups 
     scale_x_continuous(breaks=seq(0,max(data[[xvar]]),round(max(data[[xvar]])/8))) + # ticks 
-    theme_cowplot(font_size=16) + # theme
+    theme_cowplot() + # theme
     theme(legend.position="bottom") +
     labs(title = title,
          x = xlabel,
@@ -134,18 +136,21 @@ sm_all_trials_s1 <- sm_trial_data %>%
             direct_path=mean(direct_path),
             final_distance_to_goal_abs=mean(final_distance_to_goal_abs),
             path_abs=mean(path_abs))
+## ----
 
 # block is color-coded
-bar_trials(sm_all_trials_s1, "trial", "success", "block", "Trials 1-39 at T1", "Trial", "Success", "Block (goal)", mylabels)
-bar_trials(sm_all_trials_s1, "trial", "direct_path", "block", "Trials 1-39 at T1", "Trial", "Direct path", "Block (goal)", mylabels)
-bar_trials(sm_all_trials_s1, "trial", "final_distance_to_goal_abs", "block", "Trials 1-39 at T1", "Trial", "Final distance in virtual units", "Block (goal)", mylabels)
-bar_trials(sm_all_trials_s1, "trial", "path_abs", "block", "Trials 1-39 at T1", "Trial", "Path length in virtual units", "Block (goal)", mylabels)
+bar_trials(sm_all_trials_s1, "trial", "success", "block", "Success in trials 1-39 at T1 (block is color-coded)", "Trial", "Success", "Block (goal)", mylabels)
+bar_trials(sm_all_trials_s1, "trial", "direct_path", "block", "Direct path in trials 1-39 at T1 (block is color-coded)", "Trial", "Direct path", "Block (goal)", mylabels)
+bar_trials(sm_all_trials_s1, "trial", "final_distance_to_goal_abs", "block", "Final distance in trials 1-39 at T1 (block is color-coded)", "Trial", "Final distance in virtual units", "Block (goal)", mylabels)
+bar_trials(sm_all_trials_s1, "trial", "path_abs", "block", "Path in trials 1-39 at T1 (block is color-coded)", "Trial", "Path length in virtual units", "Block (goal)", mylabels)
 
+## ---- plots_trial_wise
 # condition  is color-coded
-bar_trials(sm_all_trials_s1, "trial", "success", "trial_condition", "Trials 1-39 at T1", "Trial", "Success", "Trial condition", mylabels)
-bar_trials(sm_all_trials_s1, "trial", "direct_path", "trial_condition", "Trials 1-39 at T1", "Trial", "Direct path", "Trial condition", mylabels)
-bar_trials(sm_all_trials_s1, "trial", "final_distance_to_goal_abs", "trial_condition", "Trials 1-39 at T1", "Trial", "Final distance in virtual units", "Trial condition", mylabels)
-bar_trials(sm_all_trials_s1, "trial", "path_abs", "trial_condition", "Trials 1-39 at T1", "Trial", "Path length in virtual units", "Trial condition", mylabels)
+bar_trials(sm_all_trials_s1, "trial", "success", "trial_condition", "Success in trials 1-39 at T1 (condition is color-coded)", "Trial", "Success", "Trial condition", mylabels)
+bar_trials(sm_all_trials_s1, "trial", "direct_path", "trial_condition", "Direct path in trials 1-39 at T1 (condition is color-coded)", "Trial", "Direct path", "Trial condition", mylabels)
+## ----
+bar_trials(sm_all_trials_s1, "trial", "final_distance_to_goal_abs", "trial_condition", "Final distance in trials 1-39 at T1 (condition is color-coded)", "Trial", "Final distance in virtual units", "Trial condition", mylabels)
+bar_trials(sm_all_trials_s1, "trial", "path_abs", "trial_condition", "Path in trials 1-39 at T1 (condition is color-coded)", "Trial", "Path length in virtual units", "Trial condition", mylabels)
 
 rm(sm_all_trials_s1)
 
@@ -224,7 +229,7 @@ rm(sm_trials_sum_data)
 #   p <- ggplot(data_sum, aes_string(x=xvar, y=yvar, fill=fillby)) + 
 #     geom_bar(stat="identity", position=position_dodge()) + # identity bars
 #     facet_wrap(~ data_sum[[facet]], labeller=facetlabel) + # facet grouping 
-#     theme_cowplot(font_size=16) + # theme
+#     theme_cowplot() + # theme
 #     theme(legend.position="bottom") +
 #     labs(title = title,
 #          x = xlabel,
@@ -257,7 +262,7 @@ bar_sums <- function(data_ind, data_sum, xvar, yvar, fillby, facet, title, xlabe
     geom_bar(data=data_sum, stat="identity", position=position_dodge()) + # identity bars
     geom_point(position=position_jitterdodge()) + # individual points
     facet_wrap(~trial_condition, labeller=facetlabel) + # facet grouping 
-    theme_cowplot(font_size=16) + # theme
+    theme_cowplot() + # theme
     theme(legend.position="bottom") +
     labs(title = title,
          x = xlabel,
