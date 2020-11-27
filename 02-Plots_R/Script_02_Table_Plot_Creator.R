@@ -8,6 +8,7 @@
 # install.packages("tidyverse")
 # install.packages("arsenal")
 # install.packages("cowplot")
+# install.packages("plyr")
 
 
 ## get packages
@@ -15,6 +16,7 @@ library(readxl)
 library(tidyverse)
 library(arsenal)
 library(cowplot)
+source("R_rainclouds.R")
 
 
 ## load data 
@@ -181,16 +183,16 @@ sm_blockavg_trials_s1 <- sm_trial_data %>%
             direct_path=mean(direct_path),
             path_abs=mean(path_abs))
 
-bar_trials_wrap(sm_blockavg_trials_s1, "trial_in_block", "success", "trial_condition", "group", "Success at T1 (averaged over blocks/goal locations)", "Trials (averaged over blocks)", "Success", "Type", mylabels, "bottom", 6)
-bar_trials_wrap(sm_blockavg_trials_s1, "trial_in_block", "direct_path", "trial_condition", "group", "Direct path at T1 (averaged over blocks/goal locations)", "Trials (averaged over blocks)", "Direct path", "Type",mylabels, "bottom", 6)
-bar_trials_wrap(sm_blockavg_trials_s1, "trial_in_block", "final_distance_to_goal_abs", "trial_condition", "group", "Final distance at T1 (averaged over blocks/goal locations)", "Trials (averaged over blocks)", "Final distance in virtual units", "Type", mylabels, "bottom", 6)
-bar_trials_wrap(sm_blockavg_trials_s1, "trial_in_block", "path_abs", "trial_condition", "group", "Path at T1 (averaged over blocks/goal locations)", "Trials (averaged over blocks)", "Path length in virtual units","Type", mylabels, "bottom", 6)
+bar_trials_wrap(sm_blockavg_trials_s1, "trial_in_block", "success", "trial_condition", "group", "Success at T1 (mean over blocks/goal locations)", "Trials (mean over blocks)", "Success", "Type", mylabels, "bottom", 6)
+bar_trials_wrap(sm_blockavg_trials_s1, "trial_in_block", "direct_path", "trial_condition", "group", "Direct path at T1 (mean over blocks/goal locations)", "Trials (mean over blocks)", "Direct path", "Type",mylabels, "bottom", 6)
+bar_trials_wrap(sm_blockavg_trials_s1, "trial_in_block", "final_distance_to_goal_abs", "trial_condition", "group", "Final distance at T1 (mean over blocks/goal locations)", "Trials (averaged over blocks)", "Final distance in virtual units", "Type", mylabels, "bottom", 6)
+bar_trials_wrap(sm_blockavg_trials_s1, "trial_in_block", "path_abs", "trial_condition", "group", "Path at T1 (mean over blocks/goal locations)", "Trials (mean over blocks)", "Path length in virtual units","Type", mylabels, "bottom", 6)
 
 rm(sm_blockavg_trials_s1)
 
 
 # data for trial-wise bar plots (averaged over blocks, seperate for conditions)
-sm_blockavg_condsep_trials_s1 <- sm_trial_data %>%
+sm_blockavg_trials_s1s2 <- sm_trial_data %>%
   group_by(session, group, trial_condition, trial_in_block_in_cond) %>%
   summarise(success=mean(success),
             final_distance_to_goal_abs=mean(final_distance_to_goal_abs),
@@ -198,55 +200,25 @@ sm_blockavg_condsep_trials_s1 <- sm_trial_data %>%
             path_abs=mean(path_abs))
 
 # learning only 
-bar_trials_wrap(sm_blockavg_condsep_trials_s1 %>% filter(trial_condition=="main_learn", session==1), "trial_in_block_in_cond", "success", "trial_condition", "group", "Success in learning at T1 (averaged over blocks/goal locations)", "Learning Trials (averaged over blocks)", "Success", "", mylabels, "none", 6)
-bar_trials_wrap(sm_blockavg_condsep_trials_s1 %>% filter(trial_condition=="main_learn", session==1), "trial_in_block_in_cond", "direct_path", "trial_condition", "group", "Direct path in learning at T1 (averaged over blocks/goal locations)", "Learning Trials (averaged over blocks)", "Direct path", "", mylabels, "none", 6)
-bar_trials_wrap(sm_blockavg_condsep_trials_s1 %>% filter(trial_condition=="main_learn", session==1), "trial_in_block_in_cond", "final_distance_to_goal_abs", "trial_condition", "group", "Final distance in learning at T1 (averaged over blocks/goal locations)", "Learning Trials (averaged over blocks)", "Final distance in virtual units", "", mylabels, "none", 6)
-bar_trials_wrap(sm_blockavg_condsep_trials_s1 %>% filter(trial_condition=="main_learn", session==1), "trial_in_block_in_cond", "path_abs", "trial_condition", "group", "Path in learning at T1 (averaged over blocks/goal locations)", "Learning Trials (averaged over blocks)", "Path length in virtual units", "", mylabels, "none", 6)
+bar_trials_wrap(sm_blockavg_trials_s1s2 %>% filter(trial_condition=="main_learn", session==1), "trial_in_block_in_cond", "success", "trial_condition", "group", "Success in learning at T1 (mean over blocks/goal locations)", "Learning Trials (mean over blocks)", "Success", "", mylabels, "none", 6)
+bar_trials_wrap(sm_blockavg_trials_s1s2 %>% filter(trial_condition=="main_learn", session==1), "trial_in_block_in_cond", "direct_path", "trial_condition", "group", "Direct path in learning at T1 (mean over blocks/goal locations)", "Learning Trials (mean over blocks)", "Direct path", "", mylabels, "none", 6)
+bar_trials_wrap(sm_blockavg_trials_s1s2 %>% filter(trial_condition=="main_learn", session==1), "trial_in_block_in_cond", "final_distance_to_goal_abs", "trial_condition", "group", "Final distance in learning at T1 (mean over blocks/goal locations)", "Learning Trials (mean over blocks)", "Final distance in virtual units", "", mylabels, "none", 6)
+bar_trials_wrap(sm_blockavg_trials_s1s2 %>% filter(trial_condition=="main_learn", session==1), "trial_in_block_in_cond", "path_abs", "trial_condition", "group", "Path in learning at T1 (mean over blocks/goal locations)", "Learning Trials (mean over blocks)", "Path length in virtual units", "", mylabels, "none", 6)
 
-rm(sm_blockavg_condsep_trials_s1)
-
-
-
-# # function for aggregated trial-wise bar plots
-# bar_trials_agg <- function(data_sum, xvar, yvar, fillby, facet, title, xlabel, ylabel, facetlabel){
-#   p <- ggplot(data_sum, aes_string(x=xvar, y=yvar, fill=fillby)) + 
-#     geom_bar(stat="identity", position=position_dodge()) + # identity bars
-#     facet_wrap(~ data_sum[[facet]], labeller=facetlabel) + # facet grouping 
-#     theme_cowplot() + # theme
-#     theme(legend.position="bottom") +
-#     labs(title = title,
-#          x = xlabel,
-#          y = ylabel) # labels and title
-#   
-#   return(p)
-# }
-# 
-# # trial-wise plots for allocentric trials at T1
-# sm_trials_sum_data <- sm_trial_data %>%
-#   filter(trial_condition=="allo_ret") %>%
-#   group_by(group, session, trial_in_block_in_cond) %>%
-#   summarise(success=mean(success),
-#             final_distance_to_goal_abs=mean(final_distance_to_goal_abs),
-#             direct_path=mean(direct_path),
-#             path_abs=mean(path_abs))
-# 
-# bar_trials_agg(sm_trials_sum_data, "trial_in_block_in_cond", "success",  "group", "session","Allocentric trials at T1", "Trials", "Success", mylabels)
-# bar_trials_sums(sm_trials_sum_data, "trial_in_block_in_cond", "direct_path", "group", "group", "Allocentric trials at T1", "Trials", "Direct path", mylabels)
-# bar_trials_sums(sm_trials_sum_data, "trial_in_block_in_cond", "final_distance_to_goal_abs", "group", "group", "Allocentric trials at T1", "Trials", "Final distance in virtual units", mylabels)
-# bar_trials_sums(sm_trials_sum_data, "trial_in_block_in_cond", "path_abs", "group", "group", "Allocentric trials at T1", "Trials", "Path length in virtual units", mylabels)
-# 
-# rm(sm_trials_sum_data)
+rm(sm_blockavg_trials_s1s2)
 
 
 
-# function for condition-wise bar plots with individual values 
-bar_sums <- function(data_ind, data_sum, xvar, yvar, fillby, facet, title, xlabel, ylabel, fillbylabel, facetlabel){
+# function for aggregated bar plots with individual values 
+bar_agg <- function(data_ind, data_sum, xvar, yvar, fillby, title, xlabel, ylabel, fillbylabel, facetlabel, legendPos){
   p <- ggplot(data_ind, aes_string(x=xvar, y=yvar, fill=fillby)) + 
     geom_bar(data=data_sum, stat="identity", position=position_dodge()) + # identity bars
     geom_point(position=position_jitterdodge()) + # individual points
-    facet_wrap(~trial_condition, labeller=facetlabel) + # facet grouping 
+    facet_grid(session ~ trial_condition, labeller=facetlabel) + # facet grouping 
     theme_cowplot() + # theme
-    theme(legend.position="bottom") +
+    theme(legend.position=legendPos,
+          axis.ticks.x=element_blank(),
+          axis.text.x=element_blank()) +
     labs(title = title,
          x = xlabel,
          y = ylabel, 
@@ -255,7 +227,8 @@ bar_sums <- function(data_ind, data_sum, xvar, yvar, fillby, facet, title, xlabe
   return(p)
 }
 
-# condition-wise plot for all condition and sessions 
+
+# data for aggregated bar plots with individual values 
 sm_ind_data <- sm_trial_data %>%
   group_by(id, group, session, trial_condition) %>%
   summarise(success=mean(success),
@@ -270,37 +243,102 @@ sm_sum_data <- sm_trial_data %>%
             direct_path=mean(direct_path),
             path_abs=mean(path_abs))
 
-bar_sums(sm_ind_data, sm_sum_data, "group", "success", "session", "trial_condition", "Average over all conditions and sessions", "Group", "Success", "Session", mylabels)
-bar_sums(sm_ind_data, sm_sum_data, "group", "direct_path", "session", "trial_condition", "Average over all conditions and sessions", "Group", "Direct path", "Session", mylabels)
-bar_sums(sm_ind_data, sm_sum_data, "group", "final_distance_to_goal_abs", "session", "trial_condition", "Average over all conditions and sessions", "Group", "Final distance in virtual units", "Session", mylabels)
-bar_sums(sm_ind_data, sm_sum_data, "group", "path_abs", "session", "trial_condition", "Average over all conditions and sessions", "Group", "Path length in virtual units", "Session", mylabels)
+
+# condition-wise plot for all conditions 
+bar_agg(sm_ind_data, sm_sum_data, "group", "success", "group", "Mean success and individual values", "", "Success", "Group", mylabels, "bottom")
+bar_agg(sm_ind_data, sm_sum_data, "group", "direct_path", "group", "Mean direct path and individual values", "", "Direct path", "Group", mylabels, "bottom")
+bar_agg(sm_ind_data, sm_sum_data, "group", "final_distance_to_goal_abs", "group", "Mean final distance and individual values", "", "Final distance in virtual units", "Group", mylabels, "bottom")
+bar_agg(sm_ind_data, sm_sum_data, "group", "path_abs", "group", "Mean path and individual values", "", "Path length in virtual units", "Group", mylabels, "bottom")
+
+
+# condition-wise plot for allo and ego retrieval 
+bar_agg(sm_ind_data %>% filter(trial_condition=="ego_ret" | trial_condition=="allo_ret"), sm_sum_data %>% filter(trial_condition=="ego_ret" | trial_condition=="allo_ret"), 
+        "group", "success", "group", "Mean success and individual values", "", "Success", "Group", mylabels, "bottom")
+bar_agg(sm_ind_data %>% filter(trial_condition=="ego_ret" | trial_condition=="allo_ret"), sm_sum_data %>% filter(trial_condition=="ego_ret" | trial_condition=="allo_ret"),
+        "group", "direct_path", "group", "Mean direct path and individual values", "", "Direct path", "Group", mylabels, "bottom")
+bar_agg(sm_ind_data %>% filter(trial_condition=="ego_ret" | trial_condition=="allo_ret"), sm_sum_data %>% filter(trial_condition=="ego_ret" | trial_condition=="allo_ret"),
+        "group", "final_distance_to_goal_abs", "group", "Mean final distance and individual values", "", "Final distance in virtual units", "Group", mylabels, "bottom")
+bar_agg(sm_ind_data %>% filter(trial_condition=="ego_ret" | trial_condition=="allo_ret"), sm_sum_data %>% filter(trial_condition=="ego_ret" | trial_condition=="allo_ret"),
+        "group", "path_abs", "group", "Mean path and individual values", "", "Path length in virtual units", "Group", mylabels, "bottom")
+
 
 rm(sm_ind_data, sm_sum_data)
 
 
-# condition-wise plot for allo and ego retrieval 
-sm_ind_ego_allo_data <- sm_trial_data %>%
-  filter(trial_condition=="allo_ret" | trial_condition=="ego_ret") %>%
+# function for raincloud plots 
+raincloud <- function(data, x, y, title, xlabel, ylabel, facetlabeller, legendPos){
+  p1 <- ggplot(data, aes_string(x=x, y=y, fill=x)) + # set up data 
+    geom_flat_violin(position=position_nudge(x=0.2,y=0)) + # rain cloud: setting "adjust" for smoothness of kernel
+    geom_point(position=position_jitter(w=.1,h=0.05)) + # points
+    coord_flip() + 
+    facet_wrap(~session, labeller=facetlabeller) +
+    theme_cowplot() + # nicer theme
+    theme(legend.position=legendPos) + 
+    labs(title = title,
+         x = xlabel,
+         y = ylabel) # labels and title
+  
+  return(p1)
+}
+
+
+# data for raincloud plots 
+sm_ind_data <- sm_trial_data %>%
+  #filter(trial_condition!="main_ret") %>%
   group_by(id, group, session, trial_condition) %>%
   summarise(success=mean(success),
             final_distance_to_goal_abs=mean(final_distance_to_goal_abs),
             direct_path=mean(direct_path),
             path_abs=mean(path_abs))
 
-sm_sum_ego_allo_data <- sm_trial_data %>%
-  filter(trial_condition=="allo_ret" | trial_condition=="ego_ret") %>%
-  group_by(group, session, trial_condition) %>%
+
+# overview of all trials 
+raincloud(sm_ind_data, "group", "success", "Overall success (one dot per trial type)", "Group", "Success", mylabels, "none")
+raincloud(sm_ind_data, "group", "direct_path", "Overall direct path (one dot per trial type)", "Group", "Direct path", mylabels, "none")
+raincloud(sm_ind_data, "group", "final_distance_to_goal_abs", "Overall final distance (one dot per trial type)", "Group", "Final distance in virtual units", mylabels, "none")
+raincloud(sm_ind_data, "group", "path_abs", "Overall path (one dot per trial type)", "Group", "Path length in virtual units", mylabels, "none")
+
+
+# function for raincloud plots with allo and ego marked
+raincloud_sub <- function(data, x, y, title, xlabel, ylabel, facetlabeller){
+  p1 <- ggplot(data, aes_string(x=x, y=y, fill=x)) + # set up data 
+    geom_flat_violin(position=position_nudge(x=0.2,y=0)) + # rain cloud: setting "adjust" for smoothness of kernel
+    geom_point(aes(shape=trial_condition), size=2.5, position=position_jitter(w=.1,h=.05, seed=1)) + # points
+    geom_point(aes(colour=trial_condition, shape=trial_condition), size = 1, position=position_jitter(w=.1,h=.05, seed=1)) + # point
+    geom_boxplot(position=position_dodge(), outlier.shape=NA, alpha=0.3, width=0.1, colour="BLACK") + 
+    scale_shape_manual(values=c(15,17), labels=facetlabeller, name="Type") + 
+    scale_colour_manual(values=c("lightgreen", "yellow"), labels=facetlabeller, name="Type") + 
+    coord_flip() + 
+    facet_wrap(~session, labeller=facetlabeller) +
+    theme_cowplot() + # nicer theme
+    theme(legend.position="bottom") + 
+    guides(fill=FALSE) + 
+    labs(title = title,
+         x = xlabel,
+         y = ylabel) # labels and title
+  
+  return(p1)
+}
+
+
+# data for raincloud plots 
+sm_ind_data <- sm_trial_data %>%
+  group_by(id, group, session, trial_condition) %>%
   summarise(success=mean(success),
             final_distance_to_goal_abs=mean(final_distance_to_goal_abs),
             direct_path=mean(direct_path),
             path_abs=mean(path_abs))
 
-bar_sums(sm_ind_ego_allo_data, sm_sum_ego_allo_data, "group", "success", "session", "trial_condition", "Average over allocentric and egocentric retrieval", "Group", "Success", "Session", condlabels)
-bar_sums(sm_ind_ego_allo_data, sm_sum_ego_allo_data, "group", "direct_path", "session", "trial_condition", "Average over allocentric and egocentric retrieval", "Group", "Direct path", "Session", condlabels)
-bar_sums(sm_ind_ego_allo_data, sm_sum_ego_allo_data, "group", "final_distance_to_goal_abs", "session", "trial_condition", "Average over allocentric and egocentric retrieval", "Group", "Final distance in virtual units", "Session", condlabels)
-bar_sums(sm_ind_ego_allo_data, sm_sum_ego_allo_data, "group", "path_abs", "session", "trial_condition", "Average over allocentric and egocentric retrieval", "Group", "Path length in virtual units", "Session", condlabels)
 
-rm(bar_sums, nicelabels, sm_ind_ego_allo_data, sm_sum_ego_allo_data)
+# only ego and allo retrieval
+raincloud_sub(sm_ind_data %>% filter((trial_condition=="ego_ret" | trial_condition=="allo_ret")), "group", "success", "Success in allocentric and egocentric", "Group", "Success", mylabels)
+raincloud_sub(sm_ind_data %>% filter((trial_condition=="ego_ret" | trial_condition=="allo_ret")), "group", "direct_path", "Direct path in allocentric and egocentric", "Group", "Direct path", mylabels)
+raincloud_sub(sm_ind_data %>% filter((trial_condition=="ego_ret" | trial_condition=="allo_ret")), "group", "final_distance_to_goal_abs", "Final distance in allocentric and egocentric", "Group", "Final distance in virtual units", mylabels)
+raincloud_sub(sm_ind_data %>% filter((trial_condition=="ego_ret" | trial_condition=="allo_ret")), "group", "path_abs", "Path in allocentric and egocentric", "Group", "Path length in virtual units", mylabels)
+
+
+# plots for strategie choice
+
 
 
 
