@@ -88,7 +88,7 @@ rm(sm_all_trials_s1)
 # function for trial-wise bar plots (averaged over blocks, either overall or for seperate conditions)
 bar_trials_wrap <- function(data, xvar, yvar, fillby, facet, title, xlabel, ylabel, fillbylabel, facetlabels, legendPos, ticknum){
   p <- ggplot(data, aes_string(x=xvar, y=yvar, fill=fillby)) + 
-    geom_bar(stat="identity", position=position_dodge()) + # identity bars
+    geom_bar(stat="identity", position=position_dodge(), width=.85) + # identity bars
     scale_x_continuous(breaks=seq(0,max(data[[xvar]]),round(max(data[[xvar]])/ticknum))) + # ticks 
     scale_fill_manual(name=fillbylabel, labels=facetlabels, values=mycolors) + # fill title, lable and colors
     facet_wrap(facet, labeller=facetlabels) + # facet grouping 
@@ -234,8 +234,8 @@ raincloud_sub <- function(data, x, y, title, xlabel, ylabel, facetlabeller){
     geom_point(aes(shape=trial_condition), size=3, position=position_jitter(w=.1,h=.05, seed=1)) + # points
     geom_point(aes(colour=trial_condition, shape=trial_condition), size=1.5, position=position_jitter(w=.1,h=.05, seed=1)) + # point
     geom_boxplot(position=position_dodge(), outlier.shape=NA, alpha=0.3, width=0.1, colour="BLACK") + 
-    scale_shape_manual(values=c(15,17), labels=facetlabeller, name="Type") + 
-    scale_colour_manual(values=c("allo_ret"="#669900", "ego_ret"="#FFFF00"), labels=facetlabeller, name="Type") + 
+    scale_shape_manual(values=c(19,17), labels=facetlabeller, name="Type") + 
+    scale_colour_manual(values=c("allo_ret"="#FFFF00", "ego_ret"="#669900"), labels=facetlabeller, name="Type") + 
     scale_fill_manual(values=mycolors) + # fill title, lable and colors
     coord_flip() + 
     facet_wrap(~session, labeller=facetlabeller) +
@@ -265,10 +265,70 @@ raincloud_sub(sm_ind_data %>% filter((trial_condition=="ego_ret" | trial_conditi
 raincloud_sub(sm_ind_data %>% filter((trial_condition=="ego_ret" | trial_condition=="allo_ret")), "group", "final_distance_to_goal_abs", "Final distance in allocentric and egocentric", "Group", "Final distance in virtual units", mylabels)
 raincloud_sub(sm_ind_data %>% filter((trial_condition=="ego_ret" | trial_condition=="allo_ret")), "group", "path_abs", "Path in allocentric and egocentric", "Group", "Path length in virtual units", mylabels)
 
+rm(sm_ind_data)
 
 
-# plots for strategie choice
+# function for strategy choice bar plots
+strategy_bars <- function(data, x, y, title, ylabel, flabel, filllabels, legendPos) {
+  p <- ggplot(strategy_data, aes_string(x=x, y=y, fill=x)) + # set up data 
+    geom_bar(stat="identity") + 
+    facet_grid(session ~ group) +
+    scale_fill_brewer(palette = "YlOrBr", direction=-1, labels=filllabels) + # nicer color palette 
+    theme_cowplot() + # nicer theme
+    theme(legend.position=legendPos,
+          axis.ticks.x=element_blank(),
+          axis.text.x=element_blank(),
+          axis.title.x=element_blank()) + 
+    labs(title = title,
+         y = ylabel,
+         fill = flabel) # labels and title
+  
+  return(p)
+}
 
+
+# strategy labels
+stratlabels <- c(`direct_strategy` = "direct strategy", `reoriented` = "reoriented", 
+                 `central_focus` = "central focus", `serial` = "serial", 
+                 `random` = "random", `unclassified` = "unclassified")
+
+
+# data for strategy choice bar plots: caculate percentage of strategies per group and session 
+strategy_data <- sm_trial_data %>%
+  group_by(group, session, search_strategy_no) %>% 
+  tally() %>%
+  mutate(percent=n/sum(n))
+
+# strategy choice plots for all trials
+strategy_bars(strategy_data, "search_strategy_no", "percent", "Strategy use across all trials", "Relative % of use", "Strategy", stratlabels, "bottom")
+
+rm(strategy_data)
+
+
+# data for strategy choice bar plots: Allocentric
+strategy_data_allo <- sm_trial_data %>%
+  filter(trial_condition=="allo_ret") %>% 
+  group_by(group, session, search_strategy_no) %>% 
+  tally() %>%
+  mutate(percent=n/sum(n))
+
+# strategy choice plots for allocentric trials 
+strategy_bars(strategy_data_allo, "search_strategy_no", "percent", "Strategy use for allocentric trials", "Relative % of use", "Strategy", stratlabels, "bottom")
+
+rm(strategy_data_allo)
+
+
+# data for strategy choice bar plots: Egocentric
+strategy_data_ego <- sm_trial_data %>%
+  filter(trial_condition=="ego_ret") %>% 
+  group_by(group, session, search_strategy_no) %>% 
+  tally() %>%
+  mutate(percent=n/sum(n))
+
+# strategy choice plots for allocentric trials 
+strategy_bars(strategy_data_ego, "search_strategy_no", "percent", "Strategy use for egocentric trials", "Relative % of use", "Strategy", stratlabels, "bottom")
+
+rm(strategy_data_ego)
 
 
 
