@@ -43,7 +43,7 @@ mycolors <- c("YoungKids" = "#CC6666", "OldKids" = "#FF9999", "YoungAdults" = "#
 # function for trial-wise bar plots at T1 (not averaged, either blocks or conditions are color-coded)
 bar_trials_grid <- function(data, xvar, yvar, fillby, facet, title, xlabel, ylabel, fillbylabel, facetlabels, legendPos, ticknum) {
   p <- ggplot(data, aes_string(x=xvar, y=yvar, fill=fillby)) + 
-    geom_bar(stat="identity", position=position_dodge(), width=.85) + # identity bars
+    geom_bar(stat="identity", position=position_dodge(), width=.85, colour="black") + # identity bars
     scale_x_continuous(breaks=seq(0,max(data[[xvar]]),round(max(data[[xvar]])/ticknum))) + # ticks 
     scale_fill_manual(name=fillbylabel, labels=facetlabels, values=mycolors) + # fill title, lable and colors
     facet_grid(facet, labeller=facetlabels) + # groups 
@@ -88,7 +88,7 @@ rm(sm_all_trials_s1)
 # function for trial-wise bar plots (averaged over blocks, either overall or for seperate conditions)
 bar_trials_wrap <- function(data, xvar, yvar, fillby, facet, title, xlabel, ylabel, fillbylabel, facetlabels, legendPos, ticknum){
   p <- ggplot(data, aes_string(x=xvar, y=yvar, fill=fillby)) + 
-    geom_bar(stat="identity", position=position_dodge(), width=.85) + # identity bars
+    geom_bar(stat="identity", position=position_dodge(), width=.85, colour="black") + # identity bars
     scale_x_continuous(breaks=seq(0,max(data[[xvar]]),round(max(data[[xvar]])/ticknum))) + # ticks 
     scale_fill_manual(name=fillbylabel, labels=facetlabels, values=mycolors) + # fill title, lable and colors
     facet_wrap(facet, labeller=facetlabels) + # facet grouping 
@@ -139,7 +139,7 @@ rm(sm_blockavg_trials_s1s2)
 # function for aggregated bar plots with individual values 
 bar_agg <- function(data_ind, data_sum, xvar, yvar, fillby, title, xlabel, ylabel, fillbylabel, facetlabel, legendPos){
   p <- ggplot(data_ind, aes_string(x=xvar, y=yvar, fill=fillby)) + 
-    geom_bar(data=data_sum, stat="identity", position=position_dodge()) + # identity bars
+    geom_bar(data=data_sum, stat="identity", position=position_dodge(), colour="black") + # identity bars
     geom_point(position=position_jitterdodge()) + # individual points
     facet_grid(session ~ trial_condition, labeller=facetlabel) + # facet grouping 
     scale_fill_manual(name=fillbylabel, labels=facetlabel, values=mycolors) + # fill title, lable and colors
@@ -269,11 +269,11 @@ rm(sm_ind_data)
 
 
 # function for strategy choice bar plots
-strategy_bars <- function(data, x, y, title, ylabel, flabel, filllabels, legendPos) {
-  p <- ggplot(strategy_data, aes_string(x=x, y=y, fill=x)) + # set up data 
-    geom_bar(stat="identity") + 
+strategy_bars <- function(data, x, y, title, ylabel, flabel, filllabels, mypalette, legendPos) {
+  p <- ggplot(data, aes_string(x=x, y=y, fill=x)) + # set up data 
+    geom_bar(stat="identity", colour="black") + 
     facet_grid(session ~ group) +
-    scale_fill_brewer(palette = "YlOrBr", direction=-1, labels=filllabels) + # nicer color palette 
+    scale_fill_brewer(palette = mypalette, direction=-1, labels=filllabels) + # nicer color palette 
     theme_cowplot() + # nicer theme
     theme(legend.position=legendPos,
           axis.ticks.x=element_blank(),
@@ -300,7 +300,7 @@ strategy_data <- sm_trial_data %>%
   mutate(percent=n/sum(n))
 
 # strategy choice plots for all trials
-strategy_bars(strategy_data, "search_strategy_no", "percent", "Strategy use across all trials", "Relative % of use", "Strategy", stratlabels, "bottom")
+strategy_bars(strategy_data, "search_strategy_no", "percent", "Strategy use across all trials", "Relative % of use", "Strategy", stratlabels, "YlGnBu", "bottom")
 
 rm(strategy_data)
 
@@ -313,7 +313,7 @@ strategy_data_allo <- sm_trial_data %>%
   mutate(percent=n/sum(n))
 
 # strategy choice plots for allocentric trials 
-strategy_bars(strategy_data_allo, "search_strategy_no", "percent", "Strategy use for allocentric trials", "Relative % of use", "Strategy", stratlabels, "bottom")
+strategy_bars(strategy_data_allo, "search_strategy_no", "percent", "Strategy use for allocentric trials", "Relative % of use", "Strategy", stratlabels, "YlOrBr", "bottom")
 
 rm(strategy_data_allo)
 
@@ -325,8 +325,8 @@ strategy_data_ego <- sm_trial_data %>%
   tally() %>%
   mutate(percent=n/sum(n))
 
-# strategy choice plots for allocentric trials 
-strategy_bars(strategy_data_ego, "search_strategy_no", "percent", "Strategy use for egocentric trials", "Relative % of use", "Strategy", stratlabels, "bottom")
+# strategy choice plots for egocentric trials 
+strategy_bars(strategy_data_ego, "search_strategy_no", "percent", "Strategy use for egocentric trials", "Relative % of use", "Strategy", stratlabels, "YlGn", "bottom")
 
 rm(strategy_data_ego)
 
