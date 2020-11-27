@@ -7,7 +7,7 @@
 # install.packages("readxl")
 # install.packages("tidyverse")
 # install.packages("arsenal")
-# install.packages("cowplot)
+# install.packages("cowplot")
 
 
 ## get packages
@@ -107,28 +107,28 @@ mylabels <- as_labeller(c(`YoungKids` = "Young Kids", `OldKids` = "Old Kids",
                           `YoungAdults` = "Young Adults", `OldAdults` = "Old Adults",
                           `main_learn` = "Main Learn", `main_ret` = "Main Retrieval", 
                           `allo_ret` = "Allo Retrieval", `ego_ret` = "Ego Retrieval",
-                          `1`="1", `2`="2"))
+                          `1`="1", `2`="2", `3`="3"))
 ## ----
 
 ## ---- content_trial_wise
-# function for trial-wise bar plots (separate blocks or conditions)
-bar_trials <- function(data, xvar, yvar, fillby, title, xlabel, ylabel, fillbylabel, facetlabels) {
-  p <- ggplot(data, aes(x=data[[xvar]],y=data[[yvar]], fill=data[[fillby]])) + 
-    geom_col() + # identity bars
-    facet_grid(data$group, labeller=facetlabels) + # groups 
-    scale_x_continuous(breaks=seq(0,max(data[[xvar]]),round(max(data[[xvar]])/8))) + # ticks 
+# function for trial-wise bar plots at T1 (not averaged, either blocks or conditions are color-coded)
+bar_trials_grid <- function(data, xvar, yvar, fillby, facet, title, xlabel, ylabel, fillbylabel, facetlabels, legendPos, ticknum) {
+  p <- ggplot(data, aes_string(x=xvar, y=yvar, fill=fillby)) + 
+    geom_bar(stat="identity", position=position_dodge()) + # identity bars
+    scale_x_continuous(breaks=seq(0,max(data[[xvar]]),round(max(data[[xvar]])/ticknum))) + # ticks 
+    scale_fill_discrete(fillbylabel, labels=facetlabels) + # fill title and lable
+    facet_grid(facet, labeller=facetlabels) + # groups 
     theme_cowplot() + # theme
-    theme(legend.position="bottom") +
+    theme(legend.position=legendPos) +
     labs(title = title,
          x = xlabel,
-         y = ylabel, 
-         fill = fillbylabel) # labels and title
+         y = ylabel) # labels and title
   
   return(p)
 }
 
 
-# trial-wise plots for all trials at T1 (seperate blocks)
+# data for trial-wise bar plots at T1 (not averaged, either blocks or conditions are color-coded)
 sm_all_trials_s1 <- sm_trial_data %>%
   filter(session==1 & trial <=39) %>%
   group_by(group, trial, block, trial_condition) %>%
@@ -139,31 +139,32 @@ sm_all_trials_s1 <- sm_trial_data %>%
 ## ----
 
 # block is color-coded
-bar_trials(sm_all_trials_s1, "trial", "success", "block", "Success in trials 1-39 at T1 (block is color-coded)", "Trial", "Success", "Block (goal)", mylabels)
-bar_trials(sm_all_trials_s1, "trial", "direct_path", "block", "Direct path in trials 1-39 at T1 (block is color-coded)", "Trial", "Direct path", "Block (goal)", mylabels)
-bar_trials(sm_all_trials_s1, "trial", "final_distance_to_goal_abs", "block", "Final distance in trials 1-39 at T1 (block is color-coded)", "Trial", "Final distance in virtual units", "Block (goal)", mylabels)
-bar_trials(sm_all_trials_s1, "trial", "path_abs", "block", "Path in trials 1-39 at T1 (block is color-coded)", "Trial", "Path length in virtual units", "Block (goal)", mylabels)
+bar_trials_grid(sm_all_trials_s1, "trial", "success", "block", "group", "Success in trials 1-39 at T1 (block is color-coded)", "Trial", "Success", "Block (goal)", mylabels, "bottom", 8)
+bar_trials_grid(sm_all_trials_s1, "trial", "direct_path", "block", "group", "Direct path in trials 1-39 at T1 (block is color-coded)", "Trial", "Direct path", "Block (goal)", mylabels, "bottom",8)
+bar_trials_grid(sm_all_trials_s1, "trial", "final_distance_to_goal_abs", "block", "group", "Final distance in trials 1-39 at T1 (block is color-coded)", "Trial", "Final distance in virtual units", "Block (goal)", mylabels, "bottom",8)
+bar_trials_grid(sm_all_trials_s1, "trial", "path_abs", "block", "group", "Path in trials 1-39 at T1 (block is color-coded)", "Trial", "Path length in virtual units", "Block (goal)", mylabels, "bottom",8)
 
 ## ---- plots_trial_wise
 # condition  is color-coded
-bar_trials(sm_all_trials_s1, "trial", "success", "trial_condition", "Success in trials 1-39 at T1 (condition is color-coded)", "Trial", "Success", "Trial condition", mylabels)
-bar_trials(sm_all_trials_s1, "trial", "direct_path", "trial_condition", "Direct path in trials 1-39 at T1 (condition is color-coded)", "Trial", "Direct path", "Trial condition", mylabels)
+bar_trials_grid(sm_all_trials_s1, "trial", "success", "trial_condition", "group", "Success in trials 1-39 at T1 (condition is color-coded)", "Trial", "Success", "Type", mylabels, "bottom", 8)
+bar_trials_grid(sm_all_trials_s1, "trial", "direct_path", "trial_condition", "group", "Direct path in trials 1-39 at T1 (condition is color-coded)", "Trial", "Direct path", "Type", mylabels, "bottom", 8)
 ## ----
-bar_trials(sm_all_trials_s1, "trial", "final_distance_to_goal_abs", "trial_condition", "Final distance in trials 1-39 at T1 (condition is color-coded)", "Trial", "Final distance in virtual units", "Trial condition", mylabels)
-bar_trials(sm_all_trials_s1, "trial", "path_abs", "trial_condition", "Path in trials 1-39 at T1 (condition is color-coded)", "Trial", "Path length in virtual units", "Trial condition", mylabels)
+bar_trials_grid(sm_all_trials_s1, "trial", "final_distance_to_goal_abs", "trial_condition", "group", "Final distance in trials 1-39 at T1 (condition is color-coded)", "Trial", "Final distance in virtual units", "Type", mylabels, "bottom", 8)
+bar_trials_grid(sm_all_trials_s1, "trial", "path_abs", "trial_condition", "group", "Path in trials 1-39 at T1 (condition is color-coded)", "Trial", "Path length in virtual units", "Type", mylabels, "bottom", 8)
 
 rm(sm_all_trials_s1)
 
 
 
-# function for trial-wise bar plots (separate conditions BUT NOT blocks)
-bar_trials_sums <- function(data_sum, xvar, yvar, fillby, facet, title, xlabel, ylabel, facetlabel){
-  p <- ggplot(data_sum, aes_string(x=xvar, y=yvar, fill=fillby)) + 
+# function for trial-wise bar plots (averaged over blocks, either overall or for seperate conditions)
+bar_trials_wrap <- function(data, xvar, yvar, fillby, facet, title, xlabel, ylabel, fillbylabel, facetlabels, legendPos, ticknum){
+  p <- ggplot(data, aes_string(x=xvar, y=yvar, fill=fillby)) + 
     geom_bar(stat="identity", position=position_dodge()) + # identity bars
-    facet_wrap(~data_sum[[facet]], labeller=facetlabel) + # facet grouping 
-    scale_x_continuous(breaks=seq(0,max(data_sum[[xvar]]),round(max(data_sum[[xvar]])/8))) + # ticks 
-    theme_cowplot(font_size=16) + # theme
-    theme(legend.position="none") +
+    scale_x_continuous(breaks=seq(0,max(data[[xvar]]),round(max(data[[xvar]])/ticknum))) + # ticks 
+    scale_fill_discrete(fillbylabel, labels=facetlabels) + # fill title and lable
+    facet_wrap(facet, labeller=facetlabels) + # facet grouping 
+    theme_cowplot() + # theme
+    theme(legend.position=legendPos) +
     labs(title = title,
          x = xlabel,
          y = ylabel) # labels and title
@@ -171,56 +172,38 @@ bar_trials_sums <- function(data_sum, xvar, yvar, fillby, facet, title, xlabel, 
   return(p)
 }
 
-
-# trial-wise plots for learning trials at T1
-sm_trials_sum_data <- sm_trial_data %>%
-  filter(session==1, trial_condition=="main_learn") %>%
-  group_by(group, trial_condition, trial_in_cond) %>%
+# data for trial-wise bar plots (averaged over blocks, overall)
+sm_blockavg_trials_s1 <- sm_trial_data %>%
+  filter(session==1) %>%
+  group_by(group, trial_condition, trial_in_block) %>%
   summarise(success=mean(success),
             final_distance_to_goal_abs=mean(final_distance_to_goal_abs),
             direct_path=mean(direct_path),
             path_abs=mean(path_abs))
 
-bar_trials_sums(sm_trials_sum_data, "trial_in_cond", "success", "group", "group", "Learning trials at T1", "Trials", "Success", mylabels)
-bar_trials_sums(sm_trials_sum_data, "trial_in_cond", "direct_path", "group", "group", "Learning trials at T1", "Trials", "Direct path", mylabels)
-bar_trials_sums(sm_trials_sum_data, "trial_in_cond", "final_distance_to_goal_abs", "group", "group", "Learning trials at T1", "Trials", "Final distance in virtual units", mylabels)
-bar_trials_sums(sm_trials_sum_data, "trial_in_cond", "path_abs", "group", "group", "Learning trials at T1", "Trials", "Path length in virtual units", mylabels)
+bar_trials_wrap(sm_blockavg_trials_s1, "trial_in_block", "success", "trial_condition", "group", "Success at T1 (averaged over blocks/goal locations)", "Trials (averaged over blocks)", "Success", "Type", mylabels, "bottom", 6)
+bar_trials_wrap(sm_blockavg_trials_s1, "trial_in_block", "direct_path", "trial_condition", "group", "Direct path at T1 (averaged over blocks/goal locations)", "Trials (averaged over blocks)", "Direct path", "Type",mylabels, "bottom", 6)
+bar_trials_wrap(sm_blockavg_trials_s1, "trial_in_block", "final_distance_to_goal_abs", "trial_condition", "group", "Final distance at T1 (averaged over blocks/goal locations)", "Trials (averaged over blocks)", "Final distance in virtual units", "Type", mylabels, "bottom", 6)
+bar_trials_wrap(sm_blockavg_trials_s1, "trial_in_block", "path_abs", "trial_condition", "group", "Path at T1 (averaged over blocks/goal locations)", "Trials (averaged over blocks)", "Path length in virtual units","Type", mylabels, "bottom", 6)
 
-rm(sm_trials_sum_data)
+rm(sm_blockavg_trials_s1)
 
 
-# trial-wise plots for egocentric trials at T1
-sm_trials_sum_data <- sm_trial_data %>%
-  filter(session==1, trial_condition=="ego_ret") %>%
-  group_by(group, trial_in_cond) %>%
+# data for trial-wise bar plots (averaged over blocks, seperate for conditions)
+sm_blockavg_condsep_trials_s1 <- sm_trial_data %>%
+  group_by(session, group, trial_condition, trial_in_block_in_cond) %>%
   summarise(success=mean(success),
             final_distance_to_goal_abs=mean(final_distance_to_goal_abs),
             direct_path=mean(direct_path),
             path_abs=mean(path_abs))
 
-bar_trials_sums(sm_trials_sum_data, "trial_in_cond", "success", "group", "group", "Egocentric trials at T1", "Trials", "Success", mylabels)
-bar_trials_sums(sm_trials_sum_data, "trial_in_cond", "direct_path", "group", "group", "Egocentric trials at T1", "Trials", "Direct path", mylabels)
-bar_trials_sums(sm_trials_sum_data, "trial_in_cond", "final_distance_to_goal_abs", "group", "group", "Egocentric trials at T1", "Trials", "Final distance in virtual units", mylabels)
-bar_trials_sums(sm_trials_sum_data, "trial_in_cond", "path_abs", "group", "group", "Egocentric trials at T1", "Trials", "Path length in virtual units", mylabels)
+# learning only 
+bar_trials_wrap(sm_blockavg_condsep_trials_s1 %>% filter(trial_condition=="main_learn", session==1), "trial_in_block_in_cond", "success", "trial_condition", "group", "Success in learning at T1 (averaged over blocks/goal locations)", "Learning Trials (averaged over blocks)", "Success", "", mylabels, "none", 6)
+bar_trials_wrap(sm_blockavg_condsep_trials_s1 %>% filter(trial_condition=="main_learn", session==1), "trial_in_block_in_cond", "direct_path", "trial_condition", "group", "Direct path in learning at T1 (averaged over blocks/goal locations)", "Learning Trials (averaged over blocks)", "Direct path", "", mylabels, "none", 6)
+bar_trials_wrap(sm_blockavg_condsep_trials_s1 %>% filter(trial_condition=="main_learn", session==1), "trial_in_block_in_cond", "final_distance_to_goal_abs", "trial_condition", "group", "Final distance in learning at T1 (averaged over blocks/goal locations)", "Learning Trials (averaged over blocks)", "Final distance in virtual units", "", mylabels, "none", 6)
+bar_trials_wrap(sm_blockavg_condsep_trials_s1 %>% filter(trial_condition=="main_learn", session==1), "trial_in_block_in_cond", "path_abs", "trial_condition", "group", "Path in learning at T1 (averaged over blocks/goal locations)", "Learning Trials (averaged over blocks)", "Path length in virtual units", "", mylabels, "none", 6)
 
-rm(sm_trials_sum_data)
-
-
-# trial-wise plots for allocentric trials at T1
-sm_trials_sum_data <- sm_trial_data %>%
-  filter(session==1, trial_condition=="allo_ret") %>%
-  group_by(group, trial_in_cond) %>%
-  summarise(success=mean(success),
-            final_distance_to_goal_abs=mean(final_distance_to_goal_abs),
-            direct_path=mean(direct_path),
-            path_abs=mean(path_abs))
-
-bar_trials_sums(sm_trials_sum_data, "trial_in_cond", "success", "group", "group", "Allocentric trials at T1", "Trials", "Success", mylabels)
-bar_trials_sums(sm_trials_sum_data, "trial_in_cond", "direct_path", "group", "group", "Allocentric trials at T1", "Trials", "Direct path", mylabels)
-bar_trials_sums(sm_trials_sum_data, "trial_in_cond", "final_distance_to_goal_abs", "group", "group", "Allocentric trials at T1", "Trials", "Final distance in virtual units", mylabels)
-bar_trials_sums(sm_trials_sum_data, "trial_in_cond", "path_abs", "group", "group", "Allocentric trials at T1", "Trials", "Path length in virtual units", mylabels)
-
-rm(sm_trials_sum_data)
+rm(sm_blockavg_condsep_trials_s1)
 
 
 
