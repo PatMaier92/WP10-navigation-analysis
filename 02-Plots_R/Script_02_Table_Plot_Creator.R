@@ -25,100 +25,27 @@ load(in_file)
 rm(in_file)
 
 
-
-## summary tables
-## ---- table_settings
-my_settings  <- tableby.control(test=FALSE, 
-                                total=FALSE,
-                                digits=2,
-                                digits.n=NA,
-                                numeric.stats=c("meansd"),
-                                numeric.simplify=TRUE)
-
-my_labels <- c(success="Success", 
-               final_distance_to_goal_abs="Final distance in virtual m",
-               direct_path="Direct path", path_abs="Path length in virtual m",
-               session="Session")
-## ----
-
-## ---- table_learn
-# (not including retrieval)
-sum_table_learn <- tableby(group ~ success + final_distance_to_goal_abs + direct_path + path_abs, 
-                           data=sm_trial_data,
-                           subset=c(trial_condition=="main_learn"),
-                           control=my_settings)
-summary(sum_table_learn, labelTranslations=my_labels, 
-        title="Mean (sd) for learning")
-rm(sum_table_learn)
-
-
-## ----
-
-
-## ---- table_allo
-sum_table_allo <- tableby(group ~ success + final_distance_to_goal_abs + direct_path + path_abs, 
-                          data=sm_trial_data,
-                          subset=c(trial_condition=="allo_ret"),
-                          strata=session,
-                          control=my_settings)
-summary(sum_table_allo, labelTranslations=my_labels, 
-                  title="Mean (sd) for allocentric retrieval")
-
-rm(sum_table_allo)
-
-# problem: sd value is incorrect because session is within-subject variable 
-# my_settings  <- paired.control(diff=FALSE,
-#                                test=FALSE, 
-#                                total=FALSE,
-#                                digits=2,
-#                                digits.n=NA,
-#                                numeric.stats=c("meansd"),
-#                                numeric.simplify=TRUE)
-# 
-# sum_table_allo <- paired(session ~ success + final_distance_to_goal_abs + direct_path + path_abs, 
-#                          data=sm_ind_data,
-#                          id=id,
-#                          subset=c(trial_condition=="allo_ret"),
-#                          strata=group,
-#                          control=my_settings)
-# summary(sum_table_allo, labelTranslations=my_labels, 
-#         title="Mean (sd) for allocentric retrieval")
-
-rm(sum_table_allo)
-## ----
-
-
-## ---- table_ego
-sum_table_ego <- tableby(group ~ success + final_distance_to_goal_abs + direct_path + path_abs, 
-                         data=sm_trial_data,
-                         subset=c(trial_condition=="ego_ret"),
-                         strata=session,
-                         control=my_settings)
-summary(sum_table_ego, labelTranslations=my_labels, 
-                  title="Mean (sd) for egocentric retrieval")
-rm(sum_table_ego)
-## ----
-rm(my_labels, my_settings)
-
-
-
 ## create plots
 ## ---- plots_settings
-# labels
+# labels and colors
 mylabels <- as_labeller(c(`YoungKids` = "Young Kids", `OldKids` = "Old Kids", 
                           `YoungAdults` = "Young Adults", `OldAdults` = "Old Adults",
-                          `main_learn` = "Main Learn", `main_ret` = "Main Retrieval", 
-                          `allo_ret` = "Allo Retrieval", `ego_ret` = "Ego Retrieval",
+                          `main_learn` = "Main Learn", `main_ret` = "Retrieval", 
+                          `allo_ret` = "Allocentric", `ego_ret` = "Egocentric",
                           `1`="1", `2`="2", `3`="3"))
+mycolors <- c("YoungKids" = "#CC6666", "OldKids" = "#FF9999", "YoungAdults" = "#FFCC99", "OldAdults" = "#CC9966",
+              "main_learn" = "#6699CC", "main_ret" = "#99CCFF", "allo_ret" = "#FFCC33", "ego_ret" = "#669933",
+              "1" = "#FFCCCC", "2" ="#999999", "3" = "#333333")
 ## ----
+
 
 ## ---- content_trial_wise
 # function for trial-wise bar plots at T1 (not averaged, either blocks or conditions are color-coded)
 bar_trials_grid <- function(data, xvar, yvar, fillby, facet, title, xlabel, ylabel, fillbylabel, facetlabels, legendPos, ticknum) {
   p <- ggplot(data, aes_string(x=xvar, y=yvar, fill=fillby)) + 
-    geom_bar(stat="identity", position=position_dodge()) + # identity bars
+    geom_bar(stat="identity", position=position_dodge(), width=.85) + # identity bars
     scale_x_continuous(breaks=seq(0,max(data[[xvar]]),round(max(data[[xvar]])/ticknum))) + # ticks 
-    scale_fill_discrete(fillbylabel, labels=facetlabels) + # fill title and lable
+    scale_fill_manual(name=fillbylabel, labels=facetlabels, values=mycolors) + # fill title, lable and colors
     facet_grid(facet, labeller=facetlabels) + # groups 
     theme_cowplot() + # theme
     theme(legend.position=legendPos) +
@@ -163,7 +90,7 @@ bar_trials_wrap <- function(data, xvar, yvar, fillby, facet, title, xlabel, ylab
   p <- ggplot(data, aes_string(x=xvar, y=yvar, fill=fillby)) + 
     geom_bar(stat="identity", position=position_dodge()) + # identity bars
     scale_x_continuous(breaks=seq(0,max(data[[xvar]]),round(max(data[[xvar]])/ticknum))) + # ticks 
-    scale_fill_discrete(fillbylabel, labels=facetlabels) + # fill title and lable
+    scale_fill_manual(name=fillbylabel, labels=facetlabels, values=mycolors) + # fill title, lable and colors
     facet_wrap(facet, labeller=facetlabels) + # facet grouping 
     theme_cowplot() + # theme
     theme(legend.position=legendPos) +
@@ -215,14 +142,14 @@ bar_agg <- function(data_ind, data_sum, xvar, yvar, fillby, title, xlabel, ylabe
     geom_bar(data=data_sum, stat="identity", position=position_dodge()) + # identity bars
     geom_point(position=position_jitterdodge()) + # individual points
     facet_grid(session ~ trial_condition, labeller=facetlabel) + # facet grouping 
+    scale_fill_manual(name=fillbylabel, labels=facetlabel, values=mycolors) + # fill title, lable and colors
     theme_cowplot() + # theme
     theme(legend.position=legendPos,
           axis.ticks.x=element_blank(),
           axis.text.x=element_blank()) +
     labs(title = title,
          x = xlabel,
-         y = ylabel, 
-         fill = fillbylabel) # labels and title
+         y = ylabel) # labels and title
   
   return(p)
 }
@@ -270,6 +197,7 @@ raincloud <- function(data, x, y, title, xlabel, ylabel, facetlabeller, legendPo
   p1 <- ggplot(data, aes_string(x=x, y=y, fill=x)) + # set up data 
     geom_flat_violin(position=position_nudge(x=0.2,y=0)) + # rain cloud: setting "adjust" for smoothness of kernel
     geom_point(position=position_jitter(w=.1,h=0.05)) + # points
+    scale_fill_manual(values=mycolors) + # fill colors
     coord_flip() + 
     facet_wrap(~session, labeller=facetlabeller) +
     theme_cowplot() + # nicer theme
@@ -303,11 +231,12 @@ raincloud(sm_ind_data, "group", "path_abs", "Overall path (one dot per trial typ
 raincloud_sub <- function(data, x, y, title, xlabel, ylabel, facetlabeller){
   p1 <- ggplot(data, aes_string(x=x, y=y, fill=x)) + # set up data 
     geom_flat_violin(position=position_nudge(x=0.2,y=0)) + # rain cloud: setting "adjust" for smoothness of kernel
-    geom_point(aes(shape=trial_condition), size=2.5, position=position_jitter(w=.1,h=.05, seed=1)) + # points
-    geom_point(aes(colour=trial_condition, shape=trial_condition), size = 1, position=position_jitter(w=.1,h=.05, seed=1)) + # point
+    geom_point(aes(shape=trial_condition), size=3, position=position_jitter(w=.1,h=.05, seed=1)) + # points
+    geom_point(aes(colour=trial_condition, shape=trial_condition), size=1.5, position=position_jitter(w=.1,h=.05, seed=1)) + # point
     geom_boxplot(position=position_dodge(), outlier.shape=NA, alpha=0.3, width=0.1, colour="BLACK") + 
     scale_shape_manual(values=c(15,17), labels=facetlabeller, name="Type") + 
-    scale_colour_manual(values=c("lightgreen", "yellow"), labels=facetlabeller, name="Type") + 
+    scale_colour_manual(values=c("allo_ret"="#669900", "ego_ret"="#FFFF00"), labels=facetlabeller, name="Type") + 
+    scale_fill_manual(values=mycolors) + # fill title, lable and colors
     coord_flip() + 
     facet_wrap(~session, labeller=facetlabeller) +
     theme_cowplot() + # nicer theme
@@ -337,9 +266,85 @@ raincloud_sub(sm_ind_data %>% filter((trial_condition=="ego_ret" | trial_conditi
 raincloud_sub(sm_ind_data %>% filter((trial_condition=="ego_ret" | trial_condition=="allo_ret")), "group", "path_abs", "Path in allocentric and egocentric", "Group", "Path length in virtual units", mylabels)
 
 
+
 # plots for strategie choice
 
 
+
+
+## summary tables
+## ---- table_settings
+my_settings  <- tableby.control(test=FALSE, 
+                                total=FALSE,
+                                digits=2,
+                                digits.n=NA,
+                                numeric.stats=c("meansd"),
+                                numeric.simplify=TRUE)
+
+my_labels <- c(success="Success", 
+               final_distance_to_goal_abs="Final distance in virtual m",
+               direct_path="Direct path", path_abs="Path length in virtual m",
+               session="Session")
+## ----
+
+## ---- table_learn
+# (not including retrieval)
+sum_table_learn <- tableby(group ~ success + final_distance_to_goal_abs + direct_path + path_abs, 
+                           data=sm_trial_data,
+                           subset=c(trial_condition=="main_learn"),
+                           control=my_settings)
+summary(sum_table_learn, labelTranslations=my_labels, 
+        title="Mean (sd) for learning")
+rm(sum_table_learn)
+
+
+## ----
+
+
+## ---- table_allo
+sum_table_allo <- tableby(group ~ success + final_distance_to_goal_abs + direct_path + path_abs, 
+                          data=sm_trial_data,
+                          subset=c(trial_condition=="allo_ret"),
+                          strata=session,
+                          control=my_settings)
+summary(sum_table_allo, labelTranslations=my_labels, 
+        title="Mean (sd) for allocentric retrieval")
+
+rm(sum_table_allo)
+
+# problem: sd value is incorrect because session is within-subject variable 
+# my_settings  <- paired.control(diff=FALSE,
+#                                test=FALSE, 
+#                                total=FALSE,
+#                                digits=2,
+#                                digits.n=NA,
+#                                numeric.stats=c("meansd"),
+#                                numeric.simplify=TRUE)
+# 
+# sum_table_allo <- paired(session ~ success + final_distance_to_goal_abs + direct_path + path_abs, 
+#                          data=sm_ind_data,
+#                          id=id,
+#                          subset=c(trial_condition=="allo_ret"),
+#                          strata=group,
+#                          control=my_settings)
+# summary(sum_table_allo, labelTranslations=my_labels, 
+#         title="Mean (sd) for allocentric retrieval")
+
+rm(sum_table_allo)
+## ----
+
+
+## ---- table_ego
+sum_table_ego <- tableby(group ~ success + final_distance_to_goal_abs + direct_path + path_abs, 
+                         data=sm_trial_data,
+                         subset=c(trial_condition=="ego_ret"),
+                         strata=session,
+                         control=my_settings)
+summary(sum_table_ego, labelTranslations=my_labels, 
+        title="Mean (sd) for egocentric retrieval")
+rm(sum_table_ego)
+## ----
+rm(my_labels, my_settings)
 
 
 ## clear workspace
