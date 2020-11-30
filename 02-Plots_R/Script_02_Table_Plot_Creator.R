@@ -14,7 +14,6 @@
 ## get packages
 library(readxl)
 library(tidyverse)
-library(arsenal)
 library(cowplot)
 source("R_rainclouds.R")
 
@@ -333,81 +332,6 @@ pse <- strategy_bars(strategy_data_ego, "search_strategy_no", "percent", "\nEgoc
 ## ---- 
 rm(strategy_data_ego, strategy_bars, ps1, psa, pse)
 
-
-
-## summary tables
-## ---- table_settings
-my_settings  <- tableby.control(test=FALSE, 
-                                total=FALSE,
-                                digits=2,
-                                digits.n=NA,
-                                numeric.stats=c("meansd"),
-                                numeric.simplify=TRUE)
-
-my_labels <- c(success="Success", 
-               final_distance_to_goal_abs="Final distance in virtual m",
-               direct_path="Direct path", path_abs="Path length in virtual m",
-               session="Session")
-## ----
-
-## ---- table_learn
-# (not including retrieval)
-sum_table_learn <- tableby(group ~ success + final_distance_to_goal_abs + direct_path + path_abs, 
-                           data=sm_trial_data,
-                           subset=c(trial_condition=="main_learn"),
-                           control=my_settings)
-summary(sum_table_learn, labelTranslations=my_labels, 
-        title="Mean (sd) for learning")
-rm(sum_table_learn)
-
-
-## ----
-
-
-## ---- table_allo
-sum_table_allo <- tableby(group ~ success + final_distance_to_goal_abs + direct_path + path_abs, 
-                          data=sm_trial_data,
-                          subset=c(trial_condition=="allo_ret"),
-                          strata=session,
-                          control=my_settings)
-summary(sum_table_allo, labelTranslations=my_labels, 
-        title="Mean (sd) for allocentric retrieval")
-
-rm(sum_table_allo)
-
-# problem: sd value is incorrect because session is within-subject variable 
-# my_settings  <- paired.control(diff=FALSE,
-#                                test=FALSE, 
-#                                total=FALSE,
-#                                digits=2,
-#                                digits.n=NA,
-#                                numeric.stats=c("meansd"),
-#                                numeric.simplify=TRUE)
-# 
-# sum_table_allo <- paired(session ~ success + final_distance_to_goal_abs + direct_path + path_abs, 
-#                          data=sm_ind_data,
-#                          id=id,
-#                          subset=c(trial_condition=="allo_ret"),
-#                          strata=group,
-#                          control=my_settings)
-# summary(sum_table_allo, labelTranslations=my_labels, 
-#         title="Mean (sd) for allocentric retrieval")
-
-rm(sum_table_allo)
-## ----
-
-
-## ---- table_ego
-sum_table_ego <- tableby(group ~ success + final_distance_to_goal_abs + direct_path + path_abs, 
-                         data=sm_trial_data,
-                         subset=c(trial_condition=="ego_ret"),
-                         strata=session,
-                         control=my_settings)
-summary(sum_table_ego, labelTranslations=my_labels, 
-        title="Mean (sd) for egocentric retrieval")
-rm(sum_table_ego)
-## ----
-rm(my_labels, my_settings)
 
 
 ## clear workspace

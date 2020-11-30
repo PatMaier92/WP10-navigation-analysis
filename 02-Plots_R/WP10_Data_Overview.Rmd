@@ -33,8 +33,8 @@ Navigating a star-shaped maze environment ("Starmaze") with three goal locations
 
 ```{r setup, include = FALSE, cache=FALSE}
 library(tidyverse)
-library(arsenal)
 library(cowplot)
+library(kableExtra)
 source("R_rainclouds.R")
 
 knitr::read_chunk('Script_02_Table_Plot_Creator.R')
@@ -99,7 +99,7 @@ Here we see the mean values in all trial types across sessions and groups
 ``` {r, data_func_agg, include=FALSE}
 ```
 
-``` {r, aggregate_bars, echo=FALSE, fig.asp=1.9, fig.align = "center"}
+``` {r, aggregate_bars, echo=FALSE, fig.asp=2, fig.align = "center"}
 
 plot_grid(pagg1, pagg2, pagg3, pagg4, ncol=1, labels="AUTO", rel_heights=c(1.2, 0.93, 0.93, 0.93))
 
@@ -129,27 +129,56 @@ Here we see the strategy use data
 ``` {r, data_func_strategy, include=FALSE}
 ```
 
-``` {r, aggragate_strategy, echo=FALSE, fig.asp=1.75, fig.align = "center"}
+``` {r, aggragate_strategy, echo=FALSE, fig.asp=2, fig.align = "center"}
 
 plot_grid(ps1, psa, pse, ncol=1, labels="AUTO", rel_heights=c(1, 1, 1))
 
 ```
 
-
-
 ### Tables with descriptive values \
 
 Here comes a table with descriptive values 
 
-``` {r, table_settings, include=FALSE}
+
+``` {r, table_setup, echo=FALSE, message=FALSE }
+
+table_dat <- sm_trial_data %>% 
+  group_by(group, session, trial_condition)  %>%
+  summarise(success=mean(success),
+            direct_path=mean(direct_path),
+            final_distance=mean(final_distance_to_goal_abs),
+            path=mean(path_abs))
+
 ```
 
-``` {r, table_learn, echo=FALSE, results="asis"}
-```
+``` {r, table_learn, echo=FALSE, message=FALSE, result="asis" }
 
-``` {r, table_ego, echo=FALSE, results="asis"}
-```
+table_dat  %>%
+  filter(trial_condition=="main_learn")  %>% 
+  select(group, success, direct_path, final_distance, path) %>%
+  arrange(group) %>% 
+  kbl(caption = "Mean values for learning trials",
+      col.names = c("Session", "Group", "Success", "Direct path", "Final distance", "Path"),
+      digits = 2) %>% 
+  kable_classic(html_font = "Latin Modern") %>% 
+  row_spec(0, bold=T) %>%
+  add_header_above(bold=T, c(" " = 2, "Variables" = 4))
 
-``` {r, table_allo, echo=FALSE, results="asis"}
 ```
+\
+\
+``` {r, table_alloego, echo=FALSE, message=FALSE, result="asis" }
 
+table_dat  %>%
+  filter((trial_condition=="ego_ret" | trial_condition=="allo_ret"))  %>% 
+  select(trial_condition, session, group, success, direct_path, final_distance, path) %>%
+  arrange(trial_condition, session, group) %>% 
+  kbl(caption = "Mean values for allocentric and egocentric trials", 
+      col.names = c("Type", "Session", "Group", "Success", "Direct path", "Final distance", "Path"),
+      digits = 2)%>% 
+  kable_classic(html_font = "Latin Modern") %>% 
+  row_spec(0, bold=T) %>% 
+  collapse_rows(columns = 1:3, valign = "top") %>%
+  add_header_above(bold=T, c(" " = 3, "Variables" = 4))
+
+```
