@@ -73,13 +73,13 @@ sm_all_trials_s1_suc <- sm_trial_data %>%
 bar_trials_grid(sm_all_trials_s1, "trial", "success", "block", "group", "Success in trials 1-39 at T1 (block is color-coded)", "Trial", "Success", "Block (goal)", mylabels, "bottom", 8)
 bar_trials_grid(sm_all_trials_s1, "trial", "direct_path", "block", "group", "Direct path in trials 1-39 at T1 (block is color-coded)", "Trial", "Direct path", "Block (goal)", mylabels, "bottom",8)
 bar_trials_grid(sm_all_trials_s1, "trial", "final_distance_to_goal_abs", "block", "group", "Final distance in trials 1-39 at T1 (block is color-coded)", "Trial", "Final distance (vu)", "Block (goal)", mylabels, "bottom",8)
-bar_trials_grid(sm_all_trials_s1_suc, "trial", "path_abs", "block", "group", "Path in successful trials 1-39 at T1 (block is color-coded)", "Trial", "Path length (vu)", "Block (goal)", mylabels, "bottom",8)
+bar_trials_grid(sm_all_trials_s1_suc, "trial", "path_abs", "block", "group", "Path in successful trials 1-39 at T1 (block is color-coded)", "Trial", "Path length (vu) \nin successful trials", "Block (goal)", mylabels, "bottom",8)
 
 # condition  is color-coded
 bar_trials_grid(sm_all_trials_s1, "trial", "success", "trial_condition", "group", "Success in trials 1-39 at T1 (condition is color-coded)", "Trial", "Success", "Type", mylabels, "bottom", 8)
 bar_trials_grid(sm_all_trials_s1, "trial", "direct_path", "trial_condition", "group", "Direct path in trials 1-39 at T1 (condition is color-coded)", "Trial", "Direct path", "Type", mylabels, "bottom", 8)
 bar_trials_grid(sm_all_trials_s1, "trial", "final_distance_to_goal_abs", "trial_condition", "group", "Final distance in trials 1-39 at T1 (condition is color-coded)", "Trial", "Final distance (vu)", "Type", mylabels, "bottom", 8)
-bar_trials_grid(sm_all_trials_s1_suc, "trial", "path_abs", "trial_condition", "group", "Path in successful trials 1-39 at T1 (condition is color-coded)", "Trial", "Path length (vu)", "Type", mylabels, "bottom", 8)
+bar_trials_grid(sm_all_trials_s1_suc, "trial", "path_abs", "trial_condition", "group", "Path in successful trials 1-39 at T1 (condition is color-coded)", "Trial", "Path length (vu) \nin successful trials", "Type", mylabels, "bottom", 8)
 
 rm(sm_all_trials_s1, sm_all_trials_s1_suc, bar_trials_grid)
 
@@ -118,7 +118,7 @@ sm_blockavg_trials_s1_suc <- sm_trial_data %>%
 pt1 <- bar_trials_wrap(sm_blockavg_trials_s1, "trial_in_block", "success", "trial_condition", "group", "Learning rate: Mean averaged over goal locations \n", "", "Success", "Type", mylabels, "top", 6)
 pt2 <- bar_trials_wrap(sm_blockavg_trials_s1, "trial_in_block", "direct_path", "trial_condition", "group", "", "", "Direct path", "Type",mylabels, "none", 6)
 pt3 <- bar_trials_wrap(sm_blockavg_trials_s1, "trial_in_block", "final_distance_to_goal_abs", "trial_condition", "group", "", "", "Final distance (vu)", "Type", mylabels, "none", 6)
-pt4 <- bar_trials_wrap(sm_blockavg_trials_s1_suc, "trial_in_block", "path_abs", "trial_condition", "group", "", "\n Trial number (within block)", "Path length (vu) in successful trials","Type", mylabels, "none", 6)
+pt4 <- bar_trials_wrap(sm_blockavg_trials_s1_suc, "trial_in_block", "path_abs", "trial_condition", "group", "", "\n Trial number (within block)", "Path length (vu) \nin successful trials","Type", mylabels, "none", 6)
 
 rm(sm_blockavg_trials_s1, sm_blockavg_trials_s1_suc)
 ## ----
@@ -141,7 +141,7 @@ sm_blockavg_trials_s1s2_suc <- sm_trial_data %>%
 bar_trials_wrap(sm_blockavg_trials_s1s2 %>% filter(trial_condition=="main_learn", session==1), "trial_in_block_in_cond", "success", "trial_condition", "group", "Learning rate in learning trials: Mean averaged over goal locations \n", "", "Success", "", mylabels, "none", 6)
 bar_trials_wrap(sm_blockavg_trials_s1s2 %>% filter(trial_condition=="main_learn", session==1), "trial_in_block_in_cond", "direct_path", "trial_condition", "group", "", "", "Direct path", "", mylabels, "none", 6)
 bar_trials_wrap(sm_blockavg_trials_s1s2 %>% filter(trial_condition=="main_learn", session==1), "trial_in_block_in_cond", "final_distance_to_goal_abs", "trial_condition", "group", "", "", "Final distance (vu)", "", mylabels, "none", 6)
-bar_trials_wrap(sm_blockavg_trials_s1s2_suc %>% filter(trial_condition=="main_learn", session==1), "trial_in_block_in_cond", "path_abs", "trial_condition", "group", "", "\n Trial number (within block)", "Path length (vu) in successful trials", "", mylabels, "none", 6)
+bar_trials_wrap(sm_blockavg_trials_s1s2_suc %>% filter(trial_condition=="main_learn", session==1), "trial_in_block_in_cond", "path_abs", "trial_condition", "group", "", "\n Trial number (within block)", "Path length (vu) \nin successful trials", "", mylabels, "none", 6)
 
 rm(sm_blockavg_trials_s1s2, sm_blockavg_trials_s1s2_suc, bar_trials_wrap)
 
@@ -199,7 +199,7 @@ pagg2 <- bar_agg(sm_ind_data %>% filter(trial_condition=="ego_ret" | trial_condi
 pagg3 <- bar_agg(sm_ind_data %>% filter(trial_condition=="ego_ret" | trial_condition=="allo_ret"), sm_sum_data %>% filter(trial_condition=="ego_ret" | trial_condition=="allo_ret"),
         "group", "final_distance_to_goal_abs", "group", "", "", "Final distance (vu)", "Group", mylabels, "none")
 pagg4 <- bar_agg(sm_ind_data_suc %>% filter(trial_condition=="ego_ret" | trial_condition=="allo_ret"), sm_sum_data_suc %>% filter(trial_condition=="ego_ret" | trial_condition=="allo_ret"),
-        "group", "path_abs", "group", "", "", "Path length (vu) in successful trials", "Group", mylabels, "none")
+        "group", "path_abs", "group", "", "", "Path length (vu) \nin successful trials", "Group", mylabels, "none")
 ## ----
 rm(pagg1, pagg2, pagg3, pagg4)
 
@@ -208,7 +208,7 @@ rm(pagg1, pagg2, pagg3, pagg4)
 bar_agg(sm_ind_data, sm_sum_data, "group", "success", "group", "Means and individual data points \nfor both sessions (Day 1 vs. Day 14) \n", "", "Success", "Group", mylabels, "top")
 bar_agg(sm_ind_data, sm_sum_data, "group", "direct_path", "group", "", "", "Direct path", "Group", mylabels, "none")
 bar_agg(sm_ind_data, sm_sum_data, "group", "final_distance_to_goal_abs", "group", "", "", "Final distance (vu)", "Group", mylabels, "none")
-bar_agg(sm_ind_data_suc, sm_sum_data_suc, "group", "path_abs", "group", "", "", "Path length (vu)", "Group", mylabels, "none")
+bar_agg(sm_ind_data_suc, sm_sum_data_suc, "group", "path_abs", "group", "", "", "Path length (vu) \nin successful trials", "Group", mylabels, "none")
 
 rm(sm_ind_data, sm_sum_data, sm_ind_data_suc, sm_sum_data_suc, bar_agg)
 
@@ -251,7 +251,7 @@ sm_ind_data_suc <- sm_trial_data %>%
 raincloud(sm_ind_data, "group", "success", "Median, distribution and individual data points \nfor both sessions (Day 1 vs. Day 14) across all trial types\n", "", "Success", mylabels, "none")
 raincloud(sm_ind_data, "group", "direct_path", "", "", "Direct path", mylabels, "none")
 raincloud(sm_ind_data, "group", "final_distance_to_goal_abs", "", "", "Final distance (vu)", mylabels, "none")
-raincloud(sm_ind_data_suc, "group", "path_abs", "", "", "Path length (vu) in successful trials", mylabels, "none")
+raincloud(sm_ind_data_suc, "group", "path_abs", "", "", "Path length (vu) \nin successful trials", mylabels, "none")
 
 rm(sm_ind_data, sm_ind_data_suc)
 
@@ -296,7 +296,7 @@ sm_ind_data_suc <- sm_trial_data %>%
 pr1 <- raincloud_sub(sm_ind_data %>% filter((trial_condition=="ego_ret" | trial_condition=="allo_ret")), "group", "success", "Median, distribution and individual data points \nfor both sessions (Day 1 vs. Day 14)\n", "", "Success", mylabels, "top")
 pr2 <- raincloud_sub(sm_ind_data %>% filter((trial_condition=="ego_ret" | trial_condition=="allo_ret")), "group", "direct_path", "", "", "Direct path", mylabels, "none")
 pr3 <- raincloud_sub(sm_ind_data %>% filter((trial_condition=="ego_ret" | trial_condition=="allo_ret")), "group", "final_distance_to_goal_abs", "", "", "Final distance (vu)", mylabels, "none")
-pr4 <- raincloud_sub(sm_ind_data_suc %>% filter((trial_condition=="ego_ret" | trial_condition=="allo_ret")), "group", "path_abs", "", "", "Path length (vu) in successful trials", mylabels, "none")
+pr4 <- raincloud_sub(sm_ind_data_suc %>% filter((trial_condition=="ego_ret" | trial_condition=="allo_ret")), "group", "path_abs", "", "", "Path length (vu) \nin successful trials", mylabels, "none")
 
 rm(sm_ind_data, sm_ind_data_suc)
 
