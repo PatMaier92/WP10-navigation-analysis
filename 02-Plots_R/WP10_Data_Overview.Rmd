@@ -129,15 +129,14 @@ We categorized participant's trajectories into different strategies (still under
 
 Criteria for strategy assignment:
 
-* Direct strategy: No zones are re-entered (out of 20 zones: 5 peripheral alleys (outer half), 5 peripheral alleys (inner half), 5 inner alleys, 5 central triangles at intersections of peripheral and inner alleys). 
-* Central focus: Either navigated more than half of the inner circle without re-entering zones OR re-entering zones but at least 60 % of trajectory spend in inner circle (includes full circle).
+* Direct: No zones are re-entered (out of 20 zones: 5 peripheral alleys (outer half), 5 peripheral alleys (inner half), 5 inner alleys, 5 central triangles at intersections of peripheral and inner alleys). 
+* Central focus: Either navigated more than half of the inner circle without re-entering zones OR re-entering zones and at least 60 % of trajectory spend in inner circle (includes full circle).
 * Reoriented: Maximum of 3 peripheral alleys entered, plus re-entries in inner alleys and triangles (turning back).
 * Serial: Minimum of 3 peripheral alleys entered, plus no re-entries in peripheral and inner alleys (no turning back).
 * Random: Minimum of 4 peripheral alleys and 15 zones entered. 
-* Unclassified: the rest. 
+* Unclassified for the rest.
 
-
-TBD: ADD EXAMPLE FIGURES
+![Examples for strategies](./pics/Overview_Strategies.jpg){width=500px}
 
 
 ``` {r, data_func_strategy, include=FALSE}
