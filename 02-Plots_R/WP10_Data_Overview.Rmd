@@ -118,9 +118,9 @@ There is a similar age-related peformance trajectory, i.e. a better performance 
 
 plot_grid(pagg1, paggd1, pagg2, paggd2, pagg3, paggd3, pagg4, paggd4, ncol=2, rel_widths=c(1.75,1.25))
 
-```
+plot_grid(pagg5, pagg6, pagg7, pagg8, ncol=1,  rel_heights=c(1.1, 0.95))
 
-TBD: ADD DIRECT ALLO-EGO COMPARISON 
+```
 
 
 #### Strategy use data \

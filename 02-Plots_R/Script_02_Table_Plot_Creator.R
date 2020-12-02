@@ -138,11 +138,11 @@ rm(sm_blockavg_trials_s1s2, bar_trials_wrap)
 
 ## ---- data_func_agg
 # function for aggregated bar plots with individual values 
-bar_agg <- function(data_ind, data_sum, xvar, yvar, fillby, title, xlabel, ylabel, fillbylabel, facetlabel, legendPos){
+bar_agg <- function(data_ind, data_sum, xvar, yvar, fillby, facetr, facetc, title, xlabel, ylabel, fillbylabel, facetlabel, legendPos){
   p <- ggplot(data_ind, aes_string(x=xvar, y=yvar, fill=fillby)) + 
     geom_bar(data=data_sum, stat="identity", position=position_dodge(), colour="black") + # identity bars
     geom_point(position=position_jitterdodge()) + # individual points
-    facet_grid(session ~ trial_condition, labeller=facetlabel) + # facet grouping 
+    facet_grid(formula(paste(facetr, "~", facetc)), labeller=facetlabel) + # facet grouping 
     scale_fill_manual(name=fillbylabel, labels=facetlabel, values=mycolors) + # fill title, lable and colors
     theme_cowplot(font_size = 12) + # theme
     theme(legend.position=legendPos,
@@ -172,18 +172,29 @@ sm_sum_data <- sm_ind_data %>% # inherit sm_ind_data
             direct_path=mean(direct_path))
 
 
-# condition-wise plot for allo and ego retrieval 
+# condition-wise plots for allo and ego retrieval 
+# focus: group comparison
 pagg1 <- bar_agg(sm_ind_data %>% filter(trial_condition=="ego_ret" | trial_condition=="allo_ret"), sm_sum_data %>% filter(trial_condition=="ego_ret" | trial_condition=="allo_ret"), 
-        "group", "success", "group", "Group and subject means for Day 1 vs. Day 14 and forgetting rate\n", "", "Success", "Group", mylabels, "top")
+        "group", "success", "group", "session", "trial_condition", "Group and subject means for Day 1 vs. Day 14 and forgetting rate\n", "", "Success", "Group", mylabels, "top")
 pagg2 <- bar_agg(sm_ind_data %>% filter(trial_condition=="ego_ret" | trial_condition=="allo_ret"), sm_sum_data %>% filter(trial_condition=="ego_ret" | trial_condition=="allo_ret"),
-        "group", "direct_path", "group", "", "", "Direct path", "Group", mylabels, "none")
+        "group", "direct_path", "group", "session", "trial_condition",  "", "", "Direct path", "Group", mylabels, "none")
 pagg3 <- bar_agg(sm_ind_data %>% filter(trial_condition=="ego_ret" | trial_condition=="allo_ret"), sm_sum_data %>% filter(trial_condition=="ego_ret" | trial_condition=="allo_ret"),
-        "group", "final_distance_to_goal_abs", "group", "", "", "Final distance (vu)", "Group", mylabels, "none")
+        "group", "final_distance_to_goal_abs", "group", "session", "trial_condition", "", "", "Final distance (vu)", "Group", mylabels, "none")
 pagg4 <- bar_agg(sm_ind_data %>% filter(trial_condition=="ego_ret" | trial_condition=="allo_ret"), sm_sum_data %>% filter(trial_condition=="ego_ret" | trial_condition=="allo_ret"),
-        "group", "path_abs", "group", "", "", "Path length (vu) \nin successful trials", "Group", mylabels, "none")
+        "group", "path_abs", "group", "session", "trial_condition", "", "", "Path length (vu) \nin successful trials", "Group", mylabels, "none")
+
+# focus: type comparison
+pagg5 <- bar_agg(sm_ind_data %>% filter(trial_condition=="ego_ret" | trial_condition=="allo_ret"), sm_sum_data %>% filter(trial_condition=="ego_ret" | trial_condition=="allo_ret"), 
+                 "trial_condition", "success", "trial_condition", "session", "group", "Group and subject means Allocentric vs. Egocentric\n", "", "Success", "Type", mylabels, "top")
+pagg6 <- bar_agg(sm_ind_data %>% filter(trial_condition=="ego_ret" | trial_condition=="allo_ret"), sm_sum_data %>% filter(trial_condition=="ego_ret" | trial_condition=="allo_ret"), 
+                 "trial_condition", "direct_path", "trial_condition", "session", "group", "\n\n", "", "Direct path", "Type", mylabels, "none")
+pagg7 <- bar_agg(sm_ind_data %>% filter(trial_condition=="ego_ret" | trial_condition=="allo_ret"), sm_sum_data %>% filter(trial_condition=="ego_ret" | trial_condition=="allo_ret"), 
+                 "trial_condition", "final_distance_to_goal_abs", "trial_condition", "session", "group", "", "", "Final distance (vu)", "Type", mylabels, "none")
+pagg8 <- bar_agg(sm_ind_data %>% filter(trial_condition=="ego_ret" | trial_condition=="allo_ret"), sm_sum_data %>% filter(trial_condition=="ego_ret" | trial_condition=="allo_ret"), 
+                 "trial_condition", "path_abs", "trial_condition", "session", "group", "", "", "Path length (vu) \nin successful trials", "Type", mylabels, "none")
 
 
-# function for difference/comparison plots
+# function for S2-S1 difference plots
 bar_agg_diff <- function(data, xvar, yvar, fillby, title, xlabel, ylabel, fillbylabel, facetlabel, legendPos){
   p <- ggplot(data, aes_string(x=xvar, y=yvar, fill=fillby)) +
     geom_boxplot(outlier.shape=NA, colour="BLACK") + 
@@ -204,7 +215,7 @@ bar_agg_diff <- function(data, xvar, yvar, fillby, title, xlabel, ylabel, fillby
 }
 
 
-# data for difference/comparison plots
+# data for S2-S1 difference plots
 sm_diff_data <- sm_trial_data %>%
   filter(trial_condition=="ego_ret" | trial_condition=="allo_ret")  %>%
   group_by(id, group, session, trial_condition) %>%
@@ -221,13 +232,13 @@ sm_diff_data <- sm_trial_data %>%
             path_diff = path_abs_2 - path_abs_1)
 
 
-# plots
+# S2-S1 difference
 paggd1 <- bar_agg_diff(sm_diff_data, "group", "success_diff", "group", "\n\n", "", "Success (Day 14 - Day 1)", "Group", mylabels, "none")
 paggd2 <- bar_agg_diff(sm_diff_data, "group", "direct_path_diff", "group", "", "", "Direct path (Day 14 - Day 1)", "Group", mylabels, "none")
 paggd3 <- bar_agg_diff(sm_diff_data, "group", "final_distance_diff", "group", "", "", "Final distance (Day 14 - Day 1)", "Group", mylabels, "none")
 paggd4 <- bar_agg_diff(sm_diff_data, "group", "path_diff", "group", "", "", "Path length (Day 14 - Day 1)", "Group", mylabels, "none")
 ## ----
-rm(pagg1, pagg2, pagg3, pagg4)
+rm(pagg1, pagg2, pagg3, pagg4, pagg5, pagg6, pagg7, pagg8)
 rm(paggd1, paggd2, paggd3, paggd4, sm_diff_data)
 
 
@@ -238,6 +249,7 @@ bar_agg(sm_ind_data, sm_sum_data, "group", "final_distance_to_goal_abs", "group"
 bar_agg(sm_ind_data_suc, sm_sum_data_suc, "group", "path_abs", "group", "", "", "Path length (vu) \nin successful trials", "Group", mylabels, "none")
 
 rm(sm_ind_data, sm_sum_data, bar_agg)
+
 
 
 # function for raincloud plots 
