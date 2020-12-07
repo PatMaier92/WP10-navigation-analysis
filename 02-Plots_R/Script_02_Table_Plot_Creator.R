@@ -175,7 +175,7 @@ sm_sum_data <- sm_ind_data %>% # inherit sm_ind_data
 # condition-wise plots for allo and ego retrieval 
 # focus: group comparison
 pagg1 <- bar_agg(sm_ind_data %>% filter(trial_condition=="ego_ret" | trial_condition=="allo_ret"), sm_sum_data %>% filter(trial_condition=="ego_ret" | trial_condition=="allo_ret"), 
-        "group", "success", "group", "session", "trial_condition", "Group, subject means and forgetting rate for Day 1 vs. Day 13\n", "", "Success", "Group", mylabels, "top")
+        "group", "success", "group", "session", "trial_condition", "Group means, subject means and forgetting rate for Day 1 vs. Day 13\n", "", "Success", "Group", mylabels, "top")
 pagg2 <- bar_agg(sm_ind_data %>% filter(trial_condition=="ego_ret" | trial_condition=="allo_ret"), sm_sum_data %>% filter(trial_condition=="ego_ret" | trial_condition=="allo_ret"),
         "group", "direct_path", "group", "session", "trial_condition",  "", "", "Direct path", "Group", mylabels, "none")
 pagg3 <- bar_agg(sm_ind_data %>% filter(trial_condition=="ego_ret" | trial_condition=="allo_ret"), sm_sum_data %>% filter(trial_condition=="ego_ret" | trial_condition=="allo_ret"),
@@ -185,7 +185,7 @@ pagg4 <- bar_agg(sm_ind_data %>% filter(trial_condition=="ego_ret" | trial_condi
 
 # focus: type comparison
 pagg5 <- bar_agg(sm_ind_data %>% filter(trial_condition=="ego_ret" | trial_condition=="allo_ret"), sm_sum_data %>% filter(trial_condition=="ego_ret" | trial_condition=="allo_ret"), 
-                 "trial_condition", "success", "trial_condition", "session", "group", "Group and subject means Allocentric vs. Egocentric\n", "", "Success", "Type", mylabels, "top")
+                 "trial_condition", "success", "trial_condition", "session", "group", "Group means, subject means for Allocentric vs. Egocentric\n", "", "Success", "Type", mylabels, "top")
 pagg6 <- bar_agg(sm_ind_data %>% filter(trial_condition=="ego_ret" | trial_condition=="allo_ret"), sm_sum_data %>% filter(trial_condition=="ego_ret" | trial_condition=="allo_ret"), 
                  "trial_condition", "direct_path", "trial_condition", "session", "group", "", "", "Direct path", "Type", mylabels, "none")
 pagg7 <- bar_agg(sm_ind_data %>% filter(trial_condition=="ego_ret" | trial_condition=="allo_ret"), sm_sum_data %>% filter(trial_condition=="ego_ret" | trial_condition=="allo_ret"), 
@@ -339,7 +339,7 @@ rm(pr1, pr2, pr3, pr4, raincloud, raincloud_sub)
 strategy_bars <- function(data, x, y, title, ylabel, flabel, filllabels, mypalette, legendPos) {
   p <- ggplot(data, aes_string(x=x, y=y, fill=x)) + # set up data 
     geom_bar(stat="identity", colour="black") + 
-    facet_grid(session ~ group) +
+    facet_grid(session ~ group, labeller=filllabels) +
     scale_fill_brewer(palette = mypalette, direction=-1, labels=filllabels) + # nicer color palette 
     theme_cowplot(font_size = 12) + # nicer theme
     theme(legend.position=legendPos,
@@ -355,10 +355,12 @@ strategy_bars <- function(data, x, y, title, ylabel, flabel, filllabels, mypalet
 
 
 # strategy labels
-stratlabels <- c(`direct_strategy` = "direct strategy", `reoriented` = "reoriented", 
+stratlabels <- as_labeller(c(`direct_strategy` = "direct strategy", `reoriented` = "reoriented", 
                  `central_focus` = "central focus", `serial` = "serial", 
-                 `random` = "random", `unclassified` = "unclassified",
-                 `1`="Day 1", `2`="Day 13")
+                 `random` = "random", `unclassified` = "unclassified", 
+                 `YoungKids` = "Young Kids", `OldKids` = "Old Kids", 
+                 `YoungAdults` = "Young Adults", `OldAdults` = "Old Adults",
+                 `1`="Day 1", `2`="Day 13"))
 
 
 # data for strategy choice bar plots: caculate percentage of strategies per group and session 
