@@ -2,33 +2,33 @@
 title: "Preliminary Descriptives & Plots of Starmaze Data"
 author: "Patrizia Maier"
 date: "`r format(Sys.time(), '%d %B, %Y')`"
-output: html_document #pdf_document
+output: pdf_document
 ---
 
 ### Task
 
 Navigating a star-shaped maze environment ("Starmaze") with three goal locations.
 
-![Map of the environment](./pics/Starmaze_Environment.jpg){width=450px}
+![Map of the environment](./pics/Starmaze_Environment.jpg){width=400px}
 
 ### Sessions
 
-**Day 1**
+*Day 1*
 
-* Practise trials, including motor control (joystick, 2 trials) and task explanation (5 trials).
-* Navigation to and remembering of the position of three goal locations. Baseline retrieval in egocentric (observer-dependent, i.e. from same starting point but without landmark cues) and allocentric (observer-independent, i.e. from new starting points) navigation condition (15 trials per goal location, 45 trials in total).
+* Practise trials, including joystick control practise (2 trials) and task explanation (5 trials).
+* Navigation to and remembering of the position of three goal locations. Baseline retrieval in egocentric (observer-dependent, i.e. from same starting point but without landmark cues) and allocentric (observer-independent, i.e. from new starting points) condition (15 trials per goal location; 45 in total).
 
-**Day 14**
+*Day 13*
 
-* Consolidated retrieval in egocentric and allocentric navigation condition (5 trials per goal location, 15 trials in total).
-* Non-navigational memory retrieval: Recognitve maze shape, recognize landmarks and goal objects, reconstruct location of landmarks and goal object (4 trials).
+* Consolidated retrieval in egocentric and allocentric navigation condition (5 trials per goal location; 15 in total).
+* Non-navigational memory retrieval: Recognize maze shape, recognize landmarks and goal objects, reconstruct location of landmarks and goal object (4 trials in total).
 
 
 ![Trial order at Day 1 (45 trials)](./pics/Overview_Session1.jpg){width=500px}
 
-![Trial order at Day 2 (15 trials)](./pics/Overview_Session2.jpg){width=500px}
+![Trial order at Day 13 (15 trials)](./pics/Overview_Session2.jpg){width=500px}
 
-![Non-navigational memory retrieval at Day 2](./pics/Overview_Session2_PostTest.jpg){width=500px}
+![Non-navigational memory retrieval at Day 13 (4 trials)](./pics/Overview_Session2_PostTest.jpg){width=500px}
 
 
 ```{r setup, include = FALSE, cache=FALSE}
@@ -54,23 +54,23 @@ rm(in_file)
 ### Sample
 Cross-sectional comparison between
 
-* **Young kids** (6-7 yrs, n = `r length(unique(sm_trial_data$id[sm_trial_data$group=="YoungKids"]))`) 
-* **Older kids** (9-10 yrs, n = `r length(unique(sm_trial_data$id[sm_trial_data$group=="OldKids"]))`)
-* **Young adults** (18-35 yrs, n = `r length(unique(sm_trial_data$id[sm_trial_data$group=="YoungAdults"]))`)
-* **Older adults** (68-75 yrs, n = `r length(unique(sm_trial_data$id[sm_trial_data$group=="OldAdults"]))`)
+* Young kids (6-7 yrs, n = `r length(unique(sm_trial_data$id[sm_trial_data$group=="YoungKids"]))`) 
+* Older kids (9-10 yrs, n = `r length(unique(sm_trial_data$id[sm_trial_data$group=="OldKids"]))`)
+* Young adults (18-35 yrs, n = `r length(unique(sm_trial_data$id[sm_trial_data$group=="YoungAdults"]))`)
+* Older adults (68-75 yrs, n = `r length(unique(sm_trial_data$id[sm_trial_data$group=="OldAdults"]))`)
 
 
 ### How long did the sessions take?
 
-**Young kids**: 
+*Young kids*: 
 
-* Day 1: 5 min for practise, 22 min for learning = 27 min total
-* Day 14: 7 min for retrieval, 3 min for non-navigational tests = 10 min total
+* Day 1: 5 min for practise, 22 min for learning = 27 total
+* Day 13: 7 min for retrieval, 3 min for non-navigational tests = 10 total
 
-**Older kids**: 
+*Older kids*: 
 
-* Day 1: On average `r mean(5, 6, 5, 6, 4, 5, 6, 5)` min for practise (range: `r range(5, 6, 5, 6, 4, 5, 6, 5)`), `r mean(18, 15, 17, 29, 18, 21, 25, 22)` min for learning (range: `r range(18, 15, 17, 29, 18, 21, 25, 22)`) = `r mean(18, 15, 17, 29, 18, 21, 25, 22) + mean(5, 6, 5, 6, 4, 5, 6, 5)` min total (range: `r range(18+5, 15+6, 17+5, 29+6, 18+4, 21+5, 25+6, 22+5)`)
-* Day 14: On average `r mean(7, 5, 5, 4, 4, 5, 8, 7, 8)` min for retrieval (range: `r range(7, 5, 5, 4, 4, 5, 8, 7, 8)`), 3 min for non-navigational tests = `r mean(7, 5, 5, 4, 4, 5, 8, 7, 8) +  3` min total (range: `r range(7+3, 5+3, 5+3, 4+3, 4+3, 5+3, 8+3, 7+3, 8+3)`)
+* Day 1: `r mean(5, 6, 5, 6, 4, 5, 6, 5)` min for practise (range: `r range(5, 6, 5, 6, 4, 5, 6, 5)`), `r mean(18, 15, 17, 29, 18, 21, 25, 22)` min for learning (range: `r range(18, 15, 17, 29, 18, 21, 25, 22)`) = `r mean(18, 15, 17, 29, 18, 21, 25, 22) + mean(5, 6, 5, 6, 4, 5, 6, 5)` total (range: `r range(18+5, 15+6, 17+5, 29+6, 18+4, 21+5, 25+6, 22+5)`)
+* Day 13: `r mean(7, 5, 5, 4, 4, 5, 8, 7, 8)` min for retrieval (range: `r range(7, 5, 5, 4, 4, 5, 8, 7, 8)`), 3 min for non-navigational tests = `r mean(7, 5, 5, 4, 4, 5, 8, 7, 8) +  3` total (range: `r range(7+3, 5+3, 5+3, 4+3, 4+3, 5+3, 8+3, 7+3, 8+3)`)
 
 
 ### Variables of interest
@@ -79,61 +79,56 @@ In learning trials, the goal is visible, i.e. is always found except if the part
 
 * **Success** (yes/no): Finding the correct goal location. The criterion for success is being away less than 0.1 virtual units (vu, ~ approx. being in the correct alley).
 * **Direct path** (yes/no): Being successful and additionally taking the shortest path without entering any additional alleys.
-* **Final distance** (metric): Distance between x-/y-coordinates of the chosen and the correct goal location in virtual units (vu). 
-$$FD = \sqrt{(x_{goal}-x_{chosen})^2 + (y_{goal}-y_{chosen})^2}$$
-* **Path** (metric): Absolute length of traveled path to chosen goal location in virtual units (vu). Plots include only successful trials. Calculated as summation of distance between x-/y-coordinates over time. 
+* **Final distance** (metric): Distance between x-/y-coordinates of the chosen and the correct goal location. 
+$$FD = \sqrt{(x_{correct}-x_{chosen})^2 + (y_{correct}-y_{chosen})^2}$$
+* **Path** (metric): Absolute length of traveled path to chosen goal location. Calculated as summation of distance between x-/y-coordinates over time. Plots include only paths to correct goal locations (successful). 
 $$P = \sum \sqrt{(x_{t}-x_{t+1})^2 + (y_{t}-y_{t+1})^2}$$
-* **Deviation to ideal path** (metric): Alternative to path (currently not used). Calculated as absolute percentage deviation of chosen path to ideal path. In contrast to **Path** this measure corrects rewarding short paths to incorrect goals. 
-$$PD =abs((P - P_{ideal})/P_{ideal})*100)$$
-* **Strategy classification**: direct strategy to chosen goal (no detours), central focus (circling in inner pentagon), reorientation (going back same path), serial, random or unclassified strategy. 
+* **Strategy classification**: Direct strategy to chosen goal (no detours), central focus (circling in inner pentagon), reorientation (going back same path), serial, random or unclassified strategy. 
 
 
-### Plots 
+### Memory encoding: Learning curves at Day 1 
 ``` {r, plot_settings, include=FALSE}
 ```
 
-
-#### Memory encoding: Learning curves at Day 1 \
-
-How well did the three age groups learn the position of the three goal locations at Day 1? Young adults show a very good performance (at ceiling) after only a few trials. Old kids perform slightly worse. Even though they are able to find the correct goal location in most cases (high rate of success), they do not seem to take the most direct path and have more difficulties when determining the precise location of the goals. As expected, young kids perform even worse (caution: 1 subject only). Learning curves are averaged across blocks, i.e. across the three goal locations. 
+How well did participants learn the position of the three goal locations at Day 1? Young adults show a very good performance (at ceiling) after only a few trials. Old kids perform slightly worse. Even though they are able to find the correct goal location in most cases (high rate of success), they do not seem to take the most direct path and have more difficulties when determining the precise location of the goals. As expected, young kids perform even worse (caution: 1 subject only). Learning curves are averaged across blocks, i.e. across the three goal locations. 
 
 ``` {r, data_func_trial_wise, include=FALSE}
 ```
 
 ``` {r, trial_wise, echo=FALSE, fig.asp=1.75, fig.align = "center"}
 
-plot_grid(pt1, pt2, pt3, pt4, ncol=1, labels="AUTO", rel_heights=c(1.1, 0.95, 0.95, 0.95))
+plot_grid(pt1, pt2, pt3, pt4, ncol=1, labels="AUTO", rel_heights=c(1.1, 0.93, 0.93, 0.93))
 
 ```
 
 
-#### Immediate and consolidated retrieval: Mean values in egocentric and allocentric condition \
+### Immediate vs. consolidated retrieval: Mean values in egocentric and allocentric condition 
 
-There is a similar age-related peformance trajectory, i.e. a better performance in older subjects, in allocentric and egocentric trials during both immediate retrieval at Day 1 and consolidated retrieval at Day 14. Notably, performance variability seems to be higher in old kids comapred to young adults, some kids perform like adults whereas others struggle a lot. 
+There is a similar age-related performance trajectory (i.e. a better performance with age) in allocentric and egocentric trials during both immediate retrieval at Day 1 and consolidated retrieval at Day 13. Notably, performance variability seems to be higher in old kids compared to young adults, i.e. some older kids perform like adults whereas others struggle much more. When looking at the difference between Day 13 and Day 1 (forgetting rate) older kids tend to have a higher forgetting rate in success compared to younger adults, but a comparable forgetting rate for the direct path.  
 
 ``` {r, data_func_agg, include=FALSE}
 ```
 
-``` {r, aggregate_bars, echo=FALSE, warning=FALSE, fig.asp=2, fig.align = "center"}
+``` {r, aggregate_bars, echo=FALSE, warning=FALSE, fig.asp=1.5, fig.align = "center"}
 
-plot_grid(pagg1, paggd1, pagg2, paggd2, pagg3, paggd3, pagg4, paggd4, ncol=2, rel_widths=c(1.75,1.25))
+plot_grid(pagg1, paggd1, pagg2, paggd2, pagg3, paggd3, pagg4, paggd4, ncol=2, rel_widths=c(1.75,1.25), rel_heights=c(1.1, 0.93, 0.93, 0.93))
 
-plot_grid(pagg5, pagg6, pagg7, pagg8, ncol=1,  rel_heights=c(1.1, 0.95))
+# plot_grid(pagg5, pagg6, pagg7, pagg8, ncol=1, labels="AUTO", rel_heights=c(1.1, 0.93, 0.93, 0.93))
 
 ```
 
 
-#### Strategy use data \
+### Strategy use data 
 
-We categorized participant's trajectories into different strategies (still under development). At the moment, strategies are more of a qualitative description of the trajectory and independent of success. For example, direct strategy means that the participant went straight to the chosen goal location without any detours or returns, independent of whether that chosen goal location was correct or incorrect. 
+We categorized participant's trajectories into different strategies (still under development). At the moment, strategies are a qualitative description of the trajectory and independent of success. For example, direct strategy means that the participant went straight to the chosen goal location without any detours or returns, independent of whether that chosen goal location was correct or incorrect. 
 
 Criteria for strategy assignment:
 
-* Direct: No zones are re-entered (out of 20 zones: 5 peripheral alleys (outer half), 5 peripheral alleys (inner half), 5 inner alleys, 5 central triangles at intersections of peripheral and inner alleys). 
-* Central focus: Either navigated more than half of the inner circle without re-entering zones OR re-entering zones and at least 60 % of trajectory spend in inner circle (includes full circle).
-* Reoriented: Maximum of 3 peripheral alleys entered, plus re-entries in inner alleys and triangles (turning back).
-* Serial: Minimum of 3 peripheral alleys entered, plus no re-entries in peripheral and inner alleys (no turning back).
-* Random: Minimum of 4 peripheral alleys and 15 zones entered. 
+* **Direct**: No zones are re-entered (out of 20 zones: 5 peripheral alleys (outer half), 5 peripheral alleys (inner half), 5 inner alleys, 5 central triangles at intersections of peripheral and inner alleys). 
+* **Central focus**: Either navigated more than half of the inner circle without re-entering zones OR re-entering zones and at least 60 % of trajectory spend in inner circle (includes full circle).
+* **Reoriented**: Maximum of 3 peripheral alleys entered, plus re-entries in inner alleys and triangles (turning back).
+* **Serial**: Minimum of 3 peripheral alleys entered, plus no re-entries in peripheral and inner alleys (no turning back).
+* **Random**: Minimum of 4 peripheral alleys and 15 zones entered. 
 * Unclassified for the rest.
 
 ![Examples for strategies](./pics/Overview_Strategies.jpg){width=500px}
@@ -148,7 +143,7 @@ plot_grid(ps1, psa, pse, ncol=1, labels="AUTO", rel_heights=c(1, 1, 1))
 
 ```
 
-### Table with descriptive mean values \
+### Table with descriptive mean values
 
 TBD: MAKE THEM LOOK BETTER AND CORRECT PATH VALUE 
 

@@ -31,7 +31,7 @@ mylabels <- as_labeller(c(`YoungKids` = "Young Kids", `OldKids` = "Old Kids",
                           `YoungAdults` = "Young Adults", `OldAdults` = "Old Adults",
                           `main_learn` = "Learning", `main_ret` = "Retrieval", 
                           `allo_ret` = "Allocentric", `ego_ret` = "Egocentric",
-                          `1`="1", `2`="2", `3`="3"))
+                          `1`="Day 1", `2`=" Day 13"))
 # colors
 mycolors <- c("YoungKids" = "#CC6666", "OldKids" = "#FF9999", "YoungAdults" = "#FFCC99", "OldAdults" = "#CC9966",
               "main_learn" = "#6699CC", "main_ret" = "#99CCFF", "allo_ret" = "#FFCC33", "ego_ret" = "#669933",
@@ -108,7 +108,7 @@ sm_blockavg_trials_s1 <- sm_trial_data %>%
             direct_path=mean(direct_path))
 
 # plots 
-pt1 <- bar_trials_wrap(sm_blockavg_trials_s1, "trial_in_block", "success", "trial_condition", "group", "Learning rate: Mean averaged over goal locations \n", "", "Success", "Type", mylabels, "top", 6)
+pt1 <- bar_trials_wrap(sm_blockavg_trials_s1, "trial_in_block", "success", "trial_condition", "group", "Learning curve: Mean averaged over goal locations \n", "", "Success", "Type", mylabels, "top", 6)
 pt2 <- bar_trials_wrap(sm_blockavg_trials_s1, "trial_in_block", "direct_path", "trial_condition", "group", "", "", "Direct path", "Type",mylabels, "none", 6)
 pt3 <- bar_trials_wrap(sm_blockavg_trials_s1, "trial_in_block", "final_distance_to_goal_abs", "trial_condition", "group", "", "", "Final distance (vu)", "Type", mylabels, "none", 6)
 pt4 <- bar_trials_wrap(sm_blockavg_trials_s1, "trial_in_block", "path_abs", "trial_condition", "group", "", "\n Trial number (within block)", "Path length (vu) \nin successful trials","Type", mylabels, "none", 6)
@@ -128,7 +128,7 @@ sm_blockavg_trials_s1s2 <- sm_trial_data %>%
 
 
 # learning only 
-bar_trials_wrap(sm_blockavg_trials_s1s2 %>% filter(trial_condition=="main_learn", session==1), "trial_in_block_in_cond", "success", "trial_condition", "group", "Learning rate in learning trials: Mean averaged over goal locations \n", "", "Success", "", mylabels, "none", 6)
+bar_trials_wrap(sm_blockavg_trials_s1s2 %>% filter(trial_condition=="main_learn", session==1), "trial_in_block_in_cond", "success", "trial_condition", "group", "Learning curve in learning trials: Mean averaged over goal locations \n", "", "Success", "", mylabels, "none", 6)
 bar_trials_wrap(sm_blockavg_trials_s1s2 %>% filter(trial_condition=="main_learn", session==1), "trial_in_block_in_cond", "direct_path", "trial_condition", "group", "", "", "Direct path", "", mylabels, "none", 6)
 bar_trials_wrap(sm_blockavg_trials_s1s2 %>% filter(trial_condition=="main_learn", session==1), "trial_in_block_in_cond", "final_distance_to_goal_abs", "trial_condition", "group", "", "", "Final distance (vu)", "", mylabels, "none", 6)
 bar_trials_wrap(sm_blockavg_trials_s1s2 %>% filter(trial_condition=="main_learn", session==1), "trial_in_block_in_cond", "path_abs", "trial_condition", "group", "", "\n Trial number (within block)", "Path length (vu) \nin successful trials", "", mylabels, "none", 6)
@@ -141,10 +141,10 @@ rm(sm_blockavg_trials_s1s2, bar_trials_wrap)
 bar_agg <- function(data_ind, data_sum, xvar, yvar, fillby, facetr, facetc, title, xlabel, ylabel, fillbylabel, facetlabel, legendPos){
   p <- ggplot(data_ind, aes_string(x=xvar, y=yvar, fill=fillby)) + 
     geom_bar(data=data_sum, stat="identity", position=position_dodge(), colour="black") + # identity bars
-    geom_point(position=position_jitterdodge()) + # individual points
+    geom_point(position=position_jitterdodge(), size=0.4) + # individual points
     facet_grid(formula(paste(facetr, "~", facetc)), labeller=facetlabel) + # facet grouping 
     scale_fill_manual(name=fillbylabel, labels=facetlabel, values=mycolors) + # fill title, lable and colors
-    theme_cowplot(font_size = 12) + # theme
+    theme_cowplot(font_size = 10) + # theme
     theme(legend.position=legendPos,
           axis.ticks.x=element_blank(),
           axis.text.x=element_blank()) +
@@ -175,7 +175,7 @@ sm_sum_data <- sm_ind_data %>% # inherit sm_ind_data
 # condition-wise plots for allo and ego retrieval 
 # focus: group comparison
 pagg1 <- bar_agg(sm_ind_data %>% filter(trial_condition=="ego_ret" | trial_condition=="allo_ret"), sm_sum_data %>% filter(trial_condition=="ego_ret" | trial_condition=="allo_ret"), 
-        "group", "success", "group", "session", "trial_condition", "Group and subject means for Day 1 vs. Day 14 and forgetting rate\n", "", "Success", "Group", mylabels, "top")
+        "group", "success", "group", "session", "trial_condition", "Group, subject means and forgetting rate for Day 1 vs. Day 13\n", "", "Success", "Group", mylabels, "top")
 pagg2 <- bar_agg(sm_ind_data %>% filter(trial_condition=="ego_ret" | trial_condition=="allo_ret"), sm_sum_data %>% filter(trial_condition=="ego_ret" | trial_condition=="allo_ret"),
         "group", "direct_path", "group", "session", "trial_condition",  "", "", "Direct path", "Group", mylabels, "none")
 pagg3 <- bar_agg(sm_ind_data %>% filter(trial_condition=="ego_ret" | trial_condition=="allo_ret"), sm_sum_data %>% filter(trial_condition=="ego_ret" | trial_condition=="allo_ret"),
@@ -187,7 +187,7 @@ pagg4 <- bar_agg(sm_ind_data %>% filter(trial_condition=="ego_ret" | trial_condi
 pagg5 <- bar_agg(sm_ind_data %>% filter(trial_condition=="ego_ret" | trial_condition=="allo_ret"), sm_sum_data %>% filter(trial_condition=="ego_ret" | trial_condition=="allo_ret"), 
                  "trial_condition", "success", "trial_condition", "session", "group", "Group and subject means Allocentric vs. Egocentric\n", "", "Success", "Type", mylabels, "top")
 pagg6 <- bar_agg(sm_ind_data %>% filter(trial_condition=="ego_ret" | trial_condition=="allo_ret"), sm_sum_data %>% filter(trial_condition=="ego_ret" | trial_condition=="allo_ret"), 
-                 "trial_condition", "direct_path", "trial_condition", "session", "group", "\n\n", "", "Direct path", "Type", mylabels, "none")
+                 "trial_condition", "direct_path", "trial_condition", "session", "group", "", "", "Direct path", "Type", mylabels, "none")
 pagg7 <- bar_agg(sm_ind_data %>% filter(trial_condition=="ego_ret" | trial_condition=="allo_ret"), sm_sum_data %>% filter(trial_condition=="ego_ret" | trial_condition=="allo_ret"), 
                  "trial_condition", "final_distance_to_goal_abs", "trial_condition", "session", "group", "", "", "Final distance (vu)", "Type", mylabels, "none")
 pagg8 <- bar_agg(sm_ind_data %>% filter(trial_condition=="ego_ret" | trial_condition=="allo_ret"), sm_sum_data %>% filter(trial_condition=="ego_ret" | trial_condition=="allo_ret"), 
@@ -198,12 +198,12 @@ pagg8 <- bar_agg(sm_ind_data %>% filter(trial_condition=="ego_ret" | trial_condi
 bar_agg_diff <- function(data, xvar, yvar, fillby, title, xlabel, ylabel, fillbylabel, facetlabel, legendPos){
   p <- ggplot(data, aes_string(x=xvar, y=yvar, fill=fillby)) +
     geom_boxplot(outlier.shape=NA, colour="BLACK") + 
-    geom_point(position=position_jitterdodge()) + # individual points
+    geom_point(position=position_jitterdodge(), size=0.4) + # individual points
     geom_hline(yintercept=0, linetype="dashed", color = "red") + 
     facet_wrap(~ trial_condition, labeller=facetlabel) + # facet grouping
     scale_fill_manual(name=fillbylabel, labels=facetlabel, values=mycolors) + # fill title, lable and colors
     scale_y_continuous(limits=c(-1,1)) + 
-    theme_cowplot(font_size = 12) + # theme
+    theme_cowplot(font_size = 10) + # theme
     theme(legend.position=legendPos,
           axis.ticks.x=element_blank(),
           axis.text.x=element_blank()) +
@@ -233,17 +233,17 @@ sm_diff_data <- sm_trial_data %>%
 
 
 # S2-S1 difference
-paggd1 <- bar_agg_diff(sm_diff_data, "group", "success_diff", "group", "\n\n", "", "Success (Day 14 - Day 1)", "Group", mylabels, "none")
-paggd2 <- bar_agg_diff(sm_diff_data, "group", "direct_path_diff", "group", "", "", "Direct path (Day 14 - Day 1)", "Group", mylabels, "none")
-paggd3 <- bar_agg_diff(sm_diff_data, "group", "final_distance_diff", "group", "", "", "Final distance (Day 14 - Day 1)", "Group", mylabels, "none")
-paggd4 <- bar_agg_diff(sm_diff_data, "group", "path_diff", "group", "", "", "Path length (Day 14 - Day 1)", "Group", mylabels, "none")
+paggd1 <- bar_agg_diff(sm_diff_data, "group", "success_diff", "group", "\n\n", "", "\nSuccess (D13 - D1)", "Group", mylabels, "none")
+paggd2 <- bar_agg_diff(sm_diff_data, "group", "direct_path_diff", "group", "", "", "\nDirect path (D13 - D1)", "Group", mylabels, "none")
+paggd3 <- bar_agg_diff(sm_diff_data, "group", "final_distance_diff", "group", "", "", "\nFinal distance (D13 - D1)", "Group", mylabels, "none")
+paggd4 <- bar_agg_diff(sm_diff_data, "group", "path_diff", "group", "", "", "\nPath length (D13 - D1)", "Group", mylabels, "none")
 ## ----
 rm(pagg1, pagg2, pagg3, pagg4, pagg5, pagg6, pagg7, pagg8)
 rm(paggd1, paggd2, paggd3, paggd4, sm_diff_data)
 
 
 # condition-wise plot for all conditions 
-bar_agg(sm_ind_data, sm_sum_data, "group", "success", "group", "Means and individual data points \nfor both sessions (Day 1 vs. Day 14) \n", "", "Success", "Group", mylabels, "top")
+bar_agg(sm_ind_data, sm_sum_data, "group", "success", "group", "Means and individual data points \nfor both sessions (Day 1 vs. Day 13) \n", "", "Success", "Group", mylabels, "top")
 bar_agg(sm_ind_data, sm_sum_data, "group", "direct_path", "group", "", "", "Direct path", "Group", mylabels, "none")
 bar_agg(sm_ind_data, sm_sum_data, "group", "final_distance_to_goal_abs", "group", "", "", "Final distance (vu)", "Group", mylabels, "none")
 bar_agg(sm_ind_data_suc, sm_sum_data_suc, "group", "path_abs", "group", "", "", "Path length (vu) \nin successful trials", "Group", mylabels, "none")
@@ -282,7 +282,7 @@ sm_ind_data <- sm_trial_data %>%
 
 
 # overview of all trials 
-raincloud(sm_ind_data, "group", "success", "Median, distribution and individual data points \nfor both sessions (Day 1 vs. Day 14) across all trial types\n", "", "Success", mylabels, "none")
+raincloud(sm_ind_data, "group", "success", "Median, distribution and individual data points \nfor both sessions (Day 1 vs. Day 13) across all trial types\n", "", "Success", mylabels, "none")
 raincloud(sm_ind_data, "group", "direct_path", "", "", "Direct path", mylabels, "none")
 raincloud(sm_ind_data, "group", "final_distance_to_goal_abs", "", "", "Final distance (vu)", mylabels, "none")
 raincloud(sm_ind_data, "group", "path_abs", "", "", "Path length (vu) \nin successful trials", mylabels, "none")
@@ -323,7 +323,7 @@ sm_ind_data <- sm_trial_data %>%
 
 
 # only ego and allo retrieval
-pr1 <- raincloud_sub(sm_ind_data %>% filter((trial_condition=="ego_ret" | trial_condition=="allo_ret")), "group", "success", "Median, distribution and individual data points \nfor both sessions (Day 1 vs. Day 14)\n", "", "Success", mylabels, "top")
+pr1 <- raincloud_sub(sm_ind_data %>% filter((trial_condition=="ego_ret" | trial_condition=="allo_ret")), "group", "success", "Median, distribution and individual data points \nfor both sessions (Day 1 vs. Day 13)\n", "", "Success", mylabels, "top")
 pr2 <- raincloud_sub(sm_ind_data %>% filter((trial_condition=="ego_ret" | trial_condition=="allo_ret")), "group", "direct_path", "", "", "Direct path", mylabels, "none")
 pr3 <- raincloud_sub(sm_ind_data %>% filter((trial_condition=="ego_ret" | trial_condition=="allo_ret")), "group", "final_distance_to_goal_abs", "", "", "Final distance (vu)", mylabels, "none")
 pr4 <- raincloud_sub(sm_ind_data %>% filter((trial_condition=="ego_ret" | trial_condition=="allo_ret")), "group", "path_abs", "", "", "Path length (vu) \nin successful trials", mylabels, "none")
@@ -357,7 +357,8 @@ strategy_bars <- function(data, x, y, title, ylabel, flabel, filllabels, mypalet
 # strategy labels
 stratlabels <- c(`direct_strategy` = "direct strategy", `reoriented` = "reoriented", 
                  `central_focus` = "central focus", `serial` = "serial", 
-                 `random` = "random", `unclassified` = "unclassified")
+                 `random` = "random", `unclassified` = "unclassified",
+                 `1`="Day 1", `2`="Day 13")
 
 
 # data for strategy choice bar plots: caculate percentage of strategies per group and session 
@@ -381,7 +382,7 @@ strategy_data_ego <- sm_trial_data %>%
   mutate(percent=n/sum(n))
 
 # strategy choice plots for all trials
-ps1 <- strategy_bars(strategy_data, "search_strategy_no", "percent", "Strategy use across all trials \nfor both sessions (Day 1 vs. Day 14)\n", "Relative % of use", "Strategy", stratlabels, "YlGnBu", "bottom")
+ps1 <- strategy_bars(strategy_data, "search_strategy_no", "percent", "Strategy use across all trials \nfor both sessions (Day 1 vs. Day 13)\n", "Relative % of use", "Strategy", stratlabels, "YlGnBu", "bottom")
 
 # strategy choice plots for allocentric trials 
 psa <- strategy_bars(strategy_data_allo, "search_strategy_no", "percent", "\nAllocentric trials only\n", "Relative % of use", "Strategy", stratlabels, "YlOrBr", "bottom")
