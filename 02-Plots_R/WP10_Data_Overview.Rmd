@@ -20,7 +20,7 @@ Navigating a star-shaped maze environment ("Starmaze") with three goal locations
 
 *Day 13*
 
-* Consolidated retrieval in egocentric and allocentric navigation condition (5 trials per goal location; 15 in total).
+* Consolidated retrieval in egocentric and allocentric condition (5 trials per goal location; 15 in total).
 * Non-navigational memory retrieval: Recognize maze shape, recognize landmarks and goal objects, reconstruct location of landmarks and goal object (4 trials in total).
 
 
@@ -75,9 +75,9 @@ Cross-sectional comparison between
 
 ### Variables of interest
 
-In learning trials, the goal is visible, i.e. the trial is always completed successfully except if the participants needs more than 120 seconds (time out). In egocentric and allocentric retrieval trials, the goal is not visible. Participants go to the place where they remember the goal being located and press a button. 
+In learning trials, the goal is visible, i.e. the trial is always completed successfully except if the participant needs more than 120 seconds (time out). In egocentric and allocentric retrieval trials, the goal is not visible. Participants go to the place where they remember the goal being located and press a button. 
 
-* **Success** (yes/no): Finding the correct goal location. The criterion for success is being away less than 0.1 virtual units (vu, ~ approx. being in the correct alley).
+* **Success** (yes/no): Finding the correct goal location. The criterion for success is being away less than 0.1 virtual units (~ approx. being in the correct alley).
 * **Direct path** (yes/no): Being successful and additionally taking the shortest path without entering any additional alleys.
 * **Final distance** (metric): Distance between x-/y-coordinates of the chosen and the correct goal location. 
 $$FD = \sqrt{(x_{correct}-x_{chosen})^2 + (y_{correct}-y_{chosen})^2}$$
@@ -104,9 +104,9 @@ plot_grid(pt1, pt2, pt3, pt4, ncol=1, labels="AUTO", rel_heights=c(1.1, 0.93, 0.
 
 ### Immediate (Day 1) vs. consolidated retrieval (Day 13): Egocentric and allocentric condition 
 
-*First plot:* As expected, the preliminary results show age-related performance differences, i.e. a better performance with higher age. So far, we have not collected any data from older adults, so we do not know if the effect reverses with older age. The age-dependent performance trajectory is present in all conditions, i.e. in both allocentric and egocentric trials and during immediate retrieval at Day 1 as well as consolidated retrieval at Day 13. Notably, performance variability seems to be higher in old kids compared to young adults, i.e. some old kids perform like adults whereas others struggle much more. We could probably take a closer look at the reasons behind this variability with the structural MR data in the B04 project in Berlin (start in 2021). When looking at the difference between Day 13 and Day 1 (forgetting rate) older kids tend to have a lower success rate compared to younger adults, but a comparable decline in remembering the direct path. 
+*First plot:* As expected, the preliminary results show age-related performance differences, i.e. a better performance with higher age. So far, we have not collected any data from older adults, so we do not know if the effect reverses with older age. The age-dependent performance trajectory is present in all conditions, i.e. in both allocentric and egocentric trials and during immediate retrieval at Day 1 as well as consolidated retrieval at Day 13. Notably, performance variability seems to be higher in old kids compared to young adults, i.e. some old kids perform like adults whereas others struggle much more. We can potentially take a closer look at the reasons behind this variability with the structural MR data in the B04 project in Berlin (start in 2021). When looking at the difference between Day 13 and Day 1 (forgetting rate) older kids tend to have a higher decline in success compared to younger adults, but a comparable decline in remembering the direct path. 
 
-*Second plot:* When comparing allocentric vs. egocentric directly, the performance level seem  similar, indicating a relatively comparable task difficulty. Only for the ability to remember the direct path, both old kids and younger adults show higher performance in egocentric compared to allocentric condition.
+*Second plot:* When comparing allocentric vs. egocentric trials directly, the performance level is  similar, indicating a relatively comparable task difficulty. Only for the ability to remember the direct path, both old kids and younger adults show higher performance in egocentric compared to allocentric condition.
 
 ``` {r, data_func_agg, include=FALSE}
 ```
@@ -130,7 +130,7 @@ We categorized participant's trajectories into different strategies (still under
 *Criteria for strategy assignment*:
 
 * **Direct**: No zones are re-entered (out of 20 zones: 5 peripheral alleys (outer half), 5 peripheral alleys (inner half), 5 inner alleys, 5 central triangles at intersections of peripheral and inner alleys). 
-* **Central focus**: Either navigated more than half of the inner circle without re-entering zones OR re-entering zones and at least 60 % of trajectory spend in inner circle (includes full circle).
+* **Central focus**: Either navigated more than half of the inner circle without re-entering zones (A) OR re-entering zones and at least 60 % of trajectory spend in inner circle (includes full circle, B).
 * **Reoriented**: Maximum of 3 peripheral alleys entered, plus re-entries in inner alleys and triangles (turning back).
 * **Serial**: Minimum of 3 peripheral alleys entered, plus no re-entries in peripheral and inner alleys (no turning back).
 * **Random**: Minimum of 4 peripheral alleys and 15 zones entered. 
@@ -138,7 +138,7 @@ We categorized participant's trajectories into different strategies (still under
 
 ![Examples for strategies](./pics/Overview_Strategies.jpg){width=400px}
 
-*Plots on next page:* Most young adults go straight to their chosen goal (direct strategy), indicating relatively high confidence in their decision. While old kids show a similar preference, they reorient and spend time in the central circle in some trials as well, especially on Day 13. Serial strategy, random or unclassified behavior is rarely present in all groups. When looking at conditions separately, we see that non-direct strategies are used in allocentric but not in egocentric trials. This makes sense because there are no landmarks present in egocentric trials (except for a start marker), so there are not many visually distinctive features for orientation. 
+*Plots on next page:* Most young adults go straight to their chosen goal (direct strategy), indicating relatively high confidence in their decision. While old kids show a similar preference, they reorient and spend time in the central circle in some trials as well, especially on Day 13. Serial strategy, random or unclassified behavior is rarely present in all groups. When looking at conditions separately, we see that non-direct strategies are used in allocentric but not in egocentric trials. This makes sense because there are no landmarks present in egocentric trials (except for a start marker), so there are not many distinctive features for (re-)orientation. 
 
 ``` {r, data_func_strategy, include=FALSE}
 ```
@@ -162,13 +162,14 @@ table_dat <- sm_trial_data %>%
 
 ```
 
-``` {r, table_learn, echo=FALSE, message=FALSE, results='asis' }
+``` {r, table_learn, echo=FALSE, message=FALSE, warning=FALSE, results='asis' }
 
 table_dat  %>%
   filter(trial_condition=="main_learn")  %>% 
   select(group, success, direct_path, final_distance, path) %>%
   arrange(group) %>%
-  kbl(caption = "Mean values for learning trials",
+  kbl(format="pandoc",
+      caption = "Mean values for learning trials",
       col.names = c("Session", "Group", "Success", "Direct path", "Final distance", "Path"),
       digits = 2) %>% 
   kable_classic(html_font = "Latin Modern") %>% 
@@ -177,14 +178,15 @@ table_dat  %>%
 
 ```
 
-``` {r, table_alloego, echo=FALSE, message=FALSE, results='asis' }
+``` {r, table_alloego, echo=FALSE, message=FALSE, warning=FALSE, results='asis' }
 
 table_dat  %>%
   filter((trial_condition=="ego_ret" | trial_condition=="allo_ret"))  %>% 
   mutate(trial_condition=if_else(trial_condition=="allo_ret", "Allocentric", "Egocentric")) %>%
   select(trial_condition, session, group, success, direct_path, final_distance, path) %>%
   arrange(trial_condition, session, group) %>% 
-  kbl(caption = "Mean values for allocentric and egocentric trials", 
+  kbl(format="pandoc",
+      caption = "Mean values for allocentric and egocentric trials", 
       col.names = c("Type", "Session", "Group", "Success", "Direct path", "Final distance", "Path"),
       digits = 2)%>% 
   kable_classic(html_font = "Latin Modern") %>% 
