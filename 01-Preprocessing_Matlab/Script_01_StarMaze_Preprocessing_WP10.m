@@ -133,18 +133,28 @@ alley_locs=["A" "B" "C" "D" "E" "F" "G" "H" "I" "J"];
 % sm_wp10_testfig(polyshape_array,sm.coord.goal_x,sm.coord.goal_y,sm.coord.start_x,sm.coord.start_y, goal_locs);
 
 %% Block 2: Data preprocessing
+rand_dict={};
 for subject=subject_start:subject_end
+    pstr=['p',num2str(subject)];
 
 for session=1:sessionNo
+    sstr=['s',num2str(session)];
     [finalFolderString]=sm_wp10_getFolderstring(session);
     [folderIn,folderOut]=sm_wp10_folder(dataFolder,subject,finalFolderString);
     % save data
     targetFileName_Subject         = ['\' num2str(subject) '_results_table.mat'];
     save(fullfile(folderOut, targetFileName_Subject));
 
-    % read-in overview files 
-    log_data=readtable([folderIn, '\log.csv']); % read in log-file-info
-    trial_data=readtable([folderIn, '\trial_results.csv']); % read in trial-file-info
+    % read-in trial file 
+    trial_data=readtable([folderIn, '\trial_results.csv']);
+    
+    % read-in log file and preprocess 
+    log_data=readtable([folderIn, '\log.csv'], 'ReadVariableNames', true, 'Delimiter', ','); % read in log-file-info
+    log_data=log_data.message; % extract & clean relevant data 
+    log_data=log_data(contains(log_data,'ID is')); 
+    [rand_dict]=sm_wp10_preprocLogData(log_data, subject, pstr, sstr); 
+    
+    % TBD: actually use rand_dict data to check proper randomization 
 
 %% Participant,  Workpackage, Group information
 s=session; % s=session --> row, p=participant --> coloumn
