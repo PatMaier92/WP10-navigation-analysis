@@ -1,4 +1,4 @@
-function sm_wp10_testfig(polyshape_array,goal_x,goal_y,start_x,start_y)
+function sm_wp10_testfig(polyshape_array,goal_x,goal_y,start_x,start_y,goal_locs)
 % SM_WP10_TESTFIG Create Starmaze WP10 testfigure for visualization of all
 % xy-coordinates, goals and starting points. 
 
@@ -21,9 +21,9 @@ text(0.05,0.2,'Alley 4 - G')
 text(0.8,0.2,'Alley 3 - E')
 text(0.6,0.9,'Alley 1 - A')
 
-text(goal_x(1)+0.02, goal_y(1), 'MA')
-text(goal_x(2)+0.02, goal_y(2), 'MC')
-text(goal_x(3)+0.02, goal_y(3), 'MI')
+for i=1:length(goal_locs)
+    text(goal_x(i)+0.02, goal_y(i), goal_locs(i))
+end 
 
 text(start_x(7)-0.05, start_y(7)-0.07, 'Start Learn')
 

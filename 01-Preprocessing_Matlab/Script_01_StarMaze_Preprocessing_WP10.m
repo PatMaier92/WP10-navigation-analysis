@@ -123,8 +123,14 @@ polyshape_array=[alley_polyshape_1{1,1} alley_polyshape_2{1,1} alley_polyshape_1
     alley_polyshape_1{1,3} alley_polyshape_2{1,3} alley_polyshape_1{1,4} alley_polyshape_2{1,4}...
     alley_polyshape_1{1,5} alley_polyshape_1{1,5} alley_polyshape_2{1,5} cP];
 
+% % information (ordered)
+goal_locs=["MA", "MC", "MI"]; 
+% start_locs=["Player_PA" "Player_PC" "Player_PE" "Player_PG" "Player_PI" "Player_PK" "Player_PM" ...
+%     "Player_PX" "Player_PP"]; 
+alley_locs=["A" "B" "C" "D" "E" "F" "G" "H" "I" "J"];
+
 % Create Test-Figure plot 
-% sm_wp10_testfig(polyshape_array,sm.coord.goal_x,sm.coord.goal_y,sm.coord.start_x,sm.coord.start_y);
+% sm_wp10_testfig(polyshape_array,sm.coord.goal_x,sm.coord.goal_y,sm.coord.start_x,sm.coord.start_y, goal_locs);
 
 %% Block 2: Data preprocessing
 for subject=subject_start:subject_end
