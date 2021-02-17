@@ -81,13 +81,13 @@ p=participant+1;
 wp=10; % work package default 
  
 %% Starmaze creation 
-% Min-Max-values
+% Min-Max values
 values=table2array(readtable('wp10_values.csv'));
 [sm.coord.xmin,sm.coord.xmax,sm.coord.ymin,sm.coord.ymax]=sm_wp10_MinMaxValues(values);
-% start-positions(normalized!)
+% start positions(normalized!)
 start=table2array(readtable('wp10_start.csv'));
 [sm.coord.start_x,sm.coord.start_y]=sm_wp10_start(start,sm.coord.xmin,sm.coord.xmax,sm.coord.ymin,sm.coord.ymax);
-% goal-positions(normalized!)
+% goal positions(normalized!)
 goal=table2array(readtable('wp10_goal.csv'));
 [sm.coord.goal_x,sm.coord.goal_y]=sm_wp10_goal(goal,sm.coord.xmin,sm.coord.xmax,sm.coord.ymin,sm.coord.ymax);
 
@@ -125,9 +125,42 @@ polyshape_array=[alley_polyshape_1{1,1} alley_polyshape_2{1,1} alley_polyshape_1
 
 % % information (ordered)
 goal_locs=["MA", "MC", "MI"]; 
-% start_locs=["Player_PA" "Player_PC" "Player_PE" "Player_PG" "Player_PI" "Player_PK" "Player_PM" ...
-%     "Player_PX" "Player_PP"]; 
+start_locs=["Player_MA" "Player_MB" "Player_MC" "Player_MD" "Player_ME" "Player_MF" "Player_MG" ...
+    "Player_MH" "Player_MI", "Player_MJ", "Player_MX"];
 alley_locs=["A" "B" "C" "D" "E" "F" "G" "H" "I" "J"];
+
+% Create Test-Figure plot 
+% sm_wp10_testfig(polyshape_array,sm.coord.goal_x,sm.coord.goal_y,sm.coord.start_x,sm.coord.start_y, goal_locs);
+
+%% Practise maze creation (motor control) 
+% Min-Max-values
+pract_values=table2array(readtable('wp10_practise_values.csv'));
+[pm.coord.xmin,pm.coord.xmax,pm.coord.ymin,pm.coord.ymax]=sm_wp10_MinMaxValues(pract_values);
+% start position(normalized!)
+pract_start=table2array(readtable('wp10_practise_start.csv'));
+[pm.coord.start_x,pm.coord.start_y]=sm_wp10_start(pract_start,pm.coord.xmin,pm.coord.xmax,pm.coord.ymin,pm.coord.ymax);
+% goal-positions(normalized!)
+pract_goal=table2array(readtable('wp10_practise_goal.csv'));
+[pm.coord.goal_x,pm.coord.goal_y]=sm_wp10_goal(pract_goal,pm.coord.xmin,pm.coord.xmax,pm.coord.ymin,pm.coord.ymax);
+
+% coordinates alley-corner (normalized!)
+pract_alley_x=table2array(readtable('wp10_practise_x.csv'));
+[cornerNo,~] = size(pract_alley_x);
+for corner=1:cornerNo
+    pract_alley_x(corner,1)=datanorm(pract_alley_x(corner,1),pm.coord.xmin,pm.coord.xmax);
+end
+
+pract_alley_y=table2array(readtable('wp10_practise_y.csv'));
+for corner=1:cornerNo
+    pract_alley_y(corner,1)=datanorm(pract_alley_y(corner,1),pm.coord.ymin,pm.coord.ymax);
+end
+
+% alley_polyshape
+pract_polyshape=polyshape(pract_alley_x(:),pract_alley_y(:));
+
+% information (ordered)
+pract_goal_locs=["1", "2", "3", "4", "5", "6", "7", "8" , "9", "10" ]; 
+pract_start_locs="Player_P0"; 
 
 % Create Test-Figure plot 
 % sm_wp10_testfig(polyshape_array,sm.coord.goal_x,sm.coord.goal_y,sm.coord.start_x,sm.coord.start_y, goal_locs);
@@ -194,12 +227,12 @@ if session == 3
 end
     
 M = xlsread(fullfile(folderIn, name),'A:D'); % Reading in data into matrix M
-    t=M(:,1);% reading data for time-analysis
-    x=M(:,2); y=M(:,3); x=datanorm(x,sm.coord.xmin,sm.coord.xmax); y=datanorm(y,sm.coord.ymin,sm.coord.ymax);   % data normalization for coordinates    
-    data_length=length(x); sdata_length=(size(x))-1;% vector length & shortend length (for distance calculation)
+t=M(:,1);% reading data for time analysis
+x=M(:,2); y=M(:,3); x=datanorm(x,sm.coord.xmin,sm.coord.xmax); y=datanorm(y,sm.coord.ymin,sm.coord.ymax);   % data normalization for coordinates
+data_length=length(x); sdata_length=(size(x))-1;% vector length & shortend length (for distance calculation)
     
-    sm.sub{p}.session{s}.trial{k}.x_start=x(1,1); sm.sub{p}.session{s}.trial{k}.y_start=y(1,1);
-    sm.sub{p}.session{s}.trial{k}.x_end=x(end,1); sm.sub{p}.session{s}.trial{k}.y_end=y(end,1);
+sm.sub{p}.session{s}.trial{k}.x_start=x(1,1); sm.sub{p}.session{s}.trial{k}.y_start=y(1,1);
+sm.sub{p}.session{s}.trial{k}.x_end=x(end,1); sm.sub{p}.session{s}.trial{k}.y_end=y(end,1);
       
 %% Get info depending on single trial: Feedback, Trial-Type/Condition, Goal & Start Position from trial_results.csv
 sm.sub{p}.session{s}.trial{k}.block=trial_data.block_num(k,1);
