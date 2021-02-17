@@ -187,8 +187,7 @@ if session == 3
 end
     
 if session == 3
-    if (~isempty(jump1)) || (~isempty(jump3)) || (~isempty(jump4)) || ...
-            (~isempty(jump5)) || (~isempty(jump6)) || (~isempty(jump7))
+    if (~isempty(jump1)) || (~isempty(jump3)) || (~isempty(jump4)) || (~isempty(jump5)) || (~isempty(jump6) || (~isempty(jump7))
         continue
     end
 end
