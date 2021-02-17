@@ -179,7 +179,8 @@ for session=1:sessionNo
     save(fullfile(folderOut, targetFileName_Subject));
 
     % read-in trial file 
-    trial_data=readtable([folderIn, '\trial_results.csv']);
+    opts = setvaropts(opts,'timestamp','InputFormat','MM/dd/uuuu hh:mm:ss aa'); 
+    trial_data=readtable([folderIn, '\trial_results.csv'],opts);
     
     % read-in log file and preprocess 
     log_data=readtable([folderIn, '\log.csv'], 'ReadVariableNames', true, 'Delimiter', ','); % read in log-file-info
