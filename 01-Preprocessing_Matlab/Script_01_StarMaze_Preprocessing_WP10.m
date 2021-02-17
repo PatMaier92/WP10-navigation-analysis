@@ -179,6 +179,7 @@ for session=1:sessionNo
     save(fullfile(folderOut, targetFileName_Subject));
 
     % read-in trial file 
+    opts = detectImportOptions([folderIn, '\trial_results.csv']);
     opts = setvaropts(opts,'timestamp','InputFormat','MM/dd/uuuu hh:mm:ss aa'); 
     trial_data=readtable([folderIn, '\trial_results.csv'],opts);
     
@@ -249,7 +250,7 @@ sm.sub{p}.session{s}.trial{k}.trial_type=trial_data.trial_type(k,1);
 sm.sub{p}.session{s}.trial{k}.trial_condition=sm_wp10_trialCondition(sm.sub{p}.session{s}.trial{k}.trial_type,sm.sub{p}.session{s}.trial{k}.fb);
 
 n_goals=4; 
-sm.sub{p}.session{s}.trial{k}.trial_goal_identity=sm_wp10_trialGoalIdentity(n_goals, string(trial_data.trial_goal_identity(k,1)));
+sm.sub{p}.session{s}.trial{k}.trial_goal_identity=sm_wp10_trialGoalIdentity(n_goals, char(trial_data.trial_goal_identity(k,1)));
 
 sm.sub{p}.session{s}.trial{k}.trial_goal=trial_data.trial_goal(k,1);
 [sm.sub{p}.session{s}.trial{k}.goal_x,sm.sub{p}.session{s}.trial{k}.goal_y,...
@@ -260,131 +261,166 @@ sm.sub{p}.session{s}.trial{k}.trial_goal=trial_data.trial_goal(k,1);
 sm.sub{p}.session{s}.trial{k}.trial_startpos=trial_data.trial_player(k,1);
 [sm.sub{p}.session{s}.trial{k}.start]=sm_wp10_trialStart(sm.sub{p}.session{s}.trial{k}.trial_startpos,start_locs);
 
-%%  Variables depending on starting-positions
-% CHECK velocity value used to compute ideal time. % 
-% CHECK ideal path compositions. % 
-[sm.sub{p}.session{s}.trial{k}.goal_x_ego,sm.sub{p}.session{s}.trial{k}.goal_y_ego, x_line, y_line, x_line_ego, y_line_ego,...
-    sm.sub{p}.session{s}.trial{k}.ideal_path,sm.sub{p}.session{s}.trial{k}.ideal_path_ego,sm.sub{p}.session{s}.trial{k}.ideal_time,...
-    sm.sub{p}.session{s}.trial{k}.ideal_time_ego,sm.sub{p}.session{s}.trial{k}.ideal_headturnNo,sm.sub{p}.session{s}.trial{k}.ideal_velocity]=sm_wp10_depStartVariables(sm.sub{p}.session{s}.trial{k}.start,...
-    sm.sub{p}.session{s}.trial{k}.goal_x,sm.sub{p}.session{s}.trial{k}.goal_y,sm.sub{p}.session{s}.trial{k}.goal,...
-    sm.sub{p}.session{s}.trial{k}.x_start,sm.sub{p}.session{s}.trial{k}.y_start,sm.coord.start_x,sm.coord.start_y,alley_x,alley_y,pentagon_x,pentagon_y);
+%% For motor control navigation trial 
+% analysis of path accuracy and time 
+if sm.sub{p}.session{s}.trial{k}.trial_condition==4
+    disp('To do'); 
+    % total time for trial, cumulative path length 
+    % add dummies for all other variables
+else 
+%% For all other navigation trials 
+    %% Calculate variables depending on single trial settings
+    % ideal path coordinates & length, ideal egocentric path coordinates & length
+    [sm.sub{p}.session{s}.trial{k}.goal_x_ego, sm.sub{p}.session{s}.trial{k}.goal_y_ego, x_line, y_line, x_line_ego, y_line_ego,...
+        sm.sub{p}.session{s}.trial{k}.ideal_distance, sm.sub{p}.session{s}.trial{k}.ideal_distance_ego,...
+        sm.sub{p}.session{s}.trial{k}.ideal_headturnNo,...
+        sm.sub{p}.session{s}.trial{k}.ego_alley]=sm_wp10_depStartVariables(sm.sub{p}.session{s}.trial{k}.start,...
+        sm.sub{p}.session{s}.trial{k}.goal_x, sm.sub{p}.session{s}.trial{k}.goal_y, sm.sub{p}.session{s}.trial{k}.goal_int,...
+        sm.sub{p}.session{s}.trial{k}.x_start, sm.sub{p}.session{s}.trial{k}.y_start, sm.coord.start_x, ...
+        sm.coord.start_y, alley_x, alley_y, pentagon_x, pentagon_y, alley_full_x, alley_full_y, rec_x, rec_y, cP);
+    
+        % test plot
+        figure;
+        plot(polyshape_array);
+        hold on
+        plot(x_line, y_line, 'k-', x_line_ego, y_line_ego, 'r-');
+        xlim([0 1]);
+        ylim([0 1]);
+        hold off
+        
+% NEW 
+%     % interpolate data for further analysis
+%     interp_crit=0.0001;
+%     [xi_al,yi_al,xi_eg,yi_eg]=sm_wp1_dataInterpolation(interp_crit, ...
+%         x_line, y_line, x_line_ego, y_line_ego);
 
-% interpolate data for further analysis
-[xi_al,yi_al,xi_eg,yi_eg]=sm_wp10_dataInterpolation(sm.sub{p}.session{s}.trial{k}.x_start,sm.sub{p}.session{s}.trial{k}.y_start,x_line, y_line,...
-    x_line_ego, y_line_ego,sm.sub{p}.session{s}.trial{k}.goal_x,sm.sub{p}.session{s}.trial{k}.goal_y,...
-    sm.sub{p}.session{s}.trial{k}.goal_x_ego, sm.sub{p}.session{s}.trial{k}.goal_y_ego);
- 
-%% Block 3: Data analysis, i.e. calculcation of variables 
-%% Chosen goal location % TBD
-% [sm.sub{p}.session{s}.trial{k}.chosen_goal_int,sm.sub{p}.session{s}.trial{k}.chosen_goal_str]=sm_wp10_chosenGoalAlley(string(trial_data.chosen_goal(k,1)));
+% OLD
+%     % interpolate data for further analysis
+%     [xi_al,yi_al,xi_eg,yi_eg]=sm_wp10_dataInterpolation(sm.sub{p}.session{s}.trial{k}.x_start,sm.sub{p}.session{s}.trial{k}.y_start,x_line, y_line,...
+%         x_line_ego, y_line_ego,sm.sub{p}.session{s}.trial{k}.goal_x,sm.sub{p}.session{s}.trial{k}.goal_y,...
+%         sm.sub{p}.session{s}.trial{k}.goal_x_ego, sm.sub{p}.session{s}.trial{k}.goal_y_ego);
 
-%% Time-Analysis using timestamp
+%     % test plot
+%     figure;
+%     plot(polyshape_array);
+%     hold on
+%     plot(x_line, y_line, 'k+', xi_al, yi_al, 'k-',...
+%         x_line_ego, y_line_ego, 'rx', xi_eg, yi_eg, 'r-');
+%     xlim([0 1]);
+%     ylim([0 1]);
+%     hold off
+
+    %% Block 3: Data analysis, i.e. calculcation of variables
+    %% Chosen goal location % TBD
+    % [sm.sub{p}.session{s}.trial{k}.chosen_goal_int,sm.sub{p}.session{s}.trial{k}.chosen_goal_str]=sm_wp10_chosenGoalAlley(string(trial_data.chosen_goal(k,1)));
+    
+    %% Time-Analysis using timestamp
     b=t(end,:); a=t(1,1);
     sm.sub{p}.session{s}.trial{k}.result.time=sm_time(a,b); % total amount of time
-    sm.sub{p}.session{s}.trial{k}.result.time_accuracy=sm_ac(sm.sub{p}.session{s}.trial{k}.result.time, sm.sub{p}.session{s}.trial{k}.ideal_time);% Time-Accuracy       
-
-fprintf('Time analysis done for %d, session %d, file no %d.\n', subject, session, k);
-%% Coordinate-Analysis using x & y, z             
-% Path-Analysis  
-   sm.sub{p}.session{s}.trial{k}.result.distance_traveled=0;dist_to_goal=0; % reset/initiate variables
-   for i=1:sdata_length
-       sm.sub{p}.session{s}.trial{k}.result.distance_traveled=sm.sub{p}.session{s}.trial{k}.result.distance_traveled+sum(sm_distance(x(i),x(i+1),y(i),y(i+1)));% cumulative distance traveled
-       dist_to_goal=dist_to_goal+sum(sm_distance(x(i),sm.sub{p}.session{s}.trial{k}.goal_x,y(i),sm.sub{p}.session{s}.trial{k}.goal_y)); % cumulative distance to allocentric target
-   end           
-% Calculation path-accuracy
-   sm.sub{p}.session{s}.trial{k}.result.path_accuracy= sm_ac(sm.sub{p}.session{s}.trial{k}.result.distance_traveled,sm.sub{p}.session{s}.trial{k}.ideal_path);            
-% % Velocity
-%    sm.sub{p}.session{s}.trial{k}.result.velocity= sm.sub{p}.session{s}.trial{k}.result.distance_traveled/sm.sub{p}.session{s}.trial{k}.result.time;
-% % Ideal velocity allo target
-%    sm.sub{p}.session{s}.trial{k}.ideal_velocity=sm.sub{p}.session{s}.trial{k}.ideal_path/sm.sub{p}.session{s}.trial{k}.ideal_time;
-% % Velocity-accuracy allocentric target
-%    sm.sub{p}.session{s}.trial{k}.result.velocity_accuracy=sm_ac(sm.sub{p}.session{s}.trial{k}.result.velocity, sm.sub{p}.session{s}.trial{k}.ideal_velocity);
-   
-fprintf('Path analysis done for %d, session %d, file no %d.\n', subject, session, k);
-     
-% Distance-analysis 
-% AVERAGE DISTANCE TO REAL TARGET/ allocentric target
+    sm.sub{p}.session{s}.trial{k}.result.time_accuracy=sm_ac(sm.sub{p}.session{s}.trial{k}.result.time, sm.sub{p}.session{s}.trial{k}.ideal_time);% Time-Accuracy
+    
+    fprintf('Time analysis done for %d, session %d, file no %d.\n', subject, session, k);
+    %% Coordinate-Analysis using x & y, z
+    % Path-Analysis
+    sm.sub{p}.session{s}.trial{k}.result.distance_traveled=0;dist_to_goal=0; % reset/initiate variables
+    for i=1:sdata_length
+        sm.sub{p}.session{s}.trial{k}.result.distance_traveled=sm.sub{p}.session{s}.trial{k}.result.distance_traveled+sum(sm_distance(x(i),x(i+1),y(i),y(i+1)));% cumulative distance traveled
+        dist_to_goal=dist_to_goal+sum(sm_distance(x(i),sm.sub{p}.session{s}.trial{k}.goal_x,y(i),sm.sub{p}.session{s}.trial{k}.goal_y)); % cumulative distance to allocentric target
+    end
+    % Calculation path-accuracy
+    sm.sub{p}.session{s}.trial{k}.result.path_accuracy= sm_ac(sm.sub{p}.session{s}.trial{k}.result.distance_traveled,sm.sub{p}.session{s}.trial{k}.ideal_path);
+    % % Velocity
+    %    sm.sub{p}.session{s}.trial{k}.result.velocity= sm.sub{p}.session{s}.trial{k}.result.distance_traveled/sm.sub{p}.session{s}.trial{k}.result.time;
+    % % Ideal velocity allo target
+    %    sm.sub{p}.session{s}.trial{k}.ideal_velocity=sm.sub{p}.session{s}.trial{k}.ideal_path/sm.sub{p}.session{s}.trial{k}.ideal_time;
+    % % Velocity-accuracy allocentric target
+    %    sm.sub{p}.session{s}.trial{k}.result.velocity_accuracy=sm_ac(sm.sub{p}.session{s}.trial{k}.result.velocity, sm.sub{p}.session{s}.trial{k}.ideal_velocity);
+    
+    fprintf('Path analysis done for %d, session %d, file no %d.\n', subject, session, k);
+    
+    % Distance-analysis
+    % AVERAGE DISTANCE TO REAL TARGET/ allocentric target
     dtat=dist_to_goal./sdata_length;
     sm.sub{p}.session{s}.trial{k}.result.avg_distance=dtat(1,1);
-
-% FINAL DISTANCE TO REAL TARGET/ allocentric target
+    
+    % FINAL DISTANCE TO REAL TARGET/ allocentric target
     sm.sub{p}.session{s}.trial{k}.result.final_distance=sm_distance(sm.sub{p}.session{s}.trial{k}.goal_x,x(end,:),sm.sub{p}.session{s}.trial{k}.goal_y, y(end,:));
-% Cumulative ideal distance to real target/allocentric target  
+    % Cumulative ideal distance to real target/allocentric target
     sm.sub{p}.session{s}.trial{k}.ideal_distance_traveled=0;id_dist_to_goal=0; % start-initiation
     xi_length=length(xi_al)-1;
     for i=1:xi_length %%% THIS FUNCTION TAKES VERY LONG %%%
         sm.sub{p}.session{s}.trial{k}.ideal_distance_traveled=sm.sub{p}.session{s}.trial{k}.ideal_distance_traveled+sum(sm_distance(xi_al(i),xi_al(i+1),yi_al(i),yi_al(i+1)));% cumulative distance traveled
         id_dist_to_goal=id_dist_to_goal+sum(sm_distance(xi_al(i),sm.sub{p}.session{s}.trial{k}.goal_x,yi_al(i),sm.sub{p}.session{s}.trial{k}.goal_y)); % cumulative distance to allocentric target
     end
-% Ideal AVERAGE DISTANCE TO REAL TARGET/ allocentric target
+    % Ideal AVERAGE DISTANCE TO REAL TARGET/ allocentric target
     dtat=id_dist_to_goal/xi_length;
     sm.sub{p}.session{s}.trial{k}.ideal_avg_distance=dtat(1,1);
-% DISTANCE-ACCURACY target/ allocentric target
+    % DISTANCE-ACCURACY target/ allocentric target
     sm.sub{p}.session{s}.trial{k}.result.distance_accuracy=sm_ac(sm.sub{p}.session{s}.trial{k}.result.avg_distance,sm.sub{p}.session{s}.trial{k}.ideal_avg_distance);
-
-fprintf('Distance analysis done for %d, session %d, file no %d.\n', subject, session, k);
-%% Egocentric variables
-% Time
-%     sm.sub{p}.session{s}.trial{k}.result.time_accuracy_ego=sm_ac(sm.sub{p}.session{s}.trial{k}.result.time, sm.sub{p}.session{s}.trial{k}.ideal_time_ego);
-
-% Calculating PATH-ACCURACY to egocentric target
+    
+    fprintf('Distance analysis done for %d, session %d, file no %d.\n', subject, session, k);
+    %% Egocentric variables
+    % Time
+    %     sm.sub{p}.session{s}.trial{k}.result.time_accuracy_ego=sm_ac(sm.sub{p}.session{s}.trial{k}.result.time, sm.sub{p}.session{s}.trial{k}.ideal_time_ego);
+    
+    % Calculating PATH-ACCURACY to egocentric target
     sm.sub{p}.session{s}.trial{k}.result.path_accuracy_ego= sm_ac(sm.sub{p}.session{s}.trial{k}.result.distance_traveled,sm.sub{p}.session{s}.trial{k}.ideal_path_ego);
     dist_to_goal_ego=0;
     for i=1:sdata_length
         dist_to_goal_ego=dist_to_goal_ego+sum(sm_distance(x(i),sm.sub{p}.session{s}.trial{k}.goal_x_ego,y(i),sm.sub{p}.session{s}.trial{k}.goal_y_ego)); % cumulative distance to egocentric target
     end
-% FINAL DISTANCE TO EGOCENTRIC TARGET
+    % FINAL DISTANCE TO EGOCENTRIC TARGET
     sm.sub{p}.session{s}.trial{k}.result.final_distance_ego=sm_distance(sm.sub{p}.session{s}.trial{k}.goal_x_ego,x(end,:),sm.sub{p}.session{s}.trial{k}.goal_y_ego,y(end,:));
-
+    
     % % AVERAGE DISTANCE TO EGOCENTRIC TARGET
-%     dtet=dist_to_goal_ego./sdata_length;
-%     sm.sub{p}.session{s}.trial{k}.result.avg_distance_ego=dtet(1,1);
-% % Cumulative ideal distance to egocentric target
-%     sm.sub{p}.session{s}.trial{k}.ideal_dist_to_goal_ego=0; xi_le=length(xi_eg);
-%     if sm.sub{p}.session{s}.trial{k}.goal_y_ego <= yi_eg(1,1)
-%         reference_y=yi_eg(1,1);
-%         reference_x=xi_eg(1,1);
-%     else
-%         reference_y=sm.sub{p}.session{s}.trial{k}.goal_y_ego;
-%         reference_x=sm.sub{p}.session{s}.trial{k}.goal_x_ego;
-%     end
-%         
-%     for i=1:xi_le
-%         sm.sub{p}.session{s}.trial{k}.ideal_dist_to_goal_ego=sm.sub{p}.session{s}.trial{k}.ideal_dist_to_goal_ego+sum(sm_distance(xi_eg(i),reference_x,yi_eg(i),reference_y));
-%     end
-
-% % Average ideal distance to egoocentric target
-%     idtet=sm.sub{p}.session{s}.trial{k}.ideal_dist_to_goal_ego./xi_le;
-%     sm.sub{p}.session{s}.trial{k}.ideal_avg_dist_to_goal_ego=idtet(1,1);
-% % DISTANCE-ACCURACY regarding egocentric target
-%     sm.sub{p}.session{s}.trial{k}.result.distance_accuracy_ego=sm_ac(sm.sub{p}.session{s}.trial{k}.result.avg_distance_ego,sm.sub{p}.session{s}.trial{k}.ideal_avg_dist_to_goal_ego);
-% % Ideal velocity ego target
-%     sm.sub{p}.session{s}.trial{k}.ideal_velocity_ego=sm.sub{p}.session{s}.trial{k}.ideal_path_ego/sm.sub{p}.session{s}.trial{k}.ideal_time_ego;
-% % Velocity-accuracy egocentric target
-%     sm.sub{p}.session{s}.trial{k}.result.velocity_accuracy_ego=sm_ac(sm.sub{p}.session{s}.trial{k}.result.velocity, sm.sub{p}.session{s}.trial{k}.ideal_velocity_ego);
-
-fprintf('Egocentric variable analysis done for %d, session %d, file no %d.\n', subject, session, k);
-%% Turn & Rotation- Analysis using xy-coordinates
-% Body-Rotation-Analysis
+    %     dtet=dist_to_goal_ego./sdata_length;
+    %     sm.sub{p}.session{s}.trial{k}.result.avg_distance_ego=dtet(1,1);
+    % % Cumulative ideal distance to egocentric target
+    %     sm.sub{p}.session{s}.trial{k}.ideal_dist_to_goal_ego=0; xi_le=length(xi_eg);
+    %     if sm.sub{p}.session{s}.trial{k}.goal_y_ego <= yi_eg(1,1)
+    %         reference_y=yi_eg(1,1);
+    %         reference_x=xi_eg(1,1);
+    %     else
+    %         reference_y=sm.sub{p}.session{s}.trial{k}.goal_y_ego;
+    %         reference_x=sm.sub{p}.session{s}.trial{k}.goal_x_ego;
+    %     end
+    %
+    %     for i=1:xi_le
+    %         sm.sub{p}.session{s}.trial{k}.ideal_dist_to_goal_ego=sm.sub{p}.session{s}.trial{k}.ideal_dist_to_goal_ego+sum(sm_distance(xi_eg(i),reference_x,yi_eg(i),reference_y));
+    %     end
+    
+    % % Average ideal distance to egoocentric target
+    %     idtet=sm.sub{p}.session{s}.trial{k}.ideal_dist_to_goal_ego./xi_le;
+    %     sm.sub{p}.session{s}.trial{k}.ideal_avg_dist_to_goal_ego=idtet(1,1);
+    % % DISTANCE-ACCURACY regarding egocentric target
+    %     sm.sub{p}.session{s}.trial{k}.result.distance_accuracy_ego=sm_ac(sm.sub{p}.session{s}.trial{k}.result.avg_distance_ego,sm.sub{p}.session{s}.trial{k}.ideal_avg_dist_to_goal_ego);
+    % % Ideal velocity ego target
+    %     sm.sub{p}.session{s}.trial{k}.ideal_velocity_ego=sm.sub{p}.session{s}.trial{k}.ideal_path_ego/sm.sub{p}.session{s}.trial{k}.ideal_time_ego;
+    % % Velocity-accuracy egocentric target
+    %     sm.sub{p}.session{s}.trial{k}.result.velocity_accuracy_ego=sm_ac(sm.sub{p}.session{s}.trial{k}.result.velocity, sm.sub{p}.session{s}.trial{k}.ideal_velocity_ego);
+    
+    fprintf('Egocentric variable analysis done for %d, session %d, file no %d.\n', subject, session, k);
+    %% Turn & Rotation- Analysis using xy-coordinates
+    % Body-Rotation-Analysis
     sm.sub{p}.session{s}.trial{k}.result.body_rotation=0; br=zeros(1,data_length);
     for i=2:(data_length-2)
         br(i)=sm_b_rot(y(i-1),x(i-1),y(i),x(i));
         sm.sub{p}.session{s}.trial{k}.result.body_rotation=sm.sub{p}.session{s}.trial{k}.result.body_rotation+br(i);
     end
-% Ideal sum of body-roatations   
+    % Ideal sum of body-roatations
     l_xi_al=length(xi_al);
     sm.sub{p}.session{s}.trial{k}.ideal_body_rotation=0; br_i=zeros(1,l_xi_al);
     for i=2:(l_xi_al-2)
         br_i(i)=sm_b_rot(yi_al(i-1),xi_al(i-1),yi_al(i),xi_al(i));
         sm.sub{p}.session{s}.trial{k}.ideal_body_rotation=sm.sub{p}.session{s}.trial{k}.ideal_body_rotation+br_i(i);
     end
-% Body-rotation-accuracy
+    % Body-rotation-accuracy
     sm.sub{p}.session{s}.trial{k}.result.body_rotation_accuracy=sm_ac(sm.sub{p}.session{s}.trial{k}.result.body_rotation,sm.sub{p}.session{s}.trial{k}.ideal_body_rotation);
-
-fprintf('Body rotation analysis done for %d, session %d, file no %d.\n', subject, session, k);
     
-%% Body-Turn-Analysis           
-% Cumulative body turns
+    fprintf('Body rotation analysis done for %d, session %d, file no %d.\n', subject, session, k);
+    
+    %% Body-Turn-Analysis
+    % Cumulative body turns
     body_turn=zeros(1,data_length);
     sm.sub{p}.session{s}.trial{k}.result.body_turn_left=0;sm.sub{p}.session{s}.trial{k}.result.body_turn_right=0;body_walk_straight=0;
     for j=2:(length(br)-1)
@@ -398,7 +434,7 @@ fprintf('Body rotation analysis done for %d, session %d, file no %d.\n', subject
         end
     end
     sm.sub{p}.session{s}.trial{k}.result.body_turn_total= sm.sub{p}.session{s}.trial{k}.result.body_turn_right+sm.sub{p}.session{s}.trial{k}.result.body_turn_left;
-% Cumulative ideal body turns
+    % Cumulative ideal body turns
     body_turn_i=zeros(1,l_xi_al);
     sm.sub{p}.session{s}.trial{k}.ideal_body_turn_left=0;sm.sub{p}.session{s}.trial{k}.ideal_body_turn_right=0;ideal_body_walk_straight=0;
     for j=2:(length(br_i)-1)
@@ -412,22 +448,22 @@ fprintf('Body rotation analysis done for %d, session %d, file no %d.\n', subject
         end
     end
     sm.sub{p}.session{s}.trial{k}.ideal_body_turn_total= sm.sub{p}.session{s}.trial{k}.ideal_body_turn_right+sm.sub{p}.session{s}.trial{k}.ideal_body_turn_left;
-% Body-turn-accuracy
+    % Body-turn-accuracy
     sm.sub{p}.session{s}.trial{k}.result.body_turn_accuracy=sm_ac(sm.sub{p}.session{s}.trial{k}.result.body_turn_total,sm.sub{p}.session{s}.trial{k}.ideal_body_turn_total);
-
-fprintf('Body turn analysis done for %d, session %d, file no %d.\n', subject, session, k);
-%% Head-Rotation-Analysis using Z-coordinates
+    
+    fprintf('Body turn analysis done for %d, session %d, file no %d.\n', subject, session, k);
+    %% Head-Rotation-Analysis using Z-coordinates
     r=M(:,4); % rotations in coloumn 6
-% Final deviation from start to target angle
+    % Final deviation from start to target angle
     ro=length(r); sm.sub{p}.session{s}.trial{k}.result.final_deviation=0;
-% Cumulative rotation, sum of head rotations
+    % Cumulative rotation, sum of head rotations
     sm.sub{p}.session{s}.trial{k}.result.head_rotation=0;
     for j=1:(ro-1)
         sm.sub{p}.session{s}.trial{k}.result.final_deviation=sm.sub{p}.session{s}.trial{k}.result.final_deviation+((r(j+1)-r(j))); % deviation
         sm.sub{p}.session{s}.trial{k}.result.head_rotation=sm.sub{p}.session{s}.trial{k}.result.head_rotation+(abs((r(j+1)-r(j)))); % sum of head roations
     end
     sm.sub{p}.session{s}.trial{k}.result.full_head_rotation= sm.sub{p}.session{s}.trial{k}.result.head_rotation/360;
-% Cumulative amount of completed head-turns
+    % Cumulative amount of completed head-turns
     head_turn= zeros(1, ro);
     sm.sub{p}.session{s}.trial{k}.result.head_turn_left=0;sm.sub{p}.session{s}.trial{k}.result.head_turn_right=0;head_walk_straight=0;head_left=0; head_right=0;
     for j=2:(ro-1)
@@ -444,107 +480,132 @@ fprintf('Body turn analysis done for %d, session %d, file no %d.\n', subject, se
             head_left=head_left+1;
         end
     end
-% Head-turn total                    
-    sm.sub{p}.session{s}.trial{k}.result.head_turn_total= sm.sub{p}.session{s}.trial{k}.result.head_turn_right+sm.sub{p}.session{s}.trial{k}.result.head_turn_left;                             
-% Head-turn-accuracy
+    % Head-turn total
+    sm.sub{p}.session{s}.trial{k}.result.head_turn_total= sm.sub{p}.session{s}.trial{k}.result.head_turn_right+sm.sub{p}.session{s}.trial{k}.result.head_turn_left;
+    % Head-turn-accuracy
     sm.sub{p}.session{s}.trial{k}.result.head_turn_accuracy=sm_ac(sm.sub{p}.session{s}.trial{k}.result.head_turn_total,sm.sub{p}.session{s}.trial{k}.ideal_headturnNo);
     
-fprintf('Head turn analysis done for %d, session %d, file no %d.\n', subject, session, k);
-%% Zone-Analysis
-[sm.sub{p}.session{s}.trial{k}.zone.alley_zone,...
-    sm.sub{p}.session{s}.trial{k}.zone.rel_alley_zone,...
-    sm.sub{p}.session{s}.trial{k}.zone.alley_entry]=sm_wp10_coordinatesAlleys(x,...
-    y,alley_full_x,alley_full_y,data_length);
+    fprintf('Head turn analysis done for %d, session %d, file no %d.\n', subject, session, k);
+    %% Zone-Analysis
+    [sm.sub{p}.session{s}.trial{k}.zone.alley_zone,...
+        sm.sub{p}.session{s}.trial{k}.zone.rel_alley_zone,...
+        sm.sub{p}.session{s}.trial{k}.zone.alley_entry]=sm_wp10_coordinatesAlleys(x,...
+        y,alley_full_x,alley_full_y,data_length);
+    
+    [sm.sub{p}.session{s}.trial{k}.zone.alley_zone_out,...
+        sm.sub{p}.session{s}.trial{k}.zone.rel_alley_zone_out,...
+        sm.sub{p}.session{s}.trial{k}.zone.alley_entry_out]=sm_wp10_coordinatesAlleys(x,...
+        y,alley_half_out_x,alley_half_out_y,data_length);
+    
+    [sm.sub{p}.session{s}.trial{k}.zone.alley_zone_in,...
+        sm.sub{p}.session{s}.trial{k}.zone.rel_alley_zone_in,...
+        sm.sub{p}.session{s}.trial{k}.zone.alley_entry_in]=sm_wp10_coordinatesAlleys(x,...
+        y,alley_half_in_x,alley_half_in_y,data_length);
+    
+    [sm.sub{p}.session{s}.trial{k}.zone.pentagon_zone,...
+        sm.sub{p}.session{s}.trial{k}.zone.rel_pentagon_zone,...
+        sm.sub{p}.session{s}.trial{k}.zone.pentagon_entry]=sm_wp10_coordinatesPentagon(x,...
+        y,cP_x,cP_y,data_length);
+    
+    [sm.sub{p}.session{s}.trial{k}.zone.triangle_zone,....
+        sm.sub{p}.session{s}.trial{k}.zone.rel_triangle_zone,...
+        sm.sub{p}.session{s}.trial{k}.zone.triangle_entry]=sm_wp10_coordinatesAlleys(x,...
+        y,tri_x,tri_y,data_length);
+    
+    [sm.sub{p}.session{s}.trial{k}.zone.rectangle_zone,...
+        sm.sub{p}.session{s}.trial{k}.zone.rel_rectangle_zone,...
+        sm.sub{p}.session{s}.trial{k}.zone.rectangle_entry]= sm_wp10_coordinatesAlleys(x,...
+        y,rec_x,rec_y,data_length);
+    
+    [sm.sub{p}.session{s}.trial{k}.time.alley_time,...
+        sm.sub{p}.session{s}.trial{k}.time.pentagon_time,...
+        sm.sub{p}.session{s}.trial{k}.time.triangle_time,...
+        sm.sub{p}.session{s}.trial{k}.time.rectangle_time]=sm_wp10_time(sm.sub{p}.session{s}.trial{k}.result.time,...
+        sm.sub{p}.session{s}.trial{k}.zone.rel_alley_zone,...
+        sm.sub{p}.session{s}.trial{k}.zone.rel_pentagon_zone,...
+        sm.sub{p}.session{s}.trial{k}.zone.rel_triangle_zone,...
+        sm.sub{p}.session{s}.trial{k}.zone.rel_rectangle_zone);
+    
+    fprintf('Zone analysis done for %d, session %d, file no %d.\n', subject, session, k);
+    %% Exploration-Analysis
+    
+    % Arm score and Path score as indicators of alley-exploration
+    sm.sub{p}.session{s}.trial{k}.result.arm_explored=sm_wp10_armExplored(sm.sub{p}.session{s}.trial{k}.zone.alley_zone);
+    sm.sub{p}.session{s}.trial{k}.result.arm_score=sm_wp10_armScore(sm.sub{p}.session{s}.trial{k}.zone.alley_entry);
+    sm.sub{p}.session{s}.trial{k}.result.path_explored=sm_wp10_pathExplored(sm.sub{p}.session{s}.trial{k}.zone.alley_zone_out,...
+        sm.sub{p}.session{s}.trial{k}.zone.alley_zone_in,...
+        sm.sub{p}.session{s}.trial{k}.zone.rectangle_zone,...
+        sm.sub{p}.session{s}.trial{k}.zone.triangle_zone);
+    sm.sub{p}.session{s}.trial{k}.result.path_score=sm_wp10_pathScore(sm.sub{p}.session{s}.trial{k}.zone.alley_entry_out,...
+        sm.sub{p}.session{s}.trial{k}.zone.alley_entry_in,...
+        sm.sub{p}.session{s}.trial{k}.zone.rectangle_entry,...
+        sm.sub{p}.session{s}.trial{k}.zone.triangle_entry);
+    
+    % Success
+    success_criterium = 0.1; % cut-off proximity to to goal; change value if necessary
+    [sm.sub{p}.session{s}.trial{k}.result.success, sm.sub{p}.session{s}.trial{k}.result.success_ego,...
+        sm.sub{p}.session{s}.trial{k}.result.correct_final_alley]=sm_wp10_success(success_criterium,...
+        sm.sub{p}.session{s}.trial{k}.result.final_distance,...
+        sm.sub{p}.session{s}.trial{k}.result.final_distance_ego,...
+        sm.sub{p}.session{s}.trial{k}.trial_goal,...
+        sm.sub{p}.session{s}.trial{k}.chosen_goal_str);
+    
+    % Direct path to target
+    sm.sub{p}.session{s}.trial{k}.result.direct_path=sm_wp10_directPath(sm.sub{p}.session{s}.trial{k}.start,...
+        sm.sub{p}.session{s}.trial{k}.goal,...
+        sm.sub{p}.session{s}.trial{k}.result.success,...
+        sm.sub{p}.session{s}.trial{k}.zone.alley_entry,...
+        sm.sub{p}.session{s}.trial{k}.zone.rectangle_entry,...
+        sm.sub{p}.session{s}.trial{k}.zone.triangle_entry);
+    
+    % Search strategies
+    [sm.sub{p}.session{s}.trial{k}.searchStrategy.direct,...
+        sm.sub{p}.session{s}.trial{k}.searchStrategy.egocentric,...
+        sm.sub{p}.session{s}.trial{k}.searchStrategy.allocentric,...
+        sm.sub{p}.session{s}.trial{k}.searchStrategy.failed,...
+        sm.sub{p}.session{s}.trial{k}.searchStrategy.reoriented,...
+        sm.sub{p}.session{s}.trial{k}.searchStrategy.serial,...
+        sm.sub{p}.session{s}.trial{k}.searchStrategy.central_focus,...
+        sm.sub{p}.session{s}.trial{k}.searchStrategy.random_search,...
+        sm.sub{p}.session{s}.trial{k}.searchStrategy.unclassified,...
+        sm.sub{p}.session{s}.trial{k}.result.search_strategy_no]=sm_wp10_searchStrategy(sm.sub{p}.session{s}.trial{k}.trial_condition,...
+        sm.sub{p}.session{s}.trial{k}.result.direct_path,...
+        sm.sub{p}.session{s}.trial{k}.result.success,...
+        sm.sub{p}.session{s}.trial{k}.result.success_ego,...
+        sm.sub{p}.session{s}.trial{k}.result.arm_explored,...
+        sm.sub{p}.session{s}.trial{k}.result.path_explored,...
+        sm.sub{p}.session{s}.trial{k}.result.path_score,...
+        sm.sub{p}.session{s}.trial{k}.zone.rel_pentagon_zone,...
+        sm.sub{p}.session{s}.trial{k}.zone.alley_entry,...
+        sm.sub{p}.session{s}.trial{k}.zone.rectangle_entry,...
+        sm.sub{p}.session{s}.trial{k}.zone.triangle_entry);
+    
+    fprintf('Exploration analysis done for %d, session %d, file no %d.\n', subject, session, k);
+    
+end
 
-[sm.sub{p}.session{s}.trial{k}.zone.alley_zone_out,...
-    sm.sub{p}.session{s}.trial{k}.zone.rel_alley_zone_out,...
-    sm.sub{p}.session{s}.trial{k}.zone.alley_entry_out]=sm_wp10_coordinatesAlleys(x,...
-    y,alley_half_out_x,alley_half_out_y,data_length);
-
-[sm.sub{p}.session{s}.trial{k}.zone.alley_zone_in,...
-    sm.sub{p}.session{s}.trial{k}.zone.rel_alley_zone_in,...
-    sm.sub{p}.session{s}.trial{k}.zone.alley_entry_in]=sm_wp10_coordinatesAlleys(x,...
-    y,alley_half_in_x,alley_half_in_y,data_length);
-
-[sm.sub{p}.session{s}.trial{k}.zone.pentagon_zone,...
-    sm.sub{p}.session{s}.trial{k}.zone.rel_pentagon_zone,...
-    sm.sub{p}.session{s}.trial{k}.zone.pentagon_entry]=sm_wp10_coordinatesPentagon(x,...
-    y,cP_x,cP_y,data_length);
-
-[sm.sub{p}.session{s}.trial{k}.zone.triangle_zone,....
-    sm.sub{p}.session{s}.trial{k}.zone.rel_triangle_zone,...
-    sm.sub{p}.session{s}.trial{k}.zone.triangle_entry]=sm_wp10_coordinatesAlleys(x,...
-    y,tri_x,tri_y,data_length);
-
-[sm.sub{p}.session{s}.trial{k}.zone.rectangle_zone,...
-    sm.sub{p}.session{s}.trial{k}.zone.rel_rectangle_zone,...
-    sm.sub{p}.session{s}.trial{k}.zone.rectangle_entry]= sm_wp10_coordinatesAlleys(x,...
-    y,rec_x,rec_y,data_length);
-
-[sm.sub{p}.session{s}.trial{k}.time.alley_time,...
-    sm.sub{p}.session{s}.trial{k}.time.pentagon_time,...
-    sm.sub{p}.session{s}.trial{k}.time.triangle_time,...
-    sm.sub{p}.session{s}.trial{k}.time.rectangle_time]=sm_wp10_time(sm.sub{p}.session{s}.trial{k}.result.time,...
-    sm.sub{p}.session{s}.trial{k}.zone.rel_alley_zone,...
-    sm.sub{p}.session{s}.trial{k}.zone.rel_pentagon_zone,...
-    sm.sub{p}.session{s}.trial{k}.zone.rel_triangle_zone,...
-    sm.sub{p}.session{s}.trial{k}.zone.rel_rectangle_zone);
-
-fprintf('Zone analysis done for %d, session %d, file no %d.\n', subject, session, k);
-%% Exploration-Analysis 
-
-% Arm score and Path score as indicators of alley-exploration
-sm.sub{p}.session{s}.trial{k}.result.arm_explored=sm_wp10_armExplored(sm.sub{p}.session{s}.trial{k}.zone.alley_zone);
-sm.sub{p}.session{s}.trial{k}.result.arm_score=sm_wp10_armScore(sm.sub{p}.session{s}.trial{k}.zone.alley_entry);
-sm.sub{p}.session{s}.trial{k}.result.path_explored=sm_wp10_pathExplored(sm.sub{p}.session{s}.trial{k}.zone.alley_zone_out,...
-    sm.sub{p}.session{s}.trial{k}.zone.alley_zone_in,...
-    sm.sub{p}.session{s}.trial{k}.zone.rectangle_zone,...
-    sm.sub{p}.session{s}.trial{k}.zone.triangle_zone);
-sm.sub{p}.session{s}.trial{k}.result.path_score=sm_wp10_pathScore(sm.sub{p}.session{s}.trial{k}.zone.alley_entry_out,...
-    sm.sub{p}.session{s}.trial{k}.zone.alley_entry_in,...
-    sm.sub{p}.session{s}.trial{k}.zone.rectangle_entry,...
-    sm.sub{p}.session{s}.trial{k}.zone.triangle_entry);
-
-% Success
-success_criterium = 0.1; % cut-off proximity to to goal; change value if necessary 
-[sm.sub{p}.session{s}.trial{k}.result.success, sm.sub{p}.session{s}.trial{k}.result.success_ego,...
-    sm.sub{p}.session{s}.trial{k}.result.correct_final_alley]=sm_wp10_success(success_criterium,...
-    sm.sub{p}.session{s}.trial{k}.result.final_distance,...
-    sm.sub{p}.session{s}.trial{k}.result.final_distance_ego,...
-    sm.sub{p}.session{s}.trial{k}.trial_goal,...
-    sm.sub{p}.session{s}.trial{k}.chosen_goal_str);
-
-% Direct path to target
-sm.sub{p}.session{s}.trial{k}.result.direct_path=sm_wp10_directPath(sm.sub{p}.session{s}.trial{k}.start,...
-    sm.sub{p}.session{s}.trial{k}.goal,...
-    sm.sub{p}.session{s}.trial{k}.result.success,...
-    sm.sub{p}.session{s}.trial{k}.zone.alley_entry,...
-    sm.sub{p}.session{s}.trial{k}.zone.rectangle_entry,...
-    sm.sub{p}.session{s}.trial{k}.zone.triangle_entry);
-
-% Search strategies
-[sm.sub{p}.session{s}.trial{k}.searchStrategy.direct,...
-    sm.sub{p}.session{s}.trial{k}.searchStrategy.egocentric,...
-    sm.sub{p}.session{s}.trial{k}.searchStrategy.allocentric,...
-    sm.sub{p}.session{s}.trial{k}.searchStrategy.failed,...
-    sm.sub{p}.session{s}.trial{k}.searchStrategy.reoriented,...
-    sm.sub{p}.session{s}.trial{k}.searchStrategy.serial,...
-    sm.sub{p}.session{s}.trial{k}.searchStrategy.central_focus,...
-    sm.sub{p}.session{s}.trial{k}.searchStrategy.random_search,...
-    sm.sub{p}.session{s}.trial{k}.searchStrategy.unclassified,...
-    sm.sub{p}.session{s}.trial{k}.result.search_strategy_no]=sm_wp10_searchStrategy(sm.sub{p}.session{s}.trial{k}.trial_condition,...
-    sm.sub{p}.session{s}.trial{k}.result.direct_path,...
-    sm.sub{p}.session{s}.trial{k}.result.success,...
-    sm.sub{p}.session{s}.trial{k}.result.success_ego,...
-    sm.sub{p}.session{s}.trial{k}.result.arm_explored,...
-    sm.sub{p}.session{s}.trial{k}.result.path_explored,...
-    sm.sub{p}.session{s}.trial{k}.result.path_score,...
-    sm.sub{p}.session{s}.trial{k}.zone.rel_pentagon_zone,...
-    sm.sub{p}.session{s}.trial{k}.zone.alley_entry,...
-    sm.sub{p}.session{s}.trial{k}.zone.rectangle_entry,...
-    sm.sub{p}.session{s}.trial{k}.zone.triangle_entry);
-
-fprintf('Exploration analysis done for %d, session %d, file no %d.\n', subject, session, k);
+% %% Marker for excluding trials % TBD 
+% % Criteria: timeout, any start-goal combination where direct path is ambiguous (S2-G11, S3-G14, S6-G3, S7-G6)
+% % ... or no movement/very short trial time (i.e. path_abs=0, body_rot_abs=0, or time < 3)
+% sm.sub{p}.session{s}.trial{k}.exclude=0;
+% if sm.sub{p}.session{s}.trial{k}.chosen_alley_int==999
+%     sm.sub{p}.session{s}.trial{k}.exclude=1;
+%     fprintf('Trial %d marked for exclusion due to timeout.\n',k);
+% elseif (sm.sub{p}.session{s}.trial{k}.start==2 && sm.sub{p}.session{s}.trial{k}.goal==11) ...
+%         || (sm.sub{p}.session{s}.trial{k}.start==3 && sm.sub{p}.session{s}.trial{k}.goal==14) ...
+%         || (sm.sub{p}.session{s}.trial{k}.start==6 && sm.sub{p}.session{s}.trial{k}.goal==3) ...
+%         || (sm.sub{p}.session{s}.trial{k}.start==7 && sm.sub{p}.session{s}.trial{k}.goal==6)
+%     sm.sub{p}.session{s}.trial{k}.exclude=1;
+%     fprintf('Trial %d marked for exclusion due to ambiguous path between start %d and goal %d.\n',...
+%         k,sm.sub{p}.session{s}.trial{k}.start,sm.sub{p}.session{s}.trial{k}.goal);
+% elseif sm.sub{p}.session{s}.trial{k}.trial_condition ~=4 % only for navigational trials
+%     if (sm.sub{p}.session{s}.trial{k}.result.distance_traveled<=0.1 ...
+%             || sm.sub{p}.session{s}.trial{k}.result.body_rotation==0 ...
+%             || sm.sub{p}.session{s}.trial{k}.result.time < 3)
+%         sm.sub{p}.session{s}.trial{k}.exclude=1;
+%         disp('Trial %d marked for exclusion due no movement/short trial time.\n');
+%     end
+% end
 
 % save data
 save(fullfile(folderOut, targetFileName_Subject),'sm', '-append'); 
