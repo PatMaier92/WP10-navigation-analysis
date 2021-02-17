@@ -235,7 +235,9 @@ data_length=length(x); sdata_length=(size(x))-1;% vector length & shortend lengt
 sm.sub{p}.session{s}.trial{k}.x_start=x(1,1); sm.sub{p}.session{s}.trial{k}.y_start=y(1,1);
 sm.sub{p}.session{s}.trial{k}.x_end=x(end,1); sm.sub{p}.session{s}.trial{k}.y_end=y(end,1);
       
-%% Get info depending on single trial: Feedback, Trial-Type/Condition, Goal & Start Position from trial_results.csv
+%% Get single trial info from trial_results.csv
+sm.sub{p}.session{s}.session_duration=round(minutes(trial_data.timestamp(numel(files),1) - trial_data.timestamp(1,1))); % provide session duration
+
 sm.sub{p}.session{s}.trial{k}.block=trial_data.block_num(k,1);
 sm.sub{p}.session{s}.trial{k}.trial_num=trial_data.trial_num(k,1);
 sm.sub{p}.session{s}.trial{k}.trial_in_block=trial_data.trial_num_in_block(k,1);     
@@ -246,14 +248,17 @@ sm.sub{p}.session{s}.trial{k}.feedback=trial_data.trial_feedback(k,1);
 sm.sub{p}.session{s}.trial{k}.trial_type=trial_data.trial_type(k,1);
 sm.sub{p}.session{s}.trial{k}.trial_condition=sm_wp10_trialCondition(sm.sub{p}.session{s}.trial{k}.trial_type,sm.sub{p}.session{s}.trial{k}.fb);
 
-sm.sub{p}.session{s}.trial{k}.trial_goal_identity=sm_wp10_trialGoalIdentity(string(trial_data.trial_goal_identity(k,1)));
+n_goals=4; 
+sm.sub{p}.session{s}.trial{k}.trial_goal_identity=sm_wp10_trialGoalIdentity(n_goals, string(trial_data.trial_goal_identity(k,1)));
+
 sm.sub{p}.session{s}.trial{k}.trial_goal=trial_data.trial_goal(k,1);
-[sm.sub{p}.session{s}.trial{k}.goal_x,sm.sub{p}.session{s}.trial{k}.goal_y,sm.sub{p}.session{s}.trial{k}.goal]=sm_wp10_trialGoal(sm.sub{p}.session{s}.trial{k}.trial_goal, sm.coord.goal_x,sm.coord.goal_y);
+[sm.sub{p}.session{s}.trial{k}.goal_x,sm.sub{p}.session{s}.trial{k}.goal_y,...
+    sm.sub{p}.session{s}.trial{k}.goal_int,sm.sub{p}.session{s}.trial{k}.goal_str,...
+    sm.sub{p}.session{s}.trial{k}.goal_alley]=sm_wp10_trialGoal(char(sm.sub{p}.session{s}.trial{k}.trial_goal),...
+    sm.coord.goal_x,sm.coord.goal_y,goal_locs,alley_locs);
 
-[sm.sub{p}.session{s}.trial{k}.chosen_goal_int,sm.sub{p}.session{s}.trial{k}.chosen_goal_str]=sm_wp10_chosenGoalAlley(string(trial_data.chosen_goal(k,1)));
-
-sm.sub{p}.session{s}.trial{k}.trial_startalley=trial_data.trial_player(k,1);
-[sm.sub{p}.session{s}.trial{k}.start]=sm_wp10_trialStart(sm.sub{p}.session{s}.trial{k}.trial_startalley);
+sm.sub{p}.session{s}.trial{k}.trial_startpos=trial_data.trial_player(k,1);
+[sm.sub{p}.session{s}.trial{k}.start]=sm_wp10_trialStart(sm.sub{p}.session{s}.trial{k}.trial_startpos,start_locs);
 
 %%  Variables depending on starting-positions
 % CHECK velocity value used to compute ideal time. % 
@@ -270,6 +275,9 @@ sm.sub{p}.session{s}.trial{k}.trial_startalley=trial_data.trial_player(k,1);
     sm.sub{p}.session{s}.trial{k}.goal_x_ego, sm.sub{p}.session{s}.trial{k}.goal_y_ego);
  
 %% Block 3: Data analysis, i.e. calculcation of variables 
+%% Chosen goal location % TBD
+% [sm.sub{p}.session{s}.trial{k}.chosen_goal_int,sm.sub{p}.session{s}.trial{k}.chosen_goal_str]=sm_wp10_chosenGoalAlley(string(trial_data.chosen_goal(k,1)));
+
 %% Time-Analysis using timestamp
     b=t(end,:); a=t(1,1);
     sm.sub{p}.session{s}.trial{k}.result.time=sm_time(a,b); % total amount of time
