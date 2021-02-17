@@ -29,13 +29,18 @@ end
 [~,~,a] = xlsread(fullfile(folderIn, oldname));
         b=regexp(a,',','split');
         c=reshape([b{:}],numel(b{1}),[])';
-        c(:,3)=[]; % delete third coloumn, containing x-rotation
-        c(:,4)=[]; % delete fifth coloumn, containing y-rotation
-        c(:,5)=[]; % delete seventh coloumn
-        c(strcmp(c(:,5),'True'),:) = [];
-        c(strcmp(c(:,6),'1'),:) = []; % ---> trialEvent ausschneiden
-        c(1:3,:)=[]; % delete first three rows to get rid of header and false information
-        c(:,5)=[]; % delete "gameIsPaused coloumn
+        % delete rows
+        c(1:3,:)=[]; % delete first three rows to get rid of header and info from last trial
+        c(strcmp(c(:,5),'True'),:) = []; % remove gameIsPaused == True
+        if Session~="3"
+            c(strcmp(c(:,6),'1'),:) = []; % trialEvent ausschneiden, not for motor control task (session 3)
+        end
+        % delete columns 
+        c(:,8)=[]; % delete 8th column, containing gameIsPaused
+        c(:,7)=[]; % delete 7th column, containing z-rotation
+        c(:,5)=[]; % delete 5th column, containing x-rotation
+        c(:,3)=[]; % delete 3rh column, containing y-movement (upwards) 
+        % delimiter 
         c = strrep(c, '.', ','); % comma, not points as decimal character 
     new_name = strrep(['dt_' oldname],'csv','xlsx');
     new_file = fullfile(folderIn, [Group '_' ID '_' Session '_' new_name]);
