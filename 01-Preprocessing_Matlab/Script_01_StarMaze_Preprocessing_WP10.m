@@ -130,7 +130,7 @@ start_locs=["Player_MA" "Player_MB" "Player_MC" "Player_MD" "Player_ME" "Player_
 alley_locs=["A" "B" "C" "D" "E" "F" "G" "H" "I" "J"];
 
 % Create Test-Figure plot 
-% sm_wp10_testfig(polyshape_array,sm.coord.goal_x,sm.coord.goal_y,sm.coord.start_x,sm.coord.start_y, goal_locs);
+% sm_wp10_testfig("s_maze",polyshape_array,sm.coord.goal_x,sm.coord.goal_y,sm.coord.start_x,sm.coord.start_y,goal_locs);
 
 %% Practise maze creation (motor control) 
 % Min-Max-values
@@ -163,7 +163,7 @@ pract_goal_locs=["1", "2", "3", "4", "5", "6", "7", "8" , "9", "10" ];
 pract_start_locs="Player_P0"; 
 
 % Create Test-Figure plot 
-% sm_wp10_testfig(polyshape_array,sm.coord.goal_x,sm.coord.goal_y,sm.coord.start_x,sm.coord.start_y, goal_locs);
+% sm_wp10_testfig("p_maze",pract_polyshape,pm.coord.goal_x,pm.coord.goal_y,pm.coord.start_x,pm.coord.start_y,pract_goal_locs);
 
 %% Block 2: Data preprocessing
 rand_dict={};
