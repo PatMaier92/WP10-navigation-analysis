@@ -189,7 +189,7 @@ for session=1:sessionNo
     log_data=log_data(contains(log_data,'ID is')); 
     [rand_dict]=sm_wp10_preprocLogData(log_data, subject, pstr, sstr); 
     
-    % TBD: actually use rand_dict data to check proper randomization 
+    % TBD: rand_dict data check proper randomization 
 
 %% Participant,  Workpackage, Group information
 s=session; % s=session --> row, p=participant --> coloumn
@@ -279,36 +279,20 @@ else
         sm.sub{p}.session{s}.trial{k}.x_start, sm.sub{p}.session{s}.trial{k}.y_start, sm.coord.start_x, ...
         sm.coord.start_y, alley_x, alley_y, pentagon_x, pentagon_y, alley_full_x, alley_full_y, rec_x, rec_y, cP);
     
-        % test plot
-        figure;
-        plot(polyshape_array);
-        hold on
-        plot(x_line, y_line, 'k-', x_line_ego, y_line_ego, 'r-');
-        xlim([0 1]);
-        ylim([0 1]);
-        hold off
-        
-% NEW 
-%     % interpolate data for further analysis
-%     interp_crit=0.0001;
-%     [xi_al,yi_al,xi_eg,yi_eg]=sm_wp1_dataInterpolation(interp_crit, ...
-%         x_line, y_line, x_line_ego, y_line_ego);
+    % interpolate data for further analysis
+    interp_crit=0.0001;
+    [xi_al,yi_al,xi_eg,yi_eg]=sm_wp10_dataInterpolation(interp_crit, ...
+        x_line, y_line, x_line_ego, y_line_ego);
 
-% OLD
-%     % interpolate data for further analysis
-%     [xi_al,yi_al,xi_eg,yi_eg]=sm_wp10_dataInterpolation(sm.sub{p}.session{s}.trial{k}.x_start,sm.sub{p}.session{s}.trial{k}.y_start,x_line, y_line,...
-%         x_line_ego, y_line_ego,sm.sub{p}.session{s}.trial{k}.goal_x,sm.sub{p}.session{s}.trial{k}.goal_y,...
-%         sm.sub{p}.session{s}.trial{k}.goal_x_ego, sm.sub{p}.session{s}.trial{k}.goal_y_ego);
-
-%     % test plot
-%     figure;
-%     plot(polyshape_array);
-%     hold on
-%     plot(x_line, y_line, 'k+', xi_al, yi_al, 'k-',...
-%         x_line_ego, y_line_ego, 'rx', xi_eg, yi_eg, 'r-');
-%     xlim([0 1]);
-%     ylim([0 1]);
-%     hold off
+    % test plot
+    figure;
+    plot(polyshape_array);
+    hold on
+    plot(x_line, y_line, 'k+', xi_al, yi_al, 'k-',...
+        x_line_ego, y_line_ego, 'rx', xi_eg, yi_eg, 'r-');
+    xlim([0 1]);
+    ylim([0 1]);
+    hold off
 
     %% Block 3: Data analysis, i.e. calculcation of variables
     %% Chosen goal location % TBD
