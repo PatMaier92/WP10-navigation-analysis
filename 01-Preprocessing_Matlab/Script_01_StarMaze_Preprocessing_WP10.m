@@ -265,12 +265,14 @@ sm.sub{p}.session{s}.trial{k}.trial_startpos=trial_data.trial_player(k,1);
 % analysis of path accuracy and time 
 if sm.sub{p}.session{s}.trial{k}.trial_condition==4
     disp('To do'); 
+    % TBD 
     % total time for trial, cumulative path length 
     % add dummies for all other variables
 else 
 %% For all other navigation trials 
     %% Calculate variables depending on single trial settings
     % ideal path coordinates & length, ideal egocentric path coordinates & length
+    % TBD: egocentric paths for inner starts, currently copy of original path 
     [sm.sub{p}.session{s}.trial{k}.goal_x_ego, sm.sub{p}.session{s}.trial{k}.goal_y_ego, x_line, y_line, x_line_ego, y_line_ego,...
         sm.sub{p}.session{s}.trial{k}.ideal_distance, sm.sub{p}.session{s}.trial{k}.ideal_distance_ego,...
         sm.sub{p}.session{s}.trial{k}.ideal_headturnNo,...
@@ -278,12 +280,13 @@ else
         sm.sub{p}.session{s}.trial{k}.goal_x, sm.sub{p}.session{s}.trial{k}.goal_y, sm.sub{p}.session{s}.trial{k}.goal_int,...
         sm.sub{p}.session{s}.trial{k}.x_start, sm.sub{p}.session{s}.trial{k}.y_start, sm.coord.start_x, ...
         sm.coord.start_y, alley_x, alley_y, pentagon_x, pentagon_y, alley_full_x, alley_full_y, rec_x, rec_y, cP);
-    
-    % interpolate data for further analysis
-    interp_crit=0.0001;
-    [xi_al,yi_al,xi_eg,yi_eg]=sm_wp10_dataInterpolation(interp_crit, ...
-        x_line, y_line, x_line_ego, y_line_ego);
 
+    % interpolate data for further analysis
+    % using 'interparc' function by John D'Errico (Matlab File Exchanger) 
+    [xi_al,yi_al,xi_eg,yi_eg]=sm_wp10_dataInterpolation(x_line, ...
+        y_line, sm.sub{p}.session{s}.trial{k}.ideal_distance, ...
+        x_line_ego, y_line_ego, sm.sub{p}.session{s}.trial{k}.ideal_distance_ego);
+    
     % test plot
     figure;
     plot(polyshape_array);
@@ -293,6 +296,42 @@ else
     xlim([0 1]);
     ylim([0 1]);
     hold off
+    
+    % zone analysis for ideal paths
+    [ideal_alley_zone, ideal_rel_alley_zone,...
+        sm.sub{p}.session{s}.trial{k}.zone.ideal_alley_entry]=sm_wp10_coordinatesZonesStatic(xi_al,...
+        yi_al, alley_full_x, alley_full_y, length(xi_al));
+    
+    [ideal_rectangle_zone, ideal_rel_rectangle_zone,...
+        sm.sub{p}.session{s}.trial{k}.zone.ideal_rectangle_entry]= sm_wp10_coordinatesZonesStatic(xi_al,...
+        yi_al, rec_x, rec_y, length(xi_al));
+    
+    [ideal_alley_entry_mat]=sm_wp10_coordinatesZonesDynamic(xi_al,...
+        yi_al, alley_full_x, alley_full_y, length(xi_al));
+    [uniq_alley]=unique(ideal_alley_entry_mat,'rows');
+    
+    [ideal_rectangle_entry_mat]=sm_wp10_coordinatesZonesDynamic(xi_al,...
+        yi_al, rec_x, rec_y, length(xi_al));
+    [uniq_rect]=unique(ideal_rectangle_entry_mat,'rows');
+    uniq_rect=uniq_rect(2:end,:); % remove first row (start), always zeroes
+    
+    % zone analysis for ideal ego paths
+    [ideal_ego_alley_zone, ideal_ego_rel_alley_zone,...
+        sm.sub{p}.session{s}.trial{k}.zone.ideal_ego_alley_entry]=sm_wp10_coordinatesZonesStatic(xi_eg,...
+        yi_eg, alley_full_x, alley_full_y, length(xi_eg));
+    
+    [ideal_ego_rectangle_zone, ideal_ego_rel_rectangle_zone,...
+        sm.sub{p}.session{s}.trial{k}.zone.ideal_ego_rectangle_entry]= sm_wp10_coordinatesZonesStatic(xi_eg,...
+        yi_eg, rec_x, rec_y, length(xi_eg));
+    
+    [ideal_ego_alley_entry_mat]=sm_wp10_coordinatesZonesDynamic(xi_eg,...
+        yi_eg, alley_full_x, alley_full_y, length(xi_eg));
+    [uniq_e_alley]=unique(ideal_ego_alley_entry_mat,'rows');
+    
+    [ideal_ego_rectangle_entry_mat]=sm_wp10_coordinatesZonesDynamic(xi_eg,...
+        yi_eg, rec_x, rec_y, length(xi_eg));
+    [uniq_e_rect]=unique(ideal_ego_rectangle_entry_mat,'rows');
+    uniq_e_rect=uniq_e_rect(2:end,:); % remove first row (start), always zeroes
 
     %% Block 3: Data analysis, i.e. calculcation of variables
     %% Chosen goal location % TBD
