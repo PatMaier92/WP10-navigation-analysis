@@ -345,8 +345,7 @@ else
     %% Time-Analysis using timestamp
     b=t(end,:); a=t(1,1);
     sm.sub{p}.session{s}.trial{k}.result.time=sm_time(a,b); % total amount of time
-    sm.sub{p}.session{s}.trial{k}.result.time_accuracy=sm_ac(sm.sub{p}.session{s}.trial{k}.result.time, sm.sub{p}.session{s}.trial{k}.ideal_time);% Time-Accuracy
-    
+     
     fprintf('Time analysis done for %d, session %d, file no %d.\n', subject, session, k);
     %% Coordinate-Analysis using x & y, z
     % Path-Analysis
@@ -387,10 +386,7 @@ else
     sm.sub{p}.session{s}.trial{k}.result.distance_accuracy=sm_ac(sm.sub{p}.session{s}.trial{k}.result.avg_distance,sm.sub{p}.session{s}.trial{k}.ideal_avg_distance);
     
     fprintf('Distance analysis done for %d, session %d, file no %d.\n', subject, session, k);
-    %% Egocentric variables
-    % Time
-    %     sm.sub{p}.session{s}.trial{k}.result.time_accuracy_ego=sm_ac(sm.sub{p}.session{s}.trial{k}.result.time, sm.sub{p}.session{s}.trial{k}.ideal_time_ego);
-    
+    %% Egocentric variables    
     % Calculating PATH-ACCURACY to egocentric target
     sm.sub{p}.session{s}.trial{k}.result.path_accuracy_ego= sm_ac(sm.sub{p}.session{s}.trial{k}.result.distance_traveled,sm.sub{p}.session{s}.trial{k}.ideal_path_ego);
     dist_to_goal_ego=0;
@@ -645,7 +641,7 @@ col_header={'wp','date_analysis','id','sex','group','session',...
     'goal_position','goal_identity','chosen_alley'};
 
 % main variables
-col_header_2={'time_abs','time_accuracy','path_abs','path_accuracy','final_distance_to_goal_abs',...
+col_header_2={'time_abs','path_abs','path_accuracy','final_distance_to_goal_abs',...
     'av_distance_to_goal_abs','distance_accuracy',...
     'path_accuracy_ego','final_distance_to_ego_abs',...
     'success','success_ego','correct_final_alley','direct_path',...
@@ -687,7 +683,7 @@ new_file = fullfile(folderOut, file_name);
 
 % write data
 xlswrite(new_file,strrep([group_var ...
-    sm.sub{p}.session{s}.trial{k}.result.time sm.sub{p}.session{s}.trial{k}.result.time_accuracy ...
+    sm.sub{p}.session{s}.trial{k}.result.time ...
     sm.sub{p}.session{s}.trial{k}.result.distance_traveled sm.sub{p}.session{s}.trial{k}.result.path_accuracy sm.sub{p}.session{s}.trial{k}.result.final_distance ...
     sm.sub{p}.session{s}.trial{k}.result.avg_distance sm.sub{p}.session{s}.trial{k}.result.distance_accuracy ...
     sm.sub{p}.session{s}.trial{k}.result.path_accuracy_ego sm.sub{p}.session{s}.trial{k}.result.final_distance_ego ...
