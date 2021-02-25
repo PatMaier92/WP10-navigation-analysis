@@ -334,9 +334,14 @@ else
     uniq_e_rect=uniq_e_rect(2:end,:); % remove first row (start), always zeroes
 
     %% Block 3: Data analysis, i.e. calculcation of variables
-    %% Chosen goal location % TBD
-    % [sm.sub{p}.session{s}.trial{k}.chosen_goal_int,sm.sub{p}.session{s}.trial{k}.chosen_goal_str]=sm_wp10_chosenGoalAlley(string(trial_data.chosen_goal(k,1)));
-    
+    %% Chosen goal location
+        %% Chosen goal location
+    [sm.sub{p}.session{s}.trial{k}.chosen_goal_int,...
+        sm.sub{p}.session{s}.trial{k}.chosen_goal_str,...
+        sm.sub{p}.session{s}.trial{k}.chosen_alley_int,...
+        sm.sub{p}.session{s}.trial{k}.obj_at_chosen_loc]=sm_wp10_chosenGoal(rand_dict,...
+        pstr, sstr, char(trial_data.chosen_goal(k,1)), goal_locs, alley_locs);
+      
     %% Time-Analysis using timestamp
     b=t(end,:); a=t(1,1);
     sm.sub{p}.session{s}.trial{k}.result.time=sm_time(a,b); % total amount of time
