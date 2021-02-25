@@ -45,7 +45,7 @@ sm_trial_data$goal_identity <- factor(sm_trial_data$goal_identity, levels=c(1, 2
 sm_trial_data$search_strategy_no <- factor(sm_trial_data$search_strategy_no, levels=c(1,2,3,4,5,6), 
                                      labels=c("direct_strategy","central_focus","reoriented","serial","random","unclassified"))
 
-# add variable with block info (ADD THIS TO MATLAB)
+# add variable with block info
 sm_trial_data <- sm_trial_data  %>%
   mutate(block=ifelse(session==2 & trial %in% 1:5, 1,
                       ifelse(session==2 & trial %in% 6:10, 2,
@@ -53,6 +53,7 @@ sm_trial_data <- sm_trial_data  %>%
                                     ifelse(session==1 & trial %in% 1:13, 1,
                                            ifelse(session==1 & trial %in% 14:26, 2,
                                                   ifelse(session==1 &trial %in% 27:39, 3, 4)))))))
+# TBD think about this: 3 or 4 or 6 blocks?
 sm_trial_data <- sm_trial_data %>%
   mutate(block=ifelse(block=="4" & goal_position==sm_trial_data$goal_position[1], 1,
                       ifelse(block=="4" & goal_position==sm_trial_data$goal_position[14], 2,
@@ -62,7 +63,7 @@ sm_trial_data$block <- factor(sm_trial_data$block, levels=c(1, 2, 3),
                             labels=c("1", "2", "3"))
 
 
-# add variable with trial in block info (ADD THIS TO MATLAB)
+# add variable with trial in block info
 assign_trial_in_block <- function(i, s, b, t){
   
   temp <- sm_trial_data %>%
@@ -78,7 +79,7 @@ sm_trial_data <- sm_trial_data %>%
   mutate(trial_in_block=purrr::pmap_dbl(list(id, session, block, trial), assign_trial_in_block))
 
 
-# add variable with trial in condition info (ADD THIS TO MATLAB)
+# add variable with trial in condition info
 assign_trial_in_cond <- function(i, s, c, t){
   
   temp <- sm_trial_data %>%
@@ -94,7 +95,7 @@ sm_trial_data <- sm_trial_data %>%
   mutate(trial_in_cond=purrr::pmap_dbl(list(id, session, trial_condition, trial), assign_trial_in_cond))
 
 
-# add variable with trial in block in condition info (ADD THIS TO MATLAB)
+# add variable with trial in block in condition info
 assign_trial_in_block_in_cond <- function(i, s, b, c, t){
   
   temp <- sm_trial_data %>%
