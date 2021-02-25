@@ -390,44 +390,44 @@ else
     sm.sub{p}.session{s}.trial{k}.result.velocity=sm.sub{p}.session{s}.trial{k}.result.distance_traveled/sm.sub{p}.session{s}.trial{k}.result.time;
 
     fprintf('Path, distance and velocity analysis done for %d, session %d, file no %d.\n', subject, session, k);
-    %% Egocentric variables    
-    % Calculating PATH-ACCURACY to egocentric target
-    sm.sub{p}.session{s}.trial{k}.result.path_accuracy_ego= sm_ac(sm.sub{p}.session{s}.trial{k}.result.distance_traveled,sm.sub{p}.session{s}.trial{k}.ideal_path_ego);
-    dist_to_goal_ego=0;
+    %% Egocentric variables   
+    % Path analysis
+    dist_to_goal_ego=0; % reset/initiate variables
     for i=1:sdata_length
-        dist_to_goal_ego=dist_to_goal_ego+sum(sm_distance(x(i),sm.sub{p}.session{s}.trial{k}.goal_x_ego,y(i),sm.sub{p}.session{s}.trial{k}.goal_y_ego)); % cumulative distance to egocentric target
+        % PATH TO TARGET: same as above
+        % DISTANCE TO EGO TARGET
+        % actual cumulative distance to egocentric target (used in distance analysis)
+       dist_to_goal_ego=dist_to_goal_ego+sum(sm_distance(x(i),sm.sub{p}.session{s}.trial{k}.goal_x_ego,y(i),sm.sub{p}.session{s}.trial{k}.goal_y_ego)); 
     end
-    % FINAL DISTANCE TO EGOCENTRIC TARGET
-    sm.sub{p}.session{s}.trial{k}.result.final_distance_ego=sm_distance(sm.sub{p}.session{s}.trial{k}.goal_x_ego,x(end,:),sm.sub{p}.session{s}.trial{k}.goal_y_ego,y(end,:));
     
-    % % AVERAGE DISTANCE TO EGOCENTRIC TARGET
-    %     dtet=dist_to_goal_ego./sdata_length;
-    %     sm.sub{p}.session{s}.trial{k}.result.avg_distance_ego=dtet(1,1);
-    % % Cumulative ideal distance to egocentric target
-    %     sm.sub{p}.session{s}.trial{k}.ideal_dist_to_goal_ego=0; xi_le=length(xi_eg);
-    %     if sm.sub{p}.session{s}.trial{k}.goal_y_ego <= yi_eg(1,1)
-    %         reference_y=yi_eg(1,1);
-    %         reference_x=xi_eg(1,1);
-    %     else
-    %         reference_y=sm.sub{p}.session{s}.trial{k}.goal_y_ego;
-    %         reference_x=sm.sub{p}.session{s}.trial{k}.goal_x_ego;
-    %     end
-    %
-    %     for i=1:xi_le
-    %         sm.sub{p}.session{s}.trial{k}.ideal_dist_to_goal_ego=sm.sub{p}.session{s}.trial{k}.ideal_dist_to_goal_ego+sum(sm_distance(xi_eg(i),reference_x,yi_eg(i),reference_y));
-    %     end
+    % Distance analysis 
+    % FINAL DISTANCE TO EGO TARGET 
+    sm.sub{p}.session{s}.trial{k}.result.final_distance_ego=sm_distance(sm.sub{p}.session{s}.trial{k}.goal_x_ego,sm.sub{p}.session{s}.trial{k}.x_end,sm.sub{p}.session{s}.trial{k}.goal_y_ego,sm.sub{p}.session{s}.trial{k}.y_end);
     
-    % % Average ideal distance to egoocentric target
-    %     idtet=sm.sub{p}.session{s}.trial{k}.ideal_dist_to_goal_ego./xi_le;
-    %     sm.sub{p}.session{s}.trial{k}.ideal_avg_dist_to_goal_ego=idtet(1,1);
-    % % DISTANCE-ACCURACY regarding egocentric target
-    %     sm.sub{p}.session{s}.trial{k}.result.distance_accuracy_ego=sm_ac(sm.sub{p}.session{s}.trial{k}.result.avg_distance_ego,sm.sub{p}.session{s}.trial{k}.ideal_avg_dist_to_goal_ego);
-    % % Ideal velocity ego target
-    %     sm.sub{p}.session{s}.trial{k}.ideal_velocity_ego=sm.sub{p}.session{s}.trial{k}.ideal_path_ego/sm.sub{p}.session{s}.trial{k}.ideal_time_ego;
-    % % Velocity-accuracy egocentric target
-    %     sm.sub{p}.session{s}.trial{k}.result.velocity_accuracy_ego=sm_ac(sm.sub{p}.session{s}.trial{k}.result.velocity, sm.sub{p}.session{s}.trial{k}.ideal_velocity_ego);
+    % AVERAGE DISTANCE TO EGO TARGET
+    sm.sub{p}.session{s}.trial{k}.result.avg_distance_ego=dist_to_goal_ego/sdata_length(1);
     
-    fprintf('Egocentric variable analysis done for %d, session %d, file no %d.\n', subject, session, k);
+    % Cumulative IDEAL EGO DISTANCE TO TARGET
+    sm.sub{p}.session{s}.trial{k}.ideal_distance_ego_interpol=0;id_dist_to_ego_goal=0; % start-initiation
+    xi_length=length(xi_eg)-1;
+    for i=1:xi_length
+        % ideal cumulative distance traveled (based on interpolated values)
+        sm.sub{p}.session{s}.trial{k}.ideal_distance_ego_interpol=sm.sub{p}.session{s}.trial{k}.ideal_distance_ego_interpol+sum(sm_distance(xi_eg(i),xi_eg(i+1),yi_eg(i),yi_eg(i+1)));% cumulative distance traveled
+        % ideal cumulative distance to egocentric target 
+        id_dist_to_ego_goal=id_dist_to_ego_goal+sum(sm_distance(xi_eg(i),sm.sub{p}.session{s}.trial{k}.goal_x_ego,yi_eg(i),sm.sub{p}.session{s}.trial{k}.goal_y_ego));
+    end
+    
+    % IDEAL AVERAGE DISTANCE TO EGO TARGET
+    sm.sub{p}.session{s}.trial{k}.ideal_avg_distance_ego=id_dist_to_ego_goal/xi_length;
+    
+    % PATH ACCURACY TO EGO TARGET
+    sm.sub{p}.session{s}.trial{k}.result.path_accuracy_ego=sm_ac(sm.sub{p}.session{s}.trial{k}.result.distance_traveled,sm.sub{p}.session{s}.trial{k}.ideal_distance_ego_interpol);
+    % sm.sub{p}.session{s}.trial{k}.result.path_accuracy_ego=sm_ac(sm.sub{p}.session{s}.trial{k}.result.distance_traveled,sm.sub{p}.session{s}.trial{k}.ideal_distance_ego);
+    
+    % DISTANCE ACCURACY TO TARGET 
+    sm.sub{p}.session{s}.trial{k}.result.distance_accuracy_ego=sm_ac(sm.sub{p}.session{s}.trial{k}.result.avg_distance_ego,sm.sub{p}.session{s}.trial{k}.ideal_avg_distance_ego);
+     
+    fprintf('Egocentric path and distance analysis done for %d, session %d, file no %d.\n', subject, session, k);
     %% Turn & Rotation- Analysis using xy-coordinates
     % Body-Rotation-Analysis
     sm.sub{p}.session{s}.trial{k}.result.body_rotation=0; br=zeros(1,data_length);
