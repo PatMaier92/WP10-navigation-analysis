@@ -342,50 +342,54 @@ else
         sm.sub{p}.session{s}.trial{k}.obj_at_chosen_loc]=sm_wp10_chosenGoal(rand_dict,...
         pstr, sstr, char(trial_data.chosen_goal(k,1)), goal_locs, alley_locs);
       
-    %% Time-Analysis using timestamp
+    %% Time analysis
     b=t(end,:); a=t(1,1);
     sm.sub{p}.session{s}.trial{k}.result.time=sm_time(a,b); % total amount of time
      
     fprintf('Time analysis done for %d, session %d, file no %d.\n', subject, session, k);
-    %% Coordinate-Analysis using x & y, z
-    % Path-Analysis
+    %% Coordinate analysis using x-/y-coordinates
+    % Path analysis
     sm.sub{p}.session{s}.trial{k}.result.distance_traveled=0;dist_to_goal=0; % reset/initiate variables
     for i=1:sdata_length
-        sm.sub{p}.session{s}.trial{k}.result.distance_traveled=sm.sub{p}.session{s}.trial{k}.result.distance_traveled+sum(sm_distance(x(i),x(i+1),y(i),y(i+1)));% cumulative distance traveled
-        dist_to_goal=dist_to_goal+sum(sm_distance(x(i),sm.sub{p}.session{s}.trial{k}.goal_x,y(i),sm.sub{p}.session{s}.trial{k}.goal_y)); % cumulative distance to allocentric target
+        % PATH TO TARGET
+        % actual cumulative distance traveled (used in path accuracy)
+        sm.sub{p}.session{s}.trial{k}.result.distance_traveled=sm.sub{p}.session{s}.trial{k}.result.distance_traveled+sum(sm_distance(x(i),x(i+1),y(i),y(i+1)));
+        % DISTANCE TO TARGET
+        % actual cumulative distance to target (used in distance analysis)
+        dist_to_goal=dist_to_goal+sum(sm_distance(x(i),sm.sub{p}.session{s}.trial{k}.goal_x,y(i),sm.sub{p}.session{s}.trial{k}.goal_y)); 
     end
-    % Calculation path-accuracy
-    sm.sub{p}.session{s}.trial{k}.result.path_accuracy= sm_ac(sm.sub{p}.session{s}.trial{k}.result.distance_traveled,sm.sub{p}.session{s}.trial{k}.ideal_path);
-    % % Velocity
-    %    sm.sub{p}.session{s}.trial{k}.result.velocity= sm.sub{p}.session{s}.trial{k}.result.distance_traveled/sm.sub{p}.session{s}.trial{k}.result.time;
-    % % Ideal velocity allo target
-    %    sm.sub{p}.session{s}.trial{k}.ideal_velocity=sm.sub{p}.session{s}.trial{k}.ideal_path/sm.sub{p}.session{s}.trial{k}.ideal_time;
-    % % Velocity-accuracy allocentric target
-    %    sm.sub{p}.session{s}.trial{k}.result.velocity_accuracy=sm_ac(sm.sub{p}.session{s}.trial{k}.result.velocity, sm.sub{p}.session{s}.trial{k}.ideal_velocity);
-    
-    fprintf('Path analysis done for %d, session %d, file no %d.\n', subject, session, k);
     
     % Distance-analysis
-    % AVERAGE DISTANCE TO REAL TARGET/ allocentric target
-    dtat=dist_to_goal./sdata_length;
-    sm.sub{p}.session{s}.trial{k}.result.avg_distance=dtat(1,1);
+    % FINAL DISTANCE TO TARGET
+    sm.sub{p}.session{s}.trial{k}.result.final_distance=sm_distance(sm.sub{p}.session{s}.trial{k}.goal_x,sm.sub{p}.session{s}.trial{k}.x_end,sm.sub{p}.session{s}.trial{k}.goal_y,sm.sub{p}.session{s}.trial{k}.y_end);
     
-    % FINAL DISTANCE TO REAL TARGET/ allocentric target
-    sm.sub{p}.session{s}.trial{k}.result.final_distance=sm_distance(sm.sub{p}.session{s}.trial{k}.goal_x,x(end,:),sm.sub{p}.session{s}.trial{k}.goal_y, y(end,:));
-    % Cumulative ideal distance to real target/allocentric target
-    sm.sub{p}.session{s}.trial{k}.ideal_distance_traveled=0;id_dist_to_goal=0; % start-initiation
+    % AVERAGE DISTANCE TO TARGET
+    sm.sub{p}.session{s}.trial{k}.result.avg_distance=dist_to_goal/sdata_length(1);
+    
+    % Cumulative IDEAL DISTANCE TO TARGET
+    sm.sub{p}.session{s}.trial{k}.ideal_distance_interpol=0;id_dist_to_goal=0; % start-initiation
     xi_length=length(xi_al)-1;
-    for i=1:xi_length %%% THIS FUNCTION TAKES VERY LONG %%%
-        sm.sub{p}.session{s}.trial{k}.ideal_distance_traveled=sm.sub{p}.session{s}.trial{k}.ideal_distance_traveled+sum(sm_distance(xi_al(i),xi_al(i+1),yi_al(i),yi_al(i+1)));% cumulative distance traveled
-        id_dist_to_goal=id_dist_to_goal+sum(sm_distance(xi_al(i),sm.sub{p}.session{s}.trial{k}.goal_x,yi_al(i),sm.sub{p}.session{s}.trial{k}.goal_y)); % cumulative distance to allocentric target
+    for i=1:xi_length
+        % ideal cumulative distance traveled (based on interpolated values)
+        sm.sub{p}.session{s}.trial{k}.ideal_distance_interpol=sm.sub{p}.session{s}.trial{k}.ideal_distance_interpol+sum(sm_distance(xi_al(i),xi_al(i+1),yi_al(i),yi_al(i+1)));
+        % ideal cumulative distance to target
+        id_dist_to_goal=id_dist_to_goal+sum(sm_distance(xi_al(i),sm.sub{p}.session{s}.trial{k}.goal_x,yi_al(i),sm.sub{p}.session{s}.trial{k}.goal_y));
     end
-    % Ideal AVERAGE DISTANCE TO REAL TARGET/ allocentric target
-    dtat=id_dist_to_goal/xi_length;
-    sm.sub{p}.session{s}.trial{k}.ideal_avg_distance=dtat(1,1);
-    % DISTANCE-ACCURACY target/ allocentric target
-    sm.sub{p}.session{s}.trial{k}.result.distance_accuracy=sm_ac(sm.sub{p}.session{s}.trial{k}.result.avg_distance,sm.sub{p}.session{s}.trial{k}.ideal_avg_distance);
     
-    fprintf('Distance analysis done for %d, session %d, file no %d.\n', subject, session, k);
+    % IDEAL AVERAGE DISTANCE TO TARGET
+    sm.sub{p}.session{s}.trial{k}.ideal_avg_distance=id_dist_to_goal/xi_length;
+    
+    % PATH ACCURACY
+    sm.sub{p}.session{s}.trial{k}.result.path_accuracy=sm_ac(sm.sub{p}.session{s}.trial{k}.result.distance_traveled,sm.sub{p}.session{s}.trial{k}.ideal_distance_interpol);
+    % sm.sub{p}.session{s}.trial{k}.result.path_accuracy=sm_ac(sm.sub{p}.session{s}.trial{k}.result.distance_traveled,sm.sub{p}.session{s}.trial{k}.ideal_distance); 
+    
+    % DISTANCE ACCURACY TO TARGET 
+    sm.sub{p}.session{s}.trial{k}.result.distance_accuracy=sm_ac(sm.sub{p}.session{s}.trial{k}.result.avg_distance,sm.sub{p}.session{s}.trial{k}.ideal_avg_distance);
+     
+    % VELOCITY 
+    sm.sub{p}.session{s}.trial{k}.result.velocity=sm.sub{p}.session{s}.trial{k}.result.distance_traveled/sm.sub{p}.session{s}.trial{k}.result.time;
+
+    fprintf('Path, distance and velocity analysis done for %d, session %d, file no %d.\n', subject, session, k);
     %% Egocentric variables    
     % Calculating PATH-ACCURACY to egocentric target
     sm.sub{p}.session{s}.trial{k}.result.path_accuracy_ego= sm_ac(sm.sub{p}.session{s}.trial{k}.result.distance_traveled,sm.sub{p}.session{s}.trial{k}.ideal_path_ego);
@@ -643,7 +647,7 @@ col_header={'wp','date_analysis','id','sex','group','session',...
 % main variables
 col_header_2={'time_abs','path_abs','path_accuracy','final_distance_to_goal_abs',...
     'av_distance_to_goal_abs','distance_accuracy',...
-    'path_accuracy_ego','final_distance_to_ego_abs',...
+    'path_accuracy_ego','final_distance_to_ego_abs','velocity',...
     'success','success_ego','correct_final_alley','direct_path',...
     'arm_explored','arm_score','path_explored','path_score',...
     'search_strategy_no','direct','reoriented','serial','central_focus','random_search',...
@@ -687,6 +691,7 @@ xlswrite(new_file,strrep([group_var ...
     sm.sub{p}.session{s}.trial{k}.result.distance_traveled sm.sub{p}.session{s}.trial{k}.result.path_accuracy sm.sub{p}.session{s}.trial{k}.result.final_distance ...
     sm.sub{p}.session{s}.trial{k}.result.avg_distance sm.sub{p}.session{s}.trial{k}.result.distance_accuracy ...
     sm.sub{p}.session{s}.trial{k}.result.path_accuracy_ego sm.sub{p}.session{s}.trial{k}.result.final_distance_ego ...
+    sm.sub{p}.session{s}.trial{k}.result.velocity ...
     sm.sub{p}.session{s}.trial{k}.result.success sm.sub{p}.session{s}.trial{k}.result.success_ego ...
     sm.sub{p}.session{s}.trial{k}.result.correct_final_alley sm.sub{p}.session{s}.trial{k}.result.direct_path ...
     sm.sub{p}.session{s}.trial{k}.result.arm_explored sm.sub{p}.session{s}.trial{k}.result.arm_score ...
