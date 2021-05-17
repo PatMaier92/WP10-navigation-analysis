@@ -3,9 +3,10 @@ function [alley_full_x,alley_full_y,alley_polyshape, alley_half_out_x, alley_hal
 
 % SM_WP10_ALLEYPOLYSHAPE Creates a polyshape of Starmaze WP10 alleys. 
 %
-% Input: ?
+% Input: alley_x,alley_y are arrays with x and y coordinates for all alley
+% corners (4 x 5).
 %
-% Returns: ?
+% Returns: Polyshapes for all alleys, both full and half alleys and combined. 
 
 [cornerNo, alleyNo]=size(alley_x);
 
