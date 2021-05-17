@@ -225,7 +225,7 @@ if session == 3
     end
 end
     
-M = xlsread(fullfile(folderIn, name),'A:D'); % Reading in data into matrix M
+M = xlsread(fullfile(folderIn, name),'A:E'); % Reading in data into matrix M
 t=M(:,1);% reading data for time analysis
 x=M(:,2); y=M(:,3); x=datanorm(x,sm.coord.xmin,sm.coord.xmax); y=datanorm(y,sm.coord.ymin,sm.coord.ymax);   % data normalization for coordinates
 data_length=length(x); sdata_length=(size(x))-1;% vector length & shortend length (for distance calculation)
@@ -261,10 +261,23 @@ sm.sub{p}.session{s}.trial{k}.trial_startpos=trial_data.trial_player(k,1);
 %% For motor control navigation trial 
 % analysis of path accuracy and time 
 if sm.sub{p}.session{s}.trial{k}.trial_condition==4
-    disp('To do'); 
+
+    % extract relevant data 
+    motor_matrix=zeros(M(end,5),5);
+    kugel=1; 
+    for i=1:length(M)
+        if M(i,5)==kugel
+            fprintf('Kugel no %d in line %d.\n', kugel, i); 
+            motor_matrix(kugel,:)=M(i,:); 
+            kugel=kugel+1; 
+        end
+    end
+    
     % TBD 
-    % total time for trial, cumulative path length 
-    % add dummies for all other variables
+    % results: total time for trial, cumulative path length 
+    % add dummies for all other results vars
+    % correct standard vars e.g. goal, start, etc.
+
 else 
 %% For all other navigation trials 
     %% Calculate variables depending on single trial settings
@@ -631,7 +644,6 @@ sm.sub{p}.session{s}.trial{k}.exclude_trial_matlab=0;
 if sm.sub{p}.session{s}.trial{k}.result.chosen_alley_int==999
     sm.sub{p}.session{s}.trial{k}.exclude_trial_matlab=1;
     fprintf('Trial %d marked for exclusion due to timeout.\n',k); 
-% TBD: check are there really no ambiguous direct paths?
 elseif sm.sub{p}.session{s}.trial{k}.trial_condition ~=4 % not for motor control task
     if (sm.sub{p}.session{s}.trial{k}.result.path_length<=0.1 ...
             || sm.sub{p}.session{s}.trial{k}.result.body_rotation==0 ...
