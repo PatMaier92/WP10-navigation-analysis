@@ -81,7 +81,7 @@ wp=10; % work package default
 %% Starmaze creation 
 % Min-Max values
 values=table2array(readtable('wp10_values.csv'));
-[sm.coord.xmin,sm.coord.xmax,sm.coord.ymin,sm.coord.ymax]=sm_wp10_MinMaxValues(values);
+[sm.coord.xmin,sm.coord.xmax,sm.coord.ymin,sm.coord.ymax]=sm_wp10_minMaxValues(values);
 % start positions(normalized!)
 start=table2array(readtable('wp10_start.csv'));
 [sm.coord.start_x,sm.coord.start_y]=sm_wp10_start(start,sm.coord.xmin,sm.coord.xmax,sm.coord.ymin,sm.coord.ymax);
@@ -133,7 +133,7 @@ alley_locs=["A" "B" "C" "D" "E" "F" "G" "H" "I" "J"];
 %% Practise maze creation (motor control) 
 % Min-Max-values
 pract_values=table2array(readtable('wp10_practise_values.csv'));
-[pm.coord.xmin,pm.coord.xmax,pm.coord.ymin,pm.coord.ymax]=sm_wp10_MinMaxValues(pract_values);
+[pm.coord.xmin,pm.coord.xmax,pm.coord.ymin,pm.coord.ymax]=sm_wp10_minMaxValues(pract_values);
 % start position(normalized!)
 pract_start=table2array(readtable('wp10_practise_start.csv'));
 [pm.coord.start_x,pm.coord.start_y]=sm_wp10_start(pract_start,pm.coord.xmin,pm.coord.xmax,pm.coord.ymin,pm.coord.ymax);
@@ -310,7 +310,7 @@ else
     [ideal_rectangle_entry_mat]=sm_wp10_coordinatesZonesDynamic(xi_al,...
         yi_al, rec_x, rec_y, length(xi_al));
     [uniq_rect]=unique(ideal_rectangle_entry_mat,'rows');
-    uniq_rect=uniq_rect(2:end,:); % remove first row (start), always zeroes
+    uniq_rect=uniq_rect(2:end,:); % remove first row (start), always zeroes % TBD: change, this is not true for inner starts
     
     % zone analysis for ideal ego paths
     [ideal_ego_alley_zone, ideal_ego_rel_alley_zone,...
@@ -328,16 +328,16 @@ else
     [ideal_ego_rectangle_entry_mat]=sm_wp10_coordinatesZonesDynamic(xi_eg,...
         yi_eg, rec_x, rec_y, length(xi_eg));
     [uniq_e_rect]=unique(ideal_ego_rectangle_entry_mat,'rows');
-    uniq_e_rect=uniq_e_rect(2:end,:); % remove first row (start), always zeroes
+    uniq_e_rect=uniq_e_rect(2:end,:); % remove first row (start), always zeroes % TBD: change, this is not true for inner starts
 
     %% Block 3: Data analysis, i.e. calculcation of variables
     %% Chosen goal location
     [sm.sub{p}.session{s}.trial{k}.chosen_goal_int,...
-        sm.sub{p}.session{s}.trial{k}.chosen_goal_str,...
+        sm.sub{p}.session{s}.trial{k}.chosen_alley_str,...
         sm.sub{p}.session{s}.trial{k}.chosen_alley_int,...
         sm.sub{p}.session{s}.trial{k}.obj_at_chosen_loc]=sm_wp10_chosenGoal(rand_dict,...
-        pstr, sstr, char(trial_data.chosen_goal(k,1)), goal_locs, alley_locs); % TBD check this 
-      
+        pstr, sstr, char(trial_data.chosen_goal(k,1)), goal_locs, alley_locs);
+    
     %% Time analysis using timestamp
     b=t(end,:); a=t(1,1);
     sm.sub{p}.session{s}.trial{k}.result.time=sm_time(a,b); % total amount of time
@@ -588,7 +588,7 @@ else
         sm.sub{p}.session{s}.trial{k}.result.final_distance_allo,...
         sm.sub{p}.session{s}.trial{k}.result.final_distance_ego,...
         sm.sub{p}.session{s}.trial{k}.trial_goal,...
-        sm.sub{p}.session{s}.trial{k}.chosen_goal_str,...
+        sm.sub{p}.session{s}.trial{k}.chosen_alley_str,...
         sm.sub{p}.session{s}.trial{k}.ego_alley); % TBD: check if this works (strings vs. integer)
     
     % Direct path to target
@@ -628,7 +628,7 @@ end
 %% Marker for excluding trials 
 % Criteria: timeout, or no movement/very short trial time (i.e. path_length=0, body_rot_abs=0, or time < 3)
 sm.sub{p}.session{s}.trial{k}.exclude_trial_matlab=0;
-if sm.sub{p}.session{s}.trial{k}.chosen_alley_int==999 % TBD: check if only timeout is coded as 999, check if all areas are coded with integer
+if sm.sub{p}.session{s}.trial{k}.chosen_alley_int==999
     sm.sub{p}.session{s}.trial{k}.exclude_trial_matlab=1;
     fprintf('Trial %d marked for exclusion due to timeout.\n',k); 
     % TBD: check are there really no ambiguous direct paths?
