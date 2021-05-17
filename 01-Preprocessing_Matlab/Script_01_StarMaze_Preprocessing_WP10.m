@@ -336,7 +336,7 @@ else
         sm.sub{p}.session{s}.trial{k}.chosen_goal_str,...
         sm.sub{p}.session{s}.trial{k}.chosen_alley_int,...
         sm.sub{p}.session{s}.trial{k}.obj_at_chosen_loc]=sm_wp10_chosenGoal(rand_dict,...
-        pstr, sstr, char(trial_data.chosen_goal(k,1)), goal_locs, alley_locs);
+        pstr, sstr, char(trial_data.chosen_goal(k,1)), goal_locs, alley_locs); % TBD check this 
       
     %% Time analysis using timestamp
     b=t(end,:); a=t(1,1);
@@ -431,14 +431,14 @@ else
      
     fprintf('Egocentric path and distance analysis done for %d, session %d, file no %d.\n', subject, session, k);
     %% Body rotation analysis
-    % Body-rotation analysis
+    % Body rotation analysis
     sm.sub{p}.session{s}.trial{k}.result.body_rotation=0; br=zeros(1,data_length);
     for i=2:(data_length-2)
         br(i)=sm_b_rot(y(i-1),x(i-1),y(i),x(i));
         sm.sub{p}.session{s}.trial{k}.result.body_rotation=sm.sub{p}.session{s}.trial{k}.result.body_rotation+br(i);
     end
     
-    % Ideal sum of body-roatations
+    % Ideal sum of body roatations
     l_xi_al=length(xi_al);
     sm.sub{p}.session{s}.trial{k}.ideal_body_rotation=0; br_i=zeros(1,l_xi_al);
     for i=2:(l_xi_al-2)
@@ -597,7 +597,7 @@ else
         sm.sub{p}.session{s}.trial{k}.result.success,...
         sm.sub{p}.session{s}.trial{k}.zone.alley_entry,...
         sm.sub{p}.session{s}.trial{k}.zone.rectangle_entry,...
-        sm.sub{p}.session{s}.trial{k}.zone.triangle_entry); % TBD change this method to WP1 dynamics 
+        sm.sub{p}.session{s}.trial{k}.zone.triangle_entry); % TBD: change this method to WP1 dynamics 
     
     % Search strategies
     [sm.sub{p}.session{s}.trial{k}.searchStrategy.direct,...
@@ -619,7 +619,7 @@ else
         sm.sub{p}.session{s}.trial{k}.zone.rel_pentagon_zone,...
         sm.sub{p}.session{s}.trial{k}.zone.alley_entry,...
         sm.sub{p}.session{s}.trial{k}.zone.rectangle_entry,...
-        sm.sub{p}.session{s}.trial{k}.zone.triangle_entry);
+        sm.sub{p}.session{s}.trial{k}.zone.triangle_entry); % TBD: Update this to simpler method 
     
     fprintf('Exploration analysis done for %d, session %d, file no %d.\n', subject, session, k);
     
@@ -628,10 +628,10 @@ end
 %% Marker for excluding trials 
 % Criteria: timeout, or no movement/very short trial time (i.e. path_length=0, body_rot_abs=0, or time < 3)
 sm.sub{p}.session{s}.trial{k}.exclude_trial_matlab=0;
-if sm.sub{p}.session{s}.trial{k}.chosen_alley_int==999 % TBD check if only timeout is coded as 999, check if all areas are coded with integer
+if sm.sub{p}.session{s}.trial{k}.chosen_alley_int==999 % TBD: check if only timeout is coded as 999, check if all areas are coded with integer
     sm.sub{p}.session{s}.trial{k}.exclude_trial_matlab=1;
     fprintf('Trial %d marked for exclusion due to timeout.\n',k); 
-    % TBD check are there really no ambiguous direct paths?
+    % TBD: check are there really no ambiguous direct paths?
 elseif sm.sub{p}.session{s}.trial{k}.trial_condition ~=4 % not for motor control task
     if (sm.sub{p}.session{s}.trial{k}.result.path_length<=0.1 ...
             || sm.sub{p}.session{s}.trial{k}.result.body_rotation==0 ...
@@ -765,6 +765,7 @@ xlswrite(new_file,[col_header col_header_3],'support_vars','A1');
 sm_wp10_plot_track(num2str(wp), sm.sub{p}.session{s}.trial{k}.trial_num,sm.sub{p}.session{s}.trial{k}.feedback,sm.sub{p}.session{s}.session,sm.sub{p}.session{s}.trial{k}.trial_condition,sm.sub{p}.id,sm.sub{p}.Group,name,...
     alley_polyshape_1, alley_polyshape_2, tri, rec,x,y,x_line_ego,y_line_ego,x_line,y_line,folderOut,sm.sub{p}.session{s}.trial{k}.goal_x,sm.sub{p}.session{s}.trial{k}.goal_y)
 
+% TBD: Check if needs to be updated to WP1 method
 end
 
 end
@@ -773,10 +774,6 @@ end
 new_name2 = [sm.sub{p}.Group '_' num2str(sm.sub{p}.id)  '_results'];
 new_file = fullfile(folderOut2, new_name2);
 sm_wp10_table_allTrials(folderOut,new_file,col_header,col_header_2,col_header_3);
-
-% % Write table & summaries
-% new_file = fullfile(folderOut2, [new_name2 '.xls']); % TBD %
-% sm_wp10_summary(new_file);
 
 p=p+1;
 
