@@ -224,12 +224,20 @@ if session == 3
         continue
     end
 end
-    
+
+% read-in data 
 M = xlsread(fullfile(folderIn, name),'A:E'); % Reading in data into matrix M
-t=M(:,1);% reading data for time analysis
-x=M(:,2); y=M(:,3); x=datanorm(x,sm.coord.xmin,sm.coord.xmax); y=datanorm(y,sm.coord.ymin,sm.coord.ymax);   % data normalization for coordinates
+t=M(:,1);% time analysis
+x=M(:,2); y=M(:,3); % coordinate analysis
 data_length=length(x); sdata_length=(size(x))-1;% vector length & shortend length (for distance calculation)
-    
+
+% normalization of coordinates 
+if session==3 % motor control trial (practise maze)
+    x=datanorm(x,pm.coord.xmin,pm.coord.xmax); y=datanorm(y,pm.coord.ymin,pm.coord.ymax);
+else % other trials (star maze) 
+    x=datanorm(x,sm.coord.xmin,sm.coord.xmax); y=datanorm(y,sm.coord.ymin,sm.coord.ymax);
+end
+  
 sm.sub{p}.session{s}.trial{k}.x_start=x(1,1); sm.sub{p}.session{s}.trial{k}.y_start=y(1,1);
 sm.sub{p}.session{s}.trial{k}.x_end=x(end,1); sm.sub{p}.session{s}.trial{k}.y_end=y(end,1);
       
@@ -258,25 +266,206 @@ sm.sub{p}.session{s}.trial{k}.trial_goal=trial_data.trial_goal(k,1);
 sm.sub{p}.session{s}.trial{k}.trial_startpos=trial_data.trial_player(k,1);
 [sm.sub{p}.session{s}.trial{k}.start]=sm_wp10_trialStart(sm.sub{p}.session{s}.trial{k}.trial_startpos,start_locs);
 
+%% Time analysis using timestamp
+b=t(end); a=t(1);
+sm.sub{p}.session{s}.trial{k}.result.time=sm_time(a,b); % total amount of time
+     
+fprintf('Time analysis done for %d, session %d, file no %d.\n', subject, session, k);
+    
 %% For motor control navigation trial 
-% analysis of path accuracy and time 
+% analysis of path and time 
 if sm.sub{p}.session{s}.trial{k}.trial_condition==4
+    %% Calculate variables depending on single trial settings
+    % ideal path coordinates & length    
+    x_line_motor=[pm.coord.start_x; pm.coord.goal_x];
+    y_line_motor=[pm.coord.start_y; pm.coord.goal_y]; 
+    sm.sub{p}.session{s}.trial{k}.ideal_path_length_allo=sm_wp10_idealPathLength(x_line_motor, y_line_motor);
+    
+    % interpolate data for further analysis
+    % using 'interparc' function by John D'Errico (Matlab File Exchanger) 
+    [xi_al,yi_al,xi_eg,yi_eg]=sm_wp10_dataInterpolation(x_line_motor, y_line_motor,...
+        sm.sub{p}.session{s}.trial{k}.ideal_path_length_allo, x_line_motor, y_line_motor,...
+        sm.sub{p}.session{s}.trial{k}.ideal_path_length_allo); % al and eg are identical here 
+    
+    % figure
+    figure('Position',[500 200 580 500]);
+    set(gca,'xtick',[0 1],'ytick',[0 1]);
+    plot(pract_polyshape)
+    axis([0 1 0 1])
+    hold on
+    for g=1:length(pm.coord.goal_x)
+        viscircles([pm.coord.goal_x(g) pm.coord.goal_y(g)], 0.02)
+    end
+    viscircles([pm.coord.start_x(1) pm.coord.start_y(1)], 0.03)
+    plot(x, y, 'k-', xi_al, yi_al, 'r-');
+    hold off
 
-    % extract relevant data 
-    motor_matrix=zeros(M(end,5),5);
-    kugel=1; 
-    for i=1:length(M)
-        if M(i,5)==kugel
-            fprintf('Kugel no %d in line %d.\n', kugel, i); 
-            motor_matrix(kugel,:)=M(i,:); 
-            kugel=kugel+1; 
-        end
+    % labels
+    for i=1:length(pract_goal_locs)
+        text(pm.coord.goal_x(i)+0.02, pm.coord.goal_y(i), pract_goal_locs(i))
+    end 
+    text(pm.coord.start_x(1)-0.05, pm.coord.start_y(1)-0.05, 'Start')
+    
+    %% Time analysis: already done 
+    %% Coordinate analysis using x-/y-coordinates
+    % Path analysis
+    sm.sub{p}.session{s}.trial{k}.result.path_length=0; % reset/initiate variables
+    for i=1:sdata_length
+        % PATH to all TARGETS
+        % cumulative distance traveled (used in path accuracy)
+        sm.sub{p}.session{s}.trial{k}.result.path_length=sm.sub{p}.session{s}.trial{k}.result.path_length+sum(sm_distance(x(i),x(i+1),y(i),y(i+1)));
     end
     
-    % TBD 
-    % results: total time for trial, cumulative path length 
-    % add dummies for all other results vars
-    % correct standard vars e.g. goal, start, etc.
+    % Interpolated IDEAL PATH LENGTH value
+    sm.sub{p}.session{s}.trial{k}.ideal_path_length_allo_interpol=0; % start-initiation
+    xi_length=length(xi_al)-1;
+    for i=1:xi_length
+        % ideal path traveled (based on interpolated values)
+        sm.sub{p}.session{s}.trial{k}.ideal_path_length_allo_interpol=sm.sub{p}.session{s}.trial{k}.ideal_path_length_allo_interpol+sum(sm_distance(xi_al(i),xi_al(i+1),yi_al(i),yi_al(i+1)));
+    end
+    
+    % PATH ACCURACY to all TARGETS 
+    sm.sub{p}.session{s}.trial{k}.result.path_accuracy_allo=sm_ac(sm.sub{p}.session{s}.trial{k}.result.path_length,sm.sub{p}.session{s}.trial{k}.ideal_path_length_allo_interpol);
+    % sm.sub{p}.session{s}.trial{k}.result.path_accuracy_allo=sm_ac(sm.sub{p}.session{s}.trial{k}.result.path_length,sm.sub{p}.session{s}.trial{k}.ideal_path_length_allo); 
+    
+    % VELOCITY 
+    sm.sub{p}.session{s}.trial{k}.result.velocity=sm.sub{p}.session{s}.trial{k}.result.path_length/sm.sub{p}.session{s}.trial{k}.result.time;
+    
+    % dummy values for all other results variables 
+    sm.sub{p}.session{s}.trial{k}.ego_alley=0; 
+    sm.sub{p}.session{s}.trial{k}.result.chosen_goal_int=0;
+    sm.sub{p}.session{s}.trial{k}.result.chosen_alley_int=0;
+    sm.sub{p}.session{s}.trial{k}.result.obj_at_chosen_loc=0;
+    sm.sub{p}.session{s}.trial{k}.exclude_trial_matlab=0;
+    
+    sm.sub{p}.session{s}.trial{k}.result.success=0; 
+    sm.sub{p}.session{s}.trial{k}.result.success_ego=0;
+    sm.sub{p}.session{s}.trial{k}.result.correct_final_alley=0;
+    sm.sub{p}.session{s}.trial{k}.result.correct_final_alley_ego=0;
+    sm.sub{p}.session{s}.trial{k}.result.final_distance_allo=0;
+    sm.sub{p}.session{s}.trial{k}.result.final_distance_ego=0;
+    sm.sub{p}.session{s}.trial{k}.result.path_accuracy_ego=0;
+    sm.sub{p}.session{s}.trial{k}.result.avg_distance_allo=0; 
+    sm.sub{p}.session{s}.trial{k}.ideal_total_distance_allo=0;
+    sm.sub{p}.session{s}.trial{k}.result.sum_data_points=0;
+    sm.sub{p}.session{s}.trial{k}.result.avg_distance_ego=0; 
+    sm.sub{p}.session{s}.trial{k}.ideal_total_distance_ego=0; 
+    sm.sub{p}.session{s}.trial{k}.result.distance_accuracy_allo=0;
+    sm.sub{p}.session{s}.trial{k}.result.distance_accuracy_ego=0;
+    sm.sub{p}.session{s}.trial{k}.result.direct_path=0;
+    sm.sub{p}.session{s}.trial{k}.result.arm_explored=0; 
+    sm.sub{p}.session{s}.trial{k}.result.arm_score=0;
+    sm.sub{p}.session{s}.trial{k}.result.path_explored=0;
+    sm.sub{p}.session{s}.trial{k}.result.path_score=0;
+    sm.sub{p}.session{s}.trial{k}.result.search_strategy_no=0; 
+    sm.sub{p}.session{s}.trial{k}.searchStrategy.direct=0;
+    sm.sub{p}.session{s}.trial{k}.searchStrategy.reoriented=0;
+    sm.sub{p}.session{s}.trial{k}.searchStrategy.serial=0;
+    sm.sub{p}.session{s}.trial{k}.searchStrategy.central_focus=0;
+    sm.sub{p}.session{s}.trial{k}.searchStrategy.random_search=0;
+    sm.sub{p}.session{s}.trial{k}.searchStrategy.unclassified=0; 
+    sm.sub{p}.session{s}.trial{k}.searchStrategy.failed=0;
+    sm.sub{p}.session{s}.trial{k}.searchStrategy.allocentric=0; 
+    sm.sub{p}.session{s}.trial{k}.searchStrategy.egocentric=0;
+    sm.sub{p}.session{s}.trial{k}.result.head_rotation=0;
+    sm.sub{p}.session{s}.trial{k}.result.full_head_rotation=0;
+    sm.sub{p}.session{s}.trial{k}.result.head_turn_total=0;
+    sm.sub{p}.session{s}.trial{k}.result.head_turn_accuracy=0;
+    sm.sub{p}.session{s}.trial{k}.result.body_rotation=0;
+    sm.sub{p}.session{s}.trial{k}.result.body_rotation_accuracy=0;
+    sm.sub{p}.session{s}.trial{k}.result.body_turn_total=0;
+    sm.sub{p}.session{s}.trial{k}.result.body_turn_accuracy=0;
+    
+    success_criterium=0; 
+    sm.sub{p}.session{s}.trial{k}.goal_x_ego=0; sm.sub{p}.session{s}.trial{k}.goal_y_ego=0; 
+    sm.sub{p}.session{s}.trial{k}.x_end=0; sm.sub{p}.session{s}.trial{k}.y_end=0; 
+    sm.sub{p}.session{s}.trial{k}.ideal_path_length_ego=0;
+    sm.sub{p}.session{s}.trial{k}.ideal_path_length_ego_interpol=0; 
+    sm.sub{p}.session{s}.trial{k}.ideal_avg_distance_allo=0; 
+    sm.sub{p}.session{s}.trial{k}.ideal_total_distance_allo=0; 
+    sm.sub{p}.session{s}.trial{k}.ideal_sum_data_points_allo=0; 
+    sm.sub{p}.session{s}.trial{k}.ideal_avg_distance_ego=0; 
+    sm.sub{p}.session{s}.trial{k}.ideal_total_distance_ego=0; 
+    sm.sub{p}.session{s}.trial{k}.ideal_sum_data_points_ego=0; 
+    sm.sub{p}.session{s}.trial{k}.ideal_body_rotation=0; 
+    sm.sub{p}.session{s}.trial{k}.ideal_body_turn_total=0; 
+    sm.sub{p}.session{s}.trial{k}.ideal_headturnNo=0; 
+    sm.sub{p}.session{s}.trial{k}.zone.alley_zone(1,1)=0; 
+    sm.sub{p}.session{s}.trial{k}.zone.alley_zone(1,2)=0; 
+    sm.sub{p}.session{s}.trial{k}.zone.alley_zone(1,3)=0; 
+    sm.sub{p}.session{s}.trial{k}.zone.alley_zone(1,4)=0; 
+    sm.sub{p}.session{s}.trial{k}.zone.alley_zone(1,5)=0; 
+    sm.sub{p}.session{s}.trial{k}.zone.pentagon_zone=0; 
+    sm.sub{p}.session{s}.trial{k}.zone.triangle_zone(1,1)=0; 
+    sm.sub{p}.session{s}.trial{k}.zone.triangle_zone(1,2)=0; 
+    sm.sub{p}.session{s}.trial{k}.zone.triangle_zone(1,3)=0; 
+    sm.sub{p}.session{s}.trial{k}.zone.triangle_zone(1,4)=0; 
+    sm.sub{p}.session{s}.trial{k}.zone.triangle_zone(1,5)=0; 
+    sm.sub{p}.session{s}.trial{k}.zone.rectangle_zone(1,1)=0; 
+    sm.sub{p}.session{s}.trial{k}.zone.rectangle_zone(1,2)=0; 
+    sm.sub{p}.session{s}.trial{k}.zone.rectangle_zone(1,3)=0; 
+    sm.sub{p}.session{s}.trial{k}.zone.rectangle_zone(1,4)=0; 
+    sm.sub{p}.session{s}.trial{k}.zone.rectangle_zone(1,5)=0; 
+    sm.sub{p}.session{s}.trial{k}.zone.rel_alley_zone(1,1)=0; 
+    sm.sub{p}.session{s}.trial{k}.zone.rel_alley_zone(1,2)=0; 
+    sm.sub{p}.session{s}.trial{k}.zone.rel_alley_zone(1,3)=0; 
+    sm.sub{p}.session{s}.trial{k}.zone.rel_alley_zone(1,4)=0; 
+    sm.sub{p}.session{s}.trial{k}.zone.rel_alley_zone(1,5)=0; 
+    sm.sub{p}.session{s}.trial{k}.zone.rel_pentagon_zone=0; 
+    sm.sub{p}.session{s}.trial{k}.zone.rel_triangle_zone(1,1)=0; 
+    sm.sub{p}.session{s}.trial{k}.zone.rel_triangle_zone(1,2)=0; 
+    sm.sub{p}.session{s}.trial{k}.zone.rel_triangle_zone(1,3)=0; 
+    sm.sub{p}.session{s}.trial{k}.zone.rel_triangle_zone(1,4)=0; 
+    sm.sub{p}.session{s}.trial{k}.zone.rel_triangle_zone(1,5)=0; 
+    sm.sub{p}.session{s}.trial{k}.zone.rel_rectangle_zone(1,1)=0; 
+    sm.sub{p}.session{s}.trial{k}.zone.rel_rectangle_zone(1,2)=0; 
+    sm.sub{p}.session{s}.trial{k}.zone.rel_rectangle_zone(1,3)=0; 
+    sm.sub{p}.session{s}.trial{k}.zone.rel_rectangle_zone(1,4)=0; 
+    sm.sub{p}.session{s}.trial{k}.zone.rel_rectangle_zone(1,5)=0; 
+    sm.sub{p}.session{s}.trial{k}.zone.alley_entry(1,1)=0; 
+    sm.sub{p}.session{s}.trial{k}.zone.alley_entry(1,2)=0; 
+    sm.sub{p}.session{s}.trial{k}.zone.alley_entry(1,3)=0; 
+    sm.sub{p}.session{s}.trial{k}.zone.alley_entry(1,4)=0; 
+    sm.sub{p}.session{s}.trial{k}.zone.alley_entry(1,5)=0; 
+    sm.sub{p}.session{s}.trial{k}.zone.alley_entry_out(1,1)=0; 
+    sm.sub{p}.session{s}.trial{k}.zone.alley_entry_out(1,2)=0; 
+    sm.sub{p}.session{s}.trial{k}.zone.alley_entry_out(1,3)=0; 
+    sm.sub{p}.session{s}.trial{k}.zone.alley_entry_out(1,4)=0; 
+    sm.sub{p}.session{s}.trial{k}.zone.alley_entry_out(1,5)=0; 
+    sm.sub{p}.session{s}.trial{k}.zone.alley_entry_in(1,1)=0; 
+    sm.sub{p}.session{s}.trial{k}.zone.alley_entry_in(1,2)=0; 
+    sm.sub{p}.session{s}.trial{k}.zone.alley_entry_in(1,3)=0; 
+    sm.sub{p}.session{s}.trial{k}.zone.alley_entry_in(1,4)=0; 
+    sm.sub{p}.session{s}.trial{k}.zone.alley_entry_in(1,5)=0; 
+    sm.sub{p}.session{s}.trial{k}.zone.pentagon_entry=0; 
+    sm.sub{p}.session{s}.trial{k}.zone.triangle_entry(1,1)=0; 
+    sm.sub{p}.session{s}.trial{k}.zone.triangle_entry(1,2)=0; 
+    sm.sub{p}.session{s}.trial{k}.zone.triangle_entry(1,3)=0; 
+    sm.sub{p}.session{s}.trial{k}.zone.triangle_entry(1,4)=0; 
+    sm.sub{p}.session{s}.trial{k}.zone.triangle_entry(1,5)=0; 
+    sm.sub{p}.session{s}.trial{k}.zone.rectangle_entry(1,1)=0; 
+    sm.sub{p}.session{s}.trial{k}.zone.rectangle_entry(1,2)=0; 
+    sm.sub{p}.session{s}.trial{k}.zone.rectangle_entry(1,3)=0; 
+    sm.sub{p}.session{s}.trial{k}.zone.rectangle_entry(1,4)=0; 
+    sm.sub{p}.session{s}.trial{k}.zone.rectangle_entry(1,5)=0; 
+    sm.sub{p}.session{s}.trial{k}.time.alley_time(1,1)=0; 
+    sm.sub{p}.session{s}.trial{k}.time.alley_time(1,2)=0; 
+    sm.sub{p}.session{s}.trial{k}.time.alley_time(1,3)=0; 
+    sm.sub{p}.session{s}.trial{k}.time.alley_time(1,4)=0; 
+    sm.sub{p}.session{s}.trial{k}.time.alley_time(1,5)=0; 
+    sm.sub{p}.session{s}.trial{k}.time.pentagon_time=0; 
+    sm.sub{p}.session{s}.trial{k}.time.triangle_time(1,1)=0; 
+    sm.sub{p}.session{s}.trial{k}.time.triangle_time(1,2)=0; 
+    sm.sub{p}.session{s}.trial{k}.time.triangle_time(1,3)=0; 
+    sm.sub{p}.session{s}.trial{k}.time.triangle_time(1,4)=0; 
+    sm.sub{p}.session{s}.trial{k}.time.triangle_time(1,5)=0; 
+    sm.sub{p}.session{s}.trial{k}.time.rectangle_time(1,1)=0; 
+    sm.sub{p}.session{s}.trial{k}.time.rectangle_time(1,2)=0; 
+    sm.sub{p}.session{s}.trial{k}.time.rectangle_time(1,3)=0; 
+    sm.sub{p}.session{s}.trial{k}.time.rectangle_time(1,4)=0; 
+    sm.sub{p}.session{s}.trial{k}.time.rectangle_time(1,5)=0; 
+    
+    fprintf('Motor control analysis done for %d, session %d, file no %d.\n', subject, session, k);
 
 else 
 %% For all other navigation trials 
@@ -344,6 +533,7 @@ else
     uniq_e_rect=uniq_e_rect(2:end,:); % remove first row (start), always zeroes % TBD: change, this is not true for inner starts
 
     %% Block 3: Data analysis, i.e. calculcation of variables
+    %% Time analysis: already done
     %% Chosen goal location
     [sm.sub{p}.session{s}.trial{k}.result.chosen_goal_int,...
         sm.sub{p}.session{s}.trial{k}.result.chosen_alley_str,...
@@ -351,11 +541,6 @@ else
         sm.sub{p}.session{s}.trial{k}.result.obj_at_chosen_loc]=sm_wp10_chosenGoal(rand_dict,...
         pstr, sstr, char(trial_data.chosen_goal(k,1)), goal_locs, alley_locs);
     
-    %% Time analysis using timestamp
-    b=t(end,:); a=t(1,1);
-    sm.sub{p}.session{s}.trial{k}.result.time=sm_time(a,b); % total amount of time
-     
-    fprintf('Time analysis done for %d, session %d, file no %d.\n', subject, session, k);
     %% Coordinate analysis using x-/y-coordinates
     % Path analysis
     sm.sub{p}.session{s}.trial{k}.result.path_length=0; total_dist_to_goal_allo=0; total_dist_to_goal_ego=0; % reset/initiate variables
@@ -635,23 +820,22 @@ else
 %         sm.sub{p}.session{s}.trial{k}.zone.triangle_entry); % TBD: Update this to simpler method 
     
     fprintf('Exploration analysis done for %d, session %d, file no %d.\n', subject, session, k);
+    %% Marker for excluding trials 
     
-end
-
-%% Marker for excluding trials 
-% Criteria: timeout, or no movement/very short trial time (i.e. path_length=0, body_rot_abs=0, or time < 3)
-sm.sub{p}.session{s}.trial{k}.exclude_trial_matlab=0;
-if sm.sub{p}.session{s}.trial{k}.result.chosen_alley_int==999
-    sm.sub{p}.session{s}.trial{k}.exclude_trial_matlab=1;
-    fprintf('Trial %d marked for exclusion due to timeout.\n',k); 
-elseif sm.sub{p}.session{s}.trial{k}.trial_condition ~=4 % not for motor control task
-    if (sm.sub{p}.session{s}.trial{k}.result.path_length<=0.1 ...
-            || sm.sub{p}.session{s}.trial{k}.result.body_rotation==0 ...
-            || sm.sub{p}.session{s}.trial{k}.result.time < 3)
+    % Criteria: timeout, or no movement/very short trial time (i.e. path_length=0, body_rot_abs=0, or time < 3)
+    sm.sub{p}.session{s}.trial{k}.exclude_trial_matlab=0;
+    if sm.sub{p}.session{s}.trial{k}.result.chosen_alley_int==999
         sm.sub{p}.session{s}.trial{k}.exclude_trial_matlab=1;
-        fprintf('Trial %d marked for exclusion due lack of movement/short trial time.\n',k);
+        fprintf('Trial %d marked for exclusion due to timeout.\n',k); 
+    elseif sm.sub{p}.session{s}.trial{k}.trial_condition ~=4 % not for motor control task
+        if (sm.sub{p}.session{s}.trial{k}.result.path_length<=0.1 ...
+                || sm.sub{p}.session{s}.trial{k}.result.body_rotation==0 ...
+                || sm.sub{p}.session{s}.trial{k}.result.time < 3)
+            sm.sub{p}.session{s}.trial{k}.exclude_trial_matlab=1;
+            fprintf('Trial %d marked for exclusion due lack of movement/short trial time.\n',k);
+        end
     end
-end
+end 
 
 % save data
 save(fullfile(folderOut, targetFileName_Subject),'sm', '-append'); 
@@ -706,7 +890,7 @@ group_var=[sm.sub{p}.wp string(yyyymmdd(datetime)) sm.sub{p}.id sm.sub{p}.sex sm
     sm.sub{p}.session{s}.session sm.sub{p}.session{s}.session_duration ...
     sm.sub{p}.session{s}.trial{k}.trial_num sm.sub{p}.session{s}.trial{k}.block ...
     sm.sub{p}.session{s}.trial{k}.trial_in_block sm.sub{p}.session{s}.trial{k}.trial_condition ...    
-    sm.sub{p}.session{s}.trial{k}.start sm.sub{p}.session{s}.trial{k}.goal ...
+    sm.sub{p}.session{s}.trial{k}.start sm.sub{p}.session{s}.trial{k}.goal_int ...
     sm.sub{p}.session{s}.trial{k}.goal_alley sm.sub{p}.session{s}.trial{k}.trial_goal_identity ...
     sm.sub{p}.session{s}.trial{k}.fb sm.sub{p}.session{s}.trial{k}.ego_alley ...
     sm.sub{p}.session{s}.trial{k}.result.chosen_goal_int sm.sub{p}.session{s}.trial{k}.result.chosen_alley_int ...
@@ -724,7 +908,7 @@ xlswrite(new_file,strrep([group_var ...
     sm.sub{p}.session{s}.trial{k}.result.path_accuracy_allo sm.sub{p}.session{s}.trial{k}.result.path_accuracy_ego ...
     sm.sub{p}.session{s}.trial{k}.result.avg_distance_allo sm.sub{p}.session{s}.trial{k}.ideal_total_distance_allo ...
     sm.sub{p}.session{s}.trial{k}.result.sum_data_points ...
-    sm.sub{p}.session{s}.trial{k}.result.avg_distance_ego sm.sub{p}.session{s}.trial{k}.ideal_total_distance_ego 
+    sm.sub{p}.session{s}.trial{k}.result.avg_distance_ego sm.sub{p}.session{s}.trial{k}.ideal_total_distance_ego ...
     sm.sub{p}.session{s}.trial{k}.result.distance_accuracy_allo sm.sub{p}.session{s}.trial{k}.result.distance_accuracy_ego ...
     sm.sub{p}.session{s}.trial{k}.result.direct_path ...
     sm.sub{p}.session{s}.trial{k}.result.arm_explored sm.sub{p}.session{s}.trial{k}.result.arm_score ...
@@ -777,7 +961,7 @@ xlswrite(new_file,[col_header col_header_3],'support_vars','A1');
 sm_wp10_plot_track(num2str(wp), sm.sub{p}.session{s}.trial{k}.trial_num,sm.sub{p}.session{s}.trial{k}.feedback,sm.sub{p}.session{s}.session,sm.sub{p}.session{s}.trial{k}.trial_condition,sm.sub{p}.id,sm.sub{p}.Group,name,...
     alley_polyshape_1, alley_polyshape_2, tri, rec,x,y,x_line_ego,y_line_ego,x_line,y_line,folderOut,sm.sub{p}.session{s}.trial{k}.goal_x,sm.sub{p}.session{s}.trial{k}.goal_y)
 
-% TBD: Check if needs to be updated to WP1 method
+% TBD: Check if needs to be updated to WP1 method, add if and seperate plot for motor control 
 end
 
 end
