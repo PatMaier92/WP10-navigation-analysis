@@ -287,25 +287,6 @@ if sm.sub{p}.session{s}.trial{k}.trial_condition==4
         sm.sub{p}.session{s}.trial{k}.ideal_path_length_allo, x_line_motor, y_line_motor,...
         sm.sub{p}.session{s}.trial{k}.ideal_path_length_allo); % al and eg are identical here 
     
-    % figure
-    figure('Position',[500 200 580 500]);
-    set(gca,'xtick',[0 1],'ytick',[0 1]);
-    plot(pract_polyshape)
-    axis([0 1 0 1])
-    hold on
-    for g=1:length(pm.coord.goal_x)
-        viscircles([pm.coord.goal_x(g) pm.coord.goal_y(g)], 0.02)
-    end
-    viscircles([pm.coord.start_x(1) pm.coord.start_y(1)], 0.03)
-    plot(x, y, 'k-', xi_al, yi_al, 'r-');
-    hold off
-
-    % labels
-    for i=1:length(pract_goal_locs)
-        text(pm.coord.goal_x(i)+0.02, pm.coord.goal_y(i), pract_goal_locs(i))
-    end 
-    text(pm.coord.start_x(1)-0.05, pm.coord.start_y(1)-0.05, 'Start')
-    
     %% Time analysis: already done 
     %% Coordinate analysis using x-/y-coordinates
     % Path analysis
@@ -765,7 +746,6 @@ else
     
     fprintf('Zone analysis done for %d, session %d, file no %d.\n', subject, session, k);
     %% Exploration-Analysis
-    
     % Arm score and Path score as indicators of alley-exploration
     sm.sub{p}.session{s}.trial{k}.result.arm_explored=sm_wp10_armExplored(sm.sub{p}.session{s}.trial{k}.zone.alley_zone);
     sm.sub{p}.session{s}.trial{k}.result.arm_score=sm_wp10_armScore(sm.sub{p}.session{s}.trial{k}.zone.alley_entry);
@@ -821,7 +801,6 @@ else
     
     fprintf('Exploration analysis done for %d, session %d, file no %d.\n', subject, session, k);
     %% Marker for excluding trials 
-    
     % Criteria: timeout, or no movement/very short trial time (i.e. path_length=0, body_rot_abs=0, or time < 3)
     sm.sub{p}.session{s}.trial{k}.exclude_trial_matlab=0;
     if sm.sub{p}.session{s}.trial{k}.result.chosen_alley_int==999
@@ -957,11 +936,16 @@ xlswrite(new_file,strrep([group_var success_criterium ...
 xlswrite(new_file,[col_header col_header_2],'data_vars','A1');
 xlswrite(new_file,[col_header col_header_3],'support_vars','A1');
 
-%% Create plots    
+%% Create plots 
+if session==3
+sm_wp10_plotMotorControl(sm.sub{p}.session{s}.trial{k}.trial_num,sm.sub{p}.session{s}.session,sm.sub{p}.id,sm.sub{p}.Group,...
+    pract_polyshape,pm.coord.goal_x,pm.coord.goal_y,pm.coord.start_x,pm.coord.start_y,...
+    pract_goal_locs,x,y,xi_al,yi_al,folderOut)
+else 
+    % TBD: Check if needs to be updated to WP1 method
 sm_wp10_plot_track(num2str(wp), sm.sub{p}.session{s}.trial{k}.trial_num,sm.sub{p}.session{s}.trial{k}.feedback,sm.sub{p}.session{s}.session,sm.sub{p}.session{s}.trial{k}.trial_condition,sm.sub{p}.id,sm.sub{p}.Group,name,...
     alley_polyshape_1, alley_polyshape_2, tri, rec,x,y,x_line_ego,y_line_ego,x_line,y_line,folderOut,sm.sub{p}.session{s}.trial{k}.goal_x,sm.sub{p}.session{s}.trial{k}.goal_y)
-
-% TBD: Check if needs to be updated to WP1 method, add if and seperate plot for motor control 
+end
 end
 
 end
