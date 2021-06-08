@@ -477,6 +477,57 @@ else
     ylim([0 1]);
     hold off
     
+    %% test: distance to ideal path ('integral')
+     
+    % actual path longer than ideal one
+    xy=[x,y]; % longer
+    xi_yi=[xi_al, yi_al]; % shorter
+    
+    figure;
+    plot(polyshape_array);
+    hold on
+    plot(xi_al, yi_al, 'k-', x, y, 'r-');
+    xlim([0 1]);
+    ylim([0 1]);
+    hold off
+    
+    [~,dist] = dsearchn(xi_yi, xy); 
+    fd=sm_distance(xy(end,1), xi_yi(end,1), xy(end,2), xi_yi(end,2)); % final distance
+    dist = [dist; fd]; 
+    
+    figure; 
+    plot(dist); 
+    ylim([0 1]);
+    
+    mean_deviation_ideal_path = sum(dist)/size(xi_yi, 1) 
+    mean_deviation_ideal_path = sum(dist)/size(xy, 1)
+    
+    % actual path shorter than ideal one 
+    s=1000; 
+    xy2=[x(1:s),y(1:s)]; % shorter
+    xi_yi=[xi_al, yi_al]; % longer
+    
+    figure;
+    plot(polyshape_array);
+    hold on
+    plot(xi_al, yi_al, 'k-', xy2(:,1), xy2(:,2), 'r-');
+    xlim([0 1]);
+    ylim([0 1]);
+    hold off
+    
+    [ind2,dist2] = dsearchn(xi_yi, xy2); 
+    fd2=sm_distance(xy2(end,1), xi_yi(end,1), xy2(end,2), xi_yi(end,2)); 
+    dist2 = [dist2; fd2]; 
+    
+    figure; 
+    plot(dist2); 
+    ylim([0 1]);
+    
+    mean_deviation_ideal_path2 = sum(dist2)/size(xi_yi, 1) 
+    mean_deviation_ideal_path2 = sum(dist2)/size(xy2, 1)
+    
+    %%
+    
     % zone analysis for ideal paths
     [ideal_alley_zone, ideal_rel_alley_zone,...
         sm.sub{p}.session{s}.trial{k}.zone.ideal_alley_entry]=sm_wp10_coordinatesZonesStatic(xi_al,...
