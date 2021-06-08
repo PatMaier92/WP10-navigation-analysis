@@ -230,7 +230,7 @@ end
 %% Write summaries for a selection of variables
 new_name2 = [pt.sub{p}.Group '_' num2str(pt.sub{p}.id)  '_results_post'];
 new_file = fullfile(folderOut2, new_name2);
-sm_wp10_table_allTrials_post(folderOut,new_file,col_header,col_header_2);
+sm_wp10_table_allTrials_post(folderOut, new_file, col_header, col_header_2, 'X', 'post_vars');
 
 p=p+1;
 
