@@ -57,3 +57,32 @@
     hline = refline(0, mean(dist4));
     hline.Color = 'y';
     hold off; 
+    
+    
+    % cleaned path (removes waiting/rotating at one spot)
+    xy_unique=unique(xy,'rows','stable'); 
+    len_unique=size(xy_unique,1); 
+    
+    [~,dist5] = dsearchn(xi_yi, xy_unique); 
+    dist5 = [dist5; fd]; 
+    sum(dist5)
+    mean(dist5)
+    
+    figure;
+    plot(polyshape_array);
+    hold on
+    plot(xi_al, yi_al, 'k-', xy_unique(:,1), xy_unique(:,2), 'b+');
+    xlim([0 1]);
+    ylim([0 1]);
+    hold off
+    
+    figure; 
+    plot(dist,'b-'); 
+    hold on; 
+    plot(dist5,'y-');  
+    hline = refline(0, mean(dist));
+    hline.Color = 'b';
+    hline = refline(0, mean(dist5));
+    hline.Color = 'y';
+    hold off; 
+    
