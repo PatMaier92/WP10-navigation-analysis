@@ -467,67 +467,16 @@ else
         y_line, sm.sub{p}.session{s}.trial{k}.ideal_path_length_allo, ...
         x_line_ego, y_line_ego, sm.sub{p}.session{s}.trial{k}.ideal_path_length_ego);
     
-    % test plot
-    figure;
-    plot(polyshape_array);
-    hold on
-    plot(x_line, y_line, 'k+', xi_al, yi_al, 'k-',...
-        x_line_ego, y_line_ego, 'rx', xi_eg, yi_eg, 'r-');
-    xlim([0 1]);
-    ylim([0 1]);
-    hold off
-    
-    %% test: distance to ideal path ('integral')
-     
-    % actual path longer than ideal one
-    xy=[x,y]; % longer
-    xi_yi=[xi_al, yi_al]; % shorter
-    
-    figure;
-    plot(polyshape_array);
-    hold on
-    plot(xi_al, yi_al, 'k-', x, y, 'r-');
-    xlim([0 1]);
-    ylim([0 1]);
-    hold off
-    
-    [~,dist] = dsearchn(xi_yi, xy); 
-    fd=sm_distance(xy(end,1), xi_yi(end,1), xy(end,2), xi_yi(end,2)); % final distance
-    dist = [dist; fd]; 
-    
-    figure; 
-    plot(dist); 
-    ylim([0 1]);
-    
-    mean_deviation_ideal_path = sum(dist)/size(xi_yi, 1) 
-    mean_deviation_ideal_path = sum(dist)/size(xy, 1)
-    
-    % actual path shorter than ideal one 
-    s=1000; 
-    xy2=[x(1:s),y(1:s)]; % shorter
-    xi_yi=[xi_al, yi_al]; % longer
-    
-    figure;
-    plot(polyshape_array);
-    hold on
-    plot(xi_al, yi_al, 'k-', xy2(:,1), xy2(:,2), 'r-');
-    xlim([0 1]);
-    ylim([0 1]);
-    hold off
-    
-    [ind2,dist2] = dsearchn(xi_yi, xy2); 
-    fd2=sm_distance(xy2(end,1), xi_yi(end,1), xy2(end,2), xi_yi(end,2)); 
-    dist2 = [dist2; fd2]; 
-    
-    figure; 
-    plot(dist2); 
-    ylim([0 1]);
-    
-    mean_deviation_ideal_path2 = sum(dist2)/size(xi_yi, 1) 
-    mean_deviation_ideal_path2 = sum(dist2)/size(xy2, 1)
-    
-    %%
-    
+%     % test plot
+%     figure;
+%     plot(polyshape_array);
+%     hold on
+%     plot(x_line, y_line, 'k+', xi_al, yi_al, 'k-',...
+%         x_line_ego, y_line_ego, 'rx', xi_eg, yi_eg, 'r-');
+%     xlim([0 1]);
+%     ylim([0 1]);
+%     hold off
+      
     % zone analysis for ideal paths
     [ideal_alley_zone, ideal_rel_alley_zone,...
         sm.sub{p}.session{s}.trial{k}.zone.ideal_alley_entry]=sm_wp10_coordinatesZonesStatic(xi_al,...
@@ -592,9 +541,15 @@ else
     % FINAL DISTANCE to ALLOCENTRIC target
     sm.sub{p}.session{s}.trial{k}.result.final_distance_allo=sm_distance(sm.sub{p}.session{s}.trial{k}.goal_x,sm.sub{p}.session{s}.trial{k}.x_end,sm.sub{p}.session{s}.trial{k}.goal_y,sm.sub{p}.session{s}.trial{k}.y_end);
     
+    % AVERAGE DISTANCE to ALLOCENTRIC PATH
+    [~,distance_to_allo_path] = dsearchn([xi_al, yi_al],[x,y]); % returns euclidian distance to nearest neighbour on interpolated ideal path
+    distance_to_allo_path = [distance_to_allo_path; sm.sub{p}.session{s}.trial{k}.result.final_distance_allo]; % add final distance as last data point
+    sm.sub{p}.session{s}.trial{k}.result.avg_distance_allo_path=mean(distance_to_allo_path);
+    sm.sub{p}.session{s}.trial{k}.result.total_distance_allo_path=sum(distance_to_allo_path);
+    
     % AVERAGE DISTANCE to ALLOCENTRIC target
-    sm.sub{p}.session{s}.trial{k}.result.avg_distance_allo=total_dist_to_goal_allo/sdata_length(1);
-    sm.sub{p}.session{s}.trial{k}.result.total_distance_allo=total_dist_to_goal_allo;
+    sm.sub{p}.session{s}.trial{k}.result.avg_distance_allo_target=total_dist_to_goal_allo/sdata_length(1);
+    sm.sub{p}.session{s}.trial{k}.result.total_distance_allo_target=total_dist_to_goal_allo;
     sm.sub{p}.session{s}.trial{k}.result.sum_data_points=sdata_length(1);
     
     % Cumulative IDEAL DISTANCE to ALLOCENTRIC target
@@ -608,8 +563,8 @@ else
     end
     
     % IDEAL AVERAGE DISTANCE to ALLOCENTRIC target
-    sm.sub{p}.session{s}.trial{k}.ideal_avg_distance_allo=id_total_dist_to_goal_allo/xi_length;
-    sm.sub{p}.session{s}.trial{k}.ideal_total_distance_allo=id_total_dist_to_goal_allo;
+    sm.sub{p}.session{s}.trial{k}.ideal_avg_distance_allo_target=id_total_dist_to_goal_allo/xi_length;
+    sm.sub{p}.session{s}.trial{k}.ideal_total_distance_allo_target=id_total_dist_to_goal_allo;
     sm.sub{p}.session{s}.trial{k}.ideal_sum_data_points_allo=xi_length; 
     
     % PATH ACCURACY to ALLOCENTRIC target
@@ -617,8 +572,8 @@ else
     % sm.sub{p}.session{s}.trial{k}.result.path_accuracy_allo=sm_ac(sm.sub{p}.session{s}.trial{k}.result.path_length,sm.sub{p}.session{s}.trial{k}.ideal_path_length_allo); 
     
     % DISTANCE ACCURACY to ALLOCENTRIC target
-    sm.sub{p}.session{s}.trial{k}.result.distance_accuracy_allo=sm_ac(sm.sub{p}.session{s}.trial{k}.result.avg_distance_allo,sm.sub{p}.session{s}.trial{k}.ideal_avg_distance_allo);
-     
+    sm.sub{p}.session{s}.trial{k}.result.distance_accuracy_allo=sm_ac(sm.sub{p}.session{s}.trial{k}.result.avg_distance_allo_target,sm.sub{p}.session{s}.trial{k}.ideal_avg_distance_allo_target);
+    
     % VELOCITY 
     sm.sub{p}.session{s}.trial{k}.result.velocity=sm.sub{p}.session{s}.trial{k}.result.path_length/sm.sub{p}.session{s}.trial{k}.result.time;
 
@@ -632,9 +587,15 @@ else
     % FINAL DISTANCE to EGOCENTRIC target 
     sm.sub{p}.session{s}.trial{k}.result.final_distance_ego=sm_distance(sm.sub{p}.session{s}.trial{k}.goal_x_ego,sm.sub{p}.session{s}.trial{k}.x_end,sm.sub{p}.session{s}.trial{k}.goal_y_ego,sm.sub{p}.session{s}.trial{k}.y_end);
     
+    % AVERAGE DISTANCE to EGOCENTRIC PATH
+    [~,distance_to_ego_path] = dsearchn([xi_eg, yi_eg],[x,y]); % returns euclidian distance to nearest neighbour on interpolated ideal path
+    distance_to_ego_path = [distance_to_ego_path; sm.sub{p}.session{s}.trial{k}.result.final_distance_ego]; % add final distance as last data point
+    sm.sub{p}.session{s}.trial{k}.result.avg_distance_ego_path=mean(distance_to_ego_path);
+    sm.sub{p}.session{s}.trial{k}.result.total_distance_ego_path=sum(distance_to_ego_path);
+    
     % AVERAGE DISTANCE to EGOCENTRIC target 
-    sm.sub{p}.session{s}.trial{k}.result.avg_distance_ego=total_dist_to_goal_ego/sdata_length(1);
-    sm.sub{p}.session{s}.trial{k}.result.total_distance_ego=total_dist_to_goal_ego;
+    sm.sub{p}.session{s}.trial{k}.result.avg_distance_ego_target=total_dist_to_goal_ego/sdata_length(1);
+    sm.sub{p}.session{s}.trial{k}.result.total_distance_ego_target=total_dist_to_goal_ego;
     % ideal sum data points: same as in analyis above
     
     % Cumulative IDEAL DISTANCE to EGOCENTRIC target 
@@ -648,8 +609,8 @@ else
     end
     
     % IDEAL AVERAGE DISTANCE to EGOCENTRIC target 
-    sm.sub{p}.session{s}.trial{k}.ideal_avg_distance_ego=id_total_dist_to_goal_ego/xi_length;
-    sm.sub{p}.session{s}.trial{k}.ideal_total_distance_ego=id_total_dist_to_goal_ego;
+    sm.sub{p}.session{s}.trial{k}.ideal_avg_distance_ego_target=id_total_dist_to_goal_ego/xi_length;
+    sm.sub{p}.session{s}.trial{k}.ideal_total_distance_ego_target=id_total_dist_to_goal_ego;
     sm.sub{p}.session{s}.trial{k}.ideal_sum_data_points_ego=xi_length; 
     
     % PATH ACCURACY to EGOCENTRIC target 
@@ -657,7 +618,7 @@ else
     % sm.sub{p}.session{s}.trial{k}.result.path_accuracy_ego=sm_ac(sm.sub{p}.session{s}.trial{k}.result.path_length,sm.sub{p}.session{s}.trial{k}.ideal_path_length_ego);
     
     % DISTANCE ACCURACY to EGOCENTRIC target 
-    sm.sub{p}.session{s}.trial{k}.result.distance_accuracy_ego=sm_ac(sm.sub{p}.session{s}.trial{k}.result.avg_distance_ego,sm.sub{p}.session{s}.trial{k}.ideal_avg_distance_ego);
+    sm.sub{p}.session{s}.trial{k}.result.distance_accuracy_ego=sm_ac(sm.sub{p}.session{s}.trial{k}.result.avg_distance_ego_target,sm.sub{p}.session{s}.trial{k}.ideal_avg_distance_ego_target);
      
     fprintf('Egocentric path and distance analysis done for %d, session %d, file no %d.\n', subject, session, k);
     %% Body rotation analysis
@@ -893,9 +854,11 @@ col_header={'wp','date_analysis','id','sex','group','session','session_duration'
 col_header_2={'correct_goal','correct_goal_ego','correct_final_alley','correct_final_alley_ego',...
     'time','velocity','final_distance_allo','final_distance_ego',...
     'path_length','dev_ideal_path_allo','dev_ideal_path_ego',...
-    'avg_distance_allo','total_distance_allo','sum_data_points',...
-    'avg_distance_ego','total_distance_ego', ...
+    'avg_distance_allo_target','total_distance_allo_target','sum_data_points',...
+    'avg_distance_ego_target','total_distance_ego_target', ...
     'dev_ideal_avg_dist_allo','dev_ideal_avg_dist_ego',...
+    'avg_distance_allo_path', 'total_distance_allo_path', ...
+    'avg_distance_ego_path', 'total_distance_ego_path', ...
     'direct_path','arm_explored','arm_score','path_explored','path_score',...
     'search_strategy_no','direct','reoriented','serial','central_focus','random_search',...
     'unclassified','failed_strategy','allocentric','egocentric',...
@@ -906,8 +869,8 @@ col_header_2={'correct_goal','correct_goal_ego','correct_final_alley','correct_f
 col_header_3={'correct_crit','goal_x','goal_y','goal_x_ego','goal_y_ego',...
     'chosen_x','chosen_y','ideal_path_length_allo','ideal_path_length_allo_interpol',...
     'ideal_path_length_ego','ideal_path_length_ego_interpol',...
-    'ideal_avg_distance_allo','ideal_total_distance_allo','ideal_sum_data_points_allo',...
-    'ideal_avg_distance_ego','ideal_total_distance_ego','ideal_sum_data_points_ego',...
+    'ideal_avg_distance_allo_target','ideal_total_distance_allo_target','ideal_sum_data_points_allo',...
+    'ideal_avg_distance_ego_target','ideal_total_distance_ego_target','ideal_sum_data_points_ego',...
     'ideal_body_rot','ideal_body_turn','ideal_headturn_no',...  
     'alley_1_abs','alley_2_abs','alley_3_abs','alley_4_abs','alley_5_abs','pent_abs',...
     'tri_1_abs', 'tri_2_abs', 'tri_3_abs', 'tri_4_abs', 'tri_5_abs',...
@@ -947,10 +910,12 @@ xlswrite(new_file,strrep([group_var ...
     sm.sub{p}.session{s}.trial{k}.result.final_distance_allo sm.sub{p}.session{s}.trial{k}.result.final_distance_ego ...
     sm.sub{p}.session{s}.trial{k}.result.path_length ...
     sm.sub{p}.session{s}.trial{k}.result.path_accuracy_allo sm.sub{p}.session{s}.trial{k}.result.path_accuracy_ego ...
-    sm.sub{p}.session{s}.trial{k}.result.avg_distance_allo sm.sub{p}.session{s}.trial{k}.ideal_total_distance_allo ...
+    sm.sub{p}.session{s}.trial{k}.result.avg_distance_allo_target sm.sub{p}.session{s}.trial{k}.result.total_distance_allo_target ...
     sm.sub{p}.session{s}.trial{k}.result.sum_data_points ...
-    sm.sub{p}.session{s}.trial{k}.result.avg_distance_ego sm.sub{p}.session{s}.trial{k}.ideal_total_distance_ego ...
+    sm.sub{p}.session{s}.trial{k}.result.avg_distance_ego_target sm.sub{p}.session{s}.trial{k}.result.total_distance_ego_target ...
     sm.sub{p}.session{s}.trial{k}.result.distance_accuracy_allo sm.sub{p}.session{s}.trial{k}.result.distance_accuracy_ego ...
+    sm.sub{p}.session{s}.trial{k}.result.avg_distance_allo_path sm.sub{p}.session{s}.trial{k}.result.total_distance_allo_path ...
+    sm.sub{p}.session{s}.trial{k}.result.avg_distance_ego_path sm.sub{p}.session{s}.trial{k}.result.total_distance_ego_path...
     sm.sub{p}.session{s}.trial{k}.result.direct_path ...
     sm.sub{p}.session{s}.trial{k}.result.arm_explored sm.sub{p}.session{s}.trial{k}.result.arm_score ...
     sm.sub{p}.session{s}.trial{k}.result.path_explored sm.sub{p}.session{s}.trial{k}.result.path_score ...
@@ -970,9 +935,9 @@ xlswrite(new_file,strrep([group_var success_criterium ...
     sm.sub{p}.session{s}.trial{k}.x_end sm.sub{p}.session{s}.trial{k}.y_end ...
     sm.sub{p}.session{s}.trial{k}.ideal_path_length_allo sm.sub{p}.session{s}.trial{k}.ideal_path_length_allo_interpol ...
     sm.sub{p}.session{s}.trial{k}.ideal_path_length_ego sm.sub{p}.session{s}.trial{k}.ideal_path_length_ego_interpol ...
-    sm.sub{p}.session{s}.trial{k}.ideal_avg_distance_allo sm.sub{p}.session{s}.trial{k}.ideal_total_distance_allo ...
+    sm.sub{p}.session{s}.trial{k}.ideal_avg_distance_allo_target sm.sub{p}.session{s}.trial{k}.ideal_total_distance_allo_target ...
     sm.sub{p}.session{s}.trial{k}.ideal_sum_data_points_allo ...
-    sm.sub{p}.session{s}.trial{k}.ideal_avg_distance_ego sm.sub{p}.session{s}.trial{k}.ideal_total_distance_ego ...
+    sm.sub{p}.session{s}.trial{k}.ideal_avg_distance_ego_target sm.sub{p}.session{s}.trial{k}.ideal_total_distance_ego_target ...
     sm.sub{p}.session{s}.trial{k}.ideal_sum_data_points_ego ...
     sm.sub{p}.session{s}.trial{k}.ideal_body_rotation ...
     sm.sub{p}.session{s}.trial{k}.ideal_body_turn_total sm.sub{p}.session{s}.trial{k}.ideal_headturnNo ...
@@ -1018,7 +983,7 @@ end
 %% Write summaries for a selection of variables
 new_name2 = [sm.sub{p}.Group '_' num2str(sm.sub{p}.id)  '_results'];
 new_file = fullfile(folderOut2, new_name2);
-sm_wp10_table_allTrials(folderOut,new_file,col_header,col_header_2,col_header_3,'AZ','CR','data_vars','support_vars');
+sm_wp10_table_allTrials(folderOut,new_file,col_header,col_header_2,col_header_3,'BN','DK','data_vars','support_vars');
 
 p=p+1;
 
