@@ -319,132 +319,136 @@ if sm.sub{p}.session{s}.trial{k}.trial_condition==4
     sm.sub{p}.session{s}.trial{k}.result.obj_at_chosen_loc=0;
     sm.sub{p}.session{s}.trial{k}.exclude_trial_matlab=0;
     
-    sm.sub{p}.session{s}.trial{k}.result.success=0; 
-    sm.sub{p}.session{s}.trial{k}.result.success_ego=0;
-    sm.sub{p}.session{s}.trial{k}.result.correct_final_alley=0;
-    sm.sub{p}.session{s}.trial{k}.result.correct_final_alley_ego=0;
-    sm.sub{p}.session{s}.trial{k}.result.final_distance_allo=0;
-    sm.sub{p}.session{s}.trial{k}.result.final_distance_ego=0;
-    sm.sub{p}.session{s}.trial{k}.result.path_accuracy_ego=0;
-    sm.sub{p}.session{s}.trial{k}.result.avg_distance_allo=0; 
-    sm.sub{p}.session{s}.trial{k}.ideal_total_distance_allo=0;
-    sm.sub{p}.session{s}.trial{k}.result.sum_data_points=0;
-    sm.sub{p}.session{s}.trial{k}.result.avg_distance_ego=0; 
-    sm.sub{p}.session{s}.trial{k}.ideal_total_distance_ego=0; 
-    sm.sub{p}.session{s}.trial{k}.result.distance_accuracy_allo=0;
-    sm.sub{p}.session{s}.trial{k}.result.distance_accuracy_ego=0;
-    sm.sub{p}.session{s}.trial{k}.result.direct_path=0;
-    sm.sub{p}.session{s}.trial{k}.result.arm_explored=0; 
-    sm.sub{p}.session{s}.trial{k}.result.arm_score=0;
-    sm.sub{p}.session{s}.trial{k}.result.path_explored=0;
-    sm.sub{p}.session{s}.trial{k}.result.path_score=0;
-    sm.sub{p}.session{s}.trial{k}.result.search_strategy_no=0; 
-    sm.sub{p}.session{s}.trial{k}.searchStrategy.direct=0;
-    sm.sub{p}.session{s}.trial{k}.searchStrategy.reoriented=0;
-    sm.sub{p}.session{s}.trial{k}.searchStrategy.serial=0;
-    sm.sub{p}.session{s}.trial{k}.searchStrategy.central_focus=0;
-    sm.sub{p}.session{s}.trial{k}.searchStrategy.random_search=0;
-    sm.sub{p}.session{s}.trial{k}.searchStrategy.unclassified=0; 
-    sm.sub{p}.session{s}.trial{k}.searchStrategy.failed=0;
-    sm.sub{p}.session{s}.trial{k}.searchStrategy.allocentric=0; 
-    sm.sub{p}.session{s}.trial{k}.searchStrategy.egocentric=0;
-    sm.sub{p}.session{s}.trial{k}.result.head_rotation=0;
-    sm.sub{p}.session{s}.trial{k}.result.full_head_rotation=0;
-    sm.sub{p}.session{s}.trial{k}.result.head_turn_total=0;
-    sm.sub{p}.session{s}.trial{k}.result.head_turn_accuracy=0;
-    sm.sub{p}.session{s}.trial{k}.result.body_rotation=0;
-    sm.sub{p}.session{s}.trial{k}.result.body_rotation_accuracy=0;
-    sm.sub{p}.session{s}.trial{k}.result.body_turn_total=0;
-    sm.sub{p}.session{s}.trial{k}.result.body_turn_accuracy=0;
+    sm.sub{p}.session{s}.trial{k}.result.success=999;
+    sm.sub{p}.session{s}.trial{k}.result.success_ego=999;
+    sm.sub{p}.session{s}.trial{k}.result.correct_final_alley=999;
+    sm.sub{p}.session{s}.trial{k}.result.correct_final_alley_ego=999;
+    sm.sub{p}.session{s}.trial{k}.result.final_distance_allo=999;
+    sm.sub{p}.session{s}.trial{k}.result.final_distance_ego=999;
+    sm.sub{p}.session{s}.trial{k}.result.path_accuracy_ego=999;
+    sm.sub{p}.session{s}.trial{k}.result.avg_distance_allo_target=999; 
+    sm.sub{p}.session{s}.trial{k}.result.total_distance_allo_target=999;
+    sm.sub{p}.session{s}.trial{k}.result.sum_data_points=999;
+    sm.sub{p}.session{s}.trial{k}.result.avg_distance_ego_target=999; 
+    sm.sub{p}.session{s}.trial{k}.result.total_distance_ego_target=999; 
+    sm.sub{p}.session{s}.trial{k}.result.distance_accuracy_allo=999;
+    sm.sub{p}.session{s}.trial{k}.result.distance_accuracy_ego=999;
+    sm.sub{p}.session{s}.trial{k}.result.avg_distance_allo_path=999; 
+    sm.sub{p}.session{s}.trial{k}.result.total_distance_allo_path=999; 
+    sm.sub{p}.session{s}.trial{k}.result.avg_distance_ego_path=999; 
+    sm.sub{p}.session{s}.trial{k}.result.total_distance_ego_path=999; 
+    sm.sub{p}.session{s}.trial{k}.result.direct_path=999;
+    sm.sub{p}.session{s}.trial{k}.result.arm_explored=999; 
+    sm.sub{p}.session{s}.trial{k}.result.arm_score=999;
+    sm.sub{p}.session{s}.trial{k}.result.path_explored=999;
+    sm.sub{p}.session{s}.trial{k}.result.path_score=999;
+    sm.sub{p}.session{s}.trial{k}.result.search_strategy_no=999; 
+    sm.sub{p}.session{s}.trial{k}.searchStrategy.direct=999;
+    sm.sub{p}.session{s}.trial{k}.searchStrategy.reoriented=999;
+    sm.sub{p}.session{s}.trial{k}.searchStrategy.serial=999;
+    sm.sub{p}.session{s}.trial{k}.searchStrategy.central_focus=999;
+    sm.sub{p}.session{s}.trial{k}.searchStrategy.random_search=999;
+    sm.sub{p}.session{s}.trial{k}.searchStrategy.unclassified=999; 
+    sm.sub{p}.session{s}.trial{k}.searchStrategy.failed=999;
+    sm.sub{p}.session{s}.trial{k}.searchStrategy.allocentric=999; 
+    sm.sub{p}.session{s}.trial{k}.searchStrategy.egocentric=999;
+    sm.sub{p}.session{s}.trial{k}.result.head_rotation=999;
+    sm.sub{p}.session{s}.trial{k}.result.full_head_rotation=999;
+    sm.sub{p}.session{s}.trial{k}.result.head_turn_total=999;
+    sm.sub{p}.session{s}.trial{k}.result.head_turn_accuracy=999;
+    sm.sub{p}.session{s}.trial{k}.result.body_rotation=999;
+    sm.sub{p}.session{s}.trial{k}.result.body_rotation_accuracy=999;
+    sm.sub{p}.session{s}.trial{k}.result.body_turn_total=999;
+    sm.sub{p}.session{s}.trial{k}.result.body_turn_accuracy=999;
     
     success_criterium=0; 
     sm.sub{p}.session{s}.trial{k}.goal_x_ego=0; sm.sub{p}.session{s}.trial{k}.goal_y_ego=0; 
     sm.sub{p}.session{s}.trial{k}.x_end=0; sm.sub{p}.session{s}.trial{k}.y_end=0; 
-    sm.sub{p}.session{s}.trial{k}.ideal_path_length_ego=0;
-    sm.sub{p}.session{s}.trial{k}.ideal_path_length_ego_interpol=0; 
-    sm.sub{p}.session{s}.trial{k}.ideal_avg_distance_allo=0; 
-    sm.sub{p}.session{s}.trial{k}.ideal_total_distance_allo=0; 
-    sm.sub{p}.session{s}.trial{k}.ideal_sum_data_points_allo=0; 
-    sm.sub{p}.session{s}.trial{k}.ideal_avg_distance_ego=0; 
-    sm.sub{p}.session{s}.trial{k}.ideal_total_distance_ego=0; 
-    sm.sub{p}.session{s}.trial{k}.ideal_sum_data_points_ego=0; 
-    sm.sub{p}.session{s}.trial{k}.ideal_body_rotation=0; 
-    sm.sub{p}.session{s}.trial{k}.ideal_body_turn_total=0; 
-    sm.sub{p}.session{s}.trial{k}.ideal_headturnNo=0; 
-    sm.sub{p}.session{s}.trial{k}.zone.alley_zone(1,1)=0; 
-    sm.sub{p}.session{s}.trial{k}.zone.alley_zone(1,2)=0; 
-    sm.sub{p}.session{s}.trial{k}.zone.alley_zone(1,3)=0; 
-    sm.sub{p}.session{s}.trial{k}.zone.alley_zone(1,4)=0; 
-    sm.sub{p}.session{s}.trial{k}.zone.alley_zone(1,5)=0; 
-    sm.sub{p}.session{s}.trial{k}.zone.pentagon_zone=0; 
-    sm.sub{p}.session{s}.trial{k}.zone.triangle_zone(1,1)=0; 
-    sm.sub{p}.session{s}.trial{k}.zone.triangle_zone(1,2)=0; 
-    sm.sub{p}.session{s}.trial{k}.zone.triangle_zone(1,3)=0; 
-    sm.sub{p}.session{s}.trial{k}.zone.triangle_zone(1,4)=0; 
-    sm.sub{p}.session{s}.trial{k}.zone.triangle_zone(1,5)=0; 
-    sm.sub{p}.session{s}.trial{k}.zone.rectangle_zone(1,1)=0; 
-    sm.sub{p}.session{s}.trial{k}.zone.rectangle_zone(1,2)=0; 
-    sm.sub{p}.session{s}.trial{k}.zone.rectangle_zone(1,3)=0; 
-    sm.sub{p}.session{s}.trial{k}.zone.rectangle_zone(1,4)=0; 
-    sm.sub{p}.session{s}.trial{k}.zone.rectangle_zone(1,5)=0; 
-    sm.sub{p}.session{s}.trial{k}.zone.rel_alley_zone(1,1)=0; 
-    sm.sub{p}.session{s}.trial{k}.zone.rel_alley_zone(1,2)=0; 
-    sm.sub{p}.session{s}.trial{k}.zone.rel_alley_zone(1,3)=0; 
-    sm.sub{p}.session{s}.trial{k}.zone.rel_alley_zone(1,4)=0; 
-    sm.sub{p}.session{s}.trial{k}.zone.rel_alley_zone(1,5)=0; 
-    sm.sub{p}.session{s}.trial{k}.zone.rel_pentagon_zone=0; 
-    sm.sub{p}.session{s}.trial{k}.zone.rel_triangle_zone(1,1)=0; 
-    sm.sub{p}.session{s}.trial{k}.zone.rel_triangle_zone(1,2)=0; 
-    sm.sub{p}.session{s}.trial{k}.zone.rel_triangle_zone(1,3)=0; 
-    sm.sub{p}.session{s}.trial{k}.zone.rel_triangle_zone(1,4)=0; 
-    sm.sub{p}.session{s}.trial{k}.zone.rel_triangle_zone(1,5)=0; 
-    sm.sub{p}.session{s}.trial{k}.zone.rel_rectangle_zone(1,1)=0; 
-    sm.sub{p}.session{s}.trial{k}.zone.rel_rectangle_zone(1,2)=0; 
-    sm.sub{p}.session{s}.trial{k}.zone.rel_rectangle_zone(1,3)=0; 
-    sm.sub{p}.session{s}.trial{k}.zone.rel_rectangle_zone(1,4)=0; 
-    sm.sub{p}.session{s}.trial{k}.zone.rel_rectangle_zone(1,5)=0; 
-    sm.sub{p}.session{s}.trial{k}.zone.alley_entry(1,1)=0; 
-    sm.sub{p}.session{s}.trial{k}.zone.alley_entry(1,2)=0; 
-    sm.sub{p}.session{s}.trial{k}.zone.alley_entry(1,3)=0; 
-    sm.sub{p}.session{s}.trial{k}.zone.alley_entry(1,4)=0; 
-    sm.sub{p}.session{s}.trial{k}.zone.alley_entry(1,5)=0; 
-    sm.sub{p}.session{s}.trial{k}.zone.alley_entry_out(1,1)=0; 
-    sm.sub{p}.session{s}.trial{k}.zone.alley_entry_out(1,2)=0; 
-    sm.sub{p}.session{s}.trial{k}.zone.alley_entry_out(1,3)=0; 
-    sm.sub{p}.session{s}.trial{k}.zone.alley_entry_out(1,4)=0; 
-    sm.sub{p}.session{s}.trial{k}.zone.alley_entry_out(1,5)=0; 
-    sm.sub{p}.session{s}.trial{k}.zone.alley_entry_in(1,1)=0; 
-    sm.sub{p}.session{s}.trial{k}.zone.alley_entry_in(1,2)=0; 
-    sm.sub{p}.session{s}.trial{k}.zone.alley_entry_in(1,3)=0; 
-    sm.sub{p}.session{s}.trial{k}.zone.alley_entry_in(1,4)=0; 
-    sm.sub{p}.session{s}.trial{k}.zone.alley_entry_in(1,5)=0; 
-    sm.sub{p}.session{s}.trial{k}.zone.pentagon_entry=0; 
-    sm.sub{p}.session{s}.trial{k}.zone.triangle_entry(1,1)=0; 
-    sm.sub{p}.session{s}.trial{k}.zone.triangle_entry(1,2)=0; 
-    sm.sub{p}.session{s}.trial{k}.zone.triangle_entry(1,3)=0; 
-    sm.sub{p}.session{s}.trial{k}.zone.triangle_entry(1,4)=0; 
-    sm.sub{p}.session{s}.trial{k}.zone.triangle_entry(1,5)=0; 
-    sm.sub{p}.session{s}.trial{k}.zone.rectangle_entry(1,1)=0; 
-    sm.sub{p}.session{s}.trial{k}.zone.rectangle_entry(1,2)=0; 
-    sm.sub{p}.session{s}.trial{k}.zone.rectangle_entry(1,3)=0; 
-    sm.sub{p}.session{s}.trial{k}.zone.rectangle_entry(1,4)=0; 
-    sm.sub{p}.session{s}.trial{k}.zone.rectangle_entry(1,5)=0; 
-    sm.sub{p}.session{s}.trial{k}.time.alley_time(1,1)=0; 
-    sm.sub{p}.session{s}.trial{k}.time.alley_time(1,2)=0; 
-    sm.sub{p}.session{s}.trial{k}.time.alley_time(1,3)=0; 
-    sm.sub{p}.session{s}.trial{k}.time.alley_time(1,4)=0; 
-    sm.sub{p}.session{s}.trial{k}.time.alley_time(1,5)=0; 
-    sm.sub{p}.session{s}.trial{k}.time.pentagon_time=0; 
-    sm.sub{p}.session{s}.trial{k}.time.triangle_time(1,1)=0; 
-    sm.sub{p}.session{s}.trial{k}.time.triangle_time(1,2)=0; 
-    sm.sub{p}.session{s}.trial{k}.time.triangle_time(1,3)=0; 
-    sm.sub{p}.session{s}.trial{k}.time.triangle_time(1,4)=0; 
-    sm.sub{p}.session{s}.trial{k}.time.triangle_time(1,5)=0; 
-    sm.sub{p}.session{s}.trial{k}.time.rectangle_time(1,1)=0; 
-    sm.sub{p}.session{s}.trial{k}.time.rectangle_time(1,2)=0; 
-    sm.sub{p}.session{s}.trial{k}.time.rectangle_time(1,3)=0; 
-    sm.sub{p}.session{s}.trial{k}.time.rectangle_time(1,4)=0; 
-    sm.sub{p}.session{s}.trial{k}.time.rectangle_time(1,5)=0; 
+    sm.sub{p}.session{s}.trial{k}.ideal_path_length_ego=999;
+    sm.sub{p}.session{s}.trial{k}.ideal_path_length_ego_interpol=999; 
+    sm.sub{p}.session{s}.trial{k}.ideal_avg_distance_allo=999; 
+    sm.sub{p}.session{s}.trial{k}.ideal_total_distance_allo=999; 
+    sm.sub{p}.session{s}.trial{k}.ideal_sum_data_points_allo=999; 
+    sm.sub{p}.session{s}.trial{k}.ideal_avg_distance_ego=999; 
+    sm.sub{p}.session{s}.trial{k}.ideal_total_distance_ego=999; 
+    sm.sub{p}.session{s}.trial{k}.ideal_sum_data_points_ego=999; 
+    sm.sub{p}.session{s}.trial{k}.ideal_body_rotation=999; 
+    sm.sub{p}.session{s}.trial{k}.ideal_body_turn_total=999; 
+    sm.sub{p}.session{s}.trial{k}.ideal_headturnNo=999; 
+    sm.sub{p}.session{s}.trial{k}.zone.alley_zone(1,1)=999; 
+    sm.sub{p}.session{s}.trial{k}.zone.alley_zone(1,2)=999; 
+    sm.sub{p}.session{s}.trial{k}.zone.alley_zone(1,3)=999; 
+    sm.sub{p}.session{s}.trial{k}.zone.alley_zone(1,4)=999; 
+    sm.sub{p}.session{s}.trial{k}.zone.alley_zone(1,5)=999; 
+    sm.sub{p}.session{s}.trial{k}.zone.pentagon_zone=999; 
+    sm.sub{p}.session{s}.trial{k}.zone.triangle_zone(1,1)=999; 
+    sm.sub{p}.session{s}.trial{k}.zone.triangle_zone(1,2)=999; 
+    sm.sub{p}.session{s}.trial{k}.zone.triangle_zone(1,3)=999; 
+    sm.sub{p}.session{s}.trial{k}.zone.triangle_zone(1,4)=999; 
+    sm.sub{p}.session{s}.trial{k}.zone.triangle_zone(1,5)=999; 
+    sm.sub{p}.session{s}.trial{k}.zone.rectangle_zone(1,1)=999; 
+    sm.sub{p}.session{s}.trial{k}.zone.rectangle_zone(1,2)=999; 
+    sm.sub{p}.session{s}.trial{k}.zone.rectangle_zone(1,3)=999; 
+    sm.sub{p}.session{s}.trial{k}.zone.rectangle_zone(1,4)=999; 
+    sm.sub{p}.session{s}.trial{k}.zone.rectangle_zone(1,5)=999; 
+    sm.sub{p}.session{s}.trial{k}.zone.rel_alley_zone(1,1)=999; 
+    sm.sub{p}.session{s}.trial{k}.zone.rel_alley_zone(1,2)=999; 
+    sm.sub{p}.session{s}.trial{k}.zone.rel_alley_zone(1,3)=999; 
+    sm.sub{p}.session{s}.trial{k}.zone.rel_alley_zone(1,4)=999; 
+    sm.sub{p}.session{s}.trial{k}.zone.rel_alley_zone(1,5)=999; 
+    sm.sub{p}.session{s}.trial{k}.zone.rel_pentagon_zone=999; 
+    sm.sub{p}.session{s}.trial{k}.zone.rel_triangle_zone(1,1)=999; 
+    sm.sub{p}.session{s}.trial{k}.zone.rel_triangle_zone(1,2)=999; 
+    sm.sub{p}.session{s}.trial{k}.zone.rel_triangle_zone(1,3)=999; 
+    sm.sub{p}.session{s}.trial{k}.zone.rel_triangle_zone(1,4)=999; 
+    sm.sub{p}.session{s}.trial{k}.zone.rel_triangle_zone(1,5)=999; 
+    sm.sub{p}.session{s}.trial{k}.zone.rel_rectangle_zone(1,1)=999; 
+    sm.sub{p}.session{s}.trial{k}.zone.rel_rectangle_zone(1,2)=999; 
+    sm.sub{p}.session{s}.trial{k}.zone.rel_rectangle_zone(1,3)=999; 
+    sm.sub{p}.session{s}.trial{k}.zone.rel_rectangle_zone(1,4)=999; 
+    sm.sub{p}.session{s}.trial{k}.zone.rel_rectangle_zone(1,5)=999; 
+    sm.sub{p}.session{s}.trial{k}.zone.alley_entry(1,1)=999; 
+    sm.sub{p}.session{s}.trial{k}.zone.alley_entry(1,2)=999; 
+    sm.sub{p}.session{s}.trial{k}.zone.alley_entry(1,3)=999; 
+    sm.sub{p}.session{s}.trial{k}.zone.alley_entry(1,4)=999; 
+    sm.sub{p}.session{s}.trial{k}.zone.alley_entry(1,5)=999; 
+    sm.sub{p}.session{s}.trial{k}.zone.alley_entry_out(1,1)=999; 
+    sm.sub{p}.session{s}.trial{k}.zone.alley_entry_out(1,2)=999; 
+    sm.sub{p}.session{s}.trial{k}.zone.alley_entry_out(1,3)=999; 
+    sm.sub{p}.session{s}.trial{k}.zone.alley_entry_out(1,4)=999; 
+    sm.sub{p}.session{s}.trial{k}.zone.alley_entry_out(1,5)=999; 
+    sm.sub{p}.session{s}.trial{k}.zone.alley_entry_in(1,1)=999; 
+    sm.sub{p}.session{s}.trial{k}.zone.alley_entry_in(1,2)=999; 
+    sm.sub{p}.session{s}.trial{k}.zone.alley_entry_in(1,3)=999; 
+    sm.sub{p}.session{s}.trial{k}.zone.alley_entry_in(1,4)=999; 
+    sm.sub{p}.session{s}.trial{k}.zone.alley_entry_in(1,5)=999; 
+    sm.sub{p}.session{s}.trial{k}.zone.pentagon_entry=999; 
+    sm.sub{p}.session{s}.trial{k}.zone.triangle_entry(1,1)=999; 
+    sm.sub{p}.session{s}.trial{k}.zone.triangle_entry(1,2)=999; 
+    sm.sub{p}.session{s}.trial{k}.zone.triangle_entry(1,3)=999; 
+    sm.sub{p}.session{s}.trial{k}.zone.triangle_entry(1,4)=999; 
+    sm.sub{p}.session{s}.trial{k}.zone.triangle_entry(1,5)=999; 
+    sm.sub{p}.session{s}.trial{k}.zone.rectangle_entry(1,1)=999; 
+    sm.sub{p}.session{s}.trial{k}.zone.rectangle_entry(1,2)=999; 
+    sm.sub{p}.session{s}.trial{k}.zone.rectangle_entry(1,3)=999; 
+    sm.sub{p}.session{s}.trial{k}.zone.rectangle_entry(1,4)=999; 
+    sm.sub{p}.session{s}.trial{k}.zone.rectangle_entry(1,5)=999; 
+    sm.sub{p}.session{s}.trial{k}.time.alley_time(1,1)=999; 
+    sm.sub{p}.session{s}.trial{k}.time.alley_time(1,2)=999; 
+    sm.sub{p}.session{s}.trial{k}.time.alley_time(1,3)=999; 
+    sm.sub{p}.session{s}.trial{k}.time.alley_time(1,4)=999; 
+    sm.sub{p}.session{s}.trial{k}.time.alley_time(1,5)=999; 
+    sm.sub{p}.session{s}.trial{k}.time.pentagon_time=999; 
+    sm.sub{p}.session{s}.trial{k}.time.triangle_time(1,1)=999; 
+    sm.sub{p}.session{s}.trial{k}.time.triangle_time(1,2)=999; 
+    sm.sub{p}.session{s}.trial{k}.time.triangle_time(1,3)=999; 
+    sm.sub{p}.session{s}.trial{k}.time.triangle_time(1,4)=999; 
+    sm.sub{p}.session{s}.trial{k}.time.triangle_time(1,5)=999; 
+    sm.sub{p}.session{s}.trial{k}.time.rectangle_time(1,1)=999; 
+    sm.sub{p}.session{s}.trial{k}.time.rectangle_time(1,2)=999; 
+    sm.sub{p}.session{s}.trial{k}.time.rectangle_time(1,3)=999; 
+    sm.sub{p}.session{s}.trial{k}.time.rectangle_time(1,4)=999; 
+    sm.sub{p}.session{s}.trial{k}.time.rectangle_time(1,5)=999; 
     
     fprintf('Motor control analysis done for %d, session %d, file no %d.\n', subject, session, k);
 
@@ -452,7 +456,7 @@ else
 %% For all other navigation trials 
     %% Calculate variables depending on single trial settings
     % ideal path coordinates & length, ideal egocentric path coordinates & length
-    % TBD: egocentric paths for inner starts, currently copy of original path 
+    % Caution: dummy values for egocentric for inner starts (because no clear ideal egocentric path) 
     [sm.sub{p}.session{s}.trial{k}.goal_x_ego, sm.sub{p}.session{s}.trial{k}.goal_y_ego, x_line, y_line, x_line_ego, y_line_ego,...
         sm.sub{p}.session{s}.trial{k}.ideal_path_length_allo, sm.sub{p}.session{s}.trial{k}.ideal_path_length_ego,...
         sm.sub{p}.session{s}.trial{k}.ideal_headturnNo,...
@@ -477,41 +481,41 @@ else
 %     ylim([0 1]);
 %     hold off
       
-    % zone analysis for ideal paths
-    [ideal_alley_zone, ideal_rel_alley_zone,...
-        sm.sub{p}.session{s}.trial{k}.zone.ideal_alley_entry]=sm_wp10_coordinatesZonesStatic(xi_al,...
-        yi_al, alley_full_x, alley_full_y, length(xi_al));
-    
-    [ideal_rectangle_zone, ideal_rel_rectangle_zone,...
-        sm.sub{p}.session{s}.trial{k}.zone.ideal_rectangle_entry]= sm_wp10_coordinatesZonesStatic(xi_al,...
-        yi_al, rec_x, rec_y, length(xi_al));
-    
-    [ideal_alley_entry_mat]=sm_wp10_coordinatesZonesDynamic(xi_al,...
-        yi_al, alley_full_x, alley_full_y, length(xi_al));
-    [uniq_alley]=unique(ideal_alley_entry_mat,'rows');
-    
-    [ideal_rectangle_entry_mat]=sm_wp10_coordinatesZonesDynamic(xi_al,...
-        yi_al, rec_x, rec_y, length(xi_al));
-    [uniq_rect]=unique(ideal_rectangle_entry_mat,'rows');
-    uniq_rect=uniq_rect(2:end,:); % remove first row (start), always zeroes % TBD: change, this is not true for inner starts
-    
-    % zone analysis for ideal ego paths
-    [ideal_ego_alley_zone, ideal_ego_rel_alley_zone,...
-        sm.sub{p}.session{s}.trial{k}.zone.ideal_ego_alley_entry]=sm_wp10_coordinatesZonesStatic(xi_eg,...
-        yi_eg, alley_full_x, alley_full_y, length(xi_eg));
-    
-    [ideal_ego_rectangle_zone, ideal_ego_rel_rectangle_zone,...
-        sm.sub{p}.session{s}.trial{k}.zone.ideal_ego_rectangle_entry]= sm_wp10_coordinatesZonesStatic(xi_eg,...
-        yi_eg, rec_x, rec_y, length(xi_eg));
-    
-    [ideal_ego_alley_entry_mat]=sm_wp10_coordinatesZonesDynamic(xi_eg,...
-        yi_eg, alley_full_x, alley_full_y, length(xi_eg));
-    [uniq_e_alley]=unique(ideal_ego_alley_entry_mat,'rows');
-    
-    [ideal_ego_rectangle_entry_mat]=sm_wp10_coordinatesZonesDynamic(xi_eg,...
-        yi_eg, rec_x, rec_y, length(xi_eg));
-    [uniq_e_rect]=unique(ideal_ego_rectangle_entry_mat,'rows');
-    uniq_e_rect=uniq_e_rect(2:end,:); % remove first row (start), always zeroes % TBD: change, this is not true for inner starts
+%     % zone analysis for ideal paths
+%     [ideal_alley_zone, ideal_rel_alley_zone,...
+%         sm.sub{p}.session{s}.trial{k}.zone.ideal_alley_entry]=sm_wp10_coordinatesZonesStatic(xi_al,...
+%         yi_al, alley_full_x, alley_full_y, length(xi_al));
+%     
+%     [ideal_rectangle_zone, ideal_rel_rectangle_zone,...
+%         sm.sub{p}.session{s}.trial{k}.zone.ideal_rectangle_entry]= sm_wp10_coordinatesZonesStatic(xi_al,...
+%         yi_al, rec_x, rec_y, length(xi_al));
+%     
+%     [ideal_alley_entry_mat]=sm_wp10_coordinatesZonesDynamic(xi_al,...
+%         yi_al, alley_full_x, alley_full_y, length(xi_al));
+%     [uniq_alley]=unique(ideal_alley_entry_mat,'rows');
+%     
+%     [ideal_rectangle_entry_mat]=sm_wp10_coordinatesZonesDynamic(xi_al,...
+%         yi_al, rec_x, rec_y, length(xi_al));
+%     [uniq_rect]=unique(ideal_rectangle_entry_mat,'rows');
+%     uniq_rect=uniq_rect(2:end,:); % remove first row (start), always zeroes % TBD: change, this is not true for inner starts
+%     
+%     % zone analysis for ideal ego paths
+%     [ideal_ego_alley_zone, ideal_ego_rel_alley_zone,...
+%         sm.sub{p}.session{s}.trial{k}.zone.ideal_ego_alley_entry]=sm_wp10_coordinatesZonesStatic(xi_eg,...
+%         yi_eg, alley_full_x, alley_full_y, length(xi_eg));
+%     
+%     [ideal_ego_rectangle_zone, ideal_ego_rel_rectangle_zone,...
+%         sm.sub{p}.session{s}.trial{k}.zone.ideal_ego_rectangle_entry]= sm_wp10_coordinatesZonesStatic(xi_eg,...
+%         yi_eg, rec_x, rec_y, length(xi_eg));
+%     
+%     [ideal_ego_alley_entry_mat]=sm_wp10_coordinatesZonesDynamic(xi_eg,...
+%         yi_eg, alley_full_x, alley_full_y, length(xi_eg));
+%     [uniq_e_alley]=unique(ideal_ego_alley_entry_mat,'rows');
+%     
+%     [ideal_ego_rectangle_entry_mat]=sm_wp10_coordinatesZonesDynamic(xi_eg,...
+%         yi_eg, rec_x, rec_y, length(xi_eg));
+%     [uniq_e_rect]=unique(ideal_ego_rectangle_entry_mat,'rows');
+%     uniq_e_rect=uniq_e_rect(2:end,:); % remove first row (start), always zeroes % TBD: change, this is not true for inner starts
 
     %% Block 3: Data analysis, i.e. calculcation of variables
     %% Time analysis: already done
@@ -583,43 +587,63 @@ else
         % PATH to CHOSEN target: same as above
         % DISTANCE to EGO target: see as above
     
-    % Distance analysis 
-    % FINAL DISTANCE to EGOCENTRIC target 
-    sm.sub{p}.session{s}.trial{k}.result.final_distance_ego=sm_distance(sm.sub{p}.session{s}.trial{k}.goal_x_ego,sm.sub{p}.session{s}.trial{k}.x_end,sm.sub{p}.session{s}.trial{k}.goal_y_ego,sm.sub{p}.session{s}.trial{k}.y_end);
-    
-    % AVERAGE DISTANCE to EGOCENTRIC PATH
-    [~,distance_to_ego_path] = dsearchn([xi_eg, yi_eg],[x,y]); % returns euclidian distance to nearest neighbour on interpolated ideal path
-    distance_to_ego_path = [distance_to_ego_path; sm.sub{p}.session{s}.trial{k}.result.final_distance_ego]; % add final distance as last data point
-    sm.sub{p}.session{s}.trial{k}.result.avg_distance_ego_path=mean(distance_to_ego_path);
-    sm.sub{p}.session{s}.trial{k}.result.total_distance_ego_path=sum(distance_to_ego_path);
-    
-    % AVERAGE DISTANCE to EGOCENTRIC target 
-    sm.sub{p}.session{s}.trial{k}.result.avg_distance_ego_target=total_dist_to_goal_ego/sdata_length(1);
-    sm.sub{p}.session{s}.trial{k}.result.total_distance_ego_target=total_dist_to_goal_ego;
-    % ideal sum data points: same as in analyis above
-    
-    % Cumulative IDEAL DISTANCE to EGOCENTRIC target 
-    sm.sub{p}.session{s}.trial{k}.ideal_path_length_ego_interpol=0;id_total_dist_to_goal_ego=0; % start-initiation
-    xi_length=length(xi_eg)-1;
-    for i=1:xi_length
-        % ideal cumulative distance traveled (based on interpolated values)
-        sm.sub{p}.session{s}.trial{k}.ideal_path_length_ego_interpol=sm.sub{p}.session{s}.trial{k}.ideal_path_length_ego_interpol+sum(sm_distance(xi_eg(i),xi_eg(i+1),yi_eg(i),yi_eg(i+1)));% cumulative distance traveled
-        % ideal cumulative distance to egocentric target 
-        id_total_dist_to_goal_ego=id_total_dist_to_goal_ego+sum(sm_distance(xi_eg(i),sm.sub{p}.session{s}.trial{k}.goal_x_ego,yi_eg(i),sm.sub{p}.session{s}.trial{k}.goal_y_ego));
+    % for inner starts (even start integer)there are no clear ideal
+    % egocentric paths
+    if ~mod(sm.sub{p}.session{s}.trial{k}.start,2)        
+        % set dummy values
+        sm.sub{p}.session{s}.trial{k}.result.final_distance_ego=999; 
+        sm.sub{p}.session{s}.trial{k}.result.avg_distance_ego_path=999; 
+        sm.sub{p}.session{s}.trial{k}.result.total_distance_ego_path=999;
+        sm.sub{p}.session{s}.trial{k}.result.avg_distance_ego_target=999; 
+        sm.sub{p}.session{s}.trial{k}.result.total_distance_ego_target=999; 
+        sm.sub{p}.session{s}.trial{k}.ideal_path_length_ego_interpol=999;
+        sm.sub{p}.session{s}.trial{k}.ideal_avg_distance_ego_target=999;
+        sm.sub{p}.session{s}.trial{k}.ideal_total_distance_ego_target=999; 
+        sm.sub{p}.session{s}.trial{k}.ideal_sum_data_points_ego=999;
+        sm.sub{p}.session{s}.trial{k}.result.path_accuracy_ego=999;
+        sm.sub{p}.session{s}.trial{k}.result.distance_accuracy_ego=999; 
+        
+    % else: do egocentric analysis     
+    else 
+        % Distance analysis 
+        % FINAL DISTANCE to EGOCENTRIC target 
+        sm.sub{p}.session{s}.trial{k}.result.final_distance_ego=sm_distance(sm.sub{p}.session{s}.trial{k}.goal_x_ego,sm.sub{p}.session{s}.trial{k}.x_end,sm.sub{p}.session{s}.trial{k}.goal_y_ego,sm.sub{p}.session{s}.trial{k}.y_end);
+
+        % AVERAGE DISTANCE to EGOCENTRIC PATH
+        [~,distance_to_ego_path] = dsearchn([xi_eg, yi_eg],[x,y]); % returns euclidian distance to nearest neighbour on interpolated ideal path
+        distance_to_ego_path = [distance_to_ego_path; sm.sub{p}.session{s}.trial{k}.result.final_distance_ego]; % add final distance as last data point
+        sm.sub{p}.session{s}.trial{k}.result.avg_distance_ego_path=mean(distance_to_ego_path);
+        sm.sub{p}.session{s}.trial{k}.result.total_distance_ego_path=sum(distance_to_ego_path);
+
+        % AVERAGE DISTANCE to EGOCENTRIC target 
+        sm.sub{p}.session{s}.trial{k}.result.avg_distance_ego_target=total_dist_to_goal_ego/sdata_length(1);
+        sm.sub{p}.session{s}.trial{k}.result.total_distance_ego_target=total_dist_to_goal_ego;
+        % ideal sum data points: same as in analyis above
+
+        % Cumulative IDEAL DISTANCE to EGOCENTRIC target 
+        sm.sub{p}.session{s}.trial{k}.ideal_path_length_ego_interpol=0;id_total_dist_to_goal_ego=0; % start-initiation
+        xi_length=length(xi_eg)-1;
+        for i=1:xi_length
+            % ideal cumulative distance traveled (based on interpolated values)
+            sm.sub{p}.session{s}.trial{k}.ideal_path_length_ego_interpol=sm.sub{p}.session{s}.trial{k}.ideal_path_length_ego_interpol+sum(sm_distance(xi_eg(i),xi_eg(i+1),yi_eg(i),yi_eg(i+1)));% cumulative distance traveled
+            % ideal cumulative distance to egocentric target 
+            id_total_dist_to_goal_ego=id_total_dist_to_goal_ego+sum(sm_distance(xi_eg(i),sm.sub{p}.session{s}.trial{k}.goal_x_ego,yi_eg(i),sm.sub{p}.session{s}.trial{k}.goal_y_ego));
+        end
+
+        % IDEAL AVERAGE DISTANCE to EGOCENTRIC target 
+        sm.sub{p}.session{s}.trial{k}.ideal_avg_distance_ego_target=id_total_dist_to_goal_ego/xi_length;
+        sm.sub{p}.session{s}.trial{k}.ideal_total_distance_ego_target=id_total_dist_to_goal_ego;
+        sm.sub{p}.session{s}.trial{k}.ideal_sum_data_points_ego=xi_length; 
+
+        % PATH ACCURACY to EGOCENTRIC target 
+        sm.sub{p}.session{s}.trial{k}.result.path_accuracy_ego=sm_ac(sm.sub{p}.session{s}.trial{k}.result.path_length,sm.sub{p}.session{s}.trial{k}.ideal_path_length_ego_interpol);
+        % sm.sub{p}.session{s}.trial{k}.result.path_accuracy_ego=sm_ac(sm.sub{p}.session{s}.trial{k}.result.path_length,sm.sub{p}.session{s}.trial{k}.ideal_path_length_ego);
+
+        % DISTANCE ACCURACY to EGOCENTRIC target 
+        sm.sub{p}.session{s}.trial{k}.result.distance_accuracy_ego=sm_ac(sm.sub{p}.session{s}.trial{k}.result.avg_distance_ego_target,sm.sub{p}.session{s}.trial{k}.ideal_avg_distance_ego_target);
+
     end
     
-    % IDEAL AVERAGE DISTANCE to EGOCENTRIC target 
-    sm.sub{p}.session{s}.trial{k}.ideal_avg_distance_ego_target=id_total_dist_to_goal_ego/xi_length;
-    sm.sub{p}.session{s}.trial{k}.ideal_total_distance_ego_target=id_total_dist_to_goal_ego;
-    sm.sub{p}.session{s}.trial{k}.ideal_sum_data_points_ego=xi_length; 
-    
-    % PATH ACCURACY to EGOCENTRIC target 
-    sm.sub{p}.session{s}.trial{k}.result.path_accuracy_ego=sm_ac(sm.sub{p}.session{s}.trial{k}.result.path_length,sm.sub{p}.session{s}.trial{k}.ideal_path_length_ego_interpol);
-    % sm.sub{p}.session{s}.trial{k}.result.path_accuracy_ego=sm_ac(sm.sub{p}.session{s}.trial{k}.result.path_length,sm.sub{p}.session{s}.trial{k}.ideal_path_length_ego);
-    
-    % DISTANCE ACCURACY to EGOCENTRIC target 
-    sm.sub{p}.session{s}.trial{k}.result.distance_accuracy_ego=sm_ac(sm.sub{p}.session{s}.trial{k}.result.avg_distance_ego_target,sm.sub{p}.session{s}.trial{k}.ideal_avg_distance_ego_target);
-     
     fprintf('Egocentric path and distance analysis done for %d, session %d, file no %d.\n', subject, session, k);
     %% Body rotation analysis
     % Body rotation analysis
@@ -971,7 +995,8 @@ if session==3
         pract_goal_locs,x,y,xi_al,yi_al,folderOut)
 else
     sm_wp10_plotTrack(sm.sub{p}.session{s}.trial{k}.trial_num,sm.sub{p}.session{s}.session,...
-        sm.sub{p}.session{s}.trial{k}.trial_condition,sm.sub{p}.id,sm.sub{p}.Group,...
+        sm.sub{p}.session{s}.trial{k}.trial_condition,sm.sub{p}.session{s}.trial{k}.start,...
+        sm.sub{p}.id,sm.sub{p}.Group,...
         alley_polyshape_1,alley_polyshape_2,tri,rec,...
         x,y,x_line_ego,y_line_ego,x_line,y_line,...
         sm.sub{p}.session{s}.trial{k}.goal_x,sm.sub{p}.session{s}.trial{k}.goal_y,folderOut)

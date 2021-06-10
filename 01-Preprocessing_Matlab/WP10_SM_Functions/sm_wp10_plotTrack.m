@@ -1,4 +1,4 @@
-function sm_wp10_plotTrack(trial,session,cond,id,Group, ...
+function sm_wp10_plotTrack(trial,session,cond,start,id,Group, ...
     alley_polyshape_1,alley_polyshape_2,tri,rec,...
     x,y,x_line_ego,y_line_ego,x_line,y_line,goal_x,goal_y,folderOut)
 % SM_WP_10_PLOTTRACK Creates track plots for each individual trial.
@@ -39,11 +39,15 @@ plot(polyshape_array, 'FaceColor',[0.6 0.6 0.6],'FaceAlpha',0.1)
 viscircles([goal_x goal_y], 0.01)
 
 %  plot tracks
-if cond==2
+if cond==2 % egocentric 
     line1=plot(x,y,'k -', 'LineWidth', 1);
     line3=plot(x_line_ego,y_line_ego,'g .:', 'LineWidth', 1);
     legend([line1 line3],{'actual path','ideal egocentric path'});
-else
+elseif cond==1 && ~mod(start,2) % allocentric inner starts 
+    line1=plot(x,y,'k -', 'LineWidth', 1);
+    line2=plot(x_line,y_line,'r -.', 'LineWidth', 1);
+    legend([line1 line2],{'actual path','ideal path'});
+else 
     line1=plot(x,y,'k -', 'LineWidth', 1);
     line2=plot(x_line,y_line,'r -.', 'LineWidth', 1);
     line3=plot(x_line_ego,y_line_ego,'g .:', 'LineWidth', 0.7);

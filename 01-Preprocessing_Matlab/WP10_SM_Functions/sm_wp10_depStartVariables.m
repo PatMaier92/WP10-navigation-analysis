@@ -72,7 +72,6 @@ elseif start==5
      theta=-360/5*4; 
 else
      theta=-360/5*0; % no rotation for original and inner starts
-     % TBD: how to handle inner starting points? Are they looking inward or outward (first rotation)?
 end
 R = [cosd(theta) -sind(theta); sind(theta) cosd(theta)];
 
@@ -89,14 +88,19 @@ r_y_line = vo(2,:);
 [vertexid,~,~] = nearestvertex(cP_polyshape,r_x_line(2:end-1),r_y_line(2:end-1));
 
 % save ego path and goal location
-x_line_ego=[r_x_line(1); cP_polyshape.Vertices(vertexid,1); r_x_line(end)]; 
-y_line_ego=[r_y_line(1); cP_polyshape.Vertices(vertexid,2); r_y_line(end)]; 
-goal_x_ego=r_x_line(end); goal_y_ego=r_y_line(end);
+if ~mod(start,2) % dummy for inner starts (even start integer)
+    x_line_ego=[999; 998]; y_line_ego=[999; 998]; 
+    goal_x_ego=0; goal_y_ego=0; 
+else 
+    x_line_ego=[r_x_line(1); cP_polyshape.Vertices(vertexid,1); r_x_line(end)]; 
+    y_line_ego=[r_y_line(1); cP_polyshape.Vertices(vertexid,2); r_y_line(end)]; 
+    goal_x_ego=r_x_line(end); goal_y_ego=r_y_line(end);
+end 
 
 % % test plot
-% plot(polyshape_array);
+% plot(cP_polyshape);
 % hold on
-% plot(o_x_line, o_y_line, 'k-', x_line_ego, y_line_ego, 'r-', x_center, y_center, 'bo');
+% plot(o_x_line, o_y_line, 'k-', x_line_ego, y_line_ego, 'rx', x_center, y_center, 'bo');
 % xlim([0 1]);
 % ylim([0 1]);
 % hold off
