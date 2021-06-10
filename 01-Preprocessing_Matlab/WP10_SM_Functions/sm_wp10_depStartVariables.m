@@ -165,9 +165,9 @@ elseif start==4 % D (inner)
     end
 elseif start==5 % E
     if goal==1
-        kx2=alley_x(3,4); ky2=alley_y(3,4);  kx3=pentagon_x(2); ky3=pentagon_y(2);  kx4=alley_x(3,1); ky4=alley_y(3,1);
+        kx2=alley_x(4,3); ky2=alley_y(4,3);  kx3=pentagon_x(2); ky3=pentagon_y(2);  kx4=alley_x(3,1); ky4=alley_y(3,1);
     elseif goal==2
-        kx2=alley_x(3,4); ky2=alley_y(3,4);  kx3=alley_x(3,2); ky3=alley_y(3,2);
+        kx2=alley_x(4,3); ky2=alley_y(4,3);  kx3=alley_x(3,2); ky3=alley_y(3,2);
     elseif goal==3
         kx2=alley_x(3,3); ky2=alley_y(3,3);  kx3=pentagon_x(4); ky3=pentagon_y(4);  kx4=alley_x(4,5); ky4=alley_y(4,5);
     else
