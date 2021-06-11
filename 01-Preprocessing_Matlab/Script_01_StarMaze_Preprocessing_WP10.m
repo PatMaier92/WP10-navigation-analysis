@@ -527,26 +527,10 @@ else
     [ideal_rectangle_entry_mat]=sm_wp10_coordinatesZonesDynamic(xi_al,...
         yi_al, rec_x, rec_y, length(xi_al));
     [uniq_rect]=unique(ideal_rectangle_entry_mat,'rows');
-    uniq_rect=uniq_rect(2:end,:); % remove first row (start), always zeroes % TBD: change, this is not true for inner starts
+    if mod(sm.sub{p}.session{s}.trial{k}.start,2) % even number = outer start
+        uniq_rect=uniq_rect(2:end,:); % remove first row (start) for outer starts, as it's always zero 
+    end 
     
-%     % zone analysis for ideal ego paths
-%     [ideal_ego_alley_zone, ideal_ego_rel_alley_zone,...
-%         sm.sub{p}.session{s}.trial{k}.zone.ideal_ego_alley_entry]=sm_wp10_coordinatesZonesStatic(xi_eg,...
-%         yi_eg, alley_full_x, alley_full_y, length(xi_eg));
-%     
-%     [ideal_ego_rectangle_zone, ideal_ego_rel_rectangle_zone,...
-%         sm.sub{p}.session{s}.trial{k}.zone.ideal_ego_rectangle_entry]= sm_wp10_coordinatesZonesStatic(xi_eg,...
-%         yi_eg, rec_x, rec_y, length(xi_eg));
-%     
-%     [ideal_ego_alley_entry_mat]=sm_wp10_coordinatesZonesDynamic(xi_eg,...
-%         yi_eg, alley_full_x, alley_full_y, length(xi_eg));
-%     [uniq_e_alley]=unique(ideal_ego_alley_entry_mat,'rows');
-%     
-%     [ideal_ego_rectangle_entry_mat]=sm_wp10_coordinatesZonesDynamic(xi_eg,...
-%         yi_eg, rec_x, rec_y, length(xi_eg));
-%     [uniq_e_rect]=unique(ideal_ego_rectangle_entry_mat,'rows');
-%     uniq_e_rect=uniq_e_rect(2:end,:); % remove first row (start), always zeroes % TBD: change, this is not true for inner starts
-
     %% Block 3: Data analysis, i.e. calculcation of variables
     %% Time analysis: already done
     %% Chosen goal location
