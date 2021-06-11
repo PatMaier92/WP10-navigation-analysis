@@ -132,7 +132,7 @@ alley_locs=["A" "B" "C" "D" "E" "F" "G" "H" "I" "J"];
 [myGraph,graph_x,graph_y]=sm_wp10_createGraph(sm.coord.start_x, sm.coord.start_y,...
     tri_x, tri_y, sm.coord.goal_x, sm.coord.goal_y);
 
-% create Test-Figure plot 
+% create test figure plot 
 % sm_wp10_testfig("s_maze",polyshape_array,sm.coord.goal_x,sm.coord.goal_y,sm.coord.start_x,sm.coord.start_y,goal_locs,myGraph,graph_x,graph_y);
 
 %% Practise maze creation (motor control) 
@@ -165,7 +165,7 @@ pract_polyshape=polyshape(pract_alley_x(:),pract_alley_y(:));
 pract_goal_locs=["1", "2", "3", "4", "5", "6", "7", "8" , "9", "10" ]; 
 pract_start_locs="Player_P0"; 
 
-% Create Test-Figure plot 
+% create test figure plot 
 % sm_wp10_testfig("p_maze",pract_polyshape,pm.coord.goal_x,pm.coord.goal_y,pm.coord.start_x,pm.coord.start_y,pract_goal_locs,myGraph,graph_x,graph_y);
 
 %% Block 2: Data preprocessing
@@ -482,6 +482,16 @@ else
         sm.sub{p}.session{s}.trial{k}.x_start, sm.sub{p}.session{s}.trial{k}.y_start, sm.coord.start_x, ...
         sm.coord.start_y, alley_x, alley_y, pentagon_x, pentagon_y, alley_full_x, alley_full_y, rec_x, rec_y, cP);
 
+        [path, len]=shortestpath(myGraph, 7, 28);
+
+    figure; 
+    plot(polyshape_array); hold on; 
+    pl = plot(myGraph,'XData',graph_x,'YData',graph_y,'EdgeLabel',myGraph.Edges.Weight);
+    xlim([0 1]);
+    ylim([0 1]);
+    highlight(pl,path,'EdgeColor','r');
+    hold off; 
+    
     % interpolate data for further analysis
     % using 'interparc' function by John D'Errico (Matlab File Exchanger) 
     [xi_al,yi_al,xi_eg,yi_eg]=sm_wp10_dataInterpolation(x_line, ...
