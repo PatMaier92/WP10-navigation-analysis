@@ -347,8 +347,12 @@ if sm.sub{p}.session{s}.trial{k}.trial_condition==4
     sm.sub{p}.session{s}.trial{k}.result.total_distance_path=999; 
     sm.sub{p}.session{s}.trial{k}.result.avg_distance_chosen_path=999; 
     sm.sub{p}.session{s}.trial{k}.result.total_distance_chosen_path=999; 
+    sm.sub{p}.session{s}.trial{k}.result.avg_distance_chosen_path_pure=999;
+    sm.sub{p}.session{s}.trial{k}.result.total_distance_chosen_path_pure=999;
     sm.sub{p}.session{s}.trial{k}.result.avg_distance_ego_path=999; 
     sm.sub{p}.session{s}.trial{k}.result.total_distance_ego_path=999; 
+    sm.sub{p}.session{s}.trial{k}.result.avg_distance_ego_path_pure=999;
+    sm.sub{p}.session{s}.trial{k}.result.total_distance_ego_path_pure=999;
     sm.sub{p}.session{s}.trial{k}.result.direct_path=999;
     sm.sub{p}.session{s}.trial{k}.result.arm_explored=999; 
     sm.sub{p}.session{s}.trial{k}.result.arm_score=999;
@@ -576,11 +580,18 @@ else
         sm.sub{p}.session{s}.trial{k}.result.final_distance=sm_distance(sm.sub{p}.session{s}.trial{k}.goal_x,sm.sub{p}.session{s}.trial{k}.x_end,sm.sub{p}.session{s}.trial{k}.goal_y,sm.sub{p}.session{s}.trial{k}.y_end);
     end 
     
-    % AVERAGE DISTANCE to CORRECT path
+    % AVERAGE DISTANCE to CORRECT path (full trajectory including waiting/rotation)
     [~,distance_to_path] = dsearchn([xi_al, yi_al],[x,y]); % returns euclidian distance to nearest neighbour on interpolated ideal path
     distance_to_path = [distance_to_path; sm.sub{p}.session{s}.trial{k}.result.final_distance]; % add final distance as last data point
     sm.sub{p}.session{s}.trial{k}.result.avg_distance_path=mean(distance_to_path);
     sm.sub{p}.session{s}.trial{k}.result.total_distance_path=sum(distance_to_path);
+    
+    % AVERAGE DISTANCE to CORRECT path (only path, remove duplicates due to waiting/rotation)
+    xy_unique = unique([x y],'rows'); % remove row duplicates 
+    [~,distance_to_path_unique] = dsearchn([xi_al, yi_al],xy_unique); % returns euclidian distance to nearest neighbour on interpolated ideal path
+    distance_to_path_unique = [distance_to_path_unique; sm.sub{p}.session{s}.trial{k}.result.final_distance]; % add final distance as last data point
+    sm.sub{p}.session{s}.trial{k}.result.avg_distance_path_pure=mean(distance_to_path_unique);
+    sm.sub{p}.session{s}.trial{k}.result.total_distance_path_pure=sum(distance_to_path_unique);
     
     % AVERAGE DISTANCE to CORRECT target
     sm.sub{p}.session{s}.trial{k}.result.avg_distance_target=total_dist_to_goal/sdata_length(1);
@@ -627,11 +638,17 @@ else
         % FINAL DISTANCE to EGOCENTRIC target 
         sm.sub{p}.session{s}.trial{k}.result.final_distance_ego=sm_distance(sm.sub{p}.session{s}.trial{k}.goal_x_ego,sm.sub{p}.session{s}.trial{k}.x_end,sm.sub{p}.session{s}.trial{k}.goal_y_ego,sm.sub{p}.session{s}.trial{k}.y_end);
 
-        % AVERAGE DISTANCE to EGOCENTRIC PATH
+        % AVERAGE DISTANCE to EGOCENTRIC PATH (full trajectory including waiting/rotation)
         [~,distance_to_ego_path] = dsearchn([xi_eg, yi_eg],[x,y]); % returns euclidian distance to nearest neighbour on interpolated ideal path
         distance_to_ego_path = [distance_to_ego_path; sm.sub{p}.session{s}.trial{k}.result.final_distance_ego]; % add final distance as last data point
         sm.sub{p}.session{s}.trial{k}.result.avg_distance_ego_path=mean(distance_to_ego_path);
         sm.sub{p}.session{s}.trial{k}.result.total_distance_ego_path=sum(distance_to_ego_path);
+        
+        % AVERAGE DISTANCE to EGOCENTRIC PATH (only path, remove duplicates due to waiting/rotation)
+        [~,distance_to_ego_path_unique] = dsearchn([xi_eg, yi_eg],xy_unique); % returns euclidian distance to nearest neighbour on interpolated ideal path
+        distance_to_ego_path_unique = [distance_to_ego_path_unique; sm.sub{p}.session{s}.trial{k}.result.final_distance_ego]; % add final distance as last data point
+        sm.sub{p}.session{s}.trial{k}.result.avg_distance_ego_path_pure=mean(distance_to_ego_path_unique);
+        sm.sub{p}.session{s}.trial{k}.result.total_distance_ego_path_pure=sum(distance_to_ego_path_unique);
 
         % AVERAGE DISTANCE to EGOCENTRIC target 
         sm.sub{p}.session{s}.trial{k}.result.avg_distance_ego_target=total_dist_to_goal_ego/sdata_length(1);
@@ -663,12 +680,14 @@ else
         sm.sub{p}.session{s}.trial{k}.result.final_distance_ego=999; 
         sm.sub{p}.session{s}.trial{k}.result.avg_distance_ego_path=999; 
         sm.sub{p}.session{s}.trial{k}.result.total_distance_ego_path=999;
+        sm.sub{p}.session{s}.trial{k}.result.avg_distance_ego_path_pure=999;
+        sm.sub{p}.session{s}.trial{k}.result.total_distance_ego_path_pure=999;
         sm.sub{p}.session{s}.trial{k}.result.avg_distance_ego_target=999; 
         sm.sub{p}.session{s}.trial{k}.result.total_distance_ego_target=999;
         sm.sub{p}.session{s}.trial{k}.result.path_accuracy_ego=999;
         sm.sub{p}.session{s}.trial{k}.result.distance_accuracy_ego=999; 
         
-        sm.sub{p}.session{s}.trial{k}.ideal_path_length_ego=999; % move this later
+        sm.sub{p}.session{s}.trial{k}.ideal_path_length_ego=999; 
         sm.sub{p}.session{s}.trial{k}.ideal_path_length_ego_interpol=999;
         sm.sub{p}.session{s}.trial{k}.ideal_avg_distance_ego_target=999;
         sm.sub{p}.session{s}.trial{k}.ideal_total_distance_ego_target=999; 
@@ -684,60 +703,54 @@ else
         % PATH to CHOSEN target: same as above
         % DISTANCE to CHOSEN target: see as above
     
-%         % AVERAGE DISTANCE to ideal PATH to CHOSEN target
-%         [~,distance_to_path] = dsearchn([xi_ch, yi_ch],[x,y]); % returns euclidian distance to nearest neighbour on interpolated ideal path
-%         sm.sub{p}.session{s}.trial{k}.result.avg_distance_chosen_path=mean(distance_to_path);
-%         sm.sub{p}.session{s}.trial{k}.result.total_distance_chosen_path=sum(distance_to_path);
+        % AVERAGE DISTANCE to ideal PATH to CHOSEN target (full trajectory including waiting/rotation)
+        [~,distance_to_chosen_path] = dsearchn([xi_ch, yi_ch],[x,y]); % returns euclidian distance to nearest neighbour on interpolated ideal path
+        sm.sub{p}.session{s}.trial{k}.result.avg_distance_chosen_path=mean(distance_to_chosen_path);
+        sm.sub{p}.session{s}.trial{k}.result.total_distance_chosen_path=sum(distance_to_chosen_path);
+        
+        % AVERAGE DISTANCE to ideal PATH to CHOSEN target (only path, remove duplicates due to waiting/rotation)
+        [~,distance_to_chosen_path_unique] = dsearchn([xi_ch, yi_ch],xy_unique); % returns euclidian distance to nearest neighbour on interpolated ideal path
+        sm.sub{p}.session{s}.trial{k}.result.avg_distance_chosen_path_pure=mean(distance_to_chosen_path_unique);
+        sm.sub{p}.session{s}.trial{k}.result.total_distance_chosen_path_pure=sum(distance_to_chosen_path_unique);
     
         % AVERAGE DISTANCE to CHOSEN target
         sm.sub{p}.session{s}.trial{k}.result.avg_distance_chosen_target=total_dist_to_chosen_goal/sdata_length(1);
         sm.sub{p}.session{s}.trial{k}.result.total_distance_chosen_target=total_dist_to_chosen_goal;
         % sum data points: same as in analyis above
             
-%         % Cumulative IDEAL DISTANCE to CHOSEN target  
-%         id_total_dist_to_goal_chosen=0; % start-initiation
-%         xi_ch_length=length(xi_ch)-1;
-%         for i=1:xi_ch_length
-%             % ideal cumulative distance traveled (based on interpolated values)
-%             sm.sub{p}.session{s}.trial{k}.ideal_path_length_chosen_interpol=sm.sub{p}.session{s}.trial{k}.ideal_path_length_chosen_interpol+sum(sm_distance(xi_ch(i),xi_ch(i+1),yi_ch(i),yi_ch(i+1)));% cumulative distance traveled
-%             % ideal cumulative distance to chosen target
-%             id_total_dist_to_goal_chosen=id_total_dist_to_goal_chosen+sum(sm_distance(xi_ch(i),x(end),yi_ch(i),y(end)));
-%         end
-%     
-%         % IDEAL AVERAGE DISTANCE to CHOSEN target
-%         sm.sub{p}.session{s}.trial{k}.ideal_avg_distance_chosen_target=id_total_dist_to_goal_chosen/xi_ch_length;
-%         sm.sub{p}.session{s}.trial{k}.ideal_total_distance_chosen_target=id_total_dist_to_goal_chosen;
-%         sm.sub{p}.session{s}.trial{k}.ideal_sum_data_points_chosen=xi_ch_length; 
-%     
-%         % PATH ACCURACY to CHOSEN target 
-%         sm.sub{p}.session{s}.trial{k}.result.path_accuracy_chosen=sm_ac(sm.sub{p}.session{s}.trial{k}.result.path_length,sm.sub{p}.session{s}.trial{k}.ideal_path_length_chosen_interpol);
-%     
-%         % DISTANCE ACCURACY to CHOSEN target
-%         sm.sub{p}.session{s}.trial{k}.result.distance_accuracy_chosen=sm_ac(sm.sub{p}.session{s}.trial{k}.result.avg_distance_chosen_target,sm.sub{p}.session{s}.trial{k}.ideal_avg_distance_chosen_target);
-        % set dummy variables 
-        sm.sub{p}.session{s}.trial{k}.result.avg_distance_chosen_path=999;
-        sm.sub{p}.session{s}.trial{k}.result.total_distance_chosen_path=999;
-        sm.sub{p}.session{s}.trial{k}.result.avg_distance_chosen_target=999;
-        sm.sub{p}.session{s}.trial{k}.result.total_distance_chosen_target=999;
-        sm.sub{p}.session{s}.trial{k}.result.path_accuracy_chosen=999;
-        sm.sub{p}.session{s}.trial{k}.result.distance_accuracy_chosen=999;
-        
-        sm.sub{p}.session{s}.trial{k}.ideal_path_length_chosen=999; % move this later
-        sm.sub{p}.session{s}.trial{k}.ideal_path_length_chosen_interpol=999; 
-        sm.sub{p}.session{s}.trial{k}.ideal_avg_distance_chosen_target=999;
-        sm.sub{p}.session{s}.trial{k}.ideal_total_distance_chosen_target=999;
-        sm.sub{p}.session{s}.trial{k}.ideal_sum_data_points_chosen=999;
+        % Cumulative IDEAL DISTANCE to CHOSEN target  
+        sm.sub{p}.session{s}.trial{k}.ideal_path_length_chosen_interpol=0; id_total_dist_to_goal_chosen=0; % start-initiation
+        xi_ch_length=length(xi_ch)-1;
+        for i=1:xi_ch_length
+            % ideal cumulative distance traveled (based on interpolated values)
+            sm.sub{p}.session{s}.trial{k}.ideal_path_length_chosen_interpol=sm.sub{p}.session{s}.trial{k}.ideal_path_length_chosen_interpol+sum(sm_distance(xi_ch(i),xi_ch(i+1),yi_ch(i),yi_ch(i+1)));% cumulative distance traveled
+            % ideal cumulative distance to chosen target
+            id_total_dist_to_goal_chosen=id_total_dist_to_goal_chosen+sum(sm_distance(xi_ch(i),x(end),yi_ch(i),y(end)));
+        end
+    
+        % IDEAL AVERAGE DISTANCE to CHOSEN target
+        sm.sub{p}.session{s}.trial{k}.ideal_avg_distance_chosen_target=id_total_dist_to_goal_chosen/xi_ch_length;
+        sm.sub{p}.session{s}.trial{k}.ideal_total_distance_chosen_target=id_total_dist_to_goal_chosen;
+        sm.sub{p}.session{s}.trial{k}.ideal_sum_data_points_chosen=xi_ch_length; 
+    
+        % PATH ACCURACY to CHOSEN target 
+        sm.sub{p}.session{s}.trial{k}.result.path_accuracy_chosen=sm_ac(sm.sub{p}.session{s}.trial{k}.result.path_length,sm.sub{p}.session{s}.trial{k}.ideal_path_length_chosen_interpol);
+    
+        % DISTANCE ACCURACY to CHOSEN target
+        sm.sub{p}.session{s}.trial{k}.result.distance_accuracy_chosen=sm_ac(sm.sub{p}.session{s}.trial{k}.result.avg_distance_chosen_target,sm.sub{p}.session{s}.trial{k}.ideal_avg_distance_chosen_target);
     else
         % set dummy variables 
         sm.sub{p}.session{s}.trial{k}.result.avg_distance_chosen_path=999;
         sm.sub{p}.session{s}.trial{k}.result.total_distance_chosen_path=999;
+        sm.sub{p}.session{s}.trial{k}.result.avg_distance_chosen_path_pure=999;
+        sm.sub{p}.session{s}.trial{k}.result.total_distance_chosen_path_pure=999;
         sm.sub{p}.session{s}.trial{k}.result.avg_distance_chosen_target=999;
         sm.sub{p}.session{s}.trial{k}.result.total_distance_chosen_target=999;
         sm.sub{p}.session{s}.trial{k}.result.path_accuracy_chosen=999;
         sm.sub{p}.session{s}.trial{k}.result.distance_accuracy_chosen=999;
         
+        sm.sub{p}.session{s}.trial{k}.ideal_path_length_chosen=999;
         sm.sub{p}.session{s}.trial{k}.ideal_path_length_chosen_interpol=999; 
-        sm.sub{p}.session{s}.trial{k}.ideal_path_length_chosen=999; % move this later
         sm.sub{p}.session{s}.trial{k}.ideal_avg_distance_chosen_target=999;
         sm.sub{p}.session{s}.trial{k}.ideal_total_distance_chosen_target=999;
         sm.sub{p}.session{s}.trial{k}.ideal_sum_data_points_chosen=999;
@@ -978,13 +991,16 @@ col_header={'wp','date_analysis','id','sex','group','session','session_duration'
 col_header_2={'correct_goal','correct_goal_ego','correct_final_alley','correct_final_alley_ego',...
     'time','velocity','final_distance','final_distance_ego',...
     'path_length','dev_ideal_path','dev_ideal_path_chosen','dev_ideal_path_ego',...
+    'avg_distance_path', 'total_distance_path', ...
+    'avg_distance_path_pure', 'total_distance_path_pure', ...
+    'avg_distance_chosen_path','total_distance_chosen_path',...
+    'avg_distance_chosen_path_pure', 'total_distance_chosen_path_pure', ...
+    'avg_distance_ego_path', 'total_distance_ego_path', ...  
+    'avg_distance_ego_path_pure', 'total_distance_ego_path_pure', ...
     'avg_distance_target','total_distance_target','sum_data_points',...
     'avg_distance_chosen_target','total_distance_chosen_target',...
     'avg_distance_ego_target','total_distance_ego_target', ...
     'dev_ideal_avg_dist','dev_ideal_avg_dist_chosen','dev_ideal_avg_dist_ego',...
-    'avg_distance_path', 'total_distance_path', ...
-    'avg_distance_chosen_path','total_distance_chosen_path',...
-    'avg_distance_ego_path', 'total_distance_ego_path', ...  
     'direct_path','arm_explored','arm_score','path_explored','path_score',...
     'search_strategy_no','direct','reoriented','serial','central_focus','random_search',...
     'unclassified','failed_strategy','allocentric','egocentric',...
@@ -1038,15 +1054,18 @@ xlswrite(new_file,strrep([group_var ...
     sm.sub{p}.session{s}.trial{k}.result.final_distance sm.sub{p}.session{s}.trial{k}.result.final_distance_ego ...
     sm.sub{p}.session{s}.trial{k}.result.path_length sm.sub{p}.session{s}.trial{k}.result.path_accuracy ...
     sm.sub{p}.session{s}.trial{k}.result.path_accuracy_chosen sm.sub{p}.session{s}.trial{k}.result.path_accuracy_ego ...
+    sm.sub{p}.session{s}.trial{k}.result.avg_distance_path sm.sub{p}.session{s}.trial{k}.result.total_distance_path ...
+    sm.sub{p}.session{s}.trial{k}.result.avg_distance_path_pure sm.sub{p}.session{s}.trial{k}.result.total_distance_path_pure ...
+    sm.sub{p}.session{s}.trial{k}.result.avg_distance_chosen_path sm.sub{p}.session{s}.trial{k}.result.total_distance_chosen_path ...
+    sm.sub{p}.session{s}.trial{k}.result.avg_distance_chosen_path_pure sm.sub{p}.session{s}.trial{k}.result.total_distance_chosen_path_pure ...
+    sm.sub{p}.session{s}.trial{k}.result.avg_distance_ego_path sm.sub{p}.session{s}.trial{k}.result.total_distance_ego_path ...
+    sm.sub{p}.session{s}.trial{k}.result.avg_distance_ego_path_pure sm.sub{p}.session{s}.trial{k}.result.total_distance_ego_path_pure ...
     sm.sub{p}.session{s}.trial{k}.result.avg_distance_target sm.sub{p}.session{s}.trial{k}.result.total_distance_target ...
     sm.sub{p}.session{s}.trial{k}.result.sum_data_points ...
     sm.sub{p}.session{s}.trial{k}.result.avg_distance_chosen_target sm.sub{p}.session{s}.trial{k}.result.total_distance_chosen_target ...
     sm.sub{p}.session{s}.trial{k}.result.avg_distance_ego_target sm.sub{p}.session{s}.trial{k}.result.total_distance_ego_target ...
     sm.sub{p}.session{s}.trial{k}.result.distance_accuracy  sm.sub{p}.session{s}.trial{k}.result.distance_accuracy_chosen ...
     sm.sub{p}.session{s}.trial{k}.result.distance_accuracy_ego ...
-    sm.sub{p}.session{s}.trial{k}.result.avg_distance_path sm.sub{p}.session{s}.trial{k}.result.total_distance_path ...
-    sm.sub{p}.session{s}.trial{k}.result.avg_distance_chosen_path sm.sub{p}.session{s}.trial{k}.result.total_distance_chosen_path ...
-    sm.sub{p}.session{s}.trial{k}.result.avg_distance_ego_path sm.sub{p}.session{s}.trial{k}.result.total_distance_ego_path...
     sm.sub{p}.session{s}.trial{k}.result.direct_path ...
     sm.sub{p}.session{s}.trial{k}.result.arm_explored sm.sub{p}.session{s}.trial{k}.result.arm_score ...
     sm.sub{p}.session{s}.trial{k}.result.path_explored sm.sub{p}.session{s}.trial{k}.result.path_score ...
@@ -1118,7 +1137,7 @@ end
 %% Write summaries for a selection of variables
 new_name2 = [sm.sub{p}.Group '_' num2str(sm.sub{p}.id)  '_results'];
 new_file = fullfile(folderOut2, new_name2);
-sm_wp10_table_allTrials(folderOut,new_file,col_header,col_header_2,col_header_3,'BT','DP','data_vars','support_vars');
+sm_wp10_table_allTrials(folderOut,new_file,col_header,col_header_2,col_header_3,'BZ','DP','data_vars','support_vars');
 
 p=p+1;
 
