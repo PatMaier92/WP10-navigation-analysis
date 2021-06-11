@@ -121,14 +121,19 @@ polyshape_array=[alley_polyshape_1{1,1} alley_polyshape_2{1,1} alley_polyshape_1
     alley_polyshape_1{1,3} alley_polyshape_2{1,3} alley_polyshape_1{1,4} alley_polyshape_2{1,4}...
     alley_polyshape_1{1,5} alley_polyshape_1{1,5} alley_polyshape_2{1,5} cP];
 
-% % information (ordered)
+% information (ordered)
 goal_locs=["MA", "MC", "MI"]; 
 start_locs=["Player_MA" "Player_MB" "Player_MC" "Player_MD" "Player_ME" "Player_MF" "Player_MG" ...
     "Player_MH" "Player_MI", "Player_MJ", "Player_MX"];
 alley_locs=["A" "B" "C" "D" "E" "F" "G" "H" "I" "J"];
 
-% Create Test-Figure plot 
-% sm_wp10_testfig("s_maze",polyshape_array,sm.coord.goal_x,sm.coord.goal_y,sm.coord.start_x,sm.coord.start_y,goal_locs);
+% graph (for automated shortest path calculation) 
+% requires Matlab 2021a
+[myGraph,graph_x,graph_y]=sm_wp10_createGraph(sm.coord.start_x, sm.coord.start_y,...
+    tri_x, tri_y, sm.coord.goal_x, sm.coord.goal_y);
+
+% create Test-Figure plot 
+% sm_wp10_testfig("s_maze",polyshape_array,sm.coord.goal_x,sm.coord.goal_y,sm.coord.start_x,sm.coord.start_y,myGraph,graph_x,graph_y);
 
 %% Practise maze creation (motor control) 
 % Min-Max-values
