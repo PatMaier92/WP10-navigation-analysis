@@ -473,25 +473,17 @@ else
 %% For all other navigation trials 
     %% Calculate variables depending on single trial settings
     % ideal path coordinates & length, ideal egocentric path coordinates & length
-    % Caution: dummy values for egocentric for inner starts (because no clear ideal egocentric path) 
-    [sm.sub{p}.session{s}.trial{k}.goal_x_ego, sm.sub{p}.session{s}.trial{k}.goal_y_ego, x_line, y_line, x_line_ego, y_line_ego,...
-        sm.sub{p}.session{s}.trial{k}.ideal_path_length, sm.sub{p}.session{s}.trial{k}.ideal_path_length_ego,...
-        sm.sub{p}.session{s}.trial{k}.ideal_headturnNo,...
-        sm.sub{p}.session{s}.trial{k}.ego_alley]=sm_wp10_depStartVariables(sm.sub{p}.session{s}.trial{k}.start,...
-        sm.sub{p}.session{s}.trial{k}.goal_x, sm.sub{p}.session{s}.trial{k}.goal_y, sm.sub{p}.session{s}.trial{k}.goal_int,...
+    % Caution: dummy values for egocentric for inner starts (because no clear ideal egocentric path)   
+    [sm.sub{p}.session{s}.trial{k}.goal_x_ego, sm.sub{p}.session{s}.trial{k}.goal_y_ego, ...
+        x_line, y_line, x_line_chosen, y_line_chosen, x_line_ego, y_line_ego, ...
+        sm.sub{p}.session{s}.trial{k}.ideal_path_length, sm.sub{p}.session{s}.trial{k}.ideal_path_length_chosen,...
+        sm.sub{p}.session{s}.trial{k}.ideal_path_length_ego, sm.sub{p}.session{s}.trial{k}.ego_alley, ...
+        sm.sub{p}.session{s}.trial{k}.ideal_headturnNo]=sm_wp10_depStartVariables(myGraph,graph_x,graph_y,...
+        sm.sub{p}.session{s}.trial{k}.start, sm.sub{p}.session{s}.trial{k}.goal_int,...
+        sm.sub{p}.session{s}.trial{k}.goal_x, sm.sub{p}.session{s}.trial{k}.goal_y,...
         sm.sub{p}.session{s}.trial{k}.x_start, sm.sub{p}.session{s}.trial{k}.y_start, sm.coord.start_x, ...
         sm.coord.start_y, alley_x, alley_y, pentagon_x, pentagon_y, alley_full_x, alley_full_y, rec_x, rec_y, cP);
 
-        [path, len]=shortestpath(myGraph, 7, 28);
-
-    figure; 
-    plot(polyshape_array); hold on; 
-    pl = plot(myGraph,'XData',graph_x,'YData',graph_y,'EdgeLabel',myGraph.Edges.Weight);
-    xlim([0 1]);
-    ylim([0 1]);
-    highlight(pl,path,'EdgeColor','r');
-    hold off; 
-    
     % interpolate data for further analysis
     % using 'interparc' function by John D'Errico (Matlab File Exchanger) 
     [xi_al,yi_al,xi_eg,yi_eg]=sm_wp10_dataInterpolation(x_line, ...
@@ -557,7 +549,7 @@ else
     % Path analysis
     sm.sub{p}.session{s}.trial{k}.result.path_length=0; total_dist_to_goal=0; total_dist_to_goal_ego=0; total_dist_to_chosen_goal=0; % reset/initiate variables
     for i=1:sdata_length
-        % PATH to CHOSEN target
+        % PATH to target
         % cumulative distance traveled (used in path accuracy)
         sm.sub{p}.session{s}.trial{k}.result.path_length=sm.sub{p}.session{s}.trial{k}.result.path_length+sum(sm_distance(x(i),x(i+1),y(i),y(i+1)));
         % DISTANCE to CORRECT target
@@ -573,7 +565,10 @@ else
     
     % Distance analysis
     % FINAL DISTANCE to CORRECT target
-    sm.sub{p}.session{s}.trial{k}.result.final_distance=sm_distance(sm.sub{p}.session{s}.trial{k}.goal_x,sm.sub{p}.session{s}.trial{k}.x_end,sm.sub{p}.session{s}.trial{k}.goal_y,sm.sub{p}.session{s}.trial{k}.y_end);
+    sm.sub{p}.session{s}.trial{k}.result.final_distance=0; 
+    if sm.sub{p}.session{s}.trial{k}.fb==0
+        sm.sub{p}.session{s}.trial{k}.result.final_distance=sm_distance(sm.sub{p}.session{s}.trial{k}.goal_x,sm.sub{p}.session{s}.trial{k}.x_end,sm.sub{p}.session{s}.trial{k}.goal_y,sm.sub{p}.session{s}.trial{k}.y_end);
+    end 
     
     % AVERAGE DISTANCE to CORRECT path
     [~,distance_to_path] = dsearchn([xi_al, yi_al],[x,y]); % returns euclidian distance to nearest neighbour on interpolated ideal path

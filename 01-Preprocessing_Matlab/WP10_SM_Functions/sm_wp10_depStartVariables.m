@@ -1,10 +1,10 @@
-function [goal_x_ego, goal_y_ego, x_line, y_line, x_line_ego, y_line_ego,...
-    ideal_path, ideal_ego_path, ideal_headturn, ego_alley]=sm_wp10_depStartVariables(start, ...
-    goal_x, goal_y, goal, x_start, y_start, ...
+function [goal_x_ego, goal_y_ego, x_line, y_line, x_line_chosen, y_line_chosen, x_line_ego, y_line_ego,...
+    ideal_path, ideal_path_chosen, ideal_ego_path, ego_alley, ideal_headturn]=sm_wp10_depStartVariables(myGraph,...
+    graph_x, graph_y, start, goal, goal_x, goal_y, x_start, y_start, ...
     start_x, start_y, alley_x, alley_y, pentagon_x, pentagon_y, ...
     alley_full_x, alley_full_y, rec_x, rec_y, cP_polyshape)
 % SM_WP10_DEPSTARTVARIABLES Function for determining starting point dependent
-% variables in Starmaze WP1.
+% variables in Starmaze WP1. Requires Matlab 2021a
 %
 % Input:
 % start, goal are trial identifiers (integer).
@@ -22,91 +22,25 @@ function [goal_x_ego, goal_y_ego, x_line, y_line, x_line_ego, y_line_ego,...
 % ideal_headturn is ideal head turn number, 
 % ego_alley is identifier for egocentric goal alley. 
 
-%% define original direct path from original start
-% define original coordinate points
-kxs=start_x(7); kys=start_y(7);
-kxf=goal_x; kyf=goal_y;
-kx2=0; kx3=0; kx4=0; ky2=0; ky3=0; ky4=0; steps=0; 
-if goal==1 % A, goal_alley 1
-    kx2=alley_x(3,4); ky2=alley_y(3,4);  kx3=pentagon_x(5); ky3=pentagon_y(5);  kx4=alley_x(4,1); ky4=alley_y(4,1);
-elseif goal==2 % C, goal_alley 3
-    kx2=alley_x(4,4); ky2=alley_y(4,4);  kx3=pentagon_x(3); ky3=pentagon_y(3);  kx4=alley_x(3,2); ky4=alley_y(3,2);
-elseif goal==3 % I, goal_alley 9
-    kx2=alley_x(3,4); ky2=alley_y(3,4);  kx3=alley_x(4,5);  ky3=alley_y(4,5);
-else
-    disp('Goal not identified in sm_wp1_depStartVariables.m');
-end
+%% shortest path from original start 
 
-% define number of steps
-if kx4==0 && ky4==0
-    steps=2;
-else
-    steps=3;
-end
+o_start_node=7; 
+end_node=size(myGraph.Nodes,1)+1-goal;
 
-% combine original path lines
-if steps==2
-    o_x_line=[kxs kx2 kx3 kxf];  o_y_line=[kys ky2 ky3 kyf];
-elseif steps==3
-    o_x_line=[kxs kx2 kx3 kx4 kxf];  o_y_line=[kys ky2 ky3 ky4 kyf];
-else
-    disp('Unknown number of steps in sm_wp1_depStartVariables.m');
-end
+[path_nodes,~]=shortestpath(myGraph, o_start_node, end_node);
+o_x_line=graph_x(path_nodes); 
+o_y_line=graph_y(path_nodes);
 
-%% TEMP try shortestpath
-
-s=[1 1 ...
-   2 2 2 2 ... 
-   3 3 ... 
-   4 4 4 4 ...
-   5 5 ...
-   6 6 6 6 ...
-   7 7 ...
-   8 8 8 8 ...
-   9 9 ...
-   10 10 10 10 ...
-   11 13 ...
-   16 14 ...
-   25 23 ]; 
-t=[11 13 ...
-   16 15 12 11 ...
-   14 16 ...
-   14 19 18 15 ...
-   17 19 ...
-   17 22 21 18 ...
-   20 22 ...
-   20 25 24 21 ...
-   23 25 ...
-   23 13 12 24 ...
-   26 26 ...
-   27 27 ...
-   28 28 ]; 
-
-G=graph(s, t);
-
-x = [transpose(sm.coord.start_x) tri_x(2,1) tri_x(3,1) tri_x(4,1) tri_x(2,2) tri_x(3,2) tri_x(4,2) ...
-    tri_x(2,3) tri_x(3,3) tri_x(4,3) tri_x(2,4) tri_x(3,4) tri_x(4,4) tri_x(2,5) tri_x(3,5) tri_x(4,5) ...
-    transpose(sm.coord.goal_x)];
-y = [transpose(sm.coord.start_y) tri_y(2,1) tri_y(3,1) tri_y(4,1) tri_y(2,2) tri_y(3,2) tri_y(4,2) ...
-    tri_y(2,3) tri_y(3,3) tri_y(4,3) tri_y(2,4) tri_y(3,4) tri_y(4,4) tri_y(2,5) tri_y(3,5) tri_y(4,5) ...
-    transpose(sm.coord.goal_y)];
-
-[sn,tn] = findedge(G);
-dx = x(sn) - x(tn);
-dy = y(sn) - y(tn);
-D = hypot(dx,dy);
-
-G.Edges.Weight = D';
-[path, len]=shortestpath(G, 2, 27);
-
-figure; 
-p = plot(G,'XData',x,'YData',y,'EdgeLabel',G.Edges.Weight);
-xlim([0 1]);
-ylim([0 1]);
-highlight(p,path,'EdgeColor','r');
-
-x_line=x(path);
-y_line=y(path);
+% % test plot
+% figure; 
+% plot(polyshape_array); 
+% hold on; 
+% % pl = plot(myGraph,'XData',graph_x,'YData',graph_y,'EdgeLabel',myGraph.Edges.Weight);
+% pl = plot(myGraph,'XData',graph_x,'YData',graph_y);
+% xlim([0 1]);
+% ylim([0 1]);
+% highlight(pl,path_nodes,'EdgeColor','r');
+% hold off; 
 
 %% rotation matrix for egocentric goal and path line
 % define x- and y-data for original line
@@ -174,141 +108,33 @@ end
 % calculate ideal ego path length value (external function)
 ideal_ego_path=sm_wp10_idealPathLength(x_line_ego, y_line_ego);
 
-%% define direct path from various start positions
-% define coordinate points
-kxs=x_start; kys=y_start;
-kxf=goal_x; kyf=goal_y;
-kx2=0; kx3=0; kx4=0; ky2=0; ky3=0; ky4=0; steps=0;
-if start==7 % original start G
-    x_line=o_x_line; y_line=o_y_line;
-elseif start==1 % A
-    if goal==1
-        kx2=0; ky2=0; % start and goal in same alley 
-    elseif goal==2
-        kx2=alley_x(3,1); ky2=alley_y(3,1);  kx3=alley_x(4,2); ky3=alley_y(4,2);
-    elseif goal==3
-        kx2=alley_x(4,1); ky2=alley_y(4,1);  kx3=alley_x(3,5); ky3=alley_y(3,5); 
-    else
-        fprintf('Error path to goal %d in new start %d in sm_wp1_depStartVariables.\n',goal,start);
-    end
-elseif start==2 % B (inner)
-    if goal==1
-        kx2=alley_x(3,1); ky2=alley_y(3,1);
-    elseif goal==2
-        kx2=alley_x(4,2); ky2=alley_y(4,2);
-    elseif goal==3
-        kx2=pentagon_x(1); ky2=pentagon_y(1);  kx3=alley_x(3,5); ky3=alley_y(3,5);  
-    else
-        fprintf('Error path to goal %d in new start %d in sm_wp1_depStartVariables.\n',goal,start);
-    end
-elseif start==3 % C
-    if goal==1
-        kx2=alley_x(4,2); ky2=alley_y(4,2);  kx3=alley_x(3,1); ky3=alley_y(3,1);
-    elseif goal==2
-        kx2=0; ky2=0; % start and goal in same alley 
-    elseif goal==3
-        kx2=alley_x(4,2); ky2=alley_y(4,2);  kx3=pentagon_x(1); ky3=pentagon_y(1);  kx4=alley_x(3,5); ky4=alley_y(3,5);
-    else
-        fprintf('Error path to goal %d in new start %d in sm_wp1_depStartVariables.\n',goal,start);
-    end
-elseif start==4 % D (inner)
-    if goal==1
-        kx2=pentagon_x(2); ky2=pentagon_y(2);  kx3=alley_x(3,1); ky3=alley_y(3,1);
-    elseif goal==2
-        kx2=alley_x(3,2); ky2=alley_y(3,2);
-    elseif goal==3
-        % TBD or other side around 
-        kx2=pentagon_x(2); ky2=pentagon_y(2);  kx3=pentagon_x(1); ky3=pentagon_y(1);  kx4=alley_x(3,5); ky4=alley_y(3,5);
-    else
-        fprintf('Error path to goal %d in new start %d in sm_wp1_depStartVariables.\n',goal,start);
-    end
-elseif start==5 % E
-    if goal==1
-        kx2=alley_x(4,3); ky2=alley_y(4,3);  kx3=pentagon_x(2); ky3=pentagon_y(2);  kx4=alley_x(3,1); ky4=alley_y(3,1);
-    elseif goal==2
-        kx2=alley_x(4,3); ky2=alley_y(4,3);  kx3=alley_x(3,2); ky3=alley_y(3,2);
-    elseif goal==3
-        kx2=alley_x(3,3); ky2=alley_y(3,3);  kx3=pentagon_x(4); ky3=pentagon_y(4);  kx4=alley_x(4,5); ky4=alley_y(4,5);
-    else
-        fprintf('Error path to goal %d in new start %d in sm_wp1_depStartVariables.\n',goal,start);
-    end
-elseif start==6 % F 
-    if goal==1
-        % TBD or other side around 
-        kx2=pentagon_x(3); ky2=pentagon_y(3);  kx3=pentagon_x(2); ky3=pentagon_y(2);  kx4=alley_x(3,1); ky4=alley_y(3,1);
-    elseif goal==2
-        kx2=pentagon_x(3); ky2=pentagon_y(3);  kx3=alley_x(3,2); ky3=alley_y(3,2);
-    elseif goal==3
-        kx2=pentagon_x(4); ky2=pentagon_y(4);  kx3=alley_x(4,5); ky3=alley_y(4,5);
-    else
-        fprintf('Error path to goal %d in new start %d in sm_wp1_depStartVariables.\n',goal,start);
-    end
-elseif start==8 % H 
-    if goal==1
-        kx2=pentagon_x(5); ky2=pentagon_y(5);  kx3=alley_x(4,1); ky3=alley_y(4,1);
-    elseif goal==2
-        % TBD or other side around 
-        kx2=pentagon_x(4); ky2=pentagon_y(4);  kx3=pentagon_x(3); ky3=pentagon_y(3);  kx4=alley_x(3,2); ky4=alley_y(3,2);
-    elseif goal==3
-        kx2=alley_x(4,5); ky2=alley_y(4,5);
-    else
-        fprintf('Error path to goal %d in new start %d in sm_wp1_depStartVariables.\n',goal,start);
-    end
-elseif start==9 % I 
-    if goal==1
-        kx2=alley_x(3,5); ky2=alley_y(3,5);  kx3=alley_x(4,1); ky3=alley_y(4,1);
-    elseif goal==2
-        kx2=alley_x(3,5); ky2=alley_y(3,5);  kx3=pentagon_x(1); ky3=pentagon_y(1);  kx4=alley_x(4,2); ky4=alley_y(4,2);
-    elseif goal==3
-        kx2=0; ky2=0; % start and goal in same alley 
-    else
-        fprintf('Error path to goal %d in new start %d in sm_wp1_depStartVariables.\n',goal,start);
-    end
-elseif start==10 % J
-    if goal==1
-        kx2=alley_x(4,1); ky2=alley_y(4,1);  
-    elseif goal==2
-        kx2=pentagon_x(1); ky2=pentagon_y(1);  kx3=alley_x(4,2); ky3=alley_y(4,2);
-    elseif goal==3
-        kx2=alley_x(3,5); ky2=alley_y(3,5);
-    else
-        fprintf('Error path to goal %d in new start %d in sm_wp1_depStartVariables.\n',goal,start);
-    end
-else
-    fprintf('Error in start %d in sm_wp1_depStartVariables\n', start);
-end
+%% shortest path from actual start 
 
-% combine path lines for new starts
-if start~=7
-    % define number of steps
-    if kx2==0 && ky2==0
-        steps=0;
-    elseif kx3==0 && ky3==0
-        steps=1;
-    elseif kx4==0 && ky4==0
-        steps=2;
-    else
-        steps=3;
-    end
-    
-    % combine path lines
-    if steps==0
-        x_line=[kxs kxf];  y_line=[kys kyf];
-    elseif steps==1
-        x_line=[kxs kx2 kxf];  y_line=[kys ky2 kyf];
-    elseif steps==2
-        x_line=[kxs kx2 kx3 kxf];  y_line=[kys ky2 ky3 kyf];
-    elseif steps==3
-        x_line=[kxs kx2 kx3 kx4 kxf];  y_line=[kys ky2 ky3 ky4 kyf];
-    else
-        fprintf('Error steps is %d in sm_wp1_depStartVariables\n', steps);
-    end
-end
+start_node=start;
+end_node=size(myGraph.Nodes,1)+1-goal;
 
-% calculate ideal path length value (external function)
-ideal_path=sm_wp10_idealPathLength(x_line, y_line);
+[path_nodes, ideal_path]=shortestpath(myGraph, start_node, end_node);
+x_line=graph_x(path_nodes); 
+y_line=graph_y(path_nodes);
+
+% % test plot
+% figure; 
+% plot(polyshape_array); 
+% hold on; 
+% % pl = plot(myGraph,'XData',graph_x,'YData',graph_y,'EdgeLabel',myGraph.Edges.Weight);
+% pl = plot(myGraph,'XData',graph_x,'YData',graph_y);
+% xlim([0 1]);
+% ylim([0 1]);
+% highlight(pl,path_nodes,'EdgeColor','r');
+% hold off; 
 
 % calculate ideal number of turns 
 ideal_headturn=numel(x_line)-2; % minus start and end points (no head turns there)
+
+%% TBD
+
+ideal_path_chosen=0; 
+x_line_chosen=0; 
+y_line_chosen=0;
 
 end
