@@ -1,5 +1,5 @@
 function sm_wp10_plotTrack(trial,session,cond,start,id,Group, ...
-    alley_polyshape_1,alley_polyshape_2,tri,rec,...
+    SUC,DP,STR,alley_polyshape_1,alley_polyshape_2,tri,rec,...
     x,y,x_line_ego,y_line_ego,x_line,y_line,goal_x,goal_y,folderOut)
 % SM_WP_10_PLOTTRACK Creates track plots for each individual trial.
 %
@@ -16,6 +16,9 @@ polyshape_array=[alley_polyshape_1{1,1} alley_polyshape_2{1,1} alley_polyshape_1
 T=int2str(trial);
 Session=num2str(session);
 ID=num2str(id);
+suc=num2str(SUC); 
+dp=num2str(DP);
+str=num2str(STR);
 
 wfig=figure('visible', 'off');
 set(gca,'xtick',[0 1],'ytick',[0 1]);
@@ -33,7 +36,7 @@ elseif cond==3
 else
     type = ' (XXXXX)'; 
 end
-title({[ID ', ' Group];['Session: ' Session' ', Trial: ' T type]});
+title({[ID ', ' Group];['Session: ' Session ', Trial: ' T type];['Success: ', suc, ', Direct path: ' dp ', Strategy: ' str]});
 
 plot(polyshape_array, 'FaceColor',[0.6 0.6 0.6],'FaceAlpha',0.1)
 viscircles([goal_x goal_y], 0.01)
