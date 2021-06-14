@@ -235,6 +235,7 @@ M = xlsread(fullfile(folderIn, name),'A:E'); % Reading in data into matrix M
 t=M(:,1);% time analysis
 x=M(:,2); y=M(:,3); % coordinate analysis
 data_length=length(x); sdata_length=(size(x))-1;% vector length & shortend length (for distance calculation)
+r=M(:,4); % head rotations
 
 % normalization of coordinates 
 if session==3 % motor control trial (practise maze)
@@ -364,13 +365,13 @@ if sm.sub{p}.session{s}.trial{k}.trial_condition==4
     sm.sub{p}.session{s}.trial{k}.result.searchStrategy.direct=999;
     sm.sub{p}.session{s}.trial{k}.result.searchStrategy.detour=999;
     sm.sub{p}.session{s}.trial{k}.result.searchStrategy.reoriented=999;
-    sm.sub{p}.session{s}.trial{k}.result.head_rotation=999;
-    sm.sub{p}.session{s}.trial{k}.result.full_head_rotation=999;
-    sm.sub{p}.session{s}.trial{k}.result.head_turn_total=999;
+    sm.sub{p}.session{s}.trial{k}.result.sum_head_rotation=999;
+    sm.sub{p}.session{s}.trial{k}.result.no_full_head_rotation=999;
+    sm.sub{p}.session{s}.trial{k}.result.no_head_turn=999;
     sm.sub{p}.session{s}.trial{k}.result.head_turn_accuracy=999;
-    sm.sub{p}.session{s}.trial{k}.result.body_rotation=999;
+    sm.sub{p}.session{s}.trial{k}.result.sum_body_rotation=999;
     sm.sub{p}.session{s}.trial{k}.result.body_rotation_accuracy=999;
-    sm.sub{p}.session{s}.trial{k}.result.body_turn_total=999;
+    sm.sub{p}.session{s}.trial{k}.result.no_body_turn=999;
     sm.sub{p}.session{s}.trial{k}.result.body_turn_accuracy=999;
     
     success_criterium=0; 
@@ -389,8 +390,8 @@ if sm.sub{p}.session{s}.trial{k}.trial_condition==4
     sm.sub{p}.session{s}.trial{k}.ideal_avg_distance_ego_target=999; 
     sm.sub{p}.session{s}.trial{k}.ideal_total_distance_ego_target=999; 
     sm.sub{p}.session{s}.trial{k}.ideal_sum_data_points_ego=999; 
-    sm.sub{p}.session{s}.trial{k}.ideal_body_rotation=999; 
-    sm.sub{p}.session{s}.trial{k}.ideal_body_turn_total=999; 
+    sm.sub{p}.session{s}.trial{k}.ideal_sum_body_rotation=999; 
+    sm.sub{p}.session{s}.trial{k}.ideal_no_body_turn=999; 
     sm.sub{p}.session{s}.trial{k}.ideal_headturnNo=999; 
     sm.sub{p}.session{s}.trial{k}.zone.alley_zone(1,1)=999; 
     sm.sub{p}.session{s}.trial{k}.zone.alley_zone(1,2)=999; 
@@ -466,6 +467,21 @@ if sm.sub{p}.session{s}.trial{k}.trial_condition==4
     sm.sub{p}.session{s}.trial{k}.time.rectangle_time(1,3)=999; 
     sm.sub{p}.session{s}.trial{k}.time.rectangle_time(1,4)=999; 
     sm.sub{p}.session{s}.trial{k}.time.rectangle_time(1,5)=999; 
+    sm.sub{p}.session{s}.trial{k}.zone.alley_rotations(1,1)=999; 
+    sm.sub{p}.session{s}.trial{k}.zone.alley_rotations(1,2)=999; 
+    sm.sub{p}.session{s}.trial{k}.zone.alley_rotations(1,3)=999; 
+    sm.sub{p}.session{s}.trial{k}.zone.alley_rotations(1,4)=999; 
+    sm.sub{p}.session{s}.trial{k}.zone.alley_rotations(1,5)=999; 
+    sm.sub{p}.session{s}.trial{k}.zone.triangle_rotations(1,1)=999; 
+    sm.sub{p}.session{s}.trial{k}.zone.triangle_rotations(1,2)=999; 
+    sm.sub{p}.session{s}.trial{k}.zone.triangle_rotations(1,3)=999; 
+    sm.sub{p}.session{s}.trial{k}.zone.triangle_rotations(1,4)=999; 
+    sm.sub{p}.session{s}.trial{k}.zone.triangle_rotations(1,5)=999; 
+    sm.sub{p}.session{s}.trial{k}.zone.rectangle_rotations(1,1)=999; 
+    sm.sub{p}.session{s}.trial{k}.zone.rectangle_rotations(1,2)=999; 
+    sm.sub{p}.session{s}.trial{k}.zone.rectangle_rotations(1,3)=999; 
+    sm.sub{p}.session{s}.trial{k}.zone.rectangle_rotations(1,4)=999; 
+    sm.sub{p}.session{s}.trial{k}.zone.rectangle_rotations(1,5)=999; 
     
     fprintf('Motor control analysis done for %d, session %d, file no %d.\n', subject, session, k);
 
@@ -508,12 +524,14 @@ else
       
     % zone analysis for ideal paths
     [ideal_alley_zone, ideal_rel_alley_zone,...
-        sm.sub{p}.session{s}.trial{k}.zone.ideal_alley_entry]=sm_wp10_coordinatesZonesStatic(xi_al,...
-        yi_al, alley_full_x, alley_full_y, length(xi_al));
+        sm.sub{p}.session{s}.trial{k}.zone.ideal_alley_entry,...
+        dummy1]=sm_wp10_coordinatesZonesStatic(xi_al,...
+        yi_al,zeros(length(xi_al),1),alley_full_x,alley_full_y,length(xi_al));
     
     [ideal_rectangle_zone, ideal_rel_rectangle_zone,...
-        sm.sub{p}.session{s}.trial{k}.zone.ideal_rectangle_entry]= sm_wp10_coordinatesZonesStatic(xi_al,...
-        yi_al, rec_x, rec_y, length(xi_al));
+        sm.sub{p}.session{s}.trial{k}.zone.ideal_rectangle_entry,...
+        dummy2]= sm_wp10_coordinatesZonesStatic(xi_al,...
+        yi_al,zeros(length(xi_al)),rec_x,rec_y,length(xi_al));
     
     [ideal_alley_entry_mat]=sm_wp10_coordinatesZonesDynamic(xi_al,...
         yi_al, alley_full_x, alley_full_y, length(xi_al));
@@ -541,16 +559,16 @@ else
     for i=1:sdata_length
         % PATH to target
         % cumulative distance traveled (used in path accuracy)
-        sm.sub{p}.session{s}.trial{k}.result.path_length=sm.sub{p}.session{s}.trial{k}.result.path_length+sum(sm_distance(x(i),x(i+1),y(i),y(i+1)));
+        sm.sub{p}.session{s}.trial{k}.result.path_length=sm.sub{p}.session{s}.trial{k}.result.path_length+sm_distance(x(i),x(i+1),y(i),y(i+1));
         % DISTANCE to CORRECT target
         % cumulative distance to target (used in distance analysis)
-        total_dist_to_goal=total_dist_to_goal+sum(sm_distance(x(i),sm.sub{p}.session{s}.trial{k}.goal_x,y(i),sm.sub{p}.session{s}.trial{k}.goal_y)); 
+        total_dist_to_goal=total_dist_to_goal+sm_distance(x(i),sm.sub{p}.session{s}.trial{k}.goal_x,y(i),sm.sub{p}.session{s}.trial{k}.goal_y); 
         % DISTANCE to EGOCENTRIC target
         % cumulative distance to egocentric target (used in distance analysis)
-        total_dist_to_goal_ego=total_dist_to_goal_ego+sum(sm_distance(x(i),sm.sub{p}.session{s}.trial{k}.goal_x_ego,y(i),sm.sub{p}.session{s}.trial{k}.goal_y_ego));
+        total_dist_to_goal_ego=total_dist_to_goal_ego+sm_distance(x(i),sm.sub{p}.session{s}.trial{k}.goal_x_ego,y(i),sm.sub{p}.session{s}.trial{k}.goal_y_ego);
         % DISTANCE to CHOSEN target
         % cumulative distance to chosen target (used in distance analysis)
-        total_dist_to_chosen_goal=total_dist_to_chosen_goal+sum(sm_distance(x(i),x(end),y(i),y(end))); 
+        total_dist_to_chosen_goal=total_dist_to_chosen_goal+sm_distance(x(i),x(end),y(i),y(end)); 
     end
     
     % Distance analysis
@@ -583,9 +601,9 @@ else
     xi_length=length(xi_al)-1;
     for i=1:xi_length
         % ideal cumulative distance traveled (based on interpolated values)
-        sm.sub{p}.session{s}.trial{k}.ideal_path_length_interpol=sm.sub{p}.session{s}.trial{k}.ideal_path_length_interpol+sum(sm_distance(xi_al(i),xi_al(i+1),yi_al(i),yi_al(i+1)));
+        sm.sub{p}.session{s}.trial{k}.ideal_path_length_interpol=sm.sub{p}.session{s}.trial{k}.ideal_path_length_interpol+sm_distance(xi_al(i),xi_al(i+1),yi_al(i),yi_al(i+1));
         % ideal cumulative distance to allocentric target
-        id_total_dist_to_goal=id_total_dist_to_goal+sum(sm_distance(xi_al(i),sm.sub{p}.session{s}.trial{k}.goal_x,yi_al(i),sm.sub{p}.session{s}.trial{k}.goal_y));
+        id_total_dist_to_goal=id_total_dist_to_goal+sm_distance(xi_al(i),sm.sub{p}.session{s}.trial{k}.goal_x,yi_al(i),sm.sub{p}.session{s}.trial{k}.goal_y);
     end
     
     % IDEAL AVERAGE DISTANCE to CORRECT target
@@ -640,9 +658,9 @@ else
         xi_eg_length=length(xi_eg)-1;
         for i=1:xi_eg_length
             % ideal cumulative distance traveled (based on interpolated values)
-            sm.sub{p}.session{s}.trial{k}.ideal_path_length_ego_interpol=sm.sub{p}.session{s}.trial{k}.ideal_path_length_ego_interpol+sum(sm_distance(xi_eg(i),xi_eg(i+1),yi_eg(i),yi_eg(i+1)));% cumulative distance traveled
+            sm.sub{p}.session{s}.trial{k}.ideal_path_length_ego_interpol=sm.sub{p}.session{s}.trial{k}.ideal_path_length_ego_interpol+sm_distance(xi_eg(i),xi_eg(i+1),yi_eg(i),yi_eg(i+1));% cumulative distance traveled
             % ideal cumulative distance to egocentric target 
-            id_total_dist_to_goal_ego=id_total_dist_to_goal_ego+sum(sm_distance(xi_eg(i),sm.sub{p}.session{s}.trial{k}.goal_x_ego,yi_eg(i),sm.sub{p}.session{s}.trial{k}.goal_y_ego));
+            id_total_dist_to_goal_ego=id_total_dist_to_goal_ego+sm_distance(xi_eg(i),sm.sub{p}.session{s}.trial{k}.goal_x_ego,yi_eg(i),sm.sub{p}.session{s}.trial{k}.goal_y_ego);
         end
 
         % IDEAL AVERAGE DISTANCE to EGOCENTRIC target 
@@ -703,9 +721,9 @@ else
         xi_ch_length=length(xi_ch)-1;
         for i=1:xi_ch_length
             % ideal cumulative distance traveled (based on interpolated values)
-            sm.sub{p}.session{s}.trial{k}.ideal_path_length_chosen_interpol=sm.sub{p}.session{s}.trial{k}.ideal_path_length_chosen_interpol+sum(sm_distance(xi_ch(i),xi_ch(i+1),yi_ch(i),yi_ch(i+1)));% cumulative distance traveled
+            sm.sub{p}.session{s}.trial{k}.ideal_path_length_chosen_interpol=sm.sub{p}.session{s}.trial{k}.ideal_path_length_chosen_interpol+sm_distance(xi_ch(i),xi_ch(i+1),yi_ch(i),yi_ch(i+1));% cumulative distance traveled
             % ideal cumulative distance to chosen target
-            id_total_dist_to_goal_chosen=id_total_dist_to_goal_chosen+sum(sm_distance(xi_ch(i),x(end),yi_ch(i),y(end)));
+            id_total_dist_to_goal_chosen=id_total_dist_to_goal_chosen+sm_distance(xi_ch(i),x(end),yi_ch(i),y(end));
         end
     
         % IDEAL AVERAGE DISTANCE to CHOSEN target
@@ -740,22 +758,22 @@ else
     
     %% Body rotation analysis
     % Body rotation analysis
-    sm.sub{p}.session{s}.trial{k}.result.body_rotation=0; br=zeros(1,data_length);
+    sm.sub{p}.session{s}.trial{k}.result.sum_body_rotation=0; br=zeros(1,data_length);
     for i=2:(data_length-2)
         br(i)=sm_b_rot(y(i-1),x(i-1),y(i),x(i));
-        sm.sub{p}.session{s}.trial{k}.result.body_rotation=sm.sub{p}.session{s}.trial{k}.result.body_rotation+br(i);
     end
+    sm.sub{p}.session{s}.trial{k}.result.sum_body_rotation=sum(br);
     
     % Ideal sum of body roatations
     l_xi_al=length(xi_al);
-    sm.sub{p}.session{s}.trial{k}.ideal_body_rotation=0; br_i=zeros(1,l_xi_al);
+    sm.sub{p}.session{s}.trial{k}.ideal_sum_body_rotation=0; br_i=zeros(1,l_xi_al);
     for i=2:(l_xi_al-2)
         br_i(i)=sm_b_rot(yi_al(i-1),xi_al(i-1),yi_al(i),xi_al(i));
-        sm.sub{p}.session{s}.trial{k}.ideal_body_rotation=sm.sub{p}.session{s}.trial{k}.ideal_body_rotation+br_i(i);
     end
+    sm.sub{p}.session{s}.trial{k}.ideal_sum_body_rotation=sum(br_i);
     
     % Body-rotation-accuracy
-    sm.sub{p}.session{s}.trial{k}.result.body_rotation_accuracy=sm_ac(sm.sub{p}.session{s}.trial{k}.result.body_rotation,sm.sub{p}.session{s}.trial{k}.ideal_body_rotation);
+    sm.sub{p}.session{s}.trial{k}.result.body_rotation_accuracy=sm_ac(sm.sub{p}.session{s}.trial{k}.result.sum_body_rotation,sm.sub{p}.session{s}.trial{k}.ideal_sum_body_rotation);
     
     fprintf('Body rotation analysis done for %d, session %d, file no %d.\n', subject, session, k);
     
@@ -767,13 +785,13 @@ else
         body_turn(j)=heaviside((br(j+1)-br(j)));
         if body_turn(j)==1 && (body_turn(j-1)==0 || body_turn(j-1)==0.5)
             sm.sub{p}.session{s}.trial{k}.result.body_turn_right=sm.sub{p}.session{s}.trial{k}.result.body_turn_right+1;
-        elseif body_turn(j) ==0 &&(body_turn(j-1)==1 || body_turn(j-1)==0.5)
+        elseif body_turn(j)==0 &&(body_turn(j-1)==1 || body_turn(j-1)==0.5)
             sm.sub{p}.session{s}.trial{k}.result.body_turn_left=sm.sub{p}.session{s}.trial{k}.result.body_turn_left+1;
         else
             body_walk_straight=body_walk_straight+1;
         end
     end
-    sm.sub{p}.session{s}.trial{k}.result.body_turn_total= sm.sub{p}.session{s}.trial{k}.result.body_turn_right+sm.sub{p}.session{s}.trial{k}.result.body_turn_left;
+    sm.sub{p}.session{s}.trial{k}.result.no_body_turn=sm.sub{p}.session{s}.trial{k}.result.body_turn_right+sm.sub{p}.session{s}.trial{k}.result.body_turn_left;
     
     % Cumulative ideal body turns
     body_turn_i=zeros(1,l_xi_al);
@@ -782,92 +800,98 @@ else
         body_turn_i(j)=heaviside((br_i(j+1)-br_i(j)));
         if body_turn_i(j)==1 && (body_turn_i(j-1)==0 || body_turn_i(j-1)==0.5)
             sm.sub{p}.session{s}.trial{k}.ideal_body_turn_right=sm.sub{p}.session{s}.trial{k}.ideal_body_turn_right+1;
-        elseif body_turn_i(j) ==0 &&(body_turn_i(j-1)==1 || body_turn_i(j-1)==0.5)
+        elseif body_turn_i(j)==0 &&(body_turn_i(j-1)==1 || body_turn_i(j-1)==0.5)
             sm.sub{p}.session{s}.trial{k}.ideal_body_turn_left=sm.sub{p}.session{s}.trial{k}.ideal_body_turn_left+1;
         else
             ideal_body_walk_straight=ideal_body_walk_straight+1;
         end
     end
-    sm.sub{p}.session{s}.trial{k}.ideal_body_turn_total= sm.sub{p}.session{s}.trial{k}.ideal_body_turn_right+sm.sub{p}.session{s}.trial{k}.ideal_body_turn_left;
+    sm.sub{p}.session{s}.trial{k}.ideal_no_body_turn=sm.sub{p}.session{s}.trial{k}.ideal_body_turn_right+sm.sub{p}.session{s}.trial{k}.ideal_body_turn_left;
     
     % Body-turn-accuracy
-    sm.sub{p}.session{s}.trial{k}.result.body_turn_accuracy=sm_ac(sm.sub{p}.session{s}.trial{k}.result.body_turn_total,sm.sub{p}.session{s}.trial{k}.ideal_body_turn_total);
+    sm.sub{p}.session{s}.trial{k}.result.body_turn_accuracy=sm_ac(sm.sub{p}.session{s}.trial{k}.result.no_body_turn,sm.sub{p}.session{s}.trial{k}.ideal_no_body_turn);
     
     fprintf('Body turn analysis done for %d, session %d, file no %d.\n', subject, session, k);
     
     %% Head rotation analysis
-    r=M(:,4); % rotations in coloumn 6
+    % Head rotation information from column 4 of M stored as r
     
-    % Final deviation from start to target angle
-    ro=length(r); sm.sub{p}.session{s}.trial{k}.result.final_deviation=0;
-    
-    % Cumulative rotation, sum of head rotations
-    sm.sub{p}.session{s}.trial{k}.result.head_rotation=0;
+    ro=length(r); sm.sub{p}.session{s}.trial{k}.result.final_deviation=0; % final deviation from start to target angle
+    sm.sub{p}.session{s}.trial{k}.result.sum_head_rotation=0; % cumulative rotation, sum of head rotations
     for j=1:(ro-1)
-        sm.sub{p}.session{s}.trial{k}.result.final_deviation=sm.sub{p}.session{s}.trial{k}.result.final_deviation+((r(j+1)-r(j))); % deviation
-        sm.sub{p}.session{s}.trial{k}.result.head_rotation=sm.sub{p}.session{s}.trial{k}.result.head_rotation+(abs((r(j+1)-r(j)))); % sum of head roations
+        sm.sub{p}.session{s}.trial{k}.result.final_deviation=sm.sub{p}.session{s}.trial{k}.result.final_deviation+(r(j+1)-r(j)); % deviation
+        sm.sub{p}.session{s}.trial{k}.result.sum_head_rotation=sm.sub{p}.session{s}.trial{k}.result.sum_head_rotation+abs(r(j+1)-r(j)); % sum of head roations
     end
-    sm.sub{p}.session{s}.trial{k}.result.full_head_rotation= sm.sub{p}.session{s}.trial{k}.result.head_rotation/360;
+    sm.sub{p}.session{s}.trial{k}.result.no_full_head_rotation=sm.sub{p}.session{s}.trial{k}.result.sum_head_rotation/360;
     
+    fprintf('Head rotation analysis done for %d, session %d, file no %d.\n', subject, session, k);
+    
+    %% Head turn analysis
     % Cumulative amount of completed head-turns
-    head_turn= zeros(1, ro);
+    head_turn=zeros(1, ro);
     sm.sub{p}.session{s}.trial{k}.result.head_turn_left=0;sm.sub{p}.session{s}.trial{k}.result.head_turn_right=0;head_walk_straight=0;head_left=0; head_right=0;
     for j=2:(ro-1)
         head_turn(j)=heaviside((r(j+1)-r(j)));
         if head_turn(j)==1 && (head_turn(j-1)==0 || head_turn(j-1)==0.5)
             sm.sub{p}.session{s}.trial{k}.result.head_turn_right=sm.sub{p}.session{s}.trial{k}.result.head_turn_right+1;
-        elseif head_turn(j) ==0 && (head_turn(j-1)==1 || head_turn(j-1)==0.5)
+        elseif head_turn(j)==0 && (head_turn(j-1)==1 || head_turn(j-1)==0.5)
             sm.sub{p}.session{s}.trial{k}.result.head_turn_left=sm.sub{p}.session{s}.trial{k}.result.head_turn_left+1;
-        elseif (head_turn(j) ==0 && head_turn(j-1)==0)
+        elseif (head_turn(j)==0 && head_turn(j-1)==0)
             head_straight=head_walk_straight+1;
-        elseif head_turn(j) ==1 && head_turn(j-1)==1
+        elseif head_turn(j)==1 && head_turn(j-1)==1
             head_right=head_right+1;
-        elseif head_turn(j) ==0.5 && head_turn(j-1)==0.5
+        elseif head_turn(j)==0.5 && head_turn(j-1)==0.5
             head_left=head_left+1;
         end
     end
     
     % Head-turn total
-    sm.sub{p}.session{s}.trial{k}.result.head_turn_total= sm.sub{p}.session{s}.trial{k}.result.head_turn_right+sm.sub{p}.session{s}.trial{k}.result.head_turn_left;
+    sm.sub{p}.session{s}.trial{k}.result.no_head_turn=sm.sub{p}.session{s}.trial{k}.result.head_turn_right+sm.sub{p}.session{s}.trial{k}.result.head_turn_left;
     
     % Head-turn-accuracy
-    sm.sub{p}.session{s}.trial{k}.result.head_turn_accuracy=sm_ac(sm.sub{p}.session{s}.trial{k}.result.head_turn_total,sm.sub{p}.session{s}.trial{k}.ideal_headturnNo);
+    sm.sub{p}.session{s}.trial{k}.result.head_turn_accuracy=sm_ac(sm.sub{p}.session{s}.trial{k}.result.no_head_turn,sm.sub{p}.session{s}.trial{k}.ideal_headturnNo);
     
     fprintf('Head turn analysis done for %d, session %d, file no %d.\n', subject, session, k);
     
     %% Zone analysis
     [sm.sub{p}.session{s}.trial{k}.zone.alley_zone,...
         sm.sub{p}.session{s}.trial{k}.zone.rel_alley_zone,...
-        sm.sub{p}.session{s}.trial{k}.zone.alley_entry]=sm_wp10_coordinatesZonesStatic(x,...
-        y,alley_full_x,alley_full_y,data_length);
+        sm.sub{p}.session{s}.trial{k}.zone.alley_entry,...
+        sm.sub{p}.session{s}.trial{k}.zone.alley_rotations]=sm_wp10_coordinatesZonesStatic(x,...
+        y,r,alley_full_x,alley_full_y,data_length);
     
     [alley_entry_mat]=sm_wp10_coordinatesZonesDynamic(x,...
         y,alley_full_x,alley_full_y,data_length);
     
     [sm.sub{p}.session{s}.trial{k}.zone.alley_zone_out,...
         sm.sub{p}.session{s}.trial{k}.zone.rel_alley_zone_out,...
-        sm.sub{p}.session{s}.trial{k}.zone.alley_entry_out]=sm_wp10_coordinatesZonesStatic(x,...
-        y,alley_half_out_x,alley_half_out_y,data_length);
+        sm.sub{p}.session{s}.trial{k}.zone.alley_entry_out,...
+        sm.sub{p}.session{s}.trial{k}.zone.alley_rotations_out]=sm_wp10_coordinatesZonesStatic(x,...
+        y,r,alley_half_out_x,alley_half_out_y,data_length);
     
     [sm.sub{p}.session{s}.trial{k}.zone.alley_zone_in,...
         sm.sub{p}.session{s}.trial{k}.zone.rel_alley_zone_in,...
-        sm.sub{p}.session{s}.trial{k}.zone.alley_entry_in]=sm_wp10_coordinatesZonesStatic(x,...
-        y,alley_half_in_x,alley_half_in_y,data_length);
+        sm.sub{p}.session{s}.trial{k}.zone.alley_entry_in,...
+        sm.sub{p}.session{s}.trial{k}.zone.alley_rotations_in]=sm_wp10_coordinatesZonesStatic(x,...
+        y,r,alley_half_in_x,alley_half_in_y,data_length);
     
     [sm.sub{p}.session{s}.trial{k}.zone.pentagon_zone,...
         sm.sub{p}.session{s}.trial{k}.zone.rel_pentagon_zone,...
-        sm.sub{p}.session{s}.trial{k}.zone.pentagon_entry]=sm_wp10_coordinatesPentagon(x,...
-        y,cP_x,cP_y,data_length);
+        sm.sub{p}.session{s}.trial{k}.zone.pentagon_entry,...
+        sm.sub{p}.session{s}.trial{k}.zone.pentagon_rotations]=sm_wp10_coordinatesPentagon(x,...
+        y,r,cP_x,cP_y,data_length);
     
     [sm.sub{p}.session{s}.trial{k}.zone.triangle_zone,....
         sm.sub{p}.session{s}.trial{k}.zone.rel_triangle_zone,...
-        sm.sub{p}.session{s}.trial{k}.zone.triangle_entry]=sm_wp10_coordinatesZonesStatic(x,...
-        y,tri_x,tri_y,data_length);
+        sm.sub{p}.session{s}.trial{k}.zone.triangle_entry,...
+        sm.sub{p}.session{s}.trial{k}.zone.triangle_rotations]=sm_wp10_coordinatesZonesStatic(x,...
+        y,r,tri_x,tri_y,data_length);
     
     [sm.sub{p}.session{s}.trial{k}.zone.rectangle_zone,...
         sm.sub{p}.session{s}.trial{k}.zone.rel_rectangle_zone,...
-        sm.sub{p}.session{s}.trial{k}.zone.rectangle_entry]= sm_wp10_coordinatesZonesStatic(x,...
-        y,rec_x,rec_y,data_length);
+        sm.sub{p}.session{s}.trial{k}.zone.rectangle_entry,...
+        sm.sub{p}.session{s}.trial{k}.zone.rectangle_rotations]=sm_wp10_coordinatesZonesStatic(x,...
+        y,r,rec_x,rec_y,data_length);
     
     [rectangle_entry_mat]=sm_wp10_coordinatesZonesDynamic(x,...
         y,rec_x,rec_y,data_length);
@@ -931,7 +955,7 @@ else
         fprintf('Trial %d marked for exclusion due to timeout.\n',k); 
     elseif sm.sub{p}.session{s}.trial{k}.trial_condition ~=4 % not for motor control task
         if (sm.sub{p}.session{s}.trial{k}.result.path_length<=0.1 ...
-                || sm.sub{p}.session{s}.trial{k}.result.body_rotation==0 ...
+                || sm.sub{p}.session{s}.trial{k}.result.sum_body_rotation==0 ...
                 || sm.sub{p}.session{s}.trial{k}.result.time < 3)
             sm.sub{p}.session{s}.trial{k}.exclude_trial_matlab=1;
             fprintf('Trial %d marked for exclusion due lack of movement/short trial time.\n',k);
@@ -966,8 +990,8 @@ col_header_2={'correct_goal','correct_goal_ego','correct_final_alley','correct_f
     'dev_ideal_avg_dist','dev_ideal_avg_dist_chosen','dev_ideal_avg_dist_ego',...
     'direct_path','direct_path_percent','arm_explored','arm_score','path_explored','path_score',...
     'search_strategy_no','search_direct','search_detour','search_reoriented',...
-    'head_rotation','full_head_rotation','head_turn','dev_head_turn',...
-    'body_rotation','dev_body_rotation', 'body_turn','dev_body_turn' };
+    'sum_head_rotation','no_full_head_rotation','no_head_turn','dev_ideal_head_turn',...
+    'sum_body_rotation','dev_ideal_body_rotation', 'no_body_turn','dev_ideal_body_turn' };
 
 % support analysis variables 
 col_header_3={'correct_crit','goal_x','goal_y','goal_x_ego','goal_y_ego',...
@@ -991,7 +1015,10 @@ col_header_3={'correct_crit','goal_x','goal_y','goal_x_ego','goal_y_ego',...
     'entry_rec_1', 'entry_rec_2', 'entry_rec_3', 'entry_rec_4', 'entry_rec_5',...
     'time_a1', 'time_a2', 'time_a3', 'time_a4', 'time_a5', 'time_pent',...
     'time_tri_1', 'time_tri_2', 'time_tri_3', 'time_tri_4', 'time_tri_5',...
-    'time_rec_1', 'time_rec_2', 'time_rec_3', 'time_rec_4', 'time_rec_5'};
+    'time_rec_1', 'time_rec_2', 'time_rec_3', 'time_rec_4', 'time_rec_5',...
+    'rotation_a1', 'rotation_a2', 'rotation_a3', 'rotation_a4', 'rotation_a5',...
+    'rotation_tri_5', 'rotation_tri_2', 'rotation_tri_3', 'rotation_tri_4', 'rotation_tri_5',...
+    'rotation_rec_1', 'rotation_rec_2', 'rotation_rec_3', 'rotation_rec_4', 'rotation_rec_5' };
 
 % name of excel-file
 Trial=num2str(sm.sub{p}.session{s}.trial{k}.trial_num);
@@ -1033,10 +1060,10 @@ xlswrite(new_file,strrep([group_var ...
     sm.sub{p}.session{s}.trial{k}.result.path_explored sm.sub{p}.session{s}.trial{k}.result.path_score ...
     sm.sub{p}.session{s}.trial{k}.result.search_strategy_no sm.sub{p}.session{s}.trial{k}.result.searchStrategy.direct ...
     sm.sub{p}.session{s}.trial{k}.result.searchStrategy.detour sm.sub{p}.session{s}.trial{k}.result.searchStrategy.reoriented ...
-    sm.sub{p}.session{s}.trial{k}.result.head_rotation sm.sub{p}.session{s}.trial{k}.result.full_head_rotation ...
-    sm.sub{p}.session{s}.trial{k}.result.head_turn_total sm.sub{p}.session{s}.trial{k}.result.head_turn_accuracy ...
-    sm.sub{p}.session{s}.trial{k}.result.body_rotation sm.sub{p}.session{s}.trial{k}.result.body_rotation_accuracy ...
-    sm.sub{p}.session{s}.trial{k}.result.body_turn_total sm.sub{p}.session{s}.trial{k}.result.body_turn_accuracy ],'.', ','),'data_vars','A2');
+    sm.sub{p}.session{s}.trial{k}.result.sum_head_rotation sm.sub{p}.session{s}.trial{k}.result.no_full_head_rotation ...
+    sm.sub{p}.session{s}.trial{k}.result.no_head_turn sm.sub{p}.session{s}.trial{k}.result.head_turn_accuracy ...
+    sm.sub{p}.session{s}.trial{k}.result.sum_body_rotation sm.sub{p}.session{s}.trial{k}.result.body_rotation_accuracy ...
+    sm.sub{p}.session{s}.trial{k}.result.no_body_turn sm.sub{p}.session{s}.trial{k}.result.body_turn_accuracy ],'.', ','),'data_vars','A2');
 
 xlswrite(new_file,strrep([group_var success_criterium ...
     sm.sub{p}.session{s}.trial{k}.goal_x sm.sub{p}.session{s}.trial{k}.goal_y ...
@@ -1051,8 +1078,8 @@ xlswrite(new_file,strrep([group_var success_criterium ...
     sm.sub{p}.session{s}.trial{k}.ideal_sum_data_points_chosen ...
     sm.sub{p}.session{s}.trial{k}.ideal_avg_distance_ego_target sm.sub{p}.session{s}.trial{k}.ideal_total_distance_ego_target ...
     sm.sub{p}.session{s}.trial{k}.ideal_sum_data_points_ego ...
-    sm.sub{p}.session{s}.trial{k}.ideal_body_rotation ...
-    sm.sub{p}.session{s}.trial{k}.ideal_body_turn_total sm.sub{p}.session{s}.trial{k}.ideal_headturnNo ...
+    sm.sub{p}.session{s}.trial{k}.ideal_sum_body_rotation ...
+    sm.sub{p}.session{s}.trial{k}.ideal_no_body_turn sm.sub{p}.session{s}.trial{k}.ideal_headturnNo ...
     sm.sub{p}.session{s}.trial{k}.zone.alley_zone(1,1) sm.sub{p}.session{s}.trial{k}.zone.alley_zone(1,2) sm.sub{p}.session{s}.trial{k}.zone.alley_zone(1,3) sm.sub{p}.session{s}.trial{k}.zone.alley_zone(1,4) sm.sub{p}.session{s}.trial{k}.zone.alley_zone(1,5)...
     sm.sub{p}.session{s}.trial{k}.zone.pentagon_zone...
     sm.sub{p}.session{s}.trial{k}.zone.triangle_zone(1,1) sm.sub{p}.session{s}.trial{k}.zone.triangle_zone(1,2) sm.sub{p}.session{s}.trial{k}.zone.triangle_zone(1,3) sm.sub{p}.session{s}.trial{k}.zone.triangle_zone(1,4) sm.sub{p}.session{s}.trial{k}.zone.triangle_zone(1,5)...
@@ -1070,7 +1097,10 @@ xlswrite(new_file,strrep([group_var success_criterium ...
     sm.sub{p}.session{s}.trial{k}.time.alley_time(1,1) sm.sub{p}.session{s}.trial{k}.time.alley_time(1,2) sm.sub{p}.session{s}.trial{k}.time.alley_time(1,3) sm.sub{p}.session{s}.trial{k}.time.alley_time(1,4) sm.sub{p}.session{s}.trial{k}.time.alley_time(1,5)...
     sm.sub{p}.session{s}.trial{k}.time.pentagon_time...
     sm.sub{p}.session{s}.trial{k}.time.triangle_time(1,1) sm.sub{p}.session{s}.trial{k}.time.triangle_time(1,2) sm.sub{p}.session{s}.trial{k}.time.triangle_time(1,3) sm.sub{p}.session{s}.trial{k}.time.triangle_time(1,4) sm.sub{p}.session{s}.trial{k}.time.triangle_time(1,5)...
-    sm.sub{p}.session{s}.trial{k}.time.rectangle_time(1,1) sm.sub{p}.session{s}.trial{k}.time.rectangle_time(1,2) sm.sub{p}.session{s}.trial{k}.time.rectangle_time(1,3) sm.sub{p}.session{s}.trial{k}.time.rectangle_time(1,4) sm.sub{p}.session{s}.trial{k}.time.rectangle_time(1,5)],'.', ','),'support_vars','A2');
+    sm.sub{p}.session{s}.trial{k}.time.rectangle_time(1,1) sm.sub{p}.session{s}.trial{k}.time.rectangle_time(1,2) sm.sub{p}.session{s}.trial{k}.time.rectangle_time(1,3) sm.sub{p}.session{s}.trial{k}.time.rectangle_time(1,4) sm.sub{p}.session{s}.trial{k}.time.rectangle_time(1,5) ...
+    sm.sub{p}.session{s}.trial{k}.zone.alley_rotations(1,1) sm.sub{p}.session{s}.trial{k}.zone.alley_rotations(1,2) sm.sub{p}.session{s}.trial{k}.zone.alley_rotations(1,3) sm.sub{p}.session{s}.trial{k}.zone.alley_rotations(1,4) sm.sub{p}.session{s}.trial{k}.zone.alley_rotations(1,5) ...
+    sm.sub{p}.session{s}.trial{k}.zone.triangle_rotations(1,1) sm.sub{p}.session{s}.trial{k}.zone.triangle_rotations(1,2) sm.sub{p}.session{s}.trial{k}.zone.triangle_rotations(1,3) sm.sub{p}.session{s}.trial{k}.zone.triangle_rotations(1,4) sm.sub{p}.session{s}.trial{k}.zone.triangle_rotations(1,5) ...
+    sm.sub{p}.session{s}.trial{k}.zone.rectangle_rotations(1,1) sm.sub{p}.session{s}.trial{k}.zone.rectangle_rotations(1,2) sm.sub{p}.session{s}.trial{k}.zone.rectangle_rotations(1,3) sm.sub{p}.session{s}.trial{k}.zone.rectangle_rotations(1,4) sm.sub{p}.session{s}.trial{k}.zone.rectangle_rotations(1,5) ] ,'.', ','),'support_vars','A2');
 
 xlswrite(new_file,[col_header col_header_2],'data_vars','A1');
 xlswrite(new_file,[col_header col_header_3],'support_vars','A1');
@@ -1096,7 +1126,7 @@ end
 %% Write summaries for a selection of variables
 new_name2 = [sm.sub{p}.Group '_' num2str(sm.sub{p}.id)  '_results'];
 new_file = fullfile(folderOut2, new_name2);
-sm_wp10_table_allTrials(folderOut,new_file,col_header,col_header_2,col_header_3,'BU','DP','data_vars','support_vars');
+sm_wp10_table_allTrials(folderOut,new_file,col_header,col_header_2,col_header_3,'BU','EE','data_vars','support_vars');
 
 p=p+1;
 
