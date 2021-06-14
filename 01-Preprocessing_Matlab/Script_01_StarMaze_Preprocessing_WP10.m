@@ -288,9 +288,8 @@ if sm.sub{p}.session{s}.trial{k}.trial_condition==4
     
     % interpolate data for further analysis
     % using 'interparc' function by John D'Errico (Matlab File Exchanger) 
-    [xi_al,yi_al,xi_eg,yi_eg]=sm_wp10_dataInterpolation(x_line_motor, y_line_motor,...
-        sm.sub{p}.session{s}.trial{k}.ideal_path_length, x_line_motor, y_line_motor,...
-        sm.sub{p}.session{s}.trial{k}.ideal_path_length); % al and eg are identical here 
+    [xi_al,yi_al]=sm_wp10_dataInterpolation(x_line_motor, y_line_motor,...
+        sm.sub{p}.session{s}.trial{k}.ideal_path_length); 
     
     %% Time analysis: already done 
     %% Coordinate analysis using x-/y-coordinates
@@ -343,6 +342,8 @@ if sm.sub{p}.session{s}.trial{k}.trial_condition==4
     sm.sub{p}.session{s}.trial{k}.result.distance_accuracy=999;
     sm.sub{p}.session{s}.trial{k}.result.distance_accuracy_chosen=999;
     sm.sub{p}.session{s}.trial{k}.result.distance_accuracy_ego=999;
+    sm.sub{p}.session{s}.trial{k}.result.avg_distance_path_pure=999; 
+    sm.sub{p}.session{s}.trial{k}.result.total_distance_path_pure=999; 
     sm.sub{p}.session{s}.trial{k}.result.avg_distance_path=999; 
     sm.sub{p}.session{s}.trial{k}.result.total_distance_path=999; 
     sm.sub{p}.session{s}.trial{k}.result.avg_distance_chosen_path=999; 
@@ -379,14 +380,14 @@ if sm.sub{p}.session{s}.trial{k}.trial_condition==4
     sm.sub{p}.session{s}.trial{k}.ideal_path_length_chosen_interpol=999; 
     sm.sub{p}.session{s}.trial{k}.ideal_path_length_ego=999;
     sm.sub{p}.session{s}.trial{k}.ideal_path_length_ego_interpol=999; 
-    sm.sub{p}.session{s}.trial{k}.ideal_avg_distance=999; 
-    sm.sub{p}.session{s}.trial{k}.ideal_total_distance=999; 
+    sm.sub{p}.session{s}.trial{k}.ideal_avg_distance_target=999; 
+    sm.sub{p}.session{s}.trial{k}.ideal_total_distance_target=999; 
     sm.sub{p}.session{s}.trial{k}.ideal_sum_data_points=999; 
-    sm.sub{p}.session{s}.trial{k}.ideal_avg_distance_chosen=999; 
-    sm.sub{p}.session{s}.trial{k}.ideal_total_distance_chosen=999; 
+    sm.sub{p}.session{s}.trial{k}.ideal_avg_distance_chosen_target=999; 
+    sm.sub{p}.session{s}.trial{k}.ideal_total_distance_chosen_target=999; 
     sm.sub{p}.session{s}.trial{k}.ideal_sum_data_points_chosen=999; 
-    sm.sub{p}.session{s}.trial{k}.ideal_avg_distance_ego=999; 
-    sm.sub{p}.session{s}.trial{k}.ideal_total_distance_ego=999; 
+    sm.sub{p}.session{s}.trial{k}.ideal_avg_distance_ego_target=999; 
+    sm.sub{p}.session{s}.trial{k}.ideal_total_distance_ego_target=999; 
     sm.sub{p}.session{s}.trial{k}.ideal_sum_data_points_ego=999; 
     sm.sub{p}.session{s}.trial{k}.ideal_body_rotation=999; 
     sm.sub{p}.session{s}.trial{k}.ideal_body_turn_total=999; 
