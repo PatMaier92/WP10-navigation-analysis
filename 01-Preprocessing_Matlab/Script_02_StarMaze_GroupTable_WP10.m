@@ -21,7 +21,7 @@ for k=1:numel(files)
     name = files{k}; 
        name = strrep(name,'xls','xls');
        new_file = fullfile(folder, name);
-    data=readtable(new_file,'Sheet',2,'Range','A:AZ');  
+    data=readtable(new_file,'Sheet',2,'Range','A:BU');  
     table=vertcat(table,data);
 end
 writetable(table,new_file1,'Sheet','data_vars');
@@ -31,7 +31,7 @@ for k=1:numel(files)
     name = files{k}; 
        new_name2 = strrep(name,'xls','xls');
        new_file = fullfile(folder, new_name2);
-    data=readtable(new_file,'Sheet',3,'Range','A:CR');  
+    data=readtable(new_file,'Sheet',3,'Range','A:EO');  
     table=vertcat(table,data);
  end
  writetable(table,new_file1,'Sheet','support_vars');
