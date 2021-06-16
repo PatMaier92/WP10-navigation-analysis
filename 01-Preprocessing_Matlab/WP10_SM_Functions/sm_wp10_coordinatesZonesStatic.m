@@ -20,12 +20,24 @@ function [abs_zone,rel_zone,entry,rot_zone]=sm_wp10_coordinatesZonesStatic(x,y,r
  for c=1:col
      [in,~]= inpolygon(x,y,zone_full_x(:,c),zone_full_y(:,c));
      coordinates_i_a=numel(x(in));
-     abs_zone(1,c)=abs_zone(1,c)+coordinates_i_a; % absolut
-     rel_zone(1,c)=abs_zone(1,c)/lengthX; % relativ
-     head_rotations=r(in); 
-     for j=1:(length(head_rotations)-1)
-         rot_zone(1,c)=rot_zone(1,c)+abs(head_rotations(j+1)-head_rotations(j)); % rotations
-     end 
+     abs_zone(1,c)=abs_zone(1,c)+coordinates_i_a; % absolute value 
+     rel_zone(1,c)=abs_zone(1,c)/lengthX; % relative value 
+     % rotations 
+     ind_1=find(diff(in) > 0); % start index rotation
+     ind_2=find(diff(in) < 0); % end index rotation
+     if ~isempty(ind_1) || ~isempty(ind_2)
+         if length(ind_1) < length(ind_2) % unequal length: start missing
+             ind_1=[1; ind_1];
+         elseif length(ind_1) > length(ind_2)  % unequal length: end missing
+             ind_2(end+1)=length(in);
+         end
+         for a=1:length(ind_1) % evaluate rotations per segment 
+             head_rotations=r(ind_1(a):ind_2(a));
+             for j=1:(length(head_rotations)-1)
+                 rot_zone(1,c)=rot_zone(1,c)+abs(head_rotations(j+1)-head_rotations(j)); % rotation value 
+             end
+         end
+     end
      if inpolygon(x(1,1),y(1,1),zone_full_x(:,c),zone_full_y(:,c))
          entry(1,c)=entry(1,c)+1; % initial entry/start
      end
