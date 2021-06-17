@@ -23,6 +23,10 @@ in_file <- "../WP10_data/WP10_results/WP10_results_table.RData"
 load(in_file)
 rm(in_file)
 
+in_file <- "../WP10_data/WP10_results/WP10_results_table_support.RData"
+load(in_file)
+rm(in_file)
+
 
 ## create plots
 ## ---- plot_settings
@@ -44,7 +48,7 @@ bar_trials_grid <- function(data, xvar, yvar, fillby, facet, title, xlabel, ylab
   p <- ggplot(data, aes_string(x=xvar, y=yvar, fill=fillby)) + 
     geom_bar(stat="identity", position=position_dodge(), width=.85, colour="black") + # identity bars
     scale_x_continuous(breaks=seq(0,max(data[[xvar]]),round(max(data[[xvar]])/ticknum))) + # ticks 
-    scale_fill_manual(name=fillbylabel, labels=facetlabels, values=mycolors) + # fill title, lable and colors
+    #scale_fill_manual(name=fillbylabel, labels=facetlabels, values=mycolors) + # fill title, lable and colors
     facet_grid(facet, labeller=facetlabels) + # groups 
     theme_cowplot(font_size = 12) + # theme
     theme(legend.position=legendPos) +
@@ -60,23 +64,16 @@ bar_trials_grid <- function(data, xvar, yvar, fillby, facet, title, xlabel, ylab
 sm_all_trials_s1 <- sm_trial_data %>%
   filter(session==1 & trial <=39) %>%
   group_by(group, trial, block, trial_condition) %>%
-  summarise(path_abs=mean(path_abs[success==1], na.rm = TRUE),
-            success=mean(success),
+  summarise(path_length=mean(path_length),
+            correct_goal=mean(correct_goal),
             direct_path=mean(direct_path),
-            final_distance_to_goal_abs=mean(final_distance_to_goal_abs))
-
-
-# block is color-coded
-bar_trials_grid(sm_all_trials_s1, "trial", "success", "block", "group", "Success in trials 1-39 at T1 (block is color-coded)", "Trial", "Success", "Block (goal)", mylabels, "bottom", 8)
-bar_trials_grid(sm_all_trials_s1, "trial", "direct_path", "block", "group", "Direct path in trials 1-39 at T1 (block is color-coded)", "Trial", "Direct path", "Block (goal)", mylabels, "bottom",8)
-bar_trials_grid(sm_all_trials_s1, "trial", "final_distance_to_goal_abs", "block", "group", "Final distance in trials 1-39 at T1 (block is color-coded)", "Trial", "Final distance (vu)", "Block (goal)", mylabels, "bottom",8)
-bar_trials_grid(sm_all_trials_s1, "trial", "path_abs", "block", "group", "Path in successful trials 1-39 at T1 (block is color-coded)", "Trial", "Path length (vu) \nin successful trials", "Block (goal)", mylabels, "bottom",8)
+            final_distance=mean(final_distance))
 
 # condition  is color-coded
-bar_trials_grid(sm_all_trials_s1, "trial", "success", "trial_condition", "group", "Success in trials 1-39 at T1 (condition is color-coded)", "Trial", "Success", "Type", mylabels, "bottom", 8)
+bar_trials_grid(sm_all_trials_s1, "trial", "correct_goal", "trial_condition", "group", "Correct goal in trials 1-39 at T1 (condition is color-coded)", "Trial", "Correct goal", "Type", mylabels, "bottom", 8)
 bar_trials_grid(sm_all_trials_s1, "trial", "direct_path", "trial_condition", "group", "Direct path in trials 1-39 at T1 (condition is color-coded)", "Trial", "Direct path", "Type", mylabels, "bottom", 8)
-bar_trials_grid(sm_all_trials_s1, "trial", "final_distance_to_goal_abs", "trial_condition", "group", "Final distance in trials 1-39 at T1 (condition is color-coded)", "Trial", "Final distance (vu)", "Type", mylabels, "bottom", 8)
-bar_trials_grid(sm_all_trials_s1, "trial", "path_abs", "trial_condition", "group", "Path in successful trials 1-39 at T1 (condition is color-coded)", "Trial", "Path length (vu) \nin successful trials", "Type", mylabels, "bottom", 8)
+bar_trials_grid(sm_all_trials_s1, "trial", "final_distance", "trial_condition", "group", "Final distance in trials 1-39 at T1 (condition is color-coded)", "Trial", "Final distance (vu)", "Type", mylabels, "bottom", 8)
+bar_trials_grid(sm_all_trials_s1, "trial", "path_length", "trial_condition", "group", "Path in trials 1-39 at T1 (condition is color-coded)", "Trial", "Path length (vu) \nin successful trials", "Type", mylabels, "bottom", 8)
 
 rm(sm_all_trials_s1, bar_trials_grid)
 
@@ -102,38 +99,38 @@ bar_trials_wrap <- function(data, xvar, yvar, fillby, facet, title, xlabel, ylab
 sm_blockavg_trials_s1 <- sm_trial_data %>%
   filter(session==1) %>%
   group_by(group, trial_condition, trial_in_block) %>%
-  summarise(path_abs=mean(path_abs[success==1], na.rm = TRUE),
-            success=mean(success),
-            final_distance_to_goal_abs=mean(final_distance_to_goal_abs),
-            direct_path=mean(direct_path))
+  summarise(path_length=mean(path_length),
+            correct_goal=mean(correct_goal),
+            direct_path=mean(direct_path),
+            final_distance=mean(final_distance))
 
 # plots 
-pt1 <- bar_trials_wrap(sm_blockavg_trials_s1, "trial_in_block", "success", "trial_condition", "group", "Learning curve: Mean averaged over goal locations \n", "", "Success", "Type", mylabels, "top", 6)
+pt1 <- bar_trials_wrap(sm_blockavg_trials_s1, "trial_in_block", "correct_goal", "trial_condition", "group", "Learning curve: Mean averaged over goal locations \n", "", "Correct goal", "Type", mylabels, "top", 6)
 pt2 <- bar_trials_wrap(sm_blockavg_trials_s1, "trial_in_block", "direct_path", "trial_condition", "group", "", "", "Direct path", "Type",mylabels, "none", 6)
-pt3 <- bar_trials_wrap(sm_blockavg_trials_s1, "trial_in_block", "final_distance_to_goal_abs", "trial_condition", "group", "", "", "Final distance (vu)", "Type", mylabels, "none", 6)
-pt4 <- bar_trials_wrap(sm_blockavg_trials_s1, "trial_in_block", "path_abs", "trial_condition", "group", "", "\n Trial number (within block)", "Path length (vu) \nin successful trials","Type", mylabels, "none", 6)
+pt3 <- bar_trials_wrap(sm_blockavg_trials_s1, "trial_in_block", "final_distance", "trial_condition", "group", "", "", "Final distance (vu)", "Type", mylabels, "none", 6)
+pt4 <- bar_trials_wrap(sm_blockavg_trials_s1, "trial_in_block", "path_length", "trial_condition", "group", "", "\n Trial number (within block)", "Path length (vu)","Type", mylabels, "none", 6)
 
 rm(sm_blockavg_trials_s1)
 ## ----
 rm(pt1, pt2, pt3, pt4)
 
 
-# data for trial-wise bar plots (averaged over blocks, separate for conditions)
-sm_blockavg_trials_s1s2 <- sm_trial_data %>%
-  group_by(session, group, trial_condition, trial_in_block_in_cond) %>%
-  summarise(path_abs=mean(path_abs[success==1], na.rm = TRUE),
-            success=mean(success),
-            final_distance_to_goal_abs=mean(final_distance_to_goal_abs),
-            direct_path=mean(direct_path))
-
-
-# learning only 
-bar_trials_wrap(sm_blockavg_trials_s1s2 %>% filter(trial_condition=="main_learn", session==1), "trial_in_block_in_cond", "success", "trial_condition", "group", "Learning curve in learning trials: Mean averaged over goal locations \n", "", "Success", "", mylabels, "none", 6)
-bar_trials_wrap(sm_blockavg_trials_s1s2 %>% filter(trial_condition=="main_learn", session==1), "trial_in_block_in_cond", "direct_path", "trial_condition", "group", "", "", "Direct path", "", mylabels, "none", 6)
-bar_trials_wrap(sm_blockavg_trials_s1s2 %>% filter(trial_condition=="main_learn", session==1), "trial_in_block_in_cond", "final_distance_to_goal_abs", "trial_condition", "group", "", "", "Final distance (vu)", "", mylabels, "none", 6)
-bar_trials_wrap(sm_blockavg_trials_s1s2 %>% filter(trial_condition=="main_learn", session==1), "trial_in_block_in_cond", "path_abs", "trial_condition", "group", "", "\n Trial number (within block)", "Path length (vu) \nin successful trials", "", mylabels, "none", 6)
-
-rm(sm_blockavg_trials_s1s2, bar_trials_wrap)
+# # data for trial-wise bar plots (averaged over blocks, separate for conditions)
+# sm_blockavg_trials_s1s2 <- sm_trial_data %>%
+#   group_by(session, group, trial_condition, trial_in_block_in_cond) %>%
+#   summarise(path_length=mean(path_length),
+#             correct_goal=mean(correct_goal),
+#             direct_path=mean(direct_path),
+#             final_distance=mean(final_distance))
+# 
+# 
+# # learning only 
+# bar_trials_wrap(sm_blockavg_trials_s1s2 %>% filter(trial_condition=="main_learn", session==1), "trial_in_block_in_cond", "success", "trial_condition", "group", "Learning curve in learning trials: Mean averaged over goal locations \n", "", "Correct goal", "", mylabels, "none", 6)
+# bar_trials_wrap(sm_blockavg_trials_s1s2 %>% filter(trial_condition=="main_learn", session==1), "trial_in_block_in_cond", "direct_path", "trial_condition", "group", "", "", "Direct path", "", mylabels, "none", 6)
+# bar_trials_wrap(sm_blockavg_trials_s1s2 %>% filter(trial_condition=="main_learn", session==1), "trial_in_block_in_cond", "final_distance_to_goal_abs", "trial_condition", "group", "", "", "Final distance (vu)", "", mylabels, "none", 6)
+# bar_trials_wrap(sm_blockavg_trials_s1s2 %>% filter(trial_condition=="main_learn", session==1), "trial_in_block_in_cond", "path_abs", "trial_condition", "group", "", "\n Trial number (within block)", "Path length (vu) \nin successful trials", "", mylabels, "none", 6)
+# 
+# rm(sm_blockavg_trials_s1s2, bar_trials_wrap)
 
 
 ## ---- data_func_agg
@@ -159,39 +156,39 @@ bar_agg <- function(data_ind, data_sum, xvar, yvar, fillby, facetr, facetc, titl
 # data for aggregated bar plots with individual values 
 sm_ind_data <- sm_trial_data %>%
   group_by(id, group, session, trial_condition) %>%
-  summarise(path_abs=mean(path_abs[success==1], na.rm = TRUE),
-            success=mean(success),
-            final_distance_to_goal_abs=mean(final_distance_to_goal_abs),
-            direct_path=mean(direct_path))
+  summarise(path_length=mean(path_length),
+            correct_goal=mean(correct_goal),
+            direct_path=mean(direct_path),
+            final_distance=mean(final_distance))
 
 sm_sum_data <- sm_ind_data %>% # inherit sm_ind_data 
   group_by(group, session, trial_condition) %>%
-  summarise(path_abs=mean(path_abs, na.rm = TRUE), # success criterium is already in input data 
-            success=mean(success),
-            final_distance_to_goal_abs=mean(final_distance_to_goal_abs),
-            direct_path=mean(direct_path))
+  summarise(path_length=mean(path_length),
+            correct_goal=mean(correct_goal),
+            direct_path=mean(direct_path),
+            final_distance=mean(final_distance))
 
 
 # condition-wise plots for allo and ego retrieval 
 # focus: group comparison
 pagg1 <- bar_agg(sm_ind_data %>% filter(trial_condition=="ego_ret" | trial_condition=="allo_ret"), sm_sum_data %>% filter(trial_condition=="ego_ret" | trial_condition=="allo_ret"), 
-        "group", "success", "group", "session", "trial_condition", "Group means, subject means and forgetting rate for Day 1 vs. Day 13\n", "", "Success", "Group", mylabels, "top")
+        "group", "correct_goal", "group", "session", "trial_condition", "Group means, subject means and forgetting rate for Day 1 vs. Day 13\n", "", "Correct goal", "Group", mylabels, "top")
 pagg2 <- bar_agg(sm_ind_data %>% filter(trial_condition=="ego_ret" | trial_condition=="allo_ret"), sm_sum_data %>% filter(trial_condition=="ego_ret" | trial_condition=="allo_ret"),
         "group", "direct_path", "group", "session", "trial_condition",  "", "", "Direct path", "Group", mylabels, "none")
 pagg3 <- bar_agg(sm_ind_data %>% filter(trial_condition=="ego_ret" | trial_condition=="allo_ret"), sm_sum_data %>% filter(trial_condition=="ego_ret" | trial_condition=="allo_ret"),
-        "group", "final_distance_to_goal_abs", "group", "session", "trial_condition", "", "", "Final distance (vu)", "Group", mylabels, "none")
+        "group", "final_distance", "group", "session", "trial_condition", "", "", "Final distance (vu)", "Group", mylabels, "none")
 pagg4 <- bar_agg(sm_ind_data %>% filter(trial_condition=="ego_ret" | trial_condition=="allo_ret"), sm_sum_data %>% filter(trial_condition=="ego_ret" | trial_condition=="allo_ret"),
-        "group", "path_abs", "group", "session", "trial_condition", "", "", "Path length (vu) \nin successful trials", "Group", mylabels, "none")
+        "group", "path_length", "group", "session", "trial_condition", "", "", "Path length (vu)", "Group", mylabels, "none")
 
 # focus: type comparison
 pagg5 <- bar_agg(sm_ind_data %>% filter(trial_condition=="ego_ret" | trial_condition=="allo_ret"), sm_sum_data %>% filter(trial_condition=="ego_ret" | trial_condition=="allo_ret"), 
-                 "trial_condition", "success", "trial_condition", "session", "group", "Group means, subject means for Allocentric vs. Egocentric\n", "", "Success", "Type", mylabels, "top")
+                 "trial_condition", "correct_gaol", "trial_condition", "session", "group", "Group means, subject means for Allocentric vs. Egocentric\n", "", "Correct goal", "Type", mylabels, "top")
 pagg6 <- bar_agg(sm_ind_data %>% filter(trial_condition=="ego_ret" | trial_condition=="allo_ret"), sm_sum_data %>% filter(trial_condition=="ego_ret" | trial_condition=="allo_ret"), 
                  "trial_condition", "direct_path", "trial_condition", "session", "group", "", "", "Direct path", "Type", mylabels, "none")
 pagg7 <- bar_agg(sm_ind_data %>% filter(trial_condition=="ego_ret" | trial_condition=="allo_ret"), sm_sum_data %>% filter(trial_condition=="ego_ret" | trial_condition=="allo_ret"), 
-                 "trial_condition", "final_distance_to_goal_abs", "trial_condition", "session", "group", "", "", "Final distance (vu)", "Type", mylabels, "none")
+                 "trial_condition", "final_distance", "trial_condition", "session", "group", "", "", "Final distance (vu)", "Type", mylabels, "none")
 pagg8 <- bar_agg(sm_ind_data %>% filter(trial_condition=="ego_ret" | trial_condition=="allo_ret"), sm_sum_data %>% filter(trial_condition=="ego_ret" | trial_condition=="allo_ret"), 
-                 "trial_condition", "path_abs", "trial_condition", "session", "group", "", "", "Path length (vu) \nin successful trials", "Type", mylabels, "none")
+                 "trial_condition", "path_length", "trial_condition", "session", "group", "", "", "Path length (vu)", "Type", mylabels, "none")
 
 
 # function for S2-S1 difference plots
@@ -219,21 +216,21 @@ bar_agg_diff <- function(data, xvar, yvar, fillby, title, xlabel, ylabel, fillby
 sm_diff_data <- sm_trial_data %>%
   filter(trial_condition=="ego_ret" | trial_condition=="allo_ret")  %>%
   group_by(id, group, session, trial_condition) %>%
-  summarise(path_abs=mean(path_abs[success==1], na.rm = TRUE),
-            success=mean(success),
-            final_distance_to_goal_abs=mean(final_distance_to_goal_abs),
-            direct_path=mean(direct_path)) %>%
+  summarise(path_length=mean(path_length),
+            correct_goal=mean(correct_goal),
+            direct_path=mean(direct_path),
+            final_distance=mean(final_distance)) %>%
   pivot_wider(id_cols = c(id, group, trial_condition),
-              names_from = session, values_from = c(success, direct_path, final_distance_to_goal_abs, path_abs)) %>%
+              names_from = session, values_from = c(correct_goal, direct_path, final_distance, path_length)) %>%
   group_by(id, group, trial_condition) %>%
-  summarise(success_diff = success_2 - success_1,
+  summarise(correct_diff = correct_goal_2 - correct_goal_1,
             direct_path_diff = direct_path_2 - direct_path_1,
-            final_distance_diff = final_distance_to_goal_abs_2 - final_distance_to_goal_abs_1,
-            path_diff = path_abs_2 - path_abs_1)
+            final_distance_diff = final_distance_2 - final_distance_1,
+            path_diff = path_length_2 - path_length_1)
 
 
 # S2-S1 difference
-paggd1 <- bar_agg_diff(sm_diff_data, "group", "success_diff", "group", "\n\n", "", "\nSuccess (D13 - D1)", "Group", mylabels, "none")
+paggd1 <- bar_agg_diff(sm_diff_data, "group", "correct_diff", "group", "\n\n", "", "\nCorrect goal (D13 - D1)", "Group", mylabels, "none")
 paggd2 <- bar_agg_diff(sm_diff_data, "group", "direct_path_diff", "group", "", "", "\nDirect path (D13 - D1)", "Group", mylabels, "none")
 paggd3 <- bar_agg_diff(sm_diff_data, "group", "final_distance_diff", "group", "", "", "\nFinal distance (D13 - D1)", "Group", mylabels, "none")
 paggd4 <- bar_agg_diff(sm_diff_data, "group", "path_diff", "group", "", "", "\nPath length (D13 - D1)", "Group", mylabels, "none")
@@ -243,10 +240,10 @@ rm(paggd1, paggd2, paggd3, paggd4, sm_diff_data)
 
 
 # condition-wise plot for all conditions 
-bar_agg(sm_ind_data, sm_sum_data, "group", "success", "group", "Means and individual data points \nfor both sessions (Day 1 vs. Day 13) \n", "", "Success", "Group", mylabels, "top")
+bar_agg(sm_ind_data, sm_sum_data, "group", "correct_goal", "group", "Means and individual data points \nfor both sessions (Day 1 vs. Day 13) \n", "", "Correct goal", "Group", mylabels, "top")
 bar_agg(sm_ind_data, sm_sum_data, "group", "direct_path", "group", "", "", "Direct path", "Group", mylabels, "none")
-bar_agg(sm_ind_data, sm_sum_data, "group", "final_distance_to_goal_abs", "group", "", "", "Final distance (vu)", "Group", mylabels, "none")
-bar_agg(sm_ind_data_suc, sm_sum_data_suc, "group", "path_abs", "group", "", "", "Path length (vu) \nin successful trials", "Group", mylabels, "none")
+bar_agg(sm_ind_data, sm_sum_data, "group", "final_distance", "group", "", "", "Final distance (vu)", "Group", mylabels, "none")
+bar_agg(sm_ind_data_suc, sm_sum_data_suc, "group", "path_length", "group", "", "", "Path length (vu)", "Group", mylabels, "none")
 
 rm(sm_ind_data, sm_sum_data, bar_agg)
 
@@ -275,17 +272,17 @@ raincloud <- function(data, x, y, title, xlabel, ylabel, facetlabeller, legendPo
 sm_ind_data <- sm_trial_data %>%
   #filter(trial_condition!="main_ret") %>%
   group_by(id, group, session, trial_condition) %>%
-  summarise(path_abs=mean(path_abs[success==1], na.rm = TRUE),
-            success=mean(success),
-            final_distance_to_goal_abs=mean(final_distance_to_goal_abs),
-            direct_path=mean(direct_path))
+  summarise(path_length=mean(path_length),
+            correct_goal=mean(correct_goal),
+            direct_path=mean(direct_path),
+            final_distance=mean(final_distance))
 
 
 # overview of all trials 
-raincloud(sm_ind_data, "group", "success", "Median, distribution and individual data points \nfor both sessions (Day 1 vs. Day 13) across all trial types\n", "", "Success", mylabels, "none")
+raincloud(sm_ind_data, "group", "correct_goal", "Median, distribution and individual data points \nfor both sessions (Day 1 vs. Day 13) across all trial types\n", "", "Correct goal", mylabels, "none")
 raincloud(sm_ind_data, "group", "direct_path", "", "", "Direct path", mylabels, "none")
-raincloud(sm_ind_data, "group", "final_distance_to_goal_abs", "", "", "Final distance (vu)", mylabels, "none")
-raincloud(sm_ind_data, "group", "path_abs", "", "", "Path length (vu) \nin successful trials", mylabels, "none")
+raincloud(sm_ind_data, "group", "final_distance", "", "", "Final distance (vu)", mylabels, "none")
+raincloud(sm_ind_data, "group", "path", "", "", "Path length (vu)", mylabels, "none")
 
 rm(sm_ind_data)
 
@@ -316,17 +313,17 @@ raincloud_sub <- function(data, x, y, title, xlabel, ylabel, facetlabeller, lege
 # data for raincloud plots 
 sm_ind_data <- sm_trial_data %>%
   group_by(id, group, session, trial_condition) %>%
-  summarise(path_abs=mean(path_abs[success==1], na.rm = TRUE),
-            success=mean(success),
-            final_distance_to_goal_abs=mean(final_distance_to_goal_abs),
-            direct_path=mean(direct_path))
+  summarise(path_length=mean(path_length),
+            correct_goal=mean(correct_goal),
+            direct_path=mean(direct_path),
+            final_distance=mean(final_distance))
 
 
 # only ego and allo retrieval
-pr1 <- raincloud_sub(sm_ind_data %>% filter((trial_condition=="ego_ret" | trial_condition=="allo_ret")), "group", "success", "Median, distribution and individual data points \nfor both sessions (Day 1 vs. Day 13)\n", "", "Success", mylabels, "top")
+pr1 <- raincloud_sub(sm_ind_data %>% filter((trial_condition=="ego_ret" | trial_condition=="allo_ret")), "group", "correct_goal", "Median, distribution and individual data points \nfor both sessions (Day 1 vs. Day 13)\n", "", "Correct goal", mylabels, "top")
 pr2 <- raincloud_sub(sm_ind_data %>% filter((trial_condition=="ego_ret" | trial_condition=="allo_ret")), "group", "direct_path", "", "", "Direct path", mylabels, "none")
-pr3 <- raincloud_sub(sm_ind_data %>% filter((trial_condition=="ego_ret" | trial_condition=="allo_ret")), "group", "final_distance_to_goal_abs", "", "", "Final distance (vu)", mylabels, "none")
-pr4 <- raincloud_sub(sm_ind_data %>% filter((trial_condition=="ego_ret" | trial_condition=="allo_ret")), "group", "path_abs", "", "", "Path length (vu) \nin successful trials", mylabels, "none")
+pr3 <- raincloud_sub(sm_ind_data %>% filter((trial_condition=="ego_ret" | trial_condition=="allo_ret")), "group", "final_distance", "", "", "Final distance (vu)", mylabels, "none")
+pr4 <- raincloud_sub(sm_ind_data %>% filter((trial_condition=="ego_ret" | trial_condition=="allo_ret")), "group", "path_length", "", "", "Path length (vu)", mylabels, "none")
 
 rm(sm_ind_data)
 
@@ -355,12 +352,11 @@ strategy_bars <- function(data, x, y, title, ylabel, flabel, filllabels, mypalet
 
 
 # strategy labels
-stratlabels <- as_labeller(c(`direct_strategy` = "direct strategy", `reoriented` = "reoriented", 
-                 `central_focus` = "central focus", `serial` = "serial", 
-                 `random` = "random", `unclassified` = "unclassified", 
-                 `YoungKids` = "Young Kids", `OldKids` = "Old Kids", 
-                 `YoungAdults` = "Young Adults", `OldAdults` = "Old Adults",
-                 `1`="Day 1", `2`="Day 13"))
+stratlabels <- as_labeller(c(`search_direct` = "direct", 
+                             `search_detour` = "detour", 
+                             `search_reoriented` = "reoriented",
+                             `YoungAdults` = "Young Adults", `OldAdults` = "Old Adults",
+                             `1`="Day 1", `2`="Day 13"))
 
 
 # data for strategy choice bar plots: caculate percentage of strategies per group and session 
