@@ -66,17 +66,24 @@ Cross-sectional comparison between
 * Older adults (68-75 yrs, n = `r length(unique(sm_trial_data$id[sm_trial_data$group=="OldAdults"]))`)
 
 
-### How long did the sessions take?
+### How long did the sessions take on average?
+
+```{r, session_duration, include=FALSE}
+
+temp <- sm_trial_data %>% group_by(session, group) %>%
+  summarize(mean=mean(session_duration, na.rm = T))
+
+```
 
 *Young kids*: 
 
-* Day 1: 5 min for practise, 22 min for learning = 27 total
-* Day 13: 7 min for retrieval, 3 min for non-navigational tests = 10 total
+* Day 1: `r round(temp$mean[temp$session==3 & temp$group=="YoungKids"])` min for practise, `r round(temp$mean[temp$session==1 & temp$group=="YoungKids"])` min for learning
+* Day 13: `r round(temp$mean[temp$session==2 & temp$group=="YoungKids"])` min for retrieval, x min for non-navigational tests
 
 *Older kids*: 
 
-* Day 1: `r mean(5, 6, 5, 6, 4, 5, 6, 5)` min for practise (range: `r range(5, 6, 5, 6, 4, 5, 6, 5)`), `r mean(18, 15, 17, 29, 18, 21, 25, 22)` min for learning (range: `r range(18, 15, 17, 29, 18, 21, 25, 22)`) = `r mean(18, 15, 17, 29, 18, 21, 25, 22) + mean(5, 6, 5, 6, 4, 5, 6, 5)` total (range: `r range(18+5, 15+6, 17+5, 29+6, 18+4, 21+5, 25+6, 22+5)`)
-* Day 13: `r mean(7, 5, 5, 4, 4, 5, 8, 7, 8)` min for retrieval (range: `r range(7, 5, 5, 4, 4, 5, 8, 7, 8)`), 3 min for non-navigational tests = `r mean(7, 5, 5, 4, 4, 5, 8, 7, 8) +  3` total (range: `r range(7+3, 5+3, 5+3, 4+3, 4+3, 5+3, 8+3, 7+3, 8+3)`)
+* Day 1: `r round(temp$mean[temp$session==3 & temp$group=="OldKids"])` min for practise, `r round(temp$mean[temp$session==1 & temp$group=="OldKids"])` min for learning
+* Day 13: `r round(temp$mean[temp$session==2 & temp$group=="OldKids"])` min for retrieval, x min for non-navigational tests
 
 
 ### Variables of interest
