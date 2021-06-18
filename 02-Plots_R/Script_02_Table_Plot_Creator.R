@@ -7,14 +7,12 @@
 # install.packages("readxl")
 # install.packages("tidyverse")
 # install.packages("arsenal")
-# install.packages("cowplot")
 # install.packages("plyr")
 
 
 ## get packages
 library(readxl)
 library(tidyverse)
-library(cowplot)
 library(patchwork)
 library(ggtext)
 source("R_rainclouds.R")
@@ -23,10 +21,12 @@ source("R_rainclouds.R")
 ## load data 
 in_file <- "../WP10_data/WP10_results/WP10_results_table.RData"
 load(in_file)
+sm_trial_data <- sm_trial_data[sm_trial_data$exclude_trial_matlab==0,]
 rm(in_file)
 
 in_file <- "../WP10_data/WP10_results/WP10_results_table_support.RData"
 load(in_file)
+sm_trial_data_support <- sm_trial_data_support[sm_trial_data_support$exclude_trial_matlab==0,]
 rm(in_file)
 
 
@@ -142,32 +142,32 @@ sm_all_trials_s1 <- mean_func(sm_all_trials_s1)
 p1 <- bar_trials_grid(sm_all_trials_s1, "trial", "correct_goal", "trial_condition", "group", NULL, "Trial", "% correct goal", "Type", mylabels, "top", 8)
 p2 <- bar_trials_grid(sm_all_trials_s1, "trial", "final_distance", "trial_condition", "group", NULL, "Trial", "Final distance (vu)", "Type", mylabels, "top", 8)
 
-p1 + p2 + plot_annotation(title="Initial learning and recall") + 
-  plot_layout(ncol=2, guides="collect") & theme(legend.position = "top", legend.justification=c(0,0)) 
+# p1 + p2 + plot_annotation(title="Initial learning and recall") + 
+#   plot_layout(ncol=2, guides="collect") & theme(legend.position = "top", legend.justification=c(0,0)) 
 
 p3 <- bar_trials_grid(sm_all_trials_s1, "trial", "time", "trial_condition", "group", NULL, "Trial", "Time (sec)", "Type", mylabels, "top", 8)
 p4 <- bar_trials_grid(sm_all_trials_s1, "trial", "velocity", "trial_condition", "group", NULL, "Trial", "Velocity (time (sec)/path length (vu))", "Type", mylabels, "top", 8)
 
-p3 + p4 + plot_annotation(title="Initial learning and recall") + 
-  plot_layout(ncol=2, guides="collect") & theme(legend.position = "top", legend.justification=c(0,0)) 
+# p3 + p4 + plot_annotation(title="Initial learning and recall") + 
+#   plot_layout(ncol=2, guides="collect") & theme(legend.position = "top", legend.justification=c(0,0)) 
 
 p5 <- bar_trials_grid(sm_all_trials_s1, "trial", "direct_path", "trial_condition", "group", NULL, "Trial", "% shortest path to correct goal", "Type", mylabels, "top", 8)
 p6 <- bar_trials_grid(sm_all_trials_s1, "trial", "path_length", "trial_condition", "group", NULL, "Trial", "Path length (vu)", "Type", mylabels, "top", 8)
 
-p5 + p6 + plot_annotation(title="Initial learning and recall") + 
-  plot_layout(ncol=2, guides="collect") & theme(legend.position = "top", legend.justification=c(0,0)) 
+# p5 + p6 + plot_annotation(title="Initial learning and recall") + 
+#   plot_layout(ncol=2, guides="collect") & theme(legend.position = "top", legend.justification=c(0,0)) 
 
 p7 <- bar_trials_grid(sm_all_trials_s1, "trial", "avg_distance_path", "trial_condition", "group", NULL, "Trial", "Avg. distance to ideal path to correct goal", "Type", mylabels, "top", 8)
 p8 <- bar_trials_grid(sm_all_trials_s1, "trial", "avg_distance_path_pure", "trial_condition", "group", NULL, "Trial", "(Adjusted) avg. distance to ideal path to correct goal", "Type", mylabels, "top", 8)
 
-p7 + p8 + plot_annotation(title="Initial learning and recall") + 
-  plot_layout(ncol=2, guides="collect") & theme(legend.position = "top", legend.justification=c(0,0)) 
+# p7 + p8 + plot_annotation(title="Initial learning and recall") + 
+#   plot_layout(ncol=2, guides="collect") & theme(legend.position = "top", legend.justification=c(0,0)) 
 
 p9 <- bar_trials_grid(sm_all_trials_s1, "trial", "path_score", "trial_condition", "group", NULL, "Trial", "Path score (number of zones entered)", "Type", mylabels, "top", 8)
 p10 <- bar_trials_grid(sm_all_trials_s1, "trial", "sum_head_rotation", "trial_condition", "group", NULL, "Trial", "Sum of 'head rotation' (z-axis)", "Type", mylabels, "top", 8)
 
-p9 + p10 + plot_annotation(title="Initial learning and recall") + 
-  plot_layout(ncol=2, guides="collect") & theme(legend.position = "top", legend.justification=c(0,0)) 
+# p9 + p10 + plot_annotation(title="Initial learning and recall") + 
+#   plot_layout(ncol=2, guides="collect") & theme(legend.position = "top", legend.justification=c(0,0)) 
 ## ----
 rm(sm_all_trials_s1, bar_trials_grid, p1, p2, p3, p4, p5, p6, p7, p8, p9, p10)
 
@@ -177,7 +177,7 @@ rm(sm_all_trials_s1, bar_trials_grid, p1, p2, p3, p4, p5, p6, p7, p8, p9, p10)
 box_agg <- function(data_ind, xvar, yvar, fillby, facetr, facetc, title, xlabel, ylabel, fillbylabel, facetlabel, legendPos){
   p <- ggplot(data_ind, aes_string(x=xvar, y=yvar, fill=fillby)) + 
     geom_boxplot(outlier.shape = NA) +
-    geom_point(position=position_jitterdodge(seed=999), size=0.4) + # individual points
+    geom_point(position=position_jitterdodge(seed=999), size=0.5) + # individual points
     coord_cartesian(clip="off") +
     scale_fill_manual(name=fillbylabel, labels=facetlabel, values=mycolors) + # fill title, lable and colors
     theme_classic() + # theme
@@ -223,45 +223,43 @@ p3 <- box_agg(sm_ind_data %>% filter(trial_condition=="main_learn"),
 p4 <- box_agg(sm_ind_data %>% filter(trial_condition=="main_learn"), 
               "group", "avg_distance_path", "group", "trial_condition", "none", NULL, NULL, "Avg. distance to ideal path to correct goal", "Group", mylabels, "top")
 
-p1 + p2 + p3 + p4 + plot_annotation(title="Averaged values during learning in session 1",
-                               subtitle="learning trials only (correct goal is visible)") + 
-  plot_layout(ncol=4, guides="collect") & theme(legend.position = "top", legend.justification=c(0,0)) 
-
-rm(p1, p2, p3, p4)
+# p1 + p2 + p3 + p4 + plot_annotation(title="Averaged values during learning in session 1",
+#                                subtitle="learning trials only (correct goal is visible)") + 
+#   plot_layout(ncol=4, guides="collect") & theme(legend.position = "top", legend.justification=c(0,0)) 
 
 
 # aggregated plots for T1 (recall)
-p1 <- box_agg(sm_ind_data %>% filter(trial_condition=="ego_ret" | trial_condition=="allo_ret"),
+p11 <- box_agg(sm_ind_data %>% filter(trial_condition=="ego_ret" | trial_condition=="allo_ret"),
         "group", "correct_goal", "group", "trial_condition", "none", NULL, NULL, "% correct goal", "Group", mylabels, "top")
 
-p2 <- box_agg(sm_ind_data %>% filter(trial_condition=="ego_ret" | trial_condition=="allo_ret"),
+p12 <- box_agg(sm_ind_data %>% filter(trial_condition=="ego_ret" | trial_condition=="allo_ret"),
               "group", "final_distance", "group", "trial_condition", "none", NULL, NULL, "Final distance (vu)", "Group", mylabels, "top")
 
-p3 <- box_agg(sm_ind_data %>% filter(trial_condition=="ego_ret" | trial_condition=="allo_ret"), 
+p13 <- box_agg(sm_ind_data %>% filter(trial_condition=="ego_ret" | trial_condition=="allo_ret"), 
               "group", "direct_path", "group", "trial_condition", "none", NULL, NULL, "% shortest path to corect goal", "Group", mylabels, "top")
 
-p4 <- box_agg(sm_ind_data %>% filter(trial_condition=="ego_ret" | trial_condition=="allo_ret"), 
+p14 <- box_agg(sm_ind_data %>% filter(trial_condition=="ego_ret" | trial_condition=="allo_ret"), 
               "group", "avg_distance_path", "group", "trial_condition", "none", NULL, NULL, "Avg. distance to ideal path to correct goal", "Group", mylabels, "top")
 
-p1 + p2 + p3 + p4 + plot_annotation(title="Averaged values during free recall in session 1",
-                                    subtitle="egocentric and allocentric trials only (goal invisible)") + 
-  plot_layout(ncol=2, guides="collect") & theme(legend.position = "top", legend.justification=c(0,0)) 
+# p11 + p12 + p13 + p14 + plot_annotation(title="Averaged values during free recall in session 1",
+#                                     subtitle="egocentric and allocentric trials only (goal invisible)") + 
+#   plot_layout(ncol=2, guides="collect") & theme(legend.position = "top", legend.justification=c(0,0)) 
 
 
-p5 <- box_agg(sm_ind_data %>% filter(trial_condition=="ego_ret" | trial_condition=="allo_ret"), 
+p15 <- box_agg(sm_ind_data %>% filter(trial_condition=="ego_ret" | trial_condition=="allo_ret"), 
               "group", "time", "group", "trial_condition", "none", NULL, NULL, "Time (sec)", "Group", mylabels, "top")
 
-p6 <- box_agg(sm_ind_data %>% filter(trial_condition=="ego_ret" | trial_condition=="allo_ret"), 
+p16 <- box_agg(sm_ind_data %>% filter(trial_condition=="ego_ret" | trial_condition=="allo_ret"), 
               "group", "path_length", "group", "trial_condition", "none", NULL, NULL, "Path length (vu)", "Group", mylabels, "top")
 
-p7 <- box_agg(sm_ind_data %>% filter(trial_condition=="ego_ret" | trial_condition=="allo_ret"), 
+p17 <- box_agg(sm_ind_data %>% filter(trial_condition=="ego_ret" | trial_condition=="allo_ret"), 
               "group", "velocity", "group", "trial_condition", "none", NULL, NULL, "Velocity (time/path length)", "Group", mylabels, "top")
 
-p5 + p6 + p7 + plot_annotation(title="Averaged values during free recall in session 1",
-                               subtitle="egocentric and allocentric trials only (goal invisible)") + 
-  plot_layout(ncol=2, guides="collect") & theme(legend.position = "top", legend.justification=c(0,0)) 
+# p15 + p16 + p17 + plot_annotation(title="Averaged values during free recall in session 1",
+#                                subtitle="egocentric and allocentric trials only (goal invisible)") + 
+#   plot_layout(ncol=2, guides="collect") & theme(legend.position = "top", legend.justification=c(0,0)) 
 ## ----
-rm (p1, p2, p3, p4, p5, p6, p7, sm_ind_data)
+rm (p1, p2, p3, p4, p11, p12, p13, p14, p15, p16, p17, sm_ind_data)
 
 
 ## ---- data_agg_s2_s1
@@ -271,7 +269,7 @@ rm (p1, p2, p3, p4, p5, p6, p7, sm_ind_data)
 box_agg_change <- function(data, xvar, yvar, fillby, title, xlabel, ylabel, fillbylabel, facetlabel, legendPos){
   p <- ggplot(data, aes_string(x=xvar, y=yvar, fill=fillby)) +
     geom_boxplot(outlier.shape=NA, colour="BLACK") + 
-    geom_point(position=position_jitterdodge(seed=999), size=0.4) + # individual points
+    geom_point(position=position_jitterdodge(seed=999), size=0.5) + # individual points
     geom_hline(yintercept=0, linetype="dashed", color = "red") + 
     coord_cartesian(clip="off") + 
     facet_wrap(~ trial_condition, labeller=facetlabel) + # facet grouping
@@ -355,16 +353,16 @@ p8b <- box_agg_change(sm_change_data, "group", "velocity_diff", "group", NULL, N
 # p9b <- box_agg_change(sm_change_data, "group", "sum_head_rotation_diff", "group", NULL, NULL, "Change sum z rotation", "Group", mylabels, "none")
 
 
-# combine 
-p1a + p1b + plot_layout(widths = c(2,1))
-p2a + p2b + plot_layout(widths = c(2,1))
-p3a + p3b + plot_layout(widths = c(2,1))
-p4a + p4b + plot_layout(widths = c(2,1))
-p5a + p5b + plot_layout(widths = c(2,1))
-p6a + p6b + plot_layout(widths = c(2,1))
-# p7a + p7b + plot_layout(widths = c(2,1))
-p8a + p8b + plot_layout(widths = c(2,1))
-# p9a + p9b + plot_layout(widths = c(2,1))
+# # combine 
+# p1a + p1b + plot_layout(widths = c(2,1))
+# p2a + p2b + plot_layout(widths = c(2,1))
+# p3a + p3b + plot_layout(widths = c(2,1))
+# p4a + p4b + plot_layout(widths = c(2,1))
+# p5a + p5b + plot_layout(widths = c(2,1))
+# p6a + p6b + plot_layout(widths = c(2,1))
+# # p7a + p7b + plot_layout(widths = c(2,1))
+# p8a + p8b + plot_layout(widths = c(2,1))
+# # p9a + p9b + plot_layout(widths = c(2,1))
 
 
 # # focus: type comparison
@@ -403,24 +401,24 @@ sm_ind_data <- sm_trial_data %>%
 sm_ind_data <- mean_func(sm_ind_data)
 
 
-# overview of all trials 
-raincloud(sm_ind_data, "group", "correct_goal", "Allocentric and egocentic recall trials", NULL, "% correct goal", mylabels, "none")
-raincloud(sm_ind_data, "group", "direct_path", NULL, NULL, "% shortest path to correct goal", mylabels, "none")
-raincloud(sm_ind_data, "group", "final_distance", NULL, NULL, "Final distance (vu)", mylabels, "none")
-raincloud(sm_ind_data, "group", "avg_distance_path", NULL, NULL, "Avg. distance to ideal path to goal", mylabels, "none")
-raincloud(sm_ind_data, "group", "avg_distance_path_pure", NULL, NULL, "(Adjusted) avg. distance to ideal path to goal", mylabels, "none")
-raincloud(sm_ind_data, "group", "path_length", NULL, NULL, "Path length (vu)", mylabels, "none")
-raincloud(sm_ind_data, "group", "time", NULL, NULL, "Time (sec)", mylabels, "none")
-raincloud(sm_ind_data, "group", "velocity", NULL, NULL, "Velocity", mylabels, "none")
-raincloud(sm_ind_data, "group", "sum_head_rotation", NULL, NULL, "Sum z-rotation", mylabels, "none")
+# # overview of all trials 
+# raincloud(sm_ind_data, "group", "correct_goal", "Allocentric and egocentic recall trials", NULL, "% correct goal", mylabels, "none")
+# raincloud(sm_ind_data, "group", "direct_path", NULL, NULL, "% shortest path to correct goal", mylabels, "none")
+# raincloud(sm_ind_data, "group", "final_distance", NULL, NULL, "Final distance (vu)", mylabels, "none")
+# raincloud(sm_ind_data, "group", "avg_distance_path", NULL, NULL, "Avg. distance to ideal path to goal", mylabels, "none")
+# raincloud(sm_ind_data, "group", "avg_distance_path_pure", NULL, NULL, "(Adjusted) avg. distance to ideal path to goal", mylabels, "none")
+# raincloud(sm_ind_data, "group", "path_length", NULL, NULL, "Path length (vu)", mylabels, "none")
+# raincloud(sm_ind_data, "group", "time", NULL, NULL, "Time (sec)", mylabels, "none")
+# raincloud(sm_ind_data, "group", "velocity", NULL, NULL, "Velocity", mylabels, "none")
+# raincloud(sm_ind_data, "group", "sum_head_rotation", NULL, NULL, "Sum z-rotation", mylabels, "none")
 
 
 # function for raincloud plots with allo and ego marked
 raincloud_sub <- function(data, x, y, title, xlabel, ylabel, facetlabeller, legendPos){
   p1 <- ggplot(data, aes_string(x=x, y=y, fill=x)) + # set up data 
     geom_flat_violin(position=position_nudge(x=0.2,y=0)) + # rain cloud: setting "adjust" for smoothness of kernel
-    geom_point(aes(shape=trial_condition), size=3, position=position_jitter(w=.1,h=.05,seed=999)) + # points
-    geom_point(aes(colour=trial_condition, shape=trial_condition), size=1.5, position=position_jitter(w=.1,h=.05,seed=999)) + # point
+    geom_point(aes(shape=trial_condition), size=1.5, position=position_jitter(w=.1,h=.05,seed=999)) + # points
+    geom_point(aes(colour=trial_condition, shape=trial_condition), size=0.75, position=position_jitter(w=.1,h=.05,seed=999)) + # point
     geom_boxplot(position=position_dodge(), outlier.shape=NA, alpha=0.3, width=0.1, colour="BLACK") + 
     coord_cartesian(clip="off") +
     scale_shape_manual(values=c(19,17), labels=facetlabeller, name="Type") + 
@@ -428,7 +426,7 @@ raincloud_sub <- function(data, x, y, title, xlabel, ylabel, facetlabeller, lege
     scale_fill_manual(values=mycolors) + # fill title, lable and colors
     scale_x_discrete(labels=facetlabeller) + 
     facet_wrap(~session, labeller=facetlabeller) +
-    theme_cowplot(font_size = 12) + # nicer theme
+    theme_classic() + # nicer theme
     theme(legend.position=legendPos) + 
     guides(fill=FALSE) + 
     labs(title = title,
@@ -450,16 +448,16 @@ r7 <- raincloud_sub(sm_ind_data, "group", "time", NULL, NULL, "Time (sec)", myla
 r8 <- raincloud_sub(sm_ind_data, "group", "velocity", NULL, NULL, "Velocity", mylabels, "none")
 r9 <- raincloud_sub(sm_ind_data, "group", "sum_head_rotation", NULL, NULL, "Sum 'head rotation' (z-axis)", mylabels, "none")
 
-# combine 
-r1 + p1b + plot_layout(widths = c(2,1))
-r2 + p2b + plot_layout(widths = c(2,1))
-r3 + p3b + plot_layout(widths = c(2,1))
-r4 + p4b + plot_layout(widths = c(2,1))
-r5 + p5b + plot_layout(widths = c(2,1))
-r6 + p6b + plot_layout(widths = c(2,1))
-r7 + p7b + plot_layout(widths = c(2,1))
-r8 + p8b + plot_layout(widths = c(2,1))
-r9 + p9b + plot_layout(widths = c(2,1))
+# # combine 
+# r1 + p1b + plot_layout(widths = c(2,1))
+# r2 + p2b + plot_layout(widths = c(2,1))
+# r3 + p3b + plot_layout(widths = c(2,1))
+# r4 + p4b + plot_layout(widths = c(2,1))
+# r5 + p5b + plot_layout(widths = c(2,1))
+# r6 + p6b + plot_layout(widths = c(2,1))
+# r7 + p7b + plot_layout(widths = c(2,1))
+# r8 + p8b + plot_layout(widths = c(2,1))
+# r9 + p9b + plot_layout(widths = c(2,1))
 ## ----
 rm(sm_ind_data, raincloud, raincloud_sub, r1, r2, r3, r4, r5, r6, r7, r8, r9)
 
@@ -472,7 +470,7 @@ strategy_bars <- function(data, x, y, title, ylabel, flabel, filllabels, mypalet
     facet_grid(session ~ group, labeller=filllabels) +
     coord_cartesian(clip="off") +
     scale_fill_brewer(palette = mypalette, direction=-1, labels=filllabels) + # nicer color palette 
-    theme_cowplot(font_size = 12) + # nicer theme
+    theme_classic() + # nicer theme
     theme(legend.position=legendPos,
           axis.ticks.x=element_blank(),
           axis.text.x=element_blank(),
@@ -516,13 +514,13 @@ strategy_data_ego <- sm_trial_data %>%
   mutate(percent=n/sum(n))
 
 # strategy choice plots for all trials
-strategy_bars(strategy_data, "search_strategy_no", "percent", "Strategy use across all trials \nfor both sessions (Day 1 vs. Day 13)\n", "Relative % of use", "Strategy", stratlabels, "YlGnBu", "bottom")
+s1 <- strategy_bars(strategy_data, "search_strategy_no", "percent", "All trials", "Relative % of use", "Strategy", stratlabels, "YlGnBu", "bottom")
 
 # strategy choice plots for allocentric trials 
-strategy_bars(strategy_data_allo, "search_strategy_no", "percent", "\nStrategy use in allocentric trials\n", "Relative % of use", "Strategy", stratlabels, "YlOrBr", "bottom")
+s2 <- strategy_bars(strategy_data_allo, "search_strategy_no", "percent", "Allocentric trials", "Relative % of use", "Strategy", stratlabels, "YlOrBr", "bottom")
 
 # strategy choice plots for egocentric trials 
-strategy_bars(strategy_data_ego, "search_strategy_no", "percent", "\nStrategy use in egocentric trials\n", "Relative % of use", "Strategy", stratlabels, "YlGn", "bottom")
+s3 <- strategy_bars(strategy_data_ego, "search_strategy_no", "percent", "Egocentric trials", "Relative % of use", "Strategy", stratlabels, "YlGn", "bottom")
 ## ---- 
 rm(strategy_data_ego, strategy_bars)
 
