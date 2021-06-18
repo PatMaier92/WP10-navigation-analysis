@@ -90,13 +90,20 @@ temp <- sm_trial_data %>% group_by(session, group) %>%
 
 In learning trials, the goal is visible, i.e. the trial is always completed successfully except if the participant needs more than 120 seconds (time out). In egocentric and allocentric retrieval trials, the goal is not visible. Participants go to the place where they remember the goal being located and press a button. 
 
-* **correct_goal** (yes/no): Finding the correct goal location. The criterion for success is being away less than 0.1 virtual units (~ approx. being in the correct alley).
-* **Direct path** (yes/no): Being successful and additionally taking the shortest path without entering any additional alleys.
+* **% Correct goal** (yes/no): Finding the correct goal location. The criterion is being away less than 0.1 virtual units (~ approx. being in the correct alley).
 * **Final distance** (metric): Distance between x-/y-coordinates of the chosen and the correct goal location. 
 $$FD = \sqrt{(x_{correct}-x_{chosen})^2 + (y_{correct}-y_{chosen})^2}$$
-* **Path** (metric): Absolute length of traveled path to chosen goal location. Calculated as summation of distance between x-/y-coordinates over time. Plots include only paths to correct goal locations (successful). 
+* **% Shortest path** (yes/no): Finding the correct goal location and additionally taking the shortest path without entering any additional zones. 
+* **Path score** (metric): TBD. Number of zones entered. 
+* **Path length** (metric): Absolute length of traveled path to chosen goal location. Calculated as summation of distance between x-/y-coordinates over time. Value can be misleading if chosen location is not correct location (e.g., shorter path if incorrect but closer location selected). 
 $$P = \sum \sqrt{(x_{t}-x_{t+1})^2 + (y_{t}-y_{t+1})^2}$$
-* **Strategy classification**: Direct strategy to chosen goal (no detours), central focus (circling in inner pentagon), reorientation (going back same path), serial, random or unclassified strategy. 
+* **Avg. distance to ideal path to goal** (metric): Average cumulative distance between chosen path and (interpolated) ideal path to the correct goal. Calculated as summation of distance between x-/y-coordinates of chosen and (interpolated) ideal path, then divided by the number of x-/y data points. Marker of how closely the participant stuck to the ideal path to the correct goal. Value can be misleading if chosen location is not correct goal location.
+$$DPG = \frac {\sum \sqrt{(x_{t}-x_{interpolated-ideal-path})^2 + (y_{t}-y_{interpolated-ideal-path})^2}} {n_{t}}$$
+* **Adjusted avg. distance to ideal path to goal** (metric): Same as above but the chosen path is reduced to unique data points i.e., rotation on the spot/waiting at a spot is removed from the calculation. 
+* **(Adjusted) avg. distance to ideal path to *chosen* goal** (metric): Same as above but does not consider ideal path to the correct goal but to the chosen goal. Marker of how efficiently the participant navigated to the chosen goal, therefore more comparable across correct/incorrect trials.
+* **Time**: Time to complete trial in seconds. Can also be computed for zones separately (e.g., time spend in relevant/irrelevant areas).
+* **Sum of head rotation**: TBD. Sum of z-rotations indicating exploration/looking around. Can also be computed for zones separately (e.g., initial orientation phase).
+* **Strategy classification**: Direct to chosen goal, detour (entering more zones than necessary), reorientation (re-entering same zones). 
 
 
 ``` {r, plot_settings, include=FALSE}
@@ -108,7 +115,7 @@ $$P = \sum \sqrt{(x_{t}-x_{t+1})^2 + (y_{t}-y_{t+1})^2}$$
 
 ### Memory encoding: Learning curves at Day 1 
 
-How well did participants learn the position of the three goal locations at Day 1? Young adults show a very good performance (at ceiling) after only a few trials. Old kids perform slightly worse. Even though they are able to find the correct goal location in most cases (high rate of success), they do not seem to take the most direct path and have more difficulties when determining the precise location of the goals. As expected, young kids perform even worse (caution: 1 subject only). Learning curves are averaged across blocks, i.e. the mean value across three goal locations. 
+How well did participants learn the position of the three goal locations at Day 1?  
 
 ``` {r, data_func_all_trials, include=FALSE}
 ```
@@ -141,10 +148,7 @@ p1 + p2 + p3 + p4 + plot_annotation(title="Averaged values during learning in se
 
 ### Immediate (Day 1) vs. consolidated retrieval (Day 13): Egocentric and allocentric condition 
 
-*First plot:* As expected, the preliminary results show age-related performance differences, i.e. a better performance with higher age. So far, we have not collected any data from older adults, so we do not know if the effect reverses with older age. The age-dependent performance trajectory is present in all conditions, i.e. in both allocentric and egocentric trials and during immediate retrieval at Day 1 as well as consolidated retrieval at Day 13. Notably, performance variability seems to be higher in old kids compared to young adults, i.e. some old kids perform like adults whereas others struggle much more. We can potentially take a closer look at the reasons behind this variability with the structural MR data in the B04 project in Berlin (start in 2021). When looking at the difference between Day 13 and Day 1 (forgetting rate) older kids tend to have a higher decline in success compared to younger adults, but a comparable decline in remembering the direct path. 
-
-*Second plot:* When comparing allocentric vs. egocentric trials directly, the performance level is  similar, indicating a relatively comparable task difficulty. Only for the ability to remember the direct path, both old kids and younger adults show higher performance in egocentric compared to allocentric condition.
-
+*First plot:* 
 
 
 ``` {r, agg_s2_s1, echo=FALSE, warning=FALSE, fig.width=10, fig.height=6, fig.align="center" }
@@ -194,7 +198,7 @@ I categorized participant's trajectories into strategies. Strategies are a quali
 
 ![Examples for strategies](./pics/Overview_Strategies.jpg){width=400px}
 
-*Plots on next page:* Most young adults go straight to their chosen goal (direct strategy), indicating relatively high confidence in their decision. While old kids show a similar preference, they reorient and spend time in the central circle in some trials as well, especially on Day 13. Serial strategy, random or unclassified behavior is rarely present in all groups. When looking at conditions separately, we see that non-direct strategies are used in allocentric but not in egocentric trials. This makes sense because there are no landmarks present in egocentric trials (except for a start marker), so there are not many distinctive features for (re-)orientation. 
+*Plots on next page:* When looking at conditions separately, we see that non-direct strategies are used in allocentric but not in egocentric trials. This makes sense because there are no landmarks present in egocentric trials (except for a start marker), so there are not many distinctive features for (re-)orientation.
 
 ``` {r, data_func_strategy, include=FALSE}
 ```
