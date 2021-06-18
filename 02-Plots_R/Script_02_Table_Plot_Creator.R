@@ -47,7 +47,7 @@ mycolors <- c("YoungKids" = "#CC6666", "OldKids" = "#FF9999", "YoungAdults" = "#
 ## ----
 
 
-## ---- mean_func
+## ---- func_mean
 # function for calculating means
 mean_func <- function(data){
   data <- data %>% 
@@ -70,7 +70,7 @@ mean_func <- function(data){
 ## ---- 
 
 
-## ---- motor_control
+## ---- data_func_motor_control
 is_outlier <- function(x) {
   return(x < quantile(x, 0.25) - 1.5 * IQR(x) | x > quantile(x, 0.75) + 1.5 * IQR(x))
 }
@@ -100,14 +100,15 @@ mc_plot <- function(data, xvar, yvar, outvar, title, xlabel, ylabel, mylabels, m
 
 mc1 <- mc_plot(sm_motor_control, "group", "time", "out_time", "", NULL, "time (sec)", mylabels, mycolors, "none")
 mc2 <- mc_plot(sm_motor_control, "group", "path_length", "out_path", "", NULL, "total path length (vu)", mylabels, mycolors, "none")
+mc3 <- mc_plot(sm_motor_control, "group", "velocity", "out_path", "", NULL, "velocity (time/path length)", mylabels, mycolors, "none")
 
-mc1 + mc2 + plot_annotation(title="Motor control practise trial",
+mc1 + mc2 + mc3 + plot_annotation(title="Motor control practise trial",
                             subtitle="Task: To navigate to 10 red balls as quickly and efficiently as possible")
 ## ----
-rm(mc1, mc2, mc_plot, sm_motor_control)
+rm(mc1, mc2, mc3, mc_plot, sm_motor_control)
 
 
-## ---- all_trials
+## ---- data_func_all_trials
 # function for trial-wise bar plots at T1 (not averaged)
 bar_trials_grid <- function(data, xvar, yvar, fillby, facet, title, xlabel, ylabel, fillbylabel, facetlabels, legendPos, ticknum) {
   p <- ggplot(data, aes_string(x=xvar, y=yvar, fill=fillby)) + 
@@ -118,7 +119,8 @@ bar_trials_grid <- function(data, xvar, yvar, fillby, facet, title, xlabel, ylab
     facet_grid(facet, labeller=facetlabels) + # groups 
     theme_classic() + # theme
     theme(legend.position=legendPos,
-          legend.key.size = unit(0.5, 'cm')) +
+          legend.key.size = unit(0.5, 'cm'),
+          legend.justification=c(0,0)) +
     labs(title = title,
          x = xlabel,
          y = ylabel) # labels and title
@@ -138,128 +140,130 @@ sm_all_trials_s1 <- mean_func(sm_all_trials_s1)
 p1 <- bar_trials_grid(sm_all_trials_s1, "trial", "correct_goal", "trial_condition", "group", NULL, "Trial", "% correct goal", "Type", mylabels, "top", 8)
 p2 <- bar_trials_grid(sm_all_trials_s1, "trial", "final_distance", "trial_condition", "group", NULL, "Trial", "Final distance (vu)", "Type", mylabels, "top", 8)
 
-p1 + p2 + plot_annotation(title="Initial Learning and Recall") + 
+p1 + p2 + plot_annotation(title="Initial learning and recall") + 
   plot_layout(ncol=2, guides="collect") & theme(legend.position = "top", legend.justification=c(0,0)) 
 
 p3 <- bar_trials_grid(sm_all_trials_s1, "trial", "time", "trial_condition", "group", NULL, "Trial", "Time (sec)", "Type", mylabels, "top", 8)
 p4 <- bar_trials_grid(sm_all_trials_s1, "trial", "velocity", "trial_condition", "group", NULL, "Trial", "Velocity (time / path length)", "Type", mylabels, "top", 8)
 
-p3 + p4 + plot_annotation(title="Initial Learning and Recall") + 
+p3 + p4 + plot_annotation(title="Initial learning and recall") + 
   plot_layout(ncol=2, guides="collect") & theme(legend.position = "top", legend.justification=c(0,0)) 
 
 p5 <- bar_trials_grid(sm_all_trials_s1, "trial", "direct_path", "trial_condition", "group", NULL, "Trial", "% shortest path to correct goal", "Type", mylabels, "top", 8)
 p6 <- bar_trials_grid(sm_all_trials_s1, "trial", "path_length", "trial_condition", "group", NULL, "Trial", "Path length (vu)", "Type", mylabels, "top", 8)
 
-p5 + p6 + plot_annotation(title="Initial Learning and Recall") + 
+p5 + p6 + plot_annotation(title="Initial learning and recall") + 
   plot_layout(ncol=2, guides="collect") & theme(legend.position = "top", legend.justification=c(0,0)) 
 
 p7 <- bar_trials_grid(sm_all_trials_s1, "trial", "avg_distance_path", "trial_condition", "group", NULL, "Trial", "Avg. distance to ideal path to correct goal", "Type", mylabels, "top", 8)
 p8 <- bar_trials_grid(sm_all_trials_s1, "trial", "avg_distance_path_pure", "trial_condition", "group", NULL, "Trial", "(Adjusted) avg. distance to ideal path to correct goal", "Type", mylabels, "top", 8)
 
-p7 + p8 + plot_annotation(title="Initial Learning and Recall") + 
+p7 + p8 + plot_annotation(title="Initial learning and recall") + 
   plot_layout(ncol=2, guides="collect") & theme(legend.position = "top", legend.justification=c(0,0)) 
 
 p9 <- bar_trials_grid(sm_all_trials_s1, "trial", "path_score", "trial_condition", "group", NULL, "Trial", "Path score (number of zones entered)", "Type", mylabels, "top", 8)
 p10 <- bar_trials_grid(sm_all_trials_s1, "trial", "sum_head_rotation", "trial_condition", "group", NULL, "Trial", "Sum of 'head rotation' (z-axis)", "Type", mylabels, "top", 8)
 
-p9 + p10 + plot_annotation(title="Initial Learning and Recall") + 
+p9 + p10 + plot_annotation(title="Initial learning and recall") + 
   plot_layout(ncol=2, guides="collect") & theme(legend.position = "top", legend.justification=c(0,0)) 
 ## ----
 rm(sm_all_trials_s1, bar_trials_grid, p1, p2, p3, p4, p5, p6, p7, p8, p9, p10)
 
 
-## ---- data_func_agg
-# function for aggregated bar plots with individual values 
-bar_agg <- function(data_ind, data_sum, xvar, yvar, fillby, facetr, facetc, title, xlabel, ylabel, fillbylabel, facetlabel, legendPos){
-  p <- ggplot(data_ind, aes_string(x=xvar, y=yvar, fill=fillby)) + 
-    geom_bar(data=data_sum, stat="identity", position=position_dodge(), colour="black") + # identity bars
-    geom_point(position=position_jitterdodge(seed=999), size=0.4) + # individual points
-    facet_grid(formula(paste(facetr, "~", facetc)), labeller=facetlabel) + # facet grouping 
-    scale_fill_manual(name=fillbylabel, labels=facetlabel, values=mycolors) + # fill title, lable and colors
-    theme_cowplot(font_size = 10) + # theme
-    theme(legend.position=legendPos,
-          axis.ticks.x=element_blank(),
-          axis.text.x=element_blank()) +
-    labs(title = title, 
-         x = xlabel,
-         y = ylabel) # labels and title
-  
-  return(p)
-}
-
+## ---- func_agg
+# function for aggregated box plots with individual values 
 box_agg <- function(data_ind, xvar, yvar, fillby, facetr, facetc, title, xlabel, ylabel, fillbylabel, facetlabel, legendPos){
   p <- ggplot(data_ind, aes_string(x=xvar, y=yvar, fill=fillby)) + 
-    geom_boxplot() +
+    geom_boxplot(outlier.shape = NA) +
     geom_point(position=position_jitterdodge(seed=999), size=0.4) + # individual points
-    facet_grid(formula(paste(facetr, "~", facetc)), labeller=facetlabel) + # facet grouping 
     scale_fill_manual(name=fillbylabel, labels=facetlabel, values=mycolors) + # fill title, lable and colors
-    theme_cowplot(font_size = 10) + # theme
+    theme_classic() + # theme
     theme(legend.position=legendPos,
+          legend.key.size = unit(0.5, 'cm'),
+          legend.justification=c(0,0),
           axis.ticks.x=element_blank(),
           axis.text.x=element_blank()) +
     labs(title = title, 
          x = xlabel,
          y = ylabel) # labels and title
   
+  if(facetc=="none"){
+    p <- p + facet_wrap(facetr, labeller=facetlabel) 
+  }
+  else {
+    p <- p + facet_grid(formula(paste(facetr, "~", facetc)), labeller=facetlabel) 
+  }
+  
   return(p)
 }
+## ----
 
 
-# data for aggregated bar plots with individual values 
+## ---- data_agg_s1
+# data for aggregated plots with individual values 
 sm_ind_data <- sm_trial_data %>%
-  group_by(id, group, session, trial_condition) 
+  filter(session==1) %>% 
+  group_by(id, group, trial_condition) %>% 
 sm_ind_data <- mean_func(sm_ind_data)
 
-sm_sum_data <- sm_trial_data %>% 
-  group_by(group, session, trial_condition) 
-sm_sum_data <- mean_func(sm_sum_data)
+
+# aggregated plots for T1 (learning)
+p1 <- box_agg(sm_ind_data %>% filter(session==1 & trial_condition=="main_learn"), 
+              "group", "direct_path", "group", "trial_condition", "none", NULL, NULL, "% shortest path to corect goal", "Group", mylabels, "top")
+
+p2 <- box_agg(sm_ind_data %>% filter(session==1 & trial_condition=="main_learn"), 
+              "group", "time", "group", "trial_condition", "none", NULL, NULL, "Time (sec)", "Group", mylabels, "top")
+
+p3 <- box_agg(sm_ind_data %>% filter(session==1 & trial_condition=="main_learn"), 
+              "group", "path_length", "group", "trial_condition", "none", NULL, NULL, "Path length (vu)", "Group", mylabels, "top")
+
+p4 <- box_agg(sm_ind_data %>% filter(session==1 & trial_condition=="main_learn"), 
+              "group", "avg_distance_path", "group", "trial_condition", "none", NULL, NULL, "Avg. distance to ideal path to correct goal", "Group", mylabels, "top")
+
+p1 + p2 + p3 + p4 + plot_annotation(title="Averaged values during learning in session 1",
+                               subtitle="learning trials only (correct goal is visible)") + 
+  plot_layout(ncol=4, guides="collect") & theme(legend.position = "top", legend.justification=c(0,0)) 
+
+rm(p1, p2, p3, p4)
 
 
-# aggregated plots for T1
-bar_agg(sm_ind_data %>% filter(session==1 & (trial_condition=="ego_ret" | trial_condition=="allo_ret")), 
-        sm_sum_data %>% filter(session==1 & (trial_condition=="ego_ret" | trial_condition=="allo_ret")), 
-        "group", "correct_goal", "group", "session", "trial_condition", "T1 \n", "", "% correct goal", "Group", mylabels, "top")
-bar_agg(sm_ind_data %>% filter(session==1 & (trial_condition=="ego_ret" | trial_condition=="allo_ret")), 
-        sm_sum_data %>% filter(session==1 & (trial_condition=="ego_ret" | trial_condition=="allo_ret")), 
-        "group", "direct_path", "group", "session", "trial_condition", "T1 \n", "", "% shortest path to corect goal", "Group", mylabels, "top")
-# add others
+# aggregated plots for T1 (recall)
+p1 <- box_agg(sm_ind_data %>% filter(session==1 & (trial_condition=="ego_ret" | trial_condition=="allo_ret")),
+        "group", "correct_goal", "group", "trial_condition", "none", NULL, NULL, "% correct goal", "Group", mylabels, "top")
 
-box_agg(sm_ind_data %>% filter(session==1 & (trial_condition=="ego_ret" | trial_condition=="allo_ret")),
-        "group", "correct_goal", "group", "session", "trial_condition", "T1 \n", "", "% correct goal", "Group", mylabels, "top")
-box_agg(sm_ind_data %>% filter(session==1 & (trial_condition=="ego_ret" | trial_condition=="allo_ret")), 
-        "group", "direct_path", "group", "session", "trial_condition", "T1 \n", "", "% shortest path to corect goal", "Group", mylabels, "top")
+p2 <- box_agg(sm_ind_data %>% filter(session==1 & (trial_condition=="ego_ret" | trial_condition=="allo_ret")),
+              "group", "final_distance", "group", "trial_condition", "none", NULL, NULL, "Final distance (vu)", "Group", mylabels, "top")
 
+p3 <- box_agg(sm_ind_data %>% filter(session==1 & (trial_condition=="ego_ret" | trial_condition=="allo_ret")), 
+              "group", "direct_path", "group", "trial_condition", "none", NULL, NULL, "% shortest path to corect goal", "Group", mylabels, "top")
 
-# condition-wise plots for allo and ego retrieval 
-# focus: group comparison
-pagg1 <- bar_agg(sm_ind_data %>% filter(trial_condition=="ego_ret" | trial_condition=="allo_ret"), sm_sum_data %>% filter(trial_condition=="ego_ret" | trial_condition=="allo_ret"), 
-        "group", "correct_goal", "group", "session", "trial_condition", "Group means, subject means and forgetting rate for Day 1 vs. Day 13\n", "", "Correct goal", "Group", mylabels, "top")
-pagg2 <- bar_agg(sm_ind_data %>% filter(trial_condition=="ego_ret" | trial_condition=="allo_ret"), sm_sum_data %>% filter(trial_condition=="ego_ret" | trial_condition=="allo_ret"),
-        "group", "direct_path", "group", "session", "trial_condition",  "", "", "Direct path", "Group", mylabels, "none")
-pagg3 <- bar_agg(sm_ind_data %>% filter(trial_condition=="ego_ret" | trial_condition=="allo_ret"), sm_sum_data %>% filter(trial_condition=="ego_ret" | trial_condition=="allo_ret"),
-        "group", "final_distance", "group", "session", "trial_condition", "", "", "Final distance (vu)", "Group", mylabels, "none")
-pagg4 <- bar_agg(sm_ind_data %>% filter(trial_condition=="ego_ret" | trial_condition=="allo_ret"), sm_sum_data %>% filter(trial_condition=="ego_ret" | trial_condition=="allo_ret"),
-        "group", "path_length", "group", "session", "trial_condition", "", "", "Path length (vu)", "Group", mylabels, "none")
+p4 <- box_agg(sm_ind_data %>% filter(session==1 & (trial_condition=="ego_ret" | trial_condition=="allo_ret")), 
+              "group", "avg_distance_path", "group", "trial_condition", "none", NULL, NULL, "Avg. distance to ideal path to correct goal", "Group", mylabels, "top")
 
-box_agg(sm_ind_data %>% filter(trial_condition=="ego_ret" | trial_condition=="allo_ret"), 
-        "group", "correct_goal", "group", "session", "trial_condition", "Group means, subject means and forgetting rate for Day 1 vs. Day 13\n", "", "Correct goal", "Group", mylabels, "top")
+p1 + p2 + p3 + p4 + plot_annotation(title="Averaged values during free recall in session 1",
+                                    subtitle="egocentric and allocentric trials only (goal invisible)") + 
+  plot_layout(ncol=2, guides="collect") & theme(legend.position = "top", legend.justification=c(0,0)) 
 
 
+p5 <- box_agg(sm_ind_data %>% filter(session==1 & (trial_condition=="ego_ret" | trial_condition=="allo_ret")), 
+              "group", "time", "group", "trial_condition", "none", NULL, NULL, "Time (sec)", "Group", mylabels, "top")
 
-# focus: type comparison
-pagg5 <- bar_agg(sm_ind_data %>% filter(trial_condition=="ego_ret" | trial_condition=="allo_ret"), sm_sum_data %>% filter(trial_condition=="ego_ret" | trial_condition=="allo_ret"), 
-                 "trial_condition", "correct_goal", "trial_condition", "session", "group", "Group means, subject means for Allocentric vs. Egocentric\n", "", "Correct goal", "Type", mylabels, "top")
-pagg6 <- bar_agg(sm_ind_data %>% filter(trial_condition=="ego_ret" | trial_condition=="allo_ret"), sm_sum_data %>% filter(trial_condition=="ego_ret" | trial_condition=="allo_ret"), 
-                 "trial_condition", "direct_path", "trial_condition", "session", "group", "", "", "Direct path", "Type", mylabels, "none")
-pagg7 <- bar_agg(sm_ind_data %>% filter(trial_condition=="ego_ret" | trial_condition=="allo_ret"), sm_sum_data %>% filter(trial_condition=="ego_ret" | trial_condition=="allo_ret"), 
-                 "trial_condition", "final_distance", "trial_condition", "session", "group", "", "", "Final distance (vu)", "Type", mylabels, "none")
-pagg8 <- bar_agg(sm_ind_data %>% filter(trial_condition=="ego_ret" | trial_condition=="allo_ret"), sm_sum_data %>% filter(trial_condition=="ego_ret" | trial_condition=="allo_ret"), 
-                 "trial_condition", "path_length", "trial_condition", "session", "group", "", "", "Path length (vu)", "Type", mylabels, "none")
+p6 <- box_agg(sm_ind_data %>% filter(session==1 & (trial_condition=="ego_ret" | trial_condition=="allo_ret")), 
+              "group", "path_length", "group", "trial_condition", "none", NULL, NULL, "Path length (vu)", "Group", mylabels, "top")
 
-box_agg(sm_ind_data %>% filter(trial_condition=="ego_ret" | trial_condition=="allo_ret"),
-        "trial_condition", "correct_goal", "trial_condition", "session", "group", "Group means, subject means for Allocentric vs. Egocentric\n", "", "Correct goal", "Type", mylabels, "top")
+p7 <- box_agg(sm_ind_data %>% filter(session==1 & (trial_condition=="ego_ret" | trial_condition=="allo_ret")), 
+              "group", "velocity", "group", "trial_condition", "none", NULL, NULL, "Velocity (time/path length)", "Group", mylabels, "top")
+
+p5 + p6 + p7 + plot_annotation(title="Averaged values during free recall in session 1",
+                               subtitle="egocentric and allocentric trials only (goal invisible)") + 
+  plot_layout(ncol=2, guides="collect") & theme(legend.position = "top", legend.justification=c(0,0)) 
+
+rm (p1, p2, p3, p4, p5, p6, p7, p8, p9, p10, sm_ind_data)
+## ----
 
 
+## ---- data_agg_s2
+# requires func_agg 
 
 # function for S2-S1 difference plots
 box_agg_diff <- function(data, xvar, yvar, fillby, title, xlabel, ylabel, fillbylabel, facetlabel, legendPos){
@@ -280,6 +284,25 @@ box_agg_diff <- function(data, xvar, yvar, fillby, title, xlabel, ylabel, fillby
   
   return(p)
 }
+
+
+# data for aggregated plots with individual values 
+sm_ind_data <- sm_trial_data %>%
+  group_by(id, group, session, trial_condition) 
+sm_ind_data <- mean_func(sm_ind_data)
+
+
+# condition-wise plots for allo and ego retrieval 
+# focus: group comparison
+box_agg(sm_ind_data %>% filter(trial_condition=="ego_ret" | trial_condition=="allo_ret"), 
+        "group", "correct_goal", "group", "session", "trial_condition", "Group means, subject means and forgetting rate for Day 1 vs. Day 13\n", "", "Correct goal", "Group", mylabels, "top")
+
+# focus: type comparison
+box_agg(sm_ind_data %>% filter(trial_condition=="ego_ret" | trial_condition=="allo_ret"),
+        "trial_condition", "correct_goal", "trial_condition", "session", "group", "Group means, subject means for Allocentric vs. Egocentric\n", "", "Correct goal", "Type", mylabels, "top")
+
+
+
 
 
 # data for S2-S1 difference plots
