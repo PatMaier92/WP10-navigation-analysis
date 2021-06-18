@@ -115,7 +115,7 @@ bar_trials_grid <- function(data, xvar, yvar, fillby, facet, title, xlabel, ylab
     geom_bar(stat="identity", position=position_dodge(), width=.85, colour="black") + # identity bars
     scale_x_continuous(breaks=seq(0,max(data[[xvar]]),round(max(data[[xvar]])/ticknum))) + # ticks 
     scale_fill_manual(name=fillbylabel, labels=facetlabels, values=mycolors) + # fill title, lable and colors
-    geom_vline(xintercept = c(13.5, 26.5, 39.5), color="red") + 
+    geom_vline(xintercept = c(13.5, 26.5, 39.5), color="red", linetype="dashed") + 
     facet_grid(facet, labeller=facetlabels) + # groups 
     theme_classic() + # theme
     theme(legend.position=legendPos,
@@ -257,24 +257,23 @@ p7 <- box_agg(sm_ind_data %>% filter(session==1 & (trial_condition=="ego_ret" | 
 p5 + p6 + p7 + plot_annotation(title="Averaged values during free recall in session 1",
                                subtitle="egocentric and allocentric trials only (goal invisible)") + 
   plot_layout(ncol=2, guides="collect") & theme(legend.position = "top", legend.justification=c(0,0)) 
-
-rm (p1, p2, p3, p4, p5, p6, p7, p8, p9, p10, sm_ind_data)
 ## ----
+rm (p1, p2, p3, p4, p5, p6, p7, p8, p9, p10, sm_ind_data)
 
 
-## ---- data_agg_s2
+## ---- data_agg_s2_s1
 # requires func_agg 
 
-# function for S2-S1 difference plots
+# function for difference plots
 box_agg_diff <- function(data, xvar, yvar, fillby, title, xlabel, ylabel, fillbylabel, facetlabel, legendPos){
   p <- ggplot(data, aes_string(x=xvar, y=yvar, fill=fillby)) +
     geom_boxplot(outlier.shape=NA, colour="BLACK") + 
     geom_point(position=position_jitterdodge(seed=999), size=0.4) + # individual points
     geom_hline(yintercept=0, linetype="dashed", color = "red") + 
     facet_wrap(~ trial_condition, labeller=facetlabel) + # facet grouping
-    scale_fill_manual(name=fillbylabel, labels=facetlabel, values=mycolors) + # fill title, lable and colors
+    scale_fill_manual(name=fillbylabel, values=mycolors) + # fill title and colors
     scale_y_continuous(limits=c(-1,1)) + 
-    theme_cowplot(font_size = 10) + # theme
+    theme_classic() + # theme
     theme(legend.position=legendPos,
           axis.ticks.x=element_blank(),
           axis.text.x=element_blank()) +
@@ -291,21 +290,7 @@ sm_ind_data <- sm_trial_data %>%
   group_by(id, group, session, trial_condition) 
 sm_ind_data <- mean_func(sm_ind_data)
 
-
-# condition-wise plots for allo and ego retrieval 
-# focus: group comparison
-box_agg(sm_ind_data %>% filter(trial_condition=="ego_ret" | trial_condition=="allo_ret"), 
-        "group", "correct_goal", "group", "session", "trial_condition", "Group means, subject means and forgetting rate for Day 1 vs. Day 13\n", "", "Correct goal", "Group", mylabels, "top")
-
-# focus: type comparison
-box_agg(sm_ind_data %>% filter(trial_condition=="ego_ret" | trial_condition=="allo_ret"),
-        "trial_condition", "correct_goal", "trial_condition", "session", "group", "Group means, subject means for Allocentric vs. Egocentric\n", "", "Correct goal", "Type", mylabels, "top")
-
-
-
-
-
-# data for S2-S1 difference plots
+# data for difference plots
 sm_diff_data <- sm_trial_data %>%
   filter(trial_condition=="ego_ret" | trial_condition=="allo_ret")  %>%
   group_by(id, group, session, trial_condition)
@@ -320,26 +305,24 @@ sm_diff_data <- mean_func(sm_diff_data) %>%
             path_diff = path_length_2 - path_length_1)
 
 
-# S2-S1 difference
-box_agg_diff(sm_diff_data, "group", "correct_diff", "group", "\n\n", "", "\nCorrect goal (D13 - D1)", "Group", mylabels, "none")
-box_agg_diff(sm_diff_data, "group", "direct_path_diff", "group", "", "", "\nDirect path (D13 - D1)", "Group", mylabels, "none")
-box_agg_diff(sm_diff_data, "group", "final_distance_diff", "group", "", "", "\nFinal distance (D13 - D1)", "Group", mylabels, "none")
-box_agg_diff(sm_diff_data, "group", "path_diff", "group", "", "", "\nPath length (D13 - D1)", "Group", mylabels, "none")
-# ## ----
-# rm(pagg1, pagg2, pagg3, pagg4, pagg5, pagg6, pagg7, pagg8)
-# rm(paggd1, paggd2, paggd3, paggd4, sm_diff_data)
+# comparing time points 
+# focus: group comparison
+p1a <- box_agg(sm_ind_data %>% filter(trial_condition=="ego_ret" | trial_condition=="allo_ret"), 
+        "group", "correct_goal", "group", "session", "trial_condition", "Group means, subject means and forgetting rate for Day 1 vs. Day 13\n", "", "Correct goal", "Group", mylabels, "top")
+
+# focus: type comparison
+box_agg(sm_ind_data %>% filter(trial_condition=="ego_ret" | trial_condition=="allo_ret"),
+        "trial_condition", "correct_goal", "trial_condition", "session", "group", "Group means, subject means for Allocentric vs. Egocentric\n", "", "Correct goal", "Type", mylabels, "top")
+
+# difference plot 
+p1b <- box_agg_diff(sm_diff_data, "group", "correct_diff", "group", "\n\n", "", "\nCorrect goal (D14 - D2)", "Group", mylabels, "none")
+
+p1a + p1b + plot_layout(widths = c(2,1))
+## ----
+rm()
 
 
-# # condition-wise plot for all conditions 
-# bar_agg(sm_ind_data, sm_sum_data, "group", "correct_goal", "group", "Means and individual data points \nfor both sessions (Day 1 vs. Day 13) \n", "", "Correct goal", "Group", mylabels, "top")
-# bar_agg(sm_ind_data, sm_sum_data, "group", "direct_path", "group", "", "", "Direct path", "Group", mylabels, "none")
-# bar_agg(sm_ind_data, sm_sum_data, "group", "final_distance", "group", "", "", "Final distance (vu)", "Group", mylabels, "none")
-# bar_agg(sm_ind_data_suc, sm_sum_data_suc, "group", "path_length", "group", "", "", "Path length (vu)", "Group", mylabels, "none")
-# 
-# rm(sm_ind_data, sm_sum_data, bar_agg)
-
-
-
+## ---- data_func_rain 
 # function for raincloud plots 
 raincloud <- function(data, x, y, title, xlabel, ylabel, facetlabeller, legendPos){
   p1 <- ggplot(data, aes_string(x=x, y=y, fill=x)) + # set up data 
@@ -409,11 +392,8 @@ raincloud_sub(sm_ind_data %>% filter((trial_condition=="ego_ret" | trial_conditi
 raincloud_sub(sm_ind_data %>% filter((trial_condition=="ego_ret" | trial_condition=="allo_ret")), "group", "direct_path", "", "", "Direct path", mylabels, "none")
 raincloud_sub(sm_ind_data %>% filter((trial_condition=="ego_ret" | trial_condition=="allo_ret")), "group", "final_distance", "", "", "Final distance (vu)", mylabels, "none")
 raincloud_sub(sm_ind_data %>% filter((trial_condition=="ego_ret" | trial_condition=="allo_ret")), "group", "path_length", "", "", "Path length (vu)", mylabels, "none")
-
-rm(sm_ind_data)
-
-rm(pr1, pr2, pr3, pr4, raincloud, raincloud_sub)
-
+## ----
+rm(sm_ind_data, pr1, pr2, pr3, pr4, raincloud, raincloud_sub)
 
 
 ## ---- data_func_strategy
