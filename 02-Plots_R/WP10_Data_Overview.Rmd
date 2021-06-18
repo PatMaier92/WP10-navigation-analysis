@@ -34,7 +34,7 @@ Navigating a star-shaped maze environment ("Starmaze") with three goal locations
 ```{r setup, include = FALSE, cache=FALSE}
 
 library(tidyverse)
-library(cowplot)
+library(patchwork)
 library(kableExtra)
 source("R_rainclouds.R") # requires plyr package
 # install.packages('tinytex')
@@ -48,6 +48,12 @@ knitr::read_chunk('Script_02_Table_Plot_Creator.R')
 in_file <- "../WP10_data/WP10_results/WP10_results_table.RData"
 load(in_file)
 rm(in_file)
+```
+
+```{r, prepare_data, include=FALSE}
+
+sm_trial_data <- sm_trial_data[sm_trial_data$exclude_trial_matlab==0,]
+
 ```
 
 
@@ -77,7 +83,7 @@ Cross-sectional comparison between
 
 In learning trials, the goal is visible, i.e. the trial is always completed successfully except if the participant needs more than 120 seconds (time out). In egocentric and allocentric retrieval trials, the goal is not visible. Participants go to the place where they remember the goal being located and press a button. 
 
-* **Success** (yes/no): Finding the correct goal location. The criterion for success is being away less than 0.1 virtual units (~ approx. being in the correct alley).
+* **correct_goal** (yes/no): Finding the correct goal location. The criterion for success is being away less than 0.1 virtual units (~ approx. being in the correct alley).
 * **Direct path** (yes/no): Being successful and additionally taking the shortest path without entering any additional alleys.
 * **Final distance** (metric): Distance between x-/y-coordinates of the chosen and the correct goal location. 
 $$FD = \sqrt{(x_{correct}-x_{chosen})^2 + (y_{correct}-y_{chosen})^2}$$
@@ -86,18 +92,54 @@ $$P = \sum \sqrt{(x_{t}-x_{t+1})^2 + (y_{t}-y_{t+1})^2}$$
 * **Strategy classification**: Direct strategy to chosen goal (no detours), central focus (circling in inner pentagon), reorientation (going back same path), serial, random or unclassified strategy. 
 
 
-### Memory encoding: Learning curves at Day 1 
 ``` {r, plot_settings, include=FALSE}
 ```
 
-How well did participants learn the position of the three goal locations at Day 1? Young adults show a very good performance (at ceiling) after only a few trials. Old kids perform slightly worse. Even though they are able to find the correct goal location in most cases (high rate of success), they do not seem to take the most direct path and have more difficulties when determining the precise location of the goals. As expected, young kids perform even worse (caution: 1 subject only). Learning curves are averaged across blocks, i.e. the mean value across three goal locations. 
-
-``` {r, data_func_trial_wise, include=FALSE}
+``` {r, func_mean, include=FALSE}
 ```
 
-``` {r, trial_wise, echo=FALSE, fig.asp=1.75, fig.align = "center"}
+``` {r, data_func_motor_control, include=FALSE}
+```
 
-plot_grid(pt1, pt2, pt3, pt4, ncol=1, labels="AUTO", rel_heights=c(1.1, 0.93, 0.93, 0.93))
+``` {r, motor_control, echo=FALSE, warning=FALSE, fig.width=10, fig.height=5, fig.align="center" }
+
+mc1 + mc2 + mc3 + 
+  plot_annotation(title="Motor control practise trial",
+                  subtitle="Task: To navigate to 10 red balls as quickly and efficiently as possible", 
+                  tag_levels = 'A') 
+
+```
+\newpage 
+
+### Memory encoding: Learning curves at Day 1 
+
+How well did participants learn the position of the three goal locations at Day 1? Young adults show a very good performance (at ceiling) after only a few trials. Old kids perform slightly worse. Even though they are able to find the correct goal location in most cases (high rate of success), they do not seem to take the most direct path and have more difficulties when determining the precise location of the goals. As expected, young kids perform even worse (caution: 1 subject only). Learning curves are averaged across blocks, i.e. the mean value across three goal locations. 
+
+``` {r, data_func_all_trials, include=FALSE}
+```
+
+``` {r, trial_wise_s1, echo=FALSE, warning=FALSE, fig.width=8, fig.height=10, fig.align="center" }
+
+p1 + p2 + plot_annotation(title="Initial learning and recall", tag_levels = 'A') +
+  plot_layout(ncol=1, guides="collect") & theme(legend.position = "top",
+                                                legend.justification=c(0,0))
+
+```
+\newpage 
+
+``` {r, func_agg, include=FALSE}
+```
+
+``` {r, data_agg_s1, include=FALSE}
+```
+
+``` {r, agg_s1, echo=FALSE, warning=FALSE, fig.width=10, fig.align="center"  }
+
+p1 + p2 + p3 + p4 + plot_annotation(title="Averaged values during learning in session 1",
+                               subtitle="learning trials only (correct goal is visible)",
+                               tag_levels = 'A') +
+  plot_layout(ncol=4, guides="collect") & theme(legend.position = "bottom",
+                                                legend.justification=c(0,0))
 
 ```
 
@@ -108,18 +150,40 @@ plot_grid(pt1, pt2, pt3, pt4, ncol=1, labels="AUTO", rel_heights=c(1.1, 0.93, 0.
 
 *Second plot:* When comparing allocentric vs. egocentric trials directly, the performance level is  similar, indicating a relatively comparable task difficulty. Only for the ability to remember the direct path, both old kids and younger adults show higher performance in egocentric compared to allocentric condition.
 
-``` {r, data_func_agg, include=FALSE}
+
+
+``` {r, agg_s2_s1, echo=FALSE, warning=FALSE, fig.width=10, fig.height=6, fig.align="center" }
+
+p11 + p12 + p13 + p14 + 
+  plot_annotation(title="Averaged values during free recall in session 1",
+                  subtitle="egocentric and allocentric trials only (goal invisible)",
+                  tag_levels = 'A') +
+  plot_layout(ncol=2, guides="collect") & theme(legend.position = "bottom",
+                                                legend.justification=c(0,0)) 
+
 ```
 
-``` {r, aggregate_bars, echo=FALSE, warning=FALSE, fig.asp=1.5, fig.align = "center"}
-
-plot_grid(pagg1, paggd1, pagg2, paggd2, pagg3, paggd3, pagg4, paggd4, ncol=2, rel_widths=c(1.75,1.25), rel_heights=c(1.1, 0.93, 0.93, 0.93))
+``` {r, data_agg_s2_s1, include=FALSE }
 
 ```
 
-``` {r, aggregate_bars_2, echo=FALSE, warning=FALSE, fig.width=5, fig.asp=2, fig.align = "center"}
+``` {r, agg_diff_s2_s1, echo=FALSE, warning=FALSE, fig.width=8, fig.height=4, fig.align="center"}
 
-plot_grid(pagg5, pagg6, pagg7, pagg8, ncol=1, labels="AUTO", rel_heights=c(1.1, 0.93, 0.93, 0.93))
+p1a + p1b + plot_annotation(title="", tag_levels = 'A') + 
+  plot_layout(widths = c(2,1))
+
+```
+\newpage 
+
+``` {r, data_func_rain, include=FALSE }
+
+```
+
+``` {r, rain_s2_s1, echo=FALSE, warning=FALSE, fig.width=10, fig.height=6, fig.align="center" }
+
+r1 + p1b + 
+  plot_annotation(title="", tag_levels = 'A') + 
+  plot_layout(ncol=2, widths=c(3,1)) & theme(legend.justification=c(0,0))
 
 ```
 
@@ -129,12 +193,9 @@ We categorized participant's trajectories into different strategies (still under
 
 *Criteria for strategy assignment*:
 
-* **Direct**: No zones are re-entered (out of 20 zones: 5 peripheral alleys (outer half), 5 peripheral alleys (inner half), 5 inner alleys, 5 central triangles at intersections of peripheral and inner alleys). 
-* **Central focus**: Either navigated more than half of the inner circle without re-entering zones (A) OR re-entering zones and at least 60 % of trajectory spend in inner circle (includes full circle, B).
-* **Reoriented**: Maximum of 3 peripheral alleys entered, plus re-entries in inner alleys and triangles (turning back).
-* **Serial**: Minimum of 3 peripheral alleys entered, plus no re-entries in peripheral and inner alleys (no turning back).
-* **Random**: Minimum of 4 peripheral alleys and 15 zones entered. 
-* **Unclassified** for the rest.
+* **Direct**: Shortest path to chosen goal location (not necessarily correct goal location) without re-entry of zones. 
+* **Detour**: Non-direct path without re-entry of zones. 
+* **Reoriented**: Non-direct path with re-entry of zones. 
 
 ![Examples for strategies](./pics/Overview_Strategies.jpg){width=400px}
 
@@ -143,55 +204,56 @@ We categorized participant's trajectories into different strategies (still under
 ``` {r, data_func_strategy, include=FALSE}
 ```
 
-``` {r, aggragate_strategy, echo=FALSE, fig.asp=2, fig.align = "center"}
+``` {r, agg_strategy, echo=FALSE, fig.height=8, fig.width=10, fig.align="center" }
 
-plot_grid(ps1, psa, pse, ncol=1, labels="AUTO", rel_heights=c(1, 1, 1))
+s1 + plot_spacer() + s2 + s3 + plot_layout(ncol=2) + 
+  plot_annotation(title= "Strategy use in %", tag_levels = 'A')
 
 ```
+\newpage 
 
 ### Table with descriptive mean values
 
-``` {r, table_setup, echo=FALSE, message=FALSE }
+<!-- # ``` {r, table_setup, echo=FALSE, message=FALSE } -->
+<!-- # -->
+<!-- # table_dat <- sm_trial_data %>% -->
+<!-- #   group_by(group, session, trial_condition)  %>% -->
+<!-- #   summarise(correct_goal=mean(correct_goal), -->
+<!-- #             direct_path=mean(direct_path), -->
+<!-- #             final_distance=mean(final_distance)) -->
+<!-- # -->
+<!-- # ``` -->
 
-table_dat <- sm_trial_data %>% 
-  group_by(group, session, trial_condition)  %>%
-  summarise(path=mean(path_abs[success==1], na.rm = TRUE),
-            success=mean(success),
-            direct_path=mean(direct_path),
-            final_distance=mean(final_distance_to_goal_abs))
+<!-- # ``` {r, table_learn, echo=FALSE, message=FALSE, warning=FALSE, results='asis' } -->
+<!-- #  -->
+<!-- # table_dat  %>% -->
+<!-- #   filter(trial_condition=="main_learn")  %>%  -->
+<!-- #   select(group, correct_goal, direct_path, final_distance) %>% -->
+<!-- #   arrange(group) %>% -->
+<!-- #   kbl(format="pandoc", -->
+<!-- #       caption = "Mean values for learning trials", -->
+<!-- #       col.names = c("Session", "Group", "% Correct goal", "% Shortest path", "Final distance"), -->
+<!-- #       digits = 2) %>%  -->
+<!-- #   kable_classic(html_font = "Latin Modern") %>%  -->
+<!-- #   row_spec(0, bold=T) %>% -->
+<!-- #   add_header_above(bold=T, c(" " = 2, "Variables" = 4)) -->
+<!-- #  -->
+<!-- # ``` -->
 
-```
-
-``` {r, table_learn, echo=FALSE, message=FALSE, warning=FALSE, results='asis' }
-
-table_dat  %>%
-  filter(trial_condition=="main_learn")  %>% 
-  select(group, success, direct_path, final_distance, path) %>%
-  arrange(group) %>%
-  kbl(format="pandoc",
-      caption = "Mean values for learning trials",
-      col.names = c("Session", "Group", "Success", "Direct path", "Final distance", "Path"),
-      digits = 2) %>% 
-  kable_classic(html_font = "Latin Modern") %>% 
-  row_spec(0, bold=T) %>%
-  add_header_above(bold=T, c(" " = 2, "Variables" = 4))
-
-```
-
-``` {r, table_alloego, echo=FALSE, message=FALSE, warning=FALSE, results='asis' }
-
-table_dat  %>%
-  filter((trial_condition=="ego_ret" | trial_condition=="allo_ret"))  %>% 
-  mutate(trial_condition=if_else(trial_condition=="allo_ret", "Allocentric", "Egocentric")) %>%
-  select(trial_condition, session, group, success, direct_path, final_distance, path) %>%
-  arrange(trial_condition, session, group) %>% 
-  kbl(format="pandoc",
-      caption = "Mean values for allocentric and egocentric trials", 
-      col.names = c("Type", "Session", "Group", "Success", "Direct path", "Final distance", "Path"),
-      digits = 2)%>% 
-  kable_classic(html_font = "Latin Modern") %>% 
-  row_spec(0, bold=T) %>% 
-  collapse_rows(columns = 1:3, valign = "top") %>%
-  add_header_above(bold=T, c(" " = 3, "Variables" = 4))
-
-```
+<!-- # ``` {r, table_alloego, echo=FALSE, message=FALSE, warning=FALSE, results='asis' } -->
+<!-- #  -->
+<!-- # table_dat  %>% -->
+<!-- #   filter((trial_condition=="ego_ret" | trial_condition=="allo_ret"))  %>%  -->
+<!-- #   mutate(trial_condition=if_else(trial_condition=="allo_ret", "Allocentric", "Egocentric")) %>% -->
+<!-- #   select(trial_condition, session, group, correct_goal, direct_path, final_distance) %>% -->
+<!-- #   arrange(trial_condition, session, group) %>%  -->
+<!-- #   kbl(format="pandoc", -->
+<!-- #       caption = "Mean values for allocentric and egocentric trials",  -->
+<!-- #       col.names = c("Type", "Session", "Group", "% Correct goal", "% Shortest path", "Final distance", "Path"), -->
+<!-- #       digits = 2)%>%  -->
+<!-- #   kable_classic(html_font = "Latin Modern") %>%  -->
+<!-- #   row_spec(0, bold=T) %>%  -->
+<!-- #   collapse_rows(columns = 1:3, valign = "top") %>% -->
+<!-- #   add_header_above(bold=T, c(" " = 3, "Variables" = 4)) -->
+<!-- #  -->
+<!-- # ``` -->
