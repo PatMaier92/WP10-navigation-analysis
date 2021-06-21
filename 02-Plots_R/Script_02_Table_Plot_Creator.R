@@ -41,7 +41,7 @@ mylabels <- as_labeller(c(`YoungKids` = "Young Kids", `OldKids` = "Old Kids",
                           `allo_ret` = "Allocentric", `ego_ret` = "Egocentric",
                           `1`="Day 2 - Immediate Recall", `2`=" Day 14 - Delayed Recall"))
 # colors
-mycolors <- c("YoungKids" = "#CC6666", "OldKids" = "#FF9999", "YoungAdults" = "#FFCC99", "OldAdults" = "#CC9966",
+mycolors <- c("YoungKids" = "#CC6666", "OldKids" = "#FFCC99", "YoungAdults" = "#969C97", "OldAdults" = "#000000",
               "main_learn" = "#6699CC", "main_ret" = "#99CCFF", "allo_ret" = "#FFCC33", "ego_ret" = "#669933",
               "1" = "#FFCCCC", "2" ="#999999", "3" = "#333333")
 ## ----
@@ -100,8 +100,8 @@ mc_plot <- function(data, xvar, yvar, outvar, title, xlabel, ylabel, mylabels, m
 }
 
 mc1 <- mc_plot(sm_motor_control, "group", "time", "out_time", "", NULL, "time (sec)", mylabels, mycolors, "none")
-mc2 <- mc_plot(sm_motor_control, "group", "path_length", "out_path", "", NULL, "total path length (vu)", mylabels, mycolors, "none")
-mc3 <- mc_plot(sm_motor_control, "group", "velocity", "out_path", "", NULL, "velocity (time (sec)/path length (vu))", mylabels, mycolors, "none")
+mc2 <- mc_plot(sm_motor_control, "group", "path_length", "out_path", "", NULL, "total path length (vm)", mylabels, mycolors, "none")
+mc3 <- mc_plot(sm_motor_control, "group", "velocity", "out_path", "", NULL, "velocity (path length (vm)/time (sec))", mylabels, mycolors, "none")
 
 mc1 + mc2 + mc3 + plot_annotation(title="Motor control practise trial",
                             subtitle="Task: To navigate to 10 red balls as quickly and efficiently as possible")
@@ -140,25 +140,25 @@ sm_all_trials_s1 <- mean_func(sm_all_trials_s1)
 
 # condition is color-coded
 p1 <- bar_trials_grid(sm_all_trials_s1, "trial", "correct_goal", "trial_condition", "group", NULL, "Trial", "% correct goal", "Type", mylabels, "top", 8)
-p2 <- bar_trials_grid(sm_all_trials_s1, "trial", "final_distance", "trial_condition", "group", NULL, "Trial", "Final distance (vu)", "Type", mylabels, "top", 8)
+p2 <- bar_trials_grid(sm_all_trials_s1, "trial", "final_distance", "trial_condition", "group", NULL, "Trial", "Final distance (vm)", "Type", mylabels, "top", 8)
 
 # p1 + p2 + plot_annotation(title="Initial learning and recall") + 
 #   plot_layout(ncol=2, guides="collect") & theme(legend.position = "top", legend.justification=c(0,0)) 
 
 p3 <- bar_trials_grid(sm_all_trials_s1, "trial", "time", "trial_condition", "group", NULL, "Trial", "Time (sec)", "Type", mylabels, "top", 8)
-p4 <- bar_trials_grid(sm_all_trials_s1, "trial", "velocity", "trial_condition", "group", NULL, "Trial", "Velocity (time (sec)/path length (vu))", "Type", mylabels, "top", 8)
+p4 <- bar_trials_grid(sm_all_trials_s1, "trial", "velocity", "trial_condition", "group", NULL, "Trial", "velocity (path length (vm)/time (sec))", "Type", mylabels, "top", 8)
 
 # p3 + p4 + plot_annotation(title="Initial learning and recall") + 
 #   plot_layout(ncol=2, guides="collect") & theme(legend.position = "top", legend.justification=c(0,0)) 
 
-p5 <- bar_trials_grid(sm_all_trials_s1, "trial", "direct_path", "trial_condition", "group", NULL, "Trial", "% shortest path to correct goal", "Type", mylabels, "top", 8)
-p6 <- bar_trials_grid(sm_all_trials_s1, "trial", "path_length", "trial_condition", "group", NULL, "Trial", "Path length (vu)", "Type", mylabels, "top", 8)
+p5 <- bar_trials_grid(sm_all_trials_s1, "trial", "direct_path", "trial_condition", "group", NULL, "Trial", "% shortest path to goal", "Type", mylabels, "top", 8)
+p6 <- bar_trials_grid(sm_all_trials_s1, "trial", "path_length", "trial_condition", "group", NULL, "Trial", "Path length (vm)", "Type", mylabels, "top", 8)
 
 # p5 + p6 + plot_annotation(title="Initial learning and recall") + 
 #   plot_layout(ncol=2, guides="collect") & theme(legend.position = "top", legend.justification=c(0,0)) 
 
-p7 <- bar_trials_grid(sm_all_trials_s1, "trial", "avg_distance_path", "trial_condition", "group", NULL, "Trial", "Avg. distance to ideal path to correct goal", "Type", mylabels, "top", 8)
-p8 <- bar_trials_grid(sm_all_trials_s1, "trial", "avg_distance_path_pure", "trial_condition", "group", NULL, "Trial", "(Adjusted) avg. distance to ideal path to correct goal", "Type", mylabels, "top", 8)
+p7 <- bar_trials_grid(sm_all_trials_s1, "trial", "avg_distance_path", "trial_condition", "group", NULL, "Trial", "Avg. distance to path to goal", "Type", mylabels, "top", 8)
+p8 <- bar_trials_grid(sm_all_trials_s1, "trial", "avg_distance_path_pure", "trial_condition", "group", NULL, "Trial", "(Adjusted) Avg. distance to path to goal", "Type", mylabels, "top", 8)
 
 # p7 + p8 + plot_annotation(title="Initial learning and recall") + 
 #   plot_layout(ncol=2, guides="collect") & theme(legend.position = "top", legend.justification=c(0,0)) 
@@ -218,48 +218,62 @@ p2 <- box_agg(sm_ind_data %>% filter(trial_condition=="main_learn"),
               "group", "time", "group", "trial_condition", "none", NULL, NULL, "Time (sec)", "Group", mylabels, "top")
 
 p3 <- box_agg(sm_ind_data %>% filter(trial_condition=="main_learn"), 
-              "group", "path_length", "group", "trial_condition", "none", NULL, NULL, "Path length (vu)", "Group", mylabels, "top")
+              "group", "path_length", "group", "trial_condition", "none", NULL, NULL, "Path length (vm)", "Group", mylabels, "top")
 
 p4 <- box_agg(sm_ind_data %>% filter(trial_condition=="main_learn"), 
-              "group", "avg_distance_path", "group", "trial_condition", "none", NULL, NULL, "Avg. distance to ideal path to correct goal", "Group", mylabels, "top")
-
-# p1 + p2 + p3 + p4 + plot_annotation(title="Averaged values during learning in session 1",
-#                                subtitle="learning trials only (correct goal is visible)") + 
-#   plot_layout(ncol=4, guides="collect") & theme(legend.position = "top", legend.justification=c(0,0)) 
-
+              "group", "avg_distance_path", "group", "trial_condition", "none", NULL, NULL, "Avg. distance to path to goal", "Group", mylabels, "top")
 
 # aggregated plots for T1 (recall)
 p11 <- box_agg(sm_ind_data %>% filter(trial_condition=="ego_ret" | trial_condition=="allo_ret"),
         "group", "correct_goal", "group", "trial_condition", "none", NULL, NULL, "% correct goal", "Group", mylabels, "top")
 
 p12 <- box_agg(sm_ind_data %>% filter(trial_condition=="ego_ret" | trial_condition=="allo_ret"),
-              "group", "final_distance", "group", "trial_condition", "none", NULL, NULL, "Final distance (vu)", "Group", mylabels, "top")
+              "group", "final_distance", "group", "trial_condition", "none", NULL, NULL, "Final distance (vm)", "Group", mylabels, "top")
 
 p13 <- box_agg(sm_ind_data %>% filter(trial_condition=="ego_ret" | trial_condition=="allo_ret"), 
               "group", "direct_path", "group", "trial_condition", "none", NULL, NULL, "% shortest path to corect goal", "Group", mylabels, "top")
 
 p14 <- box_agg(sm_ind_data %>% filter(trial_condition=="ego_ret" | trial_condition=="allo_ret"), 
-              "group", "avg_distance_path", "group", "trial_condition", "none", NULL, NULL, "Avg. distance to ideal path to correct goal", "Group", mylabels, "top")
-
-# p11 + p12 + p13 + p14 + plot_annotation(title="Averaged values during free recall in session 1",
-#                                     subtitle="egocentric and allocentric trials only (goal invisible)") + 
-#   plot_layout(ncol=2, guides="collect") & theme(legend.position = "top", legend.justification=c(0,0)) 
-
+              "group", "avg_distance_path", "group", "trial_condition", "none", NULL, NULL, "Avg. distance to path to goal", "Group", mylabels, "top")
 
 p15 <- box_agg(sm_ind_data %>% filter(trial_condition=="ego_ret" | trial_condition=="allo_ret"), 
               "group", "time", "group", "trial_condition", "none", NULL, NULL, "Time (sec)", "Group", mylabels, "top")
 
 p16 <- box_agg(sm_ind_data %>% filter(trial_condition=="ego_ret" | trial_condition=="allo_ret"), 
-              "group", "path_length", "group", "trial_condition", "none", NULL, NULL, "Path length (vu)", "Group", mylabels, "top")
+              "group", "path_length", "group", "trial_condition", "none", NULL, NULL, "Path length (vm)", "Group", mylabels, "top")
 
 p17 <- box_agg(sm_ind_data %>% filter(trial_condition=="ego_ret" | trial_condition=="allo_ret"), 
-              "group", "velocity", "group", "trial_condition", "none", NULL, NULL, "Velocity (time/path length)", "Group", mylabels, "top")
+              "group", "velocity", "group", "trial_condition", "none", NULL, NULL, "velocity (path length (vm)/time (sec))", "Group", mylabels, "top")
 
-# p15 + p16 + p17 + plot_annotation(title="Averaged values during free recall in session 1",
-#                                subtitle="egocentric and allocentric trials only (goal invisible)") + 
-#   plot_layout(ncol=2, guides="collect") & theme(legend.position = "top", legend.justification=c(0,0)) 
 ## ----
 rm (p1, p2, p3, p4, p11, p12, p13, p14, p15, p16, p17, sm_ind_data)
+
+
+## ---- data_agg_s1_final
+# data for aggregated plots with individual values 
+sm_ind_data <- sm_trial_data %>%
+  filter(session==1 & block==4) %>% 
+  group_by(id, group, trial_condition) 
+sm_ind_data <- mean_func(sm_ind_data)
+
+
+# aggregated plots for T1 (only final recall)
+p111 <- box_agg(sm_ind_data, "group", "correct_goal", "group", "trial_condition", "none", NULL, NULL, "% correct goal", "Group", mylabels, "top")
+
+p112 <- box_agg(sm_ind_data, "group", "final_distance", "group", "trial_condition", "none", NULL, NULL, "Final distance (vm)", "Group", mylabels, "top")
+
+p113 <- box_agg(sm_ind_data, "group", "direct_path", "group", "trial_condition", "none", NULL, NULL, "% shortest path to corect goal", "Group", mylabels, "top")
+
+p114 <- box_agg(sm_ind_data, "group", "avg_distance_path", "group", "trial_condition", "none", NULL, NULL, "Avg. distance to path to goal", "Group", mylabels, "top")
+
+p115 <- box_agg(sm_ind_data, "group", "time", "group", "trial_condition", "none", NULL, NULL, "Time (sec)", "Group", mylabels, "top")
+
+p116 <- box_agg(sm_ind_data, "group", "path_length", "group", "trial_condition", "none", NULL, NULL, "Path length (vm)", "Group", mylabels, "top")
+
+p117 <- box_agg(sm_ind_data, "group", "velocity", "group", "trial_condition", "none", NULL, NULL, "velocity (path length (vm)/time (sec))", "Group", mylabels, "top")
+
+## ----
+rm (p111, p112, p113, p114, p115, p116, p117, sm_ind_data)
 
 
 ## ---- data_agg_s2_s1
@@ -322,23 +336,23 @@ sm_change_data <- mean_func(sm_change_data) %>%
 # comparing time points 
 # focus: group comparison
 p1a <- box_agg(sm_ind_data %>% filter(trial_condition=="ego_ret" | trial_condition=="allo_ret"), 
-        "group", "correct_goal", "group", "session", "trial_condition", NULL, NULL, "% correct goal", "Group", mylabels, "top")
+        "group", "correct_goal", "group", NULL, "trial_condition", NULL, NULL, "% correct goal", "Group", mylabels, "top")
 p2a <- box_agg(sm_ind_data %>% filter(trial_condition=="ego_ret" | trial_condition=="allo_ret"), 
-               "group", "direct_path", "group", "session", "trial_condition", NULL, NULL, "% shortest path to correct goal", "Group", mylabels, "top")
+               "group", "direct_path", "group", NULL, "trial_condition", NULL, NULL, "% shortest path to goal", "Group", mylabels, "top")
 p3a <- box_agg(sm_ind_data %>% filter(trial_condition=="ego_ret" | trial_condition=="allo_ret"), 
-               "group", "final_distance", "group", "session", "trial_condition", NULL, NULL, "Final distance (vu)", "Group", mylabels, "top")
+               "group", "final_distance", "group", NULL, "trial_condition", NULL, NULL, "Final distance (vm)", "Group", mylabels, "top")
 p4a <- box_agg(sm_ind_data %>% filter(trial_condition=="ego_ret" | trial_condition=="allo_ret"), 
-               "group", "avg_distance_path", "group", "session", "trial_condition", NULL, NULL, "Avg. distance to ideal path to goal", "Group", mylabels, "top")
+               "group", "avg_distance_path", "group", NULL, "trial_condition", NULL, NULL, "Avg. distance to path to goal", "Group", mylabels, "top")
 p5a <- box_agg(sm_ind_data %>% filter(trial_condition=="ego_ret" | trial_condition=="allo_ret"), 
-               "group", "avg_distance_chosen_path", "group", "session", "trial_condition", NULL, NULL, "Avg. distance to ideal path to chosen goal", "Group", mylabels, "top")
+               "group", "avg_distance_chosen_path", "group", NULL, "trial_condition", NULL, NULL, "Avg. distance to path to chosen goal", "Group", mylabels, "top")
 p6a <- box_agg(sm_ind_data %>% filter(trial_condition=="ego_ret" | trial_condition=="allo_ret"), 
-               "group", "path_length", "group", "session", "trial_condition", NULL, NULL, "Path length (vu)", "Group", mylabels, "top")
+               "group", "path_length", "group", NULL, "trial_condition", NULL, NULL, "Path length (vm)", "Group", mylabels, "top")
 p7a <- box_agg(sm_ind_data %>% filter(trial_condition=="ego_ret" | trial_condition=="allo_ret"), 
-               "group", "time", "group", "session", "trial_condition", NULL, NULL, "Time (sec)", "Group", mylabels, "top")
+               "group", "time", "group", NULL, "trial_condition", NULL, NULL, "Time (sec)", "Group", mylabels, "top")
 p8a <- box_agg(sm_ind_data %>% filter(trial_condition=="ego_ret" | trial_condition=="allo_ret"), 
-               "group", "velocity", "group", "session", "trial_condition", NULL, NULL, "Velocity (time (sec)/path length(vu))", "Group", mylabels, "top")
+               "group", "velocity", "group", NULL, "trial_condition", NULL, NULL, "velocity (path length (vm)/time (sec))", "Group", mylabels, "top")
 p9a <- box_agg(sm_ind_data %>% filter(trial_condition=="ego_ret" | trial_condition=="allo_ret"), 
-               "group", "sum_head_rotation", "group", "session", "trial_condition", NULL, NULL, "Sum of 'head rotation' (z-axis)", "Group", mylabels, "top")
+               "group", "sum_head_rotation", "group", NULL, "trial_condition", NULL, NULL, "Sum of 'head rotation' (z-axis)", "Group", mylabels, "top")
 
 
 # change plots 
@@ -403,11 +417,11 @@ sm_ind_data <- mean_func(sm_ind_data)
 
 # # overview of all trials 
 # raincloud(sm_ind_data, "group", "correct_goal", "Allocentric and egocentic recall trials", NULL, "% correct goal", mylabels, "none")
-# raincloud(sm_ind_data, "group", "direct_path", NULL, NULL, "% shortest path to correct goal", mylabels, "none")
-# raincloud(sm_ind_data, "group", "final_distance", NULL, NULL, "Final distance (vu)", mylabels, "none")
-# raincloud(sm_ind_data, "group", "avg_distance_path", NULL, NULL, "Avg. distance to ideal path to goal", mylabels, "none")
-# raincloud(sm_ind_data, "group", "avg_distance_path_pure", NULL, NULL, "(Adjusted) avg. distance to ideal path to goal", mylabels, "none")
-# raincloud(sm_ind_data, "group", "path_length", NULL, NULL, "Path length (vu)", mylabels, "none")
+# raincloud(sm_ind_data, "group", "direct_path", NULL, NULL, "% shortest path to goal", mylabels, "none")
+# raincloud(sm_ind_data, "group", "final_distance", NULL, NULL, "Final distance (vm)", mylabels, "none")
+# raincloud(sm_ind_data, "group", "avg_distance_path", NULL, NULL, "Avg. distance to path to goal", mylabels, "none")
+# raincloud(sm_ind_data, "group", "avg_distance_path_pure", NULL, NULL, "(Adjusted) avg. distance to path to goal", mylabels, "none")
+# raincloud(sm_ind_data, "group", "path_length", NULL, NULL, "Path length (vm)", mylabels, "none")
 # raincloud(sm_ind_data, "group", "time", NULL, NULL, "Time (sec)", mylabels, "none")
 # raincloud(sm_ind_data, "group", "velocity", NULL, NULL, "Velocity", mylabels, "none")
 # raincloud(sm_ind_data, "group", "sum_head_rotation", NULL, NULL, "Sum z-rotation", mylabels, "none")
@@ -439,11 +453,11 @@ raincloud_sub <- function(data, x, y, title, xlabel, ylabel, facetlabeller, lege
 
 # only ego and allo retrieval
 r1 <- raincloud_sub(sm_ind_data, "group", "correct_goal", NULL, NULL, "% correct goal", mylabels, "top")
-r2 <- raincloud_sub(sm_ind_data, "group", "direct_path", NULL, NULL, "% shortest path to correct goal", mylabels, "none")
-r3 <- raincloud_sub(sm_ind_data, "group", "final_distance", NULL, NULL, "Final distance (vu)", mylabels, "none")
+r2 <- raincloud_sub(sm_ind_data, "group", "direct_path", NULL, NULL, "% shortest path to goal", mylabels, "none")
+r3 <- raincloud_sub(sm_ind_data, "group", "final_distance", NULL, NULL, "Final distance (vm)", mylabels, "none")
 r4 <- raincloud_sub(sm_ind_data, "group", "avg_distance_path", NULL, NULL, "Avg. distance ideal path to goal", mylabels, "none")
 r5 <- raincloud_sub(sm_ind_data, "group", "avg_distance_path_pure", NULL, NULL, "(Adjusted) avg. distance ideal path to goal", mylabels, "none")
-r6 <- raincloud_sub(sm_ind_data, "group", "path_length", NULL, NULL, "Path length (vu)", mylabels, "none")
+r6 <- raincloud_sub(sm_ind_data, "group", "path_length", NULL, NULL, "Path length (vm)", mylabels, "none")
 r7 <- raincloud_sub(sm_ind_data, "group", "time", NULL, NULL, "Time (sec)", mylabels, "none")
 r8 <- raincloud_sub(sm_ind_data, "group", "velocity", NULL, NULL, "Velocity", mylabels, "none")
 r9 <- raincloud_sub(sm_ind_data, "group", "sum_head_rotation", NULL, NULL, "Sum 'head rotation' (z-axis)", mylabels, "none")
