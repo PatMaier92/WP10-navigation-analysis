@@ -112,6 +112,8 @@ $$\text{Distance to path} = \frac {\sum \sqrt{(x_{t}-x_{path})^2 + (y_{t}-y_{pat
 * **Sum of head rotation**: Sum of z-rotations indicating exploration behavior ('looking around'). Can be computed per zone (e.g., initial orientation phase).
 * **Strategy classification**: Classification into three strategies: Direct to chosen goal, detour (entering more zones than necessary), or reorientation (re-entering same zones). 
 
+![Examples for variables](./pics/Var_all.jpg){width=300px,height=500x}
+
 
 ``` {r, plot_settings, include=FALSE}
 ```
