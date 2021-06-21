@@ -286,11 +286,13 @@ box_agg_change <- function(data, xvar, yvar, fillby, title, xlabel, ylabel, fill
     geom_point(position=position_jitterdodge(seed=999), size=0.5) + # individual points
     geom_hline(yintercept=0, linetype="dashed", color = "red") + 
     coord_cartesian(clip="off") + 
-    facet_wrap(~ trial_condition, labeller=facetlabel) + # facet grouping
-    scale_fill_manual(name=fillbylabel, values=mycolors) + # fill title and colors
+    facet_wrap(~ trial_condition) + # facet grouping
+    scale_fill_manual(name=fillbylabel, labels=facetlabel, values=mycolors) +
     scale_y_continuous(limits=c(-1,1)) + 
     theme_classic() + # theme
     theme(legend.position=legendPos,
+          legend.key.size = unit(0.5, 'cm'),
+          legend.justification=c(0,0),
           axis.ticks.x=element_blank(),
           axis.text.x=element_blank()) +
     labs(title = title,

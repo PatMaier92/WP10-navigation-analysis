@@ -213,15 +213,16 @@ I categorized participant's trajectories into strategies. Strategies are a quali
 * **Detour**: Non-direct path without re-entry of zones to chosen goal location. 
 * **Reoriented**: Non-direct path with re-entry of zones to chosen goal location. 
 
-![Examples for strategies](./pics/Overview_Strategies.jpg){width=400px}
+![Examples for strategies](./pics/Overview_Strategies.jpg){width=300px}
 
 ``` {r, data_func_strategy, include=FALSE}
 ```
 
-``` {r, agg_strategy, echo=FALSE, fig.height=8, fig.width=10, fig.align="center" }
+``` {r, agg_strategy, echo=FALSE, fig.height=7, fig.width=10, fig.align="center" }
 
-s1 + plot_spacer() + s2 + s3 + plot_annotation(title= "Strategy use in %", tag_levels = 'A') +
-  plot_layout(ncol=2, guides="collect") & theme(legend.position="top", legend.justification = c(0,0))
+s1 + guide_area() + s2 + s3 + 
+  plot_annotation(title= "Strategy use in %", tag_levels = 'A') +
+  plot_layout(ncol=2, guides="collect") 
 
 ```
 \newpage 
