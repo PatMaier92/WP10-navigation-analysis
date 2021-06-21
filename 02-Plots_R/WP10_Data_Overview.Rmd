@@ -29,8 +29,6 @@ Navigating a star-shaped maze environment ("Starmaze") with three goal locations
 
 ![Trial order at Day 14 (15 trials)](./pics/Overview_Session2.jpg){width=500px}
 
-![Non-navigational memory retrieval at Day 14 (4 trials)](./pics/Overview_Session2_PostTest.jpg){width=500px}
-
 
 ```{r setup, include = FALSE, cache=FALSE}
 
@@ -229,6 +227,30 @@ s1 + guide_area() + s2 + s3 +
 ```
 \newpage 
 
+### Non-navigational memory tasks
+
+![Non-navigational memory retrieval at Day 14 (4 trials)](./pics/Overview_Session2_PostTest.jpg){width=500px}
+
+```{r, load_post_data, include=FALSE}
+in_file <- "../WP10_data/WP10_results/WP10_post_results_table.RData"
+load(in_file)
+rm(in_file)
+```
+
+``` {r, data_func_post_tests, include=FALSE}
+```
+
+``` {r, post_tests, echo=FALSE, warning=FALSE, fig.width=10, fig.height=7, fig.align="center" }
+
+nonav + plot_spacer() + shape + landmark + 
+  plot_annotation(title="Performance in non-navigational memory tasks",
+                  tag_levels = 'A') +
+  plot_layout(height=c(1.2,1.8), guides='auto')
+
+
+```
+
+\newpage 
 
 ### Motor Control Task 
 
@@ -246,7 +268,6 @@ mc1 + mc2 + mc3 +
 
 ```
 \newpage 
-
 
 <!-- # ### Table with descriptive mean values
 

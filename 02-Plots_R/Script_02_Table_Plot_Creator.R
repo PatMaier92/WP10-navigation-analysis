@@ -29,6 +29,10 @@ load(in_file)
 sm_trial_data_support <- sm_trial_data_support[sm_trial_data_support$exclude_trial_matlab==0,]
 rm(in_file)
 
+in_file <- "../WP10_data/WP10_results/WP10_post_results_table.RData"
+load(in_file)
+rm(in_file)
+
 
 ########################################################################
 
@@ -559,6 +563,131 @@ s3 <- strategy_bars(strategy_data_ego_ind, strategy_data_ego_sum, "search_strate
 ## ---- 
 rm(strategy_data_ego, strategy_bars)
 
+
+## ---- data_func_post_tests
+pt_data_ind <- pt_trial_data %>% 
+  filter(trial_condition != "pos_recall") %>% 
+  group_by(id, group, trial_condition) %>% 
+  summarize(mean_score=mean(score))
+
+pt_data_sum <- pt_trial_data %>% 
+  filter(trial_condition != "pos_recall") %>% 
+  group_by(group, trial_condition) %>% 
+  summarize(mean_score=mean(score))
+
+
+# overview of performance score 
+nonav <- ggplot(pt_data_ind, aes(x=group, y=mean_score, fill=group)) + 
+  geom_bar(data=pt_data_sum, stat="identity", colour="black") + 
+  geom_point(position=position_jitterdodge(seed=999), size=0.5) + 
+  facet_wrap(~ trial_condition, 
+             labeller=as_labeller(c(`shape_recog`="Shape recognition", 
+                                    `lm_recog`="Landmark recognition", 
+                                    `obj_recog`="Goal object recognition", 
+                                    `pos_recall`="Position recall"))) + 
+  scale_fill_manual(values=mycolors, labels=mylabels) + # nicer color palette 
+  theme_classic() + 
+  theme(legend.position="bottom", 
+        axis.title.x=element_blank(),
+        axis.ticks.x=element_blank(),
+        axis.text.x=element_blank()) + 
+  labs(title="General overview",
+       x=NULL,
+       y="Performance score",
+       fill=NULL) 
+
+
+# details: shape recognition 
+shape_data <- pt_trial_data %>% 
+  filter(trial_condition=="shape_recog") %>% 
+  select(id, sex, group, obj_1) %>% 
+  mutate(obj_1 = factor(obj_1, levels = c(1, 2, 3, 4, 5, 6),
+                               labels=c("1-FourSquare", "2-FourFork", "3-FourX", 
+                               "4-FiveStar", "5-SixSquare", "6-SevenStar"))) %>% 
+  group_by(group) %>% 
+  count(obj_1) %>% 
+  mutate(n_per_group=sum(n),
+         perc=n/n_per_group)
+
+shape <- ggplot(shape_data, aes(x=group, y=perc, fill=group)) +
+  geom_bar(stat="identity", color="black") + 
+  facet_wrap(~ obj_1, drop=F) + 
+  scale_fill_manual(values=mycolors, labels=mylabels) +
+  ylim(0,1) + 
+  theme_classic() + 
+  theme(legend.position="bottom", 
+        axis.title.x=element_blank(),
+        axis.ticks.x=element_blank(),
+        axis.text.x=element_blank()) + 
+  labs(title="Responses in shape recognition task",
+       x=NULL,
+       y="% response (per group)",
+       fill=NULL) 
+
+
+# details: landmark recognition 
+lm_data <- pt_trial_data %>% 
+  filter(trial_condition=="lm_recog") %>% 
+  select(id, sex, group, obj_1, obj_2, obj_3, obj_4, obj_5) %>% 
+  mutate(obj_1 = factor(obj_1, levels=c(1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15),
+                        labels=c("01-Forest_corr", "02-Forest-House_corr", "03-Tower_corr", 
+                                 "04-Mountain_corr", "05-Mountain-House_corr", 
+                                 "06-Forest_sim", "07-Forest-House_sim", "08-Tower_sim",
+                                 "09-Mountain_sim", "10-Mountain-House_sim",
+                                 "11-Forest_dsm", "12-Forest-House_dsm", "13-Tower_dsm",
+                                 "14-Mountain_dsm", "15-Mountain-House_dsm")),
+         obj_2 = factor(obj_2, levels=c(1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15),
+                        labels=c("01-Forest_corr", "02-Forest-House_corr", "03-Tower_corr", 
+                                 "04-Mountain_corr", "05-Mountain-House_corr", 
+                                 "06-Forest_sim", "07-Forest-House_sim", "08-Tower_sim",
+                                 "09-Mountain_sim", "10-Mountain-House_sim",
+                                 "11-Forest_dsm", "12-Forest-House_dsm", "13-Tower_dsm",
+                                 "14-Mountain_dsm", "15-Mountain-House_dsm")),
+         obj_3 = factor(obj_3, levels=c(1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15),
+                        labels=c("01-Forest_corr", "02-Forest-House_corr", "03-Tower_corr", 
+                                 "04-Mountain_corr", "05-Mountain-House_corr", 
+                                 "06-Forest_sim", "07-Forest-House_sim", "08-Tower_sim",
+                                 "09-Mountain_sim", "10-Mountain-House_sim",
+                                 "11-Forest_dsm", "12-Forest-House_dsm", "13-Tower_dsm",
+                                 "14-Mountain_dsm", "15-Mountain-House_dsm")),
+         obj_4 = factor(obj_4, levels=c(1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15),
+                        labels=c("01-Forest_corr", "02-Forest-House_corr", "03-Tower_corr", 
+                                 "04-Mountain_corr", "05-Mountain-House_corr", 
+                                 "06-Forest_sim", "07-Forest-House_sim", "08-Tower_sim",
+                                 "09-Mountain_sim", "10-Mountain-House_sim",
+                                 "11-Forest_dsm", "12-Forest-House_dsm", "13-Tower_dsm",
+                                 "14-Mountain_dsm", "15-Mountain-House_dsm")),
+         obj_5 = factor(obj_5, levels=c(1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15),
+                        labels=c("01-Forest_corr", "02-Forest-House_corr", "03-Tower_corr", 
+                                 "04-Mountain_corr", "05-Mountain-House_corr", 
+                                 "06-Forest_sim", "07-Forest-House_sim", "08-Tower_sim",
+                                 "09-Mountain_sim", "10-Mountain-House_sim",
+                                 "11-Forest_dsm", "12-Forest-House_dsm", "13-Tower_dsm",
+                                 "14-Mountain_dsm", "15-Mountain-House_dsm"))) %>% 
+  pivot_longer(cols=c(obj_1, obj_2, obj_3, obj_4, obj_5)) %>% 
+  mutate(lm_group=case_when(str_detect(value, '_corr') ~ "1-correct",
+                            str_detect(value, '_sim') ~ "2-lure similar",
+                            str_detect(value, '_dsm') ~ "3-lure dissimilar")) %>% 
+  group_by(group) %>% 
+  count(lm_group) %>% 
+  mutate(n_per_group=sum(n),
+         perc=n/n_per_group)
+
+landmark <- ggplot(lm_data, aes(x=group, y=perc, fill=group)) +
+  geom_bar(stat="identity", color="black") + 
+  facet_wrap(~ lm_group, drop=F) + 
+  scale_fill_manual(values=mycolors, labels=mylabels) +
+  ylim(0,1) + 
+  theme_classic() + 
+  theme(legend.position="bottom", 
+        axis.title.x=element_blank(),
+        axis.ticks.x=element_blank(),
+        axis.text.x=element_blank()) + 
+  labs(title="Responses in landmark recognition task",
+       x=NULL,
+       y="% response (per group)",
+       fill=NULL)
+## ----
 
 
 ## clear workspace
