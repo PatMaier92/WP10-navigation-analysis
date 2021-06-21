@@ -14,7 +14,6 @@
 ## get packages
 library(readxl)
 library(tidyverse)
-#library(arsenal)
 
 
 
@@ -24,6 +23,7 @@ date = readline(prompt = "Please enter the date string of the result file ")
 
 ###############################################################################
 
+### STARMAZE DATA 
 
 ## read xlsx data 
 in_file <- paste("../WP10_data/WP10_results/WP10_results_table_", date, ".xlsx", sep="")
@@ -147,3 +147,76 @@ save(sm_trial_data_support, file=out_file)
 
 ## clear workspace
 rm(list = ls())
+
+
+###############################################################################
+
+### POST TEST DATA 
+
+## read xlsx data 
+in_file <- paste("../WP10_data/WP10_results/WP10_post_results_table_", date, ".xlsx", sep="")
+pt_trial_data <- read_xlsx(in_file, sheet = "post_vars", col_names = T)
+rm(date, in_file)
+
+
+## tidy data 
+# add factor information
+pt_trial_data$sex <- factor(pt_trial_data$sex, levels=c(1, 2), 
+                            labels=c("male", "female"))
+pt_trial_data$group <- factor(pt_trial_data$group, levels=c(1, 2, 5, 6), 
+                              labels=c("YoungKids", "OldKids", "YoungAdults", "OldAdults"))
+pt_trial_data$trial_condition <- factor(pt_trial_data$trial_condition, levels=c(1, 2, 3, 4), 
+                              labels=c("shape_recog", "lm_recog", "obj_recog", "pos_recall"))
+pt_trial_data$obj_MA <- factor(pt_trial_data$obj_MA, levels=c(1, 2, 3, 4),
+                               labels=c("01-Fussball", "02-Globus", "03-Geige", "04-Stuhl"))
+pt_trial_data$obj_MC <- factor(pt_trial_data$obj_MC, levels=c(1, 2, 3, 4),
+                               labels=c("01-Fussball", "02-Globus", "03-Geige", "04-Stuhl"))
+pt_trial_data$obj_MI <- factor(pt_trial_data$obj_MI, levels=c(1, 2, 3, 4),
+                               labels=c("01-Fussball", "02-Globus", "03-Geige", "04-Stuhl"))
+pt_trial_data$lm_MB <- factor(pt_trial_data$lm_MB, levels=c(1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15),
+                               labels=c("01-Forest_corr", "02-Forest-House_corr", "03-Tower_corr", 
+                                        "04-Mountain_corr", "05-Mountain-House_corr", 
+                                        "06-Forest_sim", "07-Forest-House_sim", "08-Tower_sim",
+                                        "09-Mountain_sim", "10-Mountain-House_sim",
+                                        "11-Forest_dsm", "12-Forest-House_dsm", "13-Tower_dsm",
+                                        "14-Mountain_dsm", "15-Mountain-House_dsm"))
+pt_trial_data$lm_MD <- factor(pt_trial_data$lm_MD, levels=c(1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15),
+                              labels=c("01-Forest_corr", "02-Forest-House_corr", "03-Tower_corr", 
+                                       "04-Mountain_corr", "05-Mountain-House_corr", 
+                                       "06-Forest_sim", "07-Forest-House_sim", "08-Tower_sim",
+                                       "09-Mountain_sim", "10-Mountain-House_sim",
+                                       "11-Forest_dsm", "12-Forest-House_dsm", "13-Tower_dsm",
+                                       "14-Mountain_dsm", "15-Mountain-House_dsm"))
+pt_trial_data$lm_MF <- factor(pt_trial_data$lm_MF, levels=c(1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15),
+                              labels=c("01-Forest_corr", "02-Forest-House_corr", "03-Tower_corr", 
+                                       "04-Mountain_corr", "05-Mountain-House_corr", 
+                                       "06-Forest_sim", "07-Forest-House_sim", "08-Tower_sim",
+                                       "09-Mountain_sim", "10-Mountain-House_sim",
+                                       "11-Forest_dsm", "12-Forest-House_dsm", "13-Tower_dsm",
+                                       "14-Mountain_dsm", "15-Mountain-House_dsm"))
+pt_trial_data$lm_MH <- factor(pt_trial_data$lm_MH, levels=c(1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15),
+                              labels=c("01-Forest_corr", "02-Forest-House_corr", "03-Tower_corr", 
+                                       "04-Mountain_corr", "05-Mountain-House_corr", 
+                                       "06-Forest_sim", "07-Forest-House_sim", "08-Tower_sim",
+                                       "09-Mountain_sim", "10-Mountain-House_sim",
+                                       "11-Forest_dsm", "12-Forest-House_dsm", "13-Tower_dsm",
+                                       "14-Mountain_dsm", "15-Mountain-House_dsm"))
+pt_trial_data$lm_MJ <- factor(pt_trial_data$lm_MJ, levels=c(1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15),
+                              labels=c("01-Forest_corr", "02-Forest-House_corr", "03-Tower_corr", 
+                                       "04-Mountain_corr", "05-Mountain-House_corr", 
+                                       "06-Forest_sim", "07-Forest-House_sim", "08-Tower_sim",
+                                       "09-Mountain_sim", "10-Mountain-House_sim",
+                                       "11-Forest_dsm", "12-Forest-House_dsm", "13-Tower_dsm",
+                                       "14-Mountain_dsm", "15-Mountain-House_dsm"))
+
+
+
+## save as RData
+out_file <- "../WP10_data/WP10_results/WP10_post_results_table.RData"
+save(pt_trial_data, file=out_file)
+
+
+
+## clear workspace
+rm(list = ls())
+
