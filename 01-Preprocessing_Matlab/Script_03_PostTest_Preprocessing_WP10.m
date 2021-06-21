@@ -23,7 +23,7 @@ addpath(genpath(pwd)) % add subfolder functions to path
 [dataFolder]=sm_inputPath(); 
 
 % folder for output results 
-folderOut2=[dataFolder '\WP10_results'];
+folderOut2=[dataFolder '\WP10_results\PostTest'];
 if ~exist(folderOut2, 'dir')
     mkdir(folderOut2);
     disp('Your outputfolder for results didn''t exist, a new folder was created')
@@ -52,10 +52,16 @@ for subject=subject_start:subject_end
     pstr=['p',num2str(subject)];
     sstr=['s',num2str(session)];
     [finalFolderString]=sm_wp10_getFolderstring(session);
-    [folderIn,folderOut]=sm_wp10_folder(dataFolder,subject,finalFolderString);
+    [folderIn,~]=sm_wp10_folder(dataFolder,subject,finalFolderString);
+    folderOut1=[dataFolder '\' num2str(subject) '\results_post_test'];
+    if ~exist(folderOut1, 'dir')
+        mkdir(folderOut1);
+        disp('Your individual outputfolder for results didn''t exist, a new folder was created')
+    end
+    
     % save data
     targetFileName_Subject         = ['\' num2str(subject) '_results_table_post.mat'];
-    save(fullfile(folderOut, targetFileName_Subject));
+    save(fullfile(folderOut1, targetFileName_Subject));
 
     % read-in trial file 
     opts = detectImportOptions([folderIn, '\trial_results.csv']);
@@ -204,7 +210,7 @@ for k=1:size(trial_data,1)
     end
     
     % save data
-    save(fullfile(folderOut, targetFileName_Subject),'pt', '-append'); 
+    save(fullfile(folderOut1, targetFileName_Subject),'pt', '-append'); 
 
     %% Block 3: Writing data ---> result sheet XLSX for single trials %%
     % header
@@ -223,8 +229,8 @@ for k=1:size(trial_data,1)
     group_var=[pt.sub{p}.wp string(yyyymmdd(datetime)) pt.sub{p}.id pt.sub{p}.sex pt.sub{p}.group ...  
         pt.sub{p}.session{s}.session pt.sub{p}.session{s}.session_duration ...
         pt.sub{p}.session{s}.trial{k}.trial_num pt.sub{p}.session{s}.trial{k}.trial_type ];
-    file_name = ['results_post_' num2str(wp) '_' pt.sub{p}.Group '_' num2str(subject) '_' Session '_' Trial '.xls'];
-    new_file = fullfile(folderOut, file_name);
+    file_name = ['\results_' num2str(wp) '_' pt.sub{p}.Group '_' num2str(subject) '_' Session '_' Trial '.xls'];
+    new_file = fullfile(folderOut1, file_name);
 
     % write data
     xlswrite(new_file,strrep([group_var ...
@@ -242,7 +248,7 @@ end
 %% Write summaries for a selection of variables
 new_name2 = [pt.sub{p}.Group '_' num2str(pt.sub{p}.id)  '_results_post'];
 new_file = fullfile(folderOut2, new_name2);
-sm_wp10_table_allTrials_post(folderOut, new_file, col_header, col_header_2, 'X', 'post_vars');
+sm_wp10_table_allTrials_post(folderOut1, new_file, col_header, col_header_2, 'X', 'post_vars');
 
 p=p+1;
 
