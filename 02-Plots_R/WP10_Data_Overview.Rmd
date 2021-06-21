@@ -220,8 +220,8 @@ I categorized participant's trajectories into strategies. Strategies are a quali
 
 ``` {r, agg_strategy, echo=FALSE, fig.height=8, fig.width=10, fig.align="center" }
 
-s1 + plot_spacer() + s2 + s3 + plot_layout(ncol=2) + 
-  plot_annotation(title= "Strategy use in %", tag_levels = 'A')
+s1 + plot_spacer() + s2 + s3 + plot_annotation(title= "Strategy use in %", tag_levels = 'A') +
+  plot_layout(ncol=2, guides="collect") & theme(legend.position="top", legend.justification = c(0,0))
 
 ```
 \newpage 

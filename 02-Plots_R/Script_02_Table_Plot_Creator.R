@@ -478,9 +478,10 @@ rm(sm_ind_data, raincloud, raincloud_sub, r1, r2, r3, r4, r5, r6, r7, r8, r9)
 
 ## ---- data_func_strategy
 # function for strategy choice bar plots
-strategy_bars <- function(data, x, y, title, ylabel, flabel, filllabels, mypalette, legendPos) {
-  p <- ggplot(data, aes_string(x=x, y=y, fill=x)) + # set up data 
-    geom_bar(stat="identity", colour="black") + 
+strategy_bars <- function(data_ind, data_sum, x, y, title, ylabel, flabel, filllabels, mypalette, legendPos) {
+  p <- ggplot(data_ind, aes_string(x=x, y=y, fill=x)) + # set up data 
+    geom_bar(data=data_sum, stat="identity", colour="black") + 
+    geom_point(position=position_jitterdodge(seed=999), size=0.5) + 
     facet_grid(session ~ group, labeller=filllabels) +
     coord_cartesian(clip="off") +
     scale_fill_brewer(palette = mypalette, direction=-1, labels=filllabels) + # nicer color palette 
@@ -507,34 +508,52 @@ stratlabels <- as_labeller(c(`direct` = "direct",
 
 
 # data for strategy choice bar plots: caculate percentage of strategies per group and session 
-strategy_data <- sm_trial_data %>%
+strategy_data_ind <- sm_trial_data %>%
+  filter(trial_condition!="practise_motor") %>%
+  group_by(id, group, session, search_strategy_no) %>% 
+  tally() %>%
+  mutate(percent=n/sum(n))
+
+strategy_data_sum <- sm_trial_data %>%
   filter(trial_condition!="practise_motor") %>%
   group_by(group, session, search_strategy_no) %>% 
   tally() %>%
   mutate(percent=n/sum(n))
 
 # data for strategy choice bar plots: Allocentric
-strategy_data_allo <- sm_trial_data %>%
+strategy_data_allo_ind <- sm_trial_data %>%
+  filter(trial_condition=="allo_ret") %>% 
+  group_by(id, group, session, search_strategy_no) %>% 
+  tally() %>%
+  mutate(percent=n/sum(n))
+
+strategy_data_allo_sum <- sm_trial_data %>%
   filter(trial_condition=="allo_ret") %>% 
   group_by(group, session, search_strategy_no) %>% 
   tally() %>%
   mutate(percent=n/sum(n))
 
 # data for strategy choice bar plots: Egocentric
-strategy_data_ego <- sm_trial_data %>%
+strategy_data_ego_ind <- sm_trial_data %>%
   filter(trial_condition=="ego_ret") %>% 
-  group_by(group, session, search_strategy_no) %>% 
+  group_by(id, group, session, search_strategy_no) %>% 
+  tally() %>%
+  mutate(percent=n/sum(n))
+
+strategy_data_ego_sum <- sm_trial_data %>%
+  filter(trial_condition=="ego_ret") %>% 
+  group_by( group, session, search_strategy_no) %>% 
   tally() %>%
   mutate(percent=n/sum(n))
 
 # strategy choice plots for all trials
-s1 <- strategy_bars(strategy_data, "search_strategy_no", "percent", "All trials", "Relative % of use", "Strategy", stratlabels, "YlGnBu", "bottom")
+s1 <- strategy_bars(strategy_data_ind, strategy_data_sum, "search_strategy_no", "percent", "All trials", "Relative % of use", "Strategy", stratlabels, "Purples", "bottom")
 
 # strategy choice plots for allocentric trials 
-s2 <- strategy_bars(strategy_data_allo, "search_strategy_no", "percent", "Allocentric trials", "Relative % of use", "Strategy", stratlabels, "YlOrBr", "bottom")
+s2 <- strategy_bars(strategy_data_allo_ind, strategy_data_allo_sum, "search_strategy_no", "percent", "Allocentric trials", "Relative % of use", "Strategy", stratlabels, "Purples", "bottom")
 
 # strategy choice plots for egocentric trials 
-s3 <- strategy_bars(strategy_data_ego, "search_strategy_no", "percent", "Egocentric trials", "Relative % of use", "Strategy", stratlabels, "YlGn", "bottom")
+s3 <- strategy_bars(strategy_data_ego_ind, strategy_data_ego_sum, "search_strategy_no", "percent", "Egocentric trials", "Relative % of use", "Strategy", stratlabels, "Purples", "bottom")
 ## ---- 
 rm(strategy_data_ego, strategy_bars)
 
