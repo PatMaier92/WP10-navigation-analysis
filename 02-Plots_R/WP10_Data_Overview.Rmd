@@ -47,11 +47,17 @@ knitr::read_chunk('Script_02_Table_Plot_Creator.R')
 in_file <- "../WP10_data/WP10_results/WP10_results_table.RData"
 load(in_file)
 rm(in_file)
+
+in_file <- "../WP10_data/WP10_results/WP10_results_table_support.RData"
+load(in_file)
+rm(in_file)
 ```
 
 ```{r, prepare_data, include=FALSE}
 
 sm_trial_data <- sm_trial_data[sm_trial_data$exclude_trial_matlab==0,]
+
+sm_trial_data_support <- sm_trial_data_support[sm_trial_data_support$exclude_trial_matlab==0,]
 
 ```
 
@@ -230,11 +236,21 @@ s1 + guide_area() + s2 + s3 +
 ``` {r, data_func_scatter, include=FALSE}
 ```
 
-``` {r, scatter, echo=FALSE, warning=FALSE, fig.width=8, fig.height=5, fig.align="center"}
+``` {r, scatter, echo=FALSE, warning=FALSE, fig.width=7, fig.height=4, fig.align="center"}
 
 sc1 + 
   plot_annotation(title="Relation between egocentric and allocentric performance",
                   tag_levels = 'A')
+
+```
+``` {r, data_func_rotation, include=FALSE}
+```
+
+``` {r, rotation, echo=FALSE, warning=FALSE, fig.width=8, fig.height=8, fig.align="center"}
+
+rot1 + guide_area() + rot3 + rot5 + 
+  plot_annotation(title= "Initial 'head' rotation", tag_levels = 'A') +
+  plot_layout(ncol=2, guides="collect") 
 
 ```
 
