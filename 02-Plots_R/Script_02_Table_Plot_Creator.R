@@ -564,6 +564,84 @@ s3 <- strategy_bars(strategy_data_ego_ind, strategy_data_ego_sum, "search_strate
 rm(strategy_data_ego, strategy_bars)
 
 
+## ---- data_func_rotation
+#
+# rot_data <- sm_trial_data_support %>% 
+#   filter(trial_condition=="main_learn" | trial_condition=="ego_ret" | trial_condition=="allo_ret") %>% 
+#   select(id, group, session, trial, trial_condition, 
+#          rotation_a1, rotation_a2, rotation_a3, rotation_a4, rotation_a5) %>%
+#   pivot_longer(cols=starts_with("rotation")) %>% 
+#   group_by(id, group, session, trial_condition, name) %>% 
+#   summarise(value=sum(value))
+# 
+# ggplot(rot_data, aes(x=group, y=value)) + 
+#   geom_boxplot() + 
+#   facet_wrap(trial_condition ~ name, nrow=3, ncol=5)
+
+## ----
+
+
+## ---- data_func_final_locs
+
+final_alley <- sm_trial_data %>% 
+  group_by(group, session, trial_condition) %>% 
+  count(chosen_alley_loc) %>% 
+  mutate(percent=n/sum(n)) %>% 
+  filter(trial_condition=="ego_ret", session==2) 
+
+final_alley <- sm_trial_data %>% 
+  group_by(group, session, trial_condition, goal_alley) %>% 
+  mutate(chosen_alley_loc=case_when(chosen_alley_loc %% 2 == 0 ~ 999,
+                                    TRUE ~ chosen_alley_loc)) %>% 
+  count(chosen_alley_loc) %>% 
+  mutate(percent=n/sum(n)) %>% 
+  filter(session==2, goal_alley==9, trial_condition=="ego_ret")
+
+ggplot(final_alley, aes(x=group, y=percent, fill=group)) + 
+  geom_bar(stat="identity", color="black") + 
+  facet_wrap(~ as.factor(chosen_alley_loc), nrow=1) + 
+  ylim(0,1) + 
+  scale_fill_manual(values=mycolors) + 
+  theme_classic() + 
+  theme(legend.position="bottom", 
+        axis.ticks.x=element_blank(),
+        axis.text.x=element_blank(),
+        axis.title.x=element_blank()) + 
+  labs(title="Chosen final alley",
+       subtitle="Even numbers are inner alley, uneven numbers are outer alleys",
+       x=NULL,
+       y="%",
+       fill=NULL) 
+## ----
+
+
+## ---- data_func_scatter
+
+scat_data <- sm_trial_data %>% 
+  group_by(id, group, session, trial_condition) %>% 
+  summarize(performance=mean(correct_goal)) %>% 
+  filter(trial_condition=="ego_ret" | trial_condition=="allo_ret") %>% 
+  pivot_wider(names_from=trial_condition, 
+              values_from=performance)
+
+scatter <- function(data, x, y, xlab, ylab){
+  p1 <- ggplot(data, aes_string(x=x, y=y)) +
+    geom_point(position=position_jitter(width=0.02, height=0.02, seed=1111)) + 
+    geom_smooth(method="lm") + 
+    facet_grid(session ~ group) + 
+    scale_x_continuous(labels = scales::percent, breaks=c(0, 0.25, 0.5, 0.75, 1)) + 
+    scale_y_continuous(labels = scales::percent, breaks=c(0, 0.25, 0.5, 0.75, 1)) + 
+    theme_classic() + # 
+    labs(x=xlab,
+         y=ylab)
+  
+  return(p1)
+}
+
+sc1 <- scatter(scat_data, "allo_ret", "ego_ret", "Allocentric", "Egocentric")
+## ----
+
+
 ## ---- data_func_post_tests
 pt_data_ind <- pt_trial_data %>% 
   filter(trial_condition != "pos_recall") %>% 

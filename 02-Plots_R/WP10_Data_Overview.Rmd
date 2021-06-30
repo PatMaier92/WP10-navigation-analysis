@@ -227,6 +227,19 @@ s1 + guide_area() + s2 + s3 +
 ```
 \newpage 
 
+``` {r, data_func_scatter, include=FALSE}
+```
+
+``` {r, scatter, echo=FALSE, warning=FALSE, fig.width=8, fig.height=5, fig.align="center"}
+
+sc1 + 
+  plot_annotation(title="Relation between egocentric and allocentric performance",
+                  tag_levels = 'A')
+
+```
+
+\newpage
+
 ### Non-navigational memory tasks
 
 ![Non-navigational memory retrieval at Day 14 (4 trials)](./pics/Overview_Session2_PostTest.jpg){width=500px}
