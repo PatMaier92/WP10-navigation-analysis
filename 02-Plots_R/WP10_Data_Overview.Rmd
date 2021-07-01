@@ -243,16 +243,16 @@ sc1 +
                   tag_levels = 'A')
 
 ```
-``` {r, data_func_rotation, include=FALSE}
-```
-
-``` {r, rotation, echo=FALSE, warning=FALSE, fig.width=8, fig.height=8, fig.align="center"}
-
-rot1 + guide_area() + rot3 + rot5 + 
-  plot_annotation(title= "Initial 'head' rotation", tag_levels = 'A') +
-  plot_layout(ncol=2, guides="collect") 
-
-```
+# ``` {r, data_func_rotation, include=FALSE}
+# ```
+# 
+# ``` {r, rotation, echo=FALSE, warning=FALSE, fig.width=8, fig.height=10, fig.align="center"}
+# 
+# rot1 + guide_area() + rot2 + rot3 + rot4 + rot5 + 
+#   plot_annotation(title= "Initial 'head' rotation", tag_levels = 'A') +
+#   plot_layout(ncol=2, guides="collect") 
+# 
+# ```
 
 \newpage
 
