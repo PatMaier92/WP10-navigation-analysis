@@ -565,6 +565,26 @@ rm(strategy_data_ego, strategy_bars)
 
 ## ---- data_func_rotation
 
+# summary value 
+sm_trial_data_rot <- sm_trial_data %>%
+  filter(trial_condition=="main_learn" | trial_condition=="ego_ret" | trial_condition=="allo_ret") %>%
+  group_by(id, group, session, trial_condition) %>%
+  summarise(sum_head_rotation=mean(sum_head_rotation, na.rm=T))
+
+
+rot <- ggplot(sm_trial_data_rot, aes(x=group, y=sum_head_rotation, fill=group)) + 
+  geom_boxplot() + 
+  scale_fill_manual(values=mycolors) + 
+  facet_grid(session ~ trial_condition, labeller=mylabels) + 
+  theme_classic() +
+  theme(legend.position = "bottom",
+        legend.title = element_blank(),
+        axis.ticks.x = element_blank(),
+        axis.title.x = element_blank(),
+        axis.text.x = element_blank()) + 
+  labs(subtitle="Overall rotation oer trial",
+       y="Mean sum of z rotation")
+
 
 # area information from Matlab
 # area inner: area(alley_polyshape_2{1})*1000 = 15.31
