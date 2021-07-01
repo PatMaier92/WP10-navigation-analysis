@@ -569,6 +569,7 @@ rm(strategy_data_ego, strategy_bars)
 # area information from Matlab
 # area inner: area(alley_polyshape_2{1})*1000 = 15.31
 # area outer: area(alley_polyshape_1{1})*1000 = 15.31
+# area total arm: 15.31 + 15.31 = 30.62
 # area tri: area(tri{1})*1000 = 2.99
 # area rec: area(rec{1})*1000 = 10.82
 
@@ -576,8 +577,8 @@ rm(strategy_data_ego, strategy_bars)
 # function for rotation plots 
 rot_plot <- function(data, xvar, yvar, fillvar, subtitle) {
   p <- ggplot(data, aes_string(x=xvar, y=yvar, fill=fillvar)) +
-    geom_boxplot() + 
-    scale_fill_brewer(palette="Oranges") + 
+    geom_boxplot(outlier.shape=NA) + 
+    scale_fill_manual(values=c("#F5562F", "#F5AE50", "#F5D72F")) + 
     theme_classic() +
     theme(legend.title = element_blank(),
           axis.ticks.x = element_blank(),
@@ -592,43 +593,67 @@ rot_plot <- function(data, xvar, yvar, fillvar, subtitle) {
 # full data 
 rot_data <- sm_trial_data_support %>%
   filter(trial_condition=="main_learn" | trial_condition=="ego_ret" | trial_condition=="allo_ret") %>%
-  select(id, group, session, trial, trial_condition,
-         rotation_a1_in, rotation_a2_in, rotation_a3_in, rotation_a4_in, rotation_a5_in,
-         rotation_a1_out, rotation_a2_out, rotation_a3_out, rotation_a4_out, rotation_a5_out,
+  select(id, group, session, trial, trial_condition, start_pos,
+         rotation_a1, rotation_a2, rotation_a3, rotation_a4, rotation_a5,
          rotation_tri_5, rotation_tri_2, rotation_tri_3, rotation_tri_4, rotation_tri_5_1,
          rotation_rec_1, rotation_rec_2, rotation_rec_3, rotation_rec_4, rotation_rec_5) %>%
   rename(rotation_tri_1=rotation_tri_5) %>% # correct for typo
   pivot_longer(cols=starts_with("rotation"), names_to="area") %>%
-  group_by(id, group, session, trial_condition, area) %>%
+  group_by(id, group, session, trial_condition, area, start_pos) %>%
   summarise(abs_sum_rot=sum(value)) %>% 
   mutate(area_size=case_when(str_detect(area, "tri") ~ 2.99,
                              str_detect(area, "rec") ~ 10.82,
-                             TRUE ~ 15.31),
+                             TRUE ~ 30.62),
          rel_sum_rot=abs_sum_rot/area_size)
 
 
-# data subset and plotting
+# for learning and egocentric 
 r_data <- rot_data %>%
-  filter(area %in% c("rotation_a4_in", "rotation_a4_out", "rotation_tri_4")) %>% 
-  mutate(area=factor(area, labels=c("First half", "Second half", "Intersection"),
-                     levels=c("rotation_a4_out", "rotation_a4_in", "rotation_tri_4")))
-# TBD get correct start area for allocentric depending on actual start!!!
+  filter(trial_condition!="allo_ret" &
+           area %in% c("rotation_a4", "rotation_tri_4")) %>% 
+  mutate(area=factor(area, labels=c("Outer arm", "Intersection"),
+                     levels=c("rotation_a4", "rotation_tri_4")))
 
-
-r_data_learn <-r_data %>% filter(trial_condition=="main_learn")
+r_data_learn <- r_data %>% filter(trial_condition=="main_learn")
 rot1 <- rot_plot(r_data_learn, "group", "rel_sum_rot", "area", "Learning in session 1")
 
-r_data_allo_1 <-r_data %>% filter(trial_condition=="allo_ret" & session==1)
-rot2 <- rot_plot(r_data_allo_1, "group", "rel_sum_rot", "area", "Allocentric in session 1")
+r_data_ego_1 <- r_data %>% filter(trial_condition=="ego_ret" & session==1)
+rot2 <- rot_plot(r_data_ego_1, "group", "rel_sum_rot", "area", "Egocentric in session 1")
 
-r_data_ego_1 <-r_data %>% filter(trial_condition=="ego_ret" & session==1)
-rot3 <- rot_plot(r_data_ego_1, "group", "rel_sum_rot", "area", "Egocentric in session 1")
+r_data_ego_2 <- r_data %>% filter(trial_condition=="ego_ret" & session==2)
+rot3 <- rot_plot(r_data_ego_1, "group", "rel_sum_rot", "area", "Egocentric in session 2")
 
-r_data_allo_2 <-r_data %>% filter(trial_condition=="allo_ret" & session==2)
-rot4 <- rot_plot(r_data_allo_1, "group", "rel_sum_rot", "area", "Allocentric in session 2")
 
-r_data_ego_2 <-r_data %>% filter(trial_condition=="ego_ret" & session==2)
-rot5 <- rot_plot(r_data_ego_1, "group", "rel_sum_rot", "area", "Egocentric in session 2")
+# for allocentric 
+r_data_2 <- rot_data %>%
+  filter(trial_condition=="allo_ret") %>% 
+  mutate(to_keep=case_when(start_pos==1 & area %in% c("rotation_a1", "rotation_tri_1") ~ TRUE,
+                           start_pos==3 & area %in% c("rotation_a2", "rotation_tri_2") ~ TRUE,
+                           start_pos==5 & area %in% c("rotation_a3", "rotation_tri_3") ~ TRUE,
+                           start_pos==9 & area %in% c("rotation_a5", "rotation_tri_5") ~ TRUE,
+                           # start_pos==2 & area %in% c("rotation_tri_1", "rotation_rec_1", "rotation_tri_2") ~ TRUE,
+                           # start_pos==4 & area %in% c("rotation_tri_2", "rotation_rec_2", "rotation_tri_3") ~ TRUE,
+                           # start_pos==6 & area %in% c("rotation_tri_3", "rotation_rec_3", "rotation_tri_4") ~ TRUE,
+                           # start_pos==8 & area %in% c("rotation_tri_4", "rotation_rec_4", "rotation_tri_5") ~ TRUE,
+                           # start_pos==10 & area %in% c("rotation_tri_5", "rotation_rec_5", "rotation_tri_1") ~ TRUE,
+                           start_pos==2 & area %in% c("rotation_rec_1") ~ TRUE,
+                           start_pos==4 & area %in% c("rotation_rec_2") ~ TRUE,
+                           start_pos==6 & area %in% c("rotation_rec_3") ~ TRUE,
+                           start_pos==8 & area %in% c("rotation_rec_4") ~ TRUE,
+                           start_pos==10 & area %in% c("rotation_rec_5") ~ TRUE,
+                           TRUE ~ FALSE)) %>% 
+  filter(to_keep) %>% 
+  rowwise() %>% 
+  mutate(area_2=factor(case_when(str_detect(area, "_a") ~ "Outer arm", 
+                          str_detect(area, "_tri") ~ "Intersection",
+                          TRUE ~ "Inner arm"),
+                       levels=c("Outer arm", "Intersection", "Inner arm")))
+
+r_data_allo_1 <- r_data_2 %>% filter(trial_condition=="allo_ret" & session==1)
+rot4 <- rot_plot(r_data_allo_1, "group", "rel_sum_rot", "area_2", "Allocentric in session 1")
+
+r_data_allo_2 <- r_data_2 %>% filter(trial_condition=="allo_ret" & session==2)
+rot5 <- rot_plot(r_data_allo_2, "group", "rel_sum_rot", "area_2", "Allocentric in session 2")
 
 ## ----
 
