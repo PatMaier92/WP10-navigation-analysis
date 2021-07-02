@@ -594,120 +594,143 @@ rot <- ggplot(sm_trial_data_rot, aes(x=group, y=sum_head_rotation, fill=group)) 
 # area rec: area(rec{1})*1000 = 10.82
 
 
-# function for rotation plots 
-rot_plot <- function(data, xvar, yvar, fillvar, subtitle) {
-  p <- ggplot(data, aes_string(x=xvar, y=yvar, fill=fillvar)) +
-    geom_boxplot(outlier.shape=NA) + 
-    scale_fill_manual(values=c("#F5562F", "#F5AE50", "#F5D72F")) + 
-    ylim(0,80) + 
-    theme_classic() +
-    theme(legend.title = element_blank(),
-          axis.ticks.x = element_blank(),
-          axis.title.x = element_blank()) + 
-    labs(subtitle=subtitle, 
-         y="Mean sum of z rotation (avg. by size)")
-  
-  return(p)
-}
-
-
-# full data 
-rot_data <- sm_trial_data_support %>%
-  filter(trial_condition=="main_learn" | trial_condition=="ego_ret" | trial_condition=="allo_ret") %>%
-  select(id, group, session, trial, trial_condition, start_pos,
-         rotation_a1, rotation_a2, rotation_a3, rotation_a4, rotation_a5,
-         rotation_tri_5, rotation_tri_2, rotation_tri_3, rotation_tri_4, rotation_tri_5_1,
-         rotation_rec_1, rotation_rec_2, rotation_rec_3, rotation_rec_4, rotation_rec_5) %>%
-  rename(rotation_tri_1=rotation_tri_5, rotation_tri_5=rotation_tri_5_1) %>% # correct for typo
-  pivot_longer(cols=starts_with("rotation"), names_to="area") %>%
-  group_by(id, group, session, trial_condition, area, start_pos) %>%
-  summarise(abs_sum_rot=mean(value, na.rm=T)) %>% 
-  mutate(area_size=case_when(str_detect(area, "tri") ~ 2.99,
-                             str_detect(area, "rec") ~ 10.82,
-                             TRUE ~ 30.62),
-         rel_sum_rot=abs_sum_rot/area_size)
-
-
-# for learning and egocentric 
-r_data <- rot_data %>%
-  filter(trial_condition!="allo_ret" &
-           area %in% c("rotation_a4", "rotation_tri_4")) %>% 
-  mutate(area=factor(area, labels=c("Outer arm", "Intersection"),
-                     levels=c("rotation_a4", "rotation_tri_4")))
-
-r_data_learn <- r_data %>% filter(trial_condition=="main_learn")
-rot1 <- rot_plot(r_data_learn, "group", "rel_sum_rot", "area", "Learning in session 1")
-
-r_data_ego_1 <- r_data %>% filter(trial_condition=="ego_ret" & session==1)
-rot2 <- rot_plot(r_data_ego_1, "group", "rel_sum_rot", "area", "Egocentric in session 1")
-
-r_data_ego_2 <- r_data %>% filter(trial_condition=="ego_ret" & session==2)
-rot3 <- rot_plot(r_data_ego_2, "group", "rel_sum_rot", "area", "Egocentric in session 2")
-
-
-# for allocentric 
-r_data_2 <- rot_data %>%
-  filter(trial_condition=="allo_ret") %>% 
-  mutate(to_keep=case_when(start_pos==1 & area %in% c("rotation_a1", "rotation_tri_1") ~ TRUE,
-                           start_pos==3 & area %in% c("rotation_a2", "rotation_tri_2") ~ TRUE,
-                           start_pos==5 & area %in% c("rotation_a3", "rotation_tri_3") ~ TRUE,
-                           start_pos==9 & area %in% c("rotation_a5", "rotation_tri_5") ~ TRUE,
-                           start_pos==2 & area %in% c("rotation_rec_1") ~ TRUE,
-                           start_pos==4 & area %in% c("rotation_rec_2") ~ TRUE,
-                           start_pos==6 & area %in% c("rotation_rec_3") ~ TRUE,
-                           start_pos==8 & area %in% c("rotation_rec_4") ~ TRUE,
-                           start_pos==10 & area %in% c("rotation_rec_5") ~ TRUE,
-                           TRUE ~ FALSE)) %>% 
-  filter(to_keep) %>% 
-  rowwise() %>% 
-  mutate(area_2=case_when(str_detect(area, "_a") ~ "Outer arm", 
-                          str_detect(area, "_tri") ~ "Intersection",
-                          TRUE ~ "Inner arm")) %>% 
-  group_by(id, group, session, area_2) %>% 
-  summarise(abs_sum_rot=mean(abs_sum_rot, na.rm=T),
-            rel_sum_rot=mean(rel_sum_rot, na.rm=T))
-
-
-r_data_allo_1 <- r_data_2 %>% filter(session==1)
-rot4 <- rot_plot(r_data_allo_1, "group", "rel_sum_rot", "area_2", "Allocentric in session 1")
-
-r_data_allo_2 <- r_data_2 %>% filter(session==2)
-rot5 <- rot_plot(r_data_allo_2, "group", "rel_sum_rot", "area_2", "Allocentric in session 2")
+# # function for rotation plots 
+# rot_plot <- function(data, xvar, yvar, fillvar, subtitle) {
+#   p <- ggplot(data, aes_string(x=xvar, y=yvar, fill=fillvar)) +
+#     geom_boxplot(outlier.shape=NA) + 
+#     scale_fill_manual(values=c("#F5562F", "#F5AE50", "#F5D72F")) + 
+#     ylim(0,80) + 
+#     theme_classic() +
+#     theme(legend.title = element_blank(),
+#           axis.ticks.x = element_blank(),
+#           axis.title.x = element_blank()) + 
+#     labs(subtitle=subtitle, 
+#          y="Mean sum of z rotation (avg. by size)")
+#   
+#   return(p)
+# }
+# 
+# 
+# # full data 
+# rot_data <- sm_trial_data_support %>%
+#   filter(trial_condition=="main_learn" | trial_condition=="ego_ret" | trial_condition=="allo_ret") %>%
+#   select(id, group, session, trial, trial_condition, start_pos,
+#          rotation_a1, rotation_a2, rotation_a3, rotation_a4, rotation_a5,
+#          rotation_tri_5, rotation_tri_2, rotation_tri_3, rotation_tri_4, rotation_tri_5_1,
+#          rotation_rec_1, rotation_rec_2, rotation_rec_3, rotation_rec_4, rotation_rec_5) %>%
+#   rename(rotation_tri_1=rotation_tri_5, rotation_tri_5=rotation_tri_5_1) %>% # correct for typo
+#   pivot_longer(cols=starts_with("rotation"), names_to="area") %>%
+#   group_by(id, group, session, trial_condition, area, start_pos) %>%
+#   summarise(abs_sum_rot=mean(value, na.rm=T)) %>% 
+#   mutate(area_size=case_when(str_detect(area, "tri") ~ 2.99,
+#                              str_detect(area, "rec") ~ 10.82,
+#                              TRUE ~ 30.62),
+#          rel_sum_rot=abs_sum_rot/area_size)
+# 
+# 
+# # for learning and egocentric 
+# r_data <- rot_data %>%
+#   filter(trial_condition!="allo_ret" &
+#            area %in% c("rotation_a4", "rotation_tri_4")) %>% 
+#   mutate(area=factor(area, labels=c("Outer arm", "Intersection"),
+#                      levels=c("rotation_a4", "rotation_tri_4")))
+# 
+# r_data_learn <- r_data %>% filter(trial_condition=="main_learn")
+# rot1 <- rot_plot(r_data_learn, "group", "rel_sum_rot", "area", "Learning in session 1")
+# 
+# r_data_ego_1 <- r_data %>% filter(trial_condition=="ego_ret" & session==1)
+# rot2 <- rot_plot(r_data_ego_1, "group", "rel_sum_rot", "area", "Egocentric in session 1")
+# 
+# r_data_ego_2 <- r_data %>% filter(trial_condition=="ego_ret" & session==2)
+# rot3 <- rot_plot(r_data_ego_2, "group", "rel_sum_rot", "area", "Egocentric in session 2")
+# 
+# 
+# # for allocentric 
+# r_data_2 <- rot_data %>%
+#   filter(trial_condition=="allo_ret") %>% 
+#   mutate(to_keep=case_when(start_pos==1 & area %in% c("rotation_a1", "rotation_tri_1") ~ TRUE,
+#                            start_pos==3 & area %in% c("rotation_a2", "rotation_tri_2") ~ TRUE,
+#                            start_pos==5 & area %in% c("rotation_a3", "rotation_tri_3") ~ TRUE,
+#                            start_pos==9 & area %in% c("rotation_a5", "rotation_tri_5") ~ TRUE,
+#                            start_pos==2 & area %in% c("rotation_rec_1") ~ TRUE,
+#                            start_pos==4 & area %in% c("rotation_rec_2") ~ TRUE,
+#                            start_pos==6 & area %in% c("rotation_rec_3") ~ TRUE,
+#                            start_pos==8 & area %in% c("rotation_rec_4") ~ TRUE,
+#                            start_pos==10 & area %in% c("rotation_rec_5") ~ TRUE,
+#                            TRUE ~ FALSE)) %>% 
+#   filter(to_keep) %>% 
+#   rowwise() %>% 
+#   mutate(area_2=case_when(str_detect(area, "_a") ~ "Outer arm", 
+#                           str_detect(area, "_tri") ~ "Intersection",
+#                           TRUE ~ "Inner arm")) %>% 
+#   group_by(id, group, session, area_2) %>% 
+#   summarise(abs_sum_rot=mean(abs_sum_rot, na.rm=T),
+#             rel_sum_rot=mean(rel_sum_rot, na.rm=T))
+# 
+# 
+# r_data_allo_1 <- r_data_2 %>% filter(session==1)
+# rot4 <- rot_plot(r_data_allo_1, "group", "rel_sum_rot", "area_2", "Allocentric in session 1")
+# 
+# r_data_allo_2 <- r_data_2 %>% filter(session==2)
+# rot5 <- rot_plot(r_data_allo_2, "group", "rel_sum_rot", "area_2", "Allocentric in session 2")
 
 ## ----
 
 
 ## ---- data_func_final_locs
 
+# data
 final_alley <- sm_trial_data %>% 
-  group_by(group, session, trial_condition) %>% 
-  count(chosen_alley_loc) %>% 
-  mutate(percent=n/sum(n)) %>% 
-  filter(trial_condition=="ego_ret", session==2) 
-
-final_alley <- sm_trial_data %>% 
+  filter(trial_condition=="allo_ret" | trial_condition=="ego_ret") %>% 
   group_by(group, session, trial_condition, goal_alley) %>% 
-  mutate(chosen_alley_loc=case_when(chosen_alley_loc %% 2 == 0 ~ 999,
-                                    TRUE ~ chosen_alley_loc)) %>% 
+  mutate(chosen_alley_loc=case_when(chosen_alley_loc %% 2 == 0 ~ "inner ring",
+                                    TRUE ~ as.character(chosen_alley_loc))) %>% 
   count(chosen_alley_loc) %>% 
-  mutate(percent=n/sum(n)) %>% 
-  filter(session==2, goal_alley==9, trial_condition=="ego_ret")
+  mutate(percent=n/sum(n))
 
-ggplot(final_alley, aes(x=group, y=percent, fill=group)) + 
-  geom_bar(stat="identity", color="black") + 
-  facet_wrap(~ as.factor(chosen_alley_loc), nrow=1) + 
-  ylim(0,1) + 
-  scale_fill_manual(values=mycolors) + 
-  theme_classic() + 
-  theme(legend.position="bottom", 
-        axis.ticks.x=element_blank(),
-        axis.text.x=element_blank(),
-        axis.title.x=element_blank()) + 
-  labs(title="Chosen final alley",
-       subtitle="Even numbers are inner alley, uneven numbers are outer alleys",
-       x=NULL,
-       y="%",
-       fill=NULL) 
+
+# function
+final_bars <- function(data, xvar, yvar, f1, f2, title, subtitle, mycolors){
+  p <- ggplot(data, aes_string(x=xvar, y=yvar, fill=xvar)) + 
+    geom_bar(stat="identity", color="black") + 
+    facet_grid(f1 ~ as.factor(f2)) + 
+    facet_grid(formula(paste(f1, "~", f2))) + 
+    ylim(0,1) + 
+    scale_fill_manual(values=mycolors) + 
+    theme_classic() + 
+    theme(legend.position="bottom", 
+          legend.justification = c(0,0),
+          axis.ticks.x=element_blank(),
+          axis.text.x=element_blank(),
+          axis.title.x=element_blank()) + 
+    labs(title=title,
+         subtitle=subtitle,
+         x=NULL,
+         y="% chosen",
+         fill=NULL) 
+  
+  return(p)
+  
+}
+
+final_bars(final_alley %>% filter(session==1 & trial_condition=="ego_ret"), "group", "percent", "goal_alley", "chosen_alley_loc", 
+           "Chosen final alley by goal location (999 = inner alleys)", "Egocentric in session 1", mycolors)
+
+final_bars(final_alley %>% filter(session==2 & trial_condition=="ego_ret"), "group", "percent", "goal_alley", "chosen_alley_loc", 
+           "Chosen final alley by goal location (999 = inner alleys)", "Egocentric in session 2", mycolors)
+
+final_bars(final_alley %>% filter(session==1 & trial_condition=="allo_ret"), "group", "percent", "goal_alley", "chosen_alley_loc", 
+           "Chosen final alley by goal location (999 = inner alleys)", "Allocentric in session 1", mycolors)
+
+final_bars(final_alley %>% filter(session==2 & trial_condition=="allo_ret"), "group", "percent", "goal_alley", "chosen_alley_loc", 
+           "Chosen final alley by goal location (999 = inner alleys)", "Allocentric in session 2", mycolors)
+
+final_bars(final_alley %>% filter(trial_condition=="ego_ret"), "group", "percent", "goal_alley", "chosen_alley_loc", 
+           "Chosen final alley by goal location (999 = inner alleys)", "Egocentric across sessions", mycolors)
+
+final_bars(final_alley %>% filter(trial_condition=="allo_ret"), "group", "percent", "goal_alley", "chosen_alley_loc", 
+           "Chosen final alley by goal location (999 = inner alleys)", "Allocentric  across sessions", mycolors)
+
 ## ----
 
 
