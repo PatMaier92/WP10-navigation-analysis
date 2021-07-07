@@ -168,11 +168,11 @@ pt_trial_data$group <- factor(pt_trial_data$group, levels=c(1, 2, 5, 6),
 pt_trial_data$trial_condition <- factor(pt_trial_data$trial_condition, levels=c(1, 2, 3, 4), 
                               labels=c("shape_recog", "lm_recog", "obj_recog", "pos_recall"))
 pt_trial_data$obj_MA <- factor(pt_trial_data$obj_MA, levels=c(1, 2, 3, 4),
-                               labels=c("01-Fussball", "02-Globus", "03-Geige", "04-Stuhl"))
+                               labels=c("01-Fahrrad", "02-Fussball", "03-Geige", "04-Stuhl"))
 pt_trial_data$obj_MC <- factor(pt_trial_data$obj_MC, levels=c(1, 2, 3, 4),
-                               labels=c("01-Fussball", "02-Globus", "03-Geige", "04-Stuhl"))
+                               labels=c("01-Fahrrad", "02-Fussball", "03-Geige", "04-Stuhl"))
 pt_trial_data$obj_MI <- factor(pt_trial_data$obj_MI, levels=c(1, 2, 3, 4),
-                               labels=c("01-Fussball", "02-Globus", "03-Geige", "04-Stuhl"))
+                               labels=c("01-Fahrrad", "02-Fussball", "03-Geige", "04-Stuhl"))
 pt_trial_data$lm_MB <- factor(pt_trial_data$lm_MB, levels=c(1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15),
                                labels=c("01-Forest_corr", "02-Forest-House_corr", "03-Tower_corr", 
                                         "04-Mountain_corr", "05-Mountain-House_corr", 
