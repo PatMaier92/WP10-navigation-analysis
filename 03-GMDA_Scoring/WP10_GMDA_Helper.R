@@ -13,7 +13,7 @@ library(openxlsx)
 
 
 # read-in data
-my_path <- "../../WP10/WP10_data/WP10_results/"
+my_path <- "../WP10_data/WP10_results/"
 load(paste(my_path, "WP10_post_results_table.RData", sep=""))
 
 
