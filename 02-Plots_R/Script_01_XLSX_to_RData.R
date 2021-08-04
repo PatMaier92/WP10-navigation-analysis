@@ -208,6 +208,10 @@ pt_trial_data$lm_MJ <- factor(pt_trial_data$lm_MJ, levels=c(1, 2, 3, 4, 5, 6, 7,
                                        "09-Mountain_sim", "10-Mountain-House_sim",
                                        "11-Forest_dsm", "12-Forest-House_dsm", "13-Tower_dsm",
                                        "14-Mountain_dsm", "15-Mountain-House_dsm"))
+pt_trial_data$score <-  case_when(pt_trial_data$score==999 ~ NaN,
+                                  TRUE ~ pt_trial_data$score)
+pt_trial_data$obj_1 <-  case_when(pt_trial_data$obj_1==0 ~ NaN,
+                                  TRUE ~ pt_trial_data$obj_1)
 
 
 

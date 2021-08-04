@@ -765,12 +765,12 @@ sc1 <- scatter(scat_data, "allo_ret", "ego_ret", "Allocentric", "Egocentric")
 pt_data_ind <- pt_trial_data %>% 
   filter(trial_condition != "pos_recall") %>% 
   group_by(id, group, trial_condition) %>% 
-  summarize(mean_score=mean(score))
+  summarize(mean_score=mean(score, na.rm=T))
 
 pt_data_sum <- pt_trial_data %>% 
   filter(trial_condition != "pos_recall") %>% 
   group_by(group, trial_condition) %>% 
-  summarize(mean_score=mean(score))
+  summarize(mean_score=mean(score, na.rm=T))
 
 
 # overview of performance score 
@@ -797,6 +797,7 @@ nonav <- ggplot(pt_data_ind, aes(x=group, y=mean_score, fill=group)) +
 # details: shape recognition 
 shape_data <- pt_trial_data %>% 
   filter(trial_condition=="shape_recog") %>% 
+  filter(!is.na(obj_1)) %>% 
   select(id, sex, group, obj_1) %>% 
   mutate(obj_1 = factor(obj_1, levels = c(1, 2, 3, 4, 5, 6),
                                labels=c("1-FourSquare", "2-FourFork", "3-FourX", 
