@@ -6,11 +6,12 @@
 library(tidyverse)
 library(ggtext)
 library(openxlsx)
+library(corrplot)
+library(patchwork)
 
 
 ######################################################################
 # Preprocessing for GMDA scoring 
-
 
 # read-in data
 my_path <- "../WP10_data/WP10_results/"
@@ -35,7 +36,6 @@ giveMeGoals(pt_trial_data)
 
 ######################################################################
 # Read-in GMDA Scoring result files and preprocess
-
 
 # define path to data 
 my_path="GMDA/Data/"
@@ -113,7 +113,7 @@ data_gmda <- gmda_data %>%
                            Measure=="Distance Accuracy" ~ "DistAcc",
                            Measure=="Angle Accuracy" ~ "AngleAcc",
                            TRUE ~ "NA")) %>% 
-  full_join(data_gmda_brd, by=c("ID", "Type", "Measure", "Score")) %>% 
+  full_join(temp_brd, by=c("ID", "Type", "Measure", "Score")) %>% 
   mutate(group=factor(case_when(ID<12000 | (ID>20000 & ID<22000) ~ "YK",
                                 ID<15000 | (ID>20000 & ID<25000) ~ "OK",
                                 TRUE ~ "YA"), levels=c("YK", "OK", "YA"))) %>%
@@ -144,7 +144,6 @@ rm(wb)
 #######################################################################
 # Plot data 
 
-
 # file identifier 
 date <- readline("Enter date and scoring protocol info: ")
 
@@ -153,29 +152,111 @@ in_file_R <-  paste("Data/WP10_GMDA_data_", date, ".Rdata", sep="")
 load(in_file_R)
 
 
-# outlier plotter 
-is_outlier <- function(x) {
-  return(x < quantile(x, 0.25) - 1.5 * IQR(x) | x > quantile(x, 0.75) + 1.5 * IQR(x))
-}
+# compare scoring protocols 
+protocol_all <- data_gmda
+protocol_lm <- temp
+protocol_go <- data_gmda
+data <- bind_rows(protocol_all, protocol_lm, protocol_go)
+
+# compare protocols 
+d1 <- data %>%
+  pivot_wider(id_cols=c(ID, Measure, group),
+              names_prefix="Score_",
+              names_from=protocol,
+              values_from=Score)
+
+M <- d1 %>% ungroup() %>% filter(Measure=="SQRT(CanOrg)") %>% select(Score_all, Score_landmarks, Score_goals) %>% cor()
+corrplot(M, method="number", title="SQRT(CanOrg)")
+
+M <- d1 %>% ungroup() %>% filter(Measure=="CanAcc") %>% select(Score_all, Score_landmarks, Score_goals) %>% cor()
+corrplot(M, method="number", title="CanAcc")
+
+M <- d1 %>% ungroup() %>% filter(Measure=="DistAcc") %>% select(Score_all, Score_landmarks, Score_goals) %>% cor()
+corrplot(M, method="number", title="DistAcc")
+
+M <- d1 %>% ungroup() %>% filter(Measure=="AngleAcc") %>% select(Score_all, Score_landmarks, Score_goals) %>% cor()
+corrplot(M, method="number", title="AngleAcc")
+
+# compare measures 
+d2 <- data %>%
+  pivot_wider(id_cols=c(ID, protocol, group),
+              names_from=Measure,
+              values_from=c(Score))
+
+M <- d2 %>% ungroup() %>% filter(protocol=="all") %>% 
+  select(-c(ID, group, protocol, CanOrg)) %>% cor()
+corrplot(M, method="number", title="Protocol all")
+
+M <- d2 %>% ungroup() %>% filter(protocol=="landmarks") %>% 
+  select(-c(ID, group, protocol, CanOrg)) %>% cor()
+corrplot(M, method="number", title="Protocol landmarks")
+
+M <- d2 %>% ungroup() %>% filter(protocol=="goals") %>% 
+  select(-c(ID, group, protocol, CanOrg)) %>% cor()
+corrplot(M, method="number", title="Protocol goals")
 
 
+# overview plot 
+# # outlier plotter 
+# is_outlier <- function(x) {
+#   return(x < quantile(x, 0.25) - 1.5 * IQR(x) | x > quantile(x, 0.75) + 1.5 * IQR(x))
+# }
+
+# level order 
 level_order <- c("SQRT(CanOrg)",
                  "CanOrg",
                  "CanAcc",
                  "DistAcc",
                  "AngleAcc",
-                 "r",
-                 "theta") 
+                 "r") 
 
-# overview plot 
-ggplot(data_gmda, aes(x=factor(Measure, level=level_order), y=Score)) +
-  geom_boxplot(outlier.shape = NA) + 
+# make plot
+ggplot(data_gmda, aes(x=group, y=Score, fill=group)) +
+  geom_boxplot() + 
   geom_point() + 
-  facet_wrap(~ group, nrow=1) + 
+  facet_wrap(~ factor(Measure, level=level_order), nrow=1) +
+  scale_fill_manual(values=c("red", "blue", "yellow")) + 
   ylim(0,1) + 
   theme_classic() +
+  theme(legend.position="bottom", 
+        axis.text.x = element_blank(),
+        axis.ticks = element_blank()) + 
   labs(title="GMDA scores",
-       subtitle=paste("using original images, rotated if theta > 30, scoring template ", date, sep=""),
+       subtitle=paste("scoring template ", date, sep=""),
        y="Score",
-       x="GMDA Measures")
+       x="")
+
+
+# reduced overview plot
+data_gmda_cl <-data_gmda %>% 
+  filter(!Measure %in% c("r", "CanOrg"))
+
+# make plot
+ggplot(data_gmda_cl, aes(x=group, y=Score, fill=group)) +
+  geom_boxplot() + 
+  geom_point() + 
+  facet_wrap(~ factor(Measure, level=level_order), nrow=1) +
+  scale_fill_manual(values=c("red", "blue", "yellow")) + 
+  ylim(0,1) + 
+  theme_classic() +
+  theme(legend.position="bottom", 
+        axis.text.x = element_blank(),
+        axis.ticks = element_blank()) + 
+  labs(title="GMDA scores",
+       subtitle=paste("scoring template ", date, sep=""),
+       y="Score",
+       x="")
+
+ggplot(data_gmda_cl, aes(x=Score, color=group)) + 
+  geom_freqpoly(bins=5) + 
+  facet_grid(~ factor(Measure, level=level_order)) + 
+  scale_color_manual(values=c("red", "blue", "yellow")) + 
+  theme_classic() +
+  theme(legend.position="bottom", 
+        axis.text.x = element_blank(),
+        axis.ticks = element_blank()) + 
+  labs(title="GMDA scores",
+       subtitle=paste("scoring template ", date, sep=""),
+       y="Count",
+       x="")
 
