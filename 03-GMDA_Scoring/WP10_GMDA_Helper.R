@@ -9,7 +9,7 @@ library(openxlsx)
 
 
 ######################################################################
-# Preprocessing
+# Preprocessing for GMDA scoring 
 
 
 # read-in data
@@ -34,7 +34,7 @@ giveMeGoals(pt_trial_data)
 
 
 ######################################################################
-# Read-in GMDA Scoring result files 
+# Read-in GMDA Scoring result files and preprocess
 
 
 # define path to data 
@@ -89,9 +89,71 @@ brd_data <- file_list %>%
 #   separate(Filename, sep="_", into=c("ID", "Type"))
 
 
-#######################################################################
-# Preparation
+# check theta
+# get "bad" theta values
+bad_theta <- brd_data %>% filter(Measure=="theta") %>% filter(abs(Score) > 20) 
 
+
+#######################################################################
+# Save data 
+
+# Data overview/compare groups
+temp_brd <- brd_data %>% 
+  select(!`Measure Type`) %>%
+  filter(Measure %in% c("r", "theta"))
+
+
+data_gmda <- gmda_data %>% 
+  select(!`Measure Type`) %>% 
+  filter(!Measure %in% c("Rotational Bias", "Scaling Bias", "Num Landmarks Missing")) %>% 
+  mutate(Score=as.numeric(Score),
+         Measure=case_when(Measure=="SQRT(Canonical Organization)" ~ "SQRT(CanOrg)",
+                           Measure=="Canonical Organization" ~ "CanOrg",
+                           Measure=="Canonical Accuracy" ~ "CanAcc",
+                           Measure=="Distance Accuracy" ~ "DistAcc",
+                           Measure=="Angle Accuracy" ~ "AngleAcc",
+                           TRUE ~ "NA")) %>% 
+  full_join(data_gmda_brd, by=c("ID", "Type", "Measure", "Score")) %>% 
+  mutate(group=factor(case_when(ID<12000 | (ID>20000 & ID<22000) ~ "YK",
+                                ID<15000 | (ID>20000 & ID<25000) ~ "OK",
+                                TRUE ~ "YA"), levels=c("YK", "OK", "YA"))) %>%
+  group_by(group) %>%
+  arrange(ID) %>% 
+  filter(Measure!="theta")
+
+
+# file identifier 
+date <- readline("Enter date and scoring protocol info: ")
+
+# save output
+# as Rdata 
+out_file_R <-  paste("WP10_GMDA_data_", date, ".Rdata", sep="")
+save(data_gmda, file=out_file_R)
+
+# as excel 
+out_file_XLSX <-  paste("WP10_GMDA_data_", date, ".xlsx", sep="")
+
+wb <- createWorkbook()
+addWorksheet(wb, "GMDA")
+writeData(wb, "GMDA", data_gmda)
+
+saveWorkbook(wb, out_file_XLSX, overwrite = TRUE)
+rm(wb)
+
+
+#######################################################################
+# Plot data 
+
+
+# file identifier 
+date <- readline("Enter date and scoring protocol info: ")
+
+# read data 
+in_file_R <-  paste("Data/WP10_GMDA_data_", date, ".Rdata", sep="")
+load(in_file_R)
+
+
+# outlier plotter 
 is_outlier <- function(x) {
   return(x < quantile(x, 0.25) - 1.5 * IQR(x) | x > quantile(x, 0.75) + 1.5 * IQR(x))
 }
@@ -105,41 +167,10 @@ level_order <- c("SQRT(CanOrg)",
                  "r",
                  "theta") 
 
-
-# get bad theta values --> need to redo Scoring after GIMP rotation
-bad_theta <- brd_data %>% filter(Measure=="theta") %>% filter(abs(Score) > 20) 
-
-
-# Data overview/compare groups
-temp_brd <- brd_data %>% 
-  select(!`Measure Type`) %>%
-  filter(Measure %in% c("r", "theta"))
-
-
-temp <- gmda_data %>% 
-  select(!`Measure Type`) %>% 
-  filter(!Measure %in% c("Rotational Bias", "Scaling Bias", "Num Landmarks Missing")) %>% 
-  mutate(Score=as.numeric(Score),
-         Measure=case_when(Measure=="SQRT(Canonical Organization)" ~ "SQRT(CanOrg)",
-                           Measure=="Canonical Organization" ~ "CanOrg",
-                           Measure=="Canonical Accuracy" ~ "CanAcc",
-                           Measure=="Distance Accuracy" ~ "DistAcc",
-                           Measure=="Angle Accuracy" ~ "AngleAcc",
-                           TRUE ~ "NA")) %>% 
-  full_join(temp_brd, by=c("ID", "Type", "Measure", "Score")) %>% 
-  mutate(group=factor(case_when(ID<12000 | (ID>20000 & ID<22000) ~ "YK",
-                                ID<15000 | (ID>20000 & ID<25000) ~ "OK",
-                                TRUE ~ "YA"), levels=c("YK", "OK", "YA"))) %>%
-  group_by(group) %>%
-  arrange(ID) %>% 
-  filter(Measure!="theta")
-
-
-date <- "210707 (landmarks)"
-ggplot(temp, aes(x=factor(Measure, level=level_order), y=Score)) +
+# overview plot 
+ggplot(data_gmda, aes(x=factor(Measure, level=level_order), y=Score)) +
   geom_boxplot(outlier.shape = NA) + 
   geom_point() + 
-  #geom_text(aes(label=ID), size=3, na.rm = TRUE, hjust = -0.5) + 
   facet_wrap(~ group, nrow=1) + 
   ylim(0,1) + 
   theme_classic() +
@@ -148,20 +179,3 @@ ggplot(temp, aes(x=factor(Measure, level=level_order), y=Score)) +
        y="Score",
        x="GMDA Measures")
 
-
-# save output
-date <- "210707"
-
-# as Rdata 
-out_file_R <-  paste("WP10_GMDA_data_", date, ".Rdata", sep="")
-save(temp, file=out_file_R)
-
-# as excel 
-out_file_XLSX <-  paste("WP10_GMDA_data_", date, ".xlsx", sep="")
-
-wb <- createWorkbook()
-addWorksheet(wb, "GMDA")
-writeData(wb, "GMDA", temp)
-
-saveWorkbook(wb, out_file_XLSX, overwrite = TRUE)
-rm(wb)
