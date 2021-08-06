@@ -264,17 +264,21 @@ sc1 +
 in_file <- "../WP10_data/WP10_results/WP10_post_results_table.RData"
 load(in_file)
 rm(in_file)
+
+in_file <- "../WP10_data/WP10_results/WP10_GMDA_data.RData"
+load(in_file)
+rm(in_file)
 ```
 
 ``` {r, data_func_post_tests, include=FALSE}
 ```
 
-``` {r, post_tests, echo=FALSE, warning=FALSE, fig.width=10, fig.height=7, fig.align="center" }
+``` {r, post_tests, echo=FALSE, warning=FALSE, fig.width=14, fig.height=10, fig.align="center" }
 
-nonav + plot_spacer() + shape + landmark + 
+nonav + shape + landmark + gmda +
   plot_annotation(title="Performance in non-navigational memory tasks",
                   tag_levels = 'A') +
-  plot_layout(height=c(1.2,1.8), guides='auto')
+  plot_layout(height=c(1,1), guides='auto')
 
 
 ```

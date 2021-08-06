@@ -32,6 +32,10 @@ in_file <- "../WP10_data/WP10_results/WP10_post_results_table.RData"
 load(in_file)
 rm(in_file)
 
+in_file <- "../WP10_data/WP10_results/WP10_GMDA_data.RData"
+load(in_file)
+rm(in_file)
+
 
 ########################################################################
 
@@ -762,26 +766,54 @@ sc1 <- scatter(scat_data, "allo_ret", "ego_ret", "Allocentric", "Egocentric")
 
 
 ## ---- data_func_post_tests
+
+data_gmda_ind <- data_gmda %>% 
+  group_by(ID, group) %>% 
+  select(-c(Type)) %>% 
+  filter(!Measure %in% c("r", "CanOrg")) %>% 
+  rename(id = ID) %>% 
+  summarize(mean_score=mean(Score, na.rm=T)) %>% 
+  mutate(id=as.numeric(id), 
+         trial_condition="pos_recall",
+         group=fct_recode(group, YoungKids = "YK", OldKids = "OK", YoungAdults="YA"))
+
+data_gmda_sum <- data_gmda %>% 
+  group_by(group) %>% 
+  select(-c(Type)) %>% 
+  filter(!Measure %in% c("r", "CanOrg")) %>% 
+  summarize(mean_score=mean(Score, na.rm=T)) %>% 
+  mutate(trial_condition="pos_recall",
+         group=fct_recode(group, YoungKids = "YK", OldKids = "OK", YoungAdults="YA"))
+
 pt_data_ind <- pt_trial_data %>% 
   filter(trial_condition != "pos_recall") %>% 
   group_by(id, group, trial_condition) %>% 
-  summarize(mean_score=mean(score, na.rm=T))
+  summarize(mean_score=mean(score, na.rm=T)) %>% 
+  bind_rows(data_gmda_ind) %>% 
+  group_by(id, group, trial_condition) 
 
 pt_data_sum <- pt_trial_data %>% 
   filter(trial_condition != "pos_recall") %>% 
   group_by(group, trial_condition) %>% 
-  summarize(mean_score=mean(score, na.rm=T))
+  summarize(mean_score=mean(score, na.rm=T)) %>% 
+  bind_rows(data_gmda_sum) %>% 
+  group_by(group, trial_condition)
 
 
-# overview of performance score 
+# overview of performance score
+level_order1 <- c("shape_recog",
+                 "lm_recog",
+                 "obj_recog",
+                 "pos_recall")
+
 nonav <- ggplot(pt_data_ind, aes(x=group, y=mean_score, fill=group)) + 
   geom_bar(data=pt_data_sum, stat="identity", colour="black") + 
   geom_point(position=position_jitterdodge(seed=999), size=0.5) + 
-  facet_wrap(~ trial_condition, 
+  facet_wrap(~ factor(trial_condition, level=level_order1), nrow=1,
              labeller=as_labeller(c(`shape_recog`="Shape recognition", 
                                     `lm_recog`="Landmark recognition", 
                                     `obj_recog`="Goal object recognition", 
-                                    `pos_recall`="Position recall"))) + 
+                                    `pos_recall`="GMDA Mean Score"))) + 
   scale_fill_manual(values=mycolors, labels=mylabels) + # nicer color palette 
   theme_classic() + 
   theme(legend.position="bottom", 
@@ -885,6 +917,31 @@ landmark <- ggplot(lm_data, aes(x=group, y=perc, fill=group)) +
        x=NULL,
        y="% response (per group)",
        fill=NULL)
+
+
+# details: GMDA positioning
+gmda_data <- data_gmda %>%
+  filter(!Measure %in% c("r", "CanOrg")) %>% 
+  mutate(group=fct_recode(group, YoungKids = "YK", OldKids = "OK", YoungAdults="YA"))
+
+level_order2 <- c("SQRT(CanOrg)",
+                 "CanAcc",
+                 "DistAcc",
+                 "AngleAcc") 
+
+gmda <- ggplot(gmda_data, aes(x=group, y=Score, fill=group)) +
+  geom_boxplot(outlier.shape = NA) + 
+  geom_point(size=0.5) + 
+  facet_wrap(~ factor(Measure, level=level_order2), nrow=1) +
+  scale_fill_manual(values=mycolors, labels=mylabels) +
+  ylim(0,1) + 
+  theme_classic() +
+  theme(legend.position="bottom", 
+        axis.text.x = element_blank(),
+        axis.ticks = element_blank()) + 
+  labs(title="Distribution of GMDA Scores",
+       y="Score",
+       x=NULL)
 ## ----
 
 
