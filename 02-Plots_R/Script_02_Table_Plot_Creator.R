@@ -810,10 +810,10 @@ nonav <- ggplot(pt_data_ind, aes(x=group, y=mean_score, fill=group)) +
   geom_bar(data=pt_data_sum, stat="identity", colour="black") + 
   geom_point(position=position_jitterdodge(seed=999), size=0.5) + 
   facet_wrap(~ factor(trial_condition, level=level_order1), nrow=1,
-             labeller=as_labeller(c(`shape_recog`="Shape recognition", 
+             labeller=as_labeller(c(`shape_recog`="Layout recognition", 
                                     `lm_recog`="Landmark recognition", 
-                                    `obj_recog`="Goal object recognition", 
-                                    `pos_recall`="GMDA Mean Score"))) + 
+                                    `obj_recog`="Object recognition", 
+                                    `pos_recall`="Positioning (GMDA)"))) + 
   scale_fill_manual(values=mycolors, labels=mylabels) + # nicer color palette 
   theme_classic() + 
   theme(legend.position="bottom", 
@@ -849,7 +849,7 @@ shape <- ggplot(shape_data, aes(x=group, y=perc, fill=group)) +
         axis.title.x=element_blank(),
         axis.ticks.x=element_blank(),
         axis.text.x=element_blank()) + 
-  labs(title="Responses in shape recognition task",
+  labs(title="Responses in layout recognition task",
        x=NULL,
        y="% response (per group)",
        fill=NULL) 
