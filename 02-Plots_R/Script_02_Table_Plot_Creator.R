@@ -242,6 +242,8 @@ p13 <- box_agg(sm_ind_data %>% filter(trial_condition=="ego_ret" | trial_conditi
 
 p14 <- box_agg(sm_ind_data %>% filter(trial_condition=="ego_ret" | trial_condition=="allo_ret"), 
               "group", "avg_distance_path", "group", "trial_condition", "none", NULL, NULL, "Avg. distance to path to goal", "Group", mylabels, "top")
+p14b <- box_agg(sm_ind_data %>% filter(trial_condition=="ego_ret" | trial_condition=="allo_ret"), 
+               "group", "avg_distance_chosen_path", "group", "trial_condition", "none", NULL, NULL, "Avg. distance to path to goal", "Group", mylabels, "top")
 
 p15 <- box_agg(sm_ind_data %>% filter(trial_condition=="ego_ret" | trial_condition=="allo_ret"), 
               "group", "time", "group", "trial_condition", "none", NULL, NULL, "Time (sec)", "Group", mylabels, "top")
@@ -272,6 +274,7 @@ p112 <- box_agg(sm_ind_data, "group", "final_distance", "group", "trial_conditio
 p113 <- box_agg(sm_ind_data, "group", "direct_path", "group", "trial_condition", "none", NULL, NULL, "% shortest path to corect goal", "Group", mylabels, "top")
 
 p114 <- box_agg(sm_ind_data, "group", "avg_distance_path", "group", "trial_condition", "none", NULL, NULL, "Avg. distance to path to goal", "Group", mylabels, "top")
+p114a <- box_agg(sm_ind_data, "group", "avg_distance_chosen_path", "group", "trial_condition", "none", NULL, NULL, "Avg. distance to path to goal", "Group", mylabels, "top")
 
 p115 <- box_agg(sm_ind_data, "group", "time", "group", "trial_condition", "none", NULL, NULL, "Time (sec)", "Group", mylabels, "top")
 
@@ -295,7 +298,7 @@ box_agg_change <- function(data, xvar, yvar, fillby, title, xlabel, ylabel, fill
     coord_cartesian(clip="off") + 
     facet_wrap(~ trial_condition, labeller=facetlabel) + # facet grouping
     scale_fill_manual(name=fillbylabel, labels=facetlabel, values=mycolors) +
-    scale_y_continuous(limits=c(-1,1)) + 
+    #scale_y_continuous(limits=c(-1,1)) + 
     theme_classic() + # theme
     theme(legend.position=legendPos,
           legend.key.size = unit(0.5, 'cm'),
@@ -312,13 +315,46 @@ box_agg_change <- function(data, xvar, yvar, fillby, title, xlabel, ylabel, fill
 
 # data for aggregated plots with individual values 
 sm_ind_data <- sm_trial_data %>%
-  group_by(id, group, session, trial_condition) 
+  filter(trial_condition=="ego_ret" | trial_condition=="allo_ret") %>% 
+  filter(session==2) %>% 
+  group_by(id, group, trial_condition) 
 sm_ind_data <- mean_func(sm_ind_data)
 
 # data for change plots
 sm_change_data <- sm_trial_data %>%
   filter(trial_condition=="ego_ret" | trial_condition=="allo_ret")  %>%
   group_by(id, group, session, trial_condition)
+# sm_change_data <- mean_func(sm_change_data) %>%
+#   pivot_wider(id_cols = c(id, group, trial_condition),
+#               names_from = session,
+#               values_from = c(correct_goal, direct_path, final_distance, path_length, 
+#                               time, velocity,
+#                               avg_distance_path, avg_distance_path_pure, 
+#                               avg_distance_chosen_path, avg_distance_chosen_path_pure,
+#                               path_score, sum_head_rotation)) %>%
+#   group_by(id, group, trial_condition) %>%
+#   summarise(correct_diff = correct_goal_2 - correct_goal_1,
+#             correct_ratio = correct_diff / correct_goal_1,
+#             direct_path_diff = direct_path_2 - direct_path_1,
+#             direct_path_ratio = direct_path_diff / direct_path_1,
+#             final_distance_diff = final_distance_2 - final_distance_1,
+#             final_distance_ratio = final_distance_diff / final_distance_1,
+#             path_diff = path_length_2 - path_length_1,
+#             path_ratio = path_diff / path_length_1,
+#             time_diff = time_2 - time_1,
+#             time_ratio = time_diff / time_1,
+#             velocity_diff = velocity_2 - velocity_1,
+#             velocity_ratio = velocity_diff / velocity_1,
+#             avg_distance_path_diff = avg_distance_path_2 - avg_distance_path_1, 
+#             avg_distance_path_ratio = avg_distance_path_diff / avg_distance_path_1, 
+#             avg_distance_path_pure_diff = avg_distance_path_pure_2 - avg_distance_path_pure_1,
+#             avg_distance_path_pure_ratio = avg_distance_path_pure_diff / avg_distance_path_pure_1,
+#             avg_distance_chosen_path_diff = avg_distance_chosen_path_2 - avg_distance_chosen_path_1,
+#             avg_distance_chosen_path_ratio = avg_distance_chosen_path_diff / avg_distance_chosen_path_1,
+#             avg_distance_chosen_path_pure_diff = avg_distance_chosen_path_pure_2 - avg_distance_chosen_path_pure_1,
+#             avg_distance_chosen_path_pure_ratio = avg_distance_chosen_path_pure_diff / avg_distance_chosen_path_pure_1,
+#             path_score_diff = path_score_2 - path_score_1, 
+#             path_score_ratio = path_score_diff / path_score_1)
 sm_change_data <- mean_func(sm_change_data) %>%
   pivot_wider(id_cols = c(id, group, trial_condition),
               names_from = session,
@@ -329,52 +365,38 @@ sm_change_data <- mean_func(sm_change_data) %>%
                               path_score, sum_head_rotation)) %>%
   group_by(id, group, trial_condition) %>%
   summarise(correct_diff = correct_goal_2 - correct_goal_1,
-            direct_path_diff = direct_path_2 - direct_path_1,
+            correct_ratio = correct_diff / correct_goal_1,
             final_distance_diff = final_distance_2 - final_distance_1,
-            path_diff = path_length_2 - path_length_1,
-            time_diff = time_2 - time_1,
-            velocity_diff = velocity_2 - velocity_1,
+            final_distance_ratio = final_distance_diff / final_distance_1,
+            final_distance_log = log1p(final_distance_ratio),
             avg_distance_path_diff = avg_distance_path_2 - avg_distance_path_1, 
-            avg_distance_path_pure = avg_distance_path_pure_2 - avg_distance_path_pure_1,
-            avg_distance_chosen_path_diff = avg_distance_chosen_path_2 - avg_distance_chosen_path_1,
-            avg_distance_chosen_path_pure_diff = avg_distance_chosen_path_pure_2 - avg_distance_chosen_path_pure_1,
-            path_score_diff = path_score_2 - path_score_1, 
-            sum_head_rotation_diff = sum_head_rotation_2 - sum_head_rotation_1)
+            avg_distance_path_ratio = avg_distance_path_diff / avg_distance_path_1)
 
 
 # comparing time points 
 # focus: group comparison
-p1a <- box_agg(sm_ind_data %>% filter(trial_condition=="ego_ret" | trial_condition=="allo_ret"), 
-        "group", "correct_goal", "group", NULL, "trial_condition", NULL, NULL, "% correct goal", "Group", mylabels, "top")
-p2a <- box_agg(sm_ind_data %>% filter(trial_condition=="ego_ret" | trial_condition=="allo_ret"), 
-               "group", "direct_path", "group", NULL, "trial_condition", NULL, NULL, "% shortest path to goal", "Group", mylabels, "top")
-p3a <- box_agg(sm_ind_data %>% filter(trial_condition=="ego_ret" | trial_condition=="allo_ret"), 
-               "group", "final_distance", "group", NULL, "trial_condition", NULL, NULL, "Final distance (vm)", "Group", mylabels, "top")
-p4a <- box_agg(sm_ind_data %>% filter(trial_condition=="ego_ret" | trial_condition=="allo_ret"), 
-               "group", "avg_distance_path", "group", NULL, "trial_condition", NULL, NULL, "Avg. distance to path to goal", "Group", mylabels, "top")
-p5a <- box_agg(sm_ind_data %>% filter(trial_condition=="ego_ret" | trial_condition=="allo_ret"), 
-               "group", "avg_distance_chosen_path", "group", NULL, "trial_condition", NULL, NULL, "Avg. distance to path to chosen goal", "Group", mylabels, "top")
-p6a <- box_agg(sm_ind_data %>% filter(trial_condition=="ego_ret" | trial_condition=="allo_ret"), 
-               "group", "path_length", "group", NULL, "trial_condition", NULL, NULL, "Path length (vm)", "Group", mylabels, "top")
-p7a <- box_agg(sm_ind_data %>% filter(trial_condition=="ego_ret" | trial_condition=="allo_ret"), 
-               "group", "time", "group", NULL, "trial_condition", NULL, NULL, "Time (sec)", "Group", mylabels, "top")
-p8a <- box_agg(sm_ind_data %>% filter(trial_condition=="ego_ret" | trial_condition=="allo_ret"), 
-               "group", "velocity", "group", NULL, "trial_condition", NULL, NULL, "velocity (path length (vm)/time (sec))", "Group", mylabels, "top")
-p9a <- box_agg(sm_ind_data %>% filter(trial_condition=="ego_ret" | trial_condition=="allo_ret"), 
-               "group", "sum_head_rotation", "group", NULL, "trial_condition", NULL, NULL, "Sum of 'head rotation' (z-axis)", "Group", mylabels, "top")
-
+p1a <- box_agg(sm_ind_data, "group", "correct_goal", "group", NULL, "trial_condition", NULL, NULL, "% correct goal", "Group", mylabels, "top")
+# p2a <- box_agg(sm_ind_data, "group", "direct_path", "group", NULL, "trial_condition", NULL, NULL, "% shortest path to goal", "Group", mylabels, "top")
+p3a <- box_agg(sm_ind_data, "group", "final_distance", "group", NULL, "trial_condition", NULL, NULL, "Final distance (vm)", "Group", mylabels, "top")
+p4a <- box_agg(sm_ind_data, "group", "avg_distance_path", "group", NULL, "trial_condition", NULL, NULL, "Avg. distance to path to goal", "Group", mylabels, "top")
+# p5a <- box_agg(sm_ind_data, "group", "avg_distance_chosen_path", "group", NULL, "trial_condition", NULL, NULL, "Avg. distance to path to chosen goal", "Group", mylabels, "top")
+# p6a <- box_agg(sm_ind_data, "group", "path_length", "group", NULL, "trial_condition", NULL, NULL, "Path length (vm)", "Group", mylabels, "top")
+# p7a <- box_agg(sm_ind_data, "group", "time", "group", NULL, "trial_condition", NULL, NULL, "Time (sec)", "Group", mylabels, "top")
+# p8a <- box_agg(sm_ind_data, "group", "velocity", "group", NULL, "trial_condition", NULL, NULL, "velocity (path length (vm)/time (sec))", "Group", mylabels, "top")
 
 # change plots 
-p1b <- box_agg_change(sm_change_data, "group", "correct_diff", "group", NULL, NULL, "Change % correct goal", "Group", mylabels, "none")
-p2b <- box_agg_change(sm_change_data, "group", "direct_path_diff", "group", NULL, NULL, "Change % shortest path", "Group", mylabels, "none")
-p3b <- box_agg_change(sm_change_data, "group", "final_distance_diff", "group", NULL, NULL, "Change final distance", "Group", mylabels, "none")
-p4b <- box_agg_change(sm_change_data, "group", "avg_distance_path_diff", "group", NULL, NULL, "Change avg. distance path", "Group", mylabels, "none")
-p5b <- box_agg_change(sm_change_data, "group", "avg_distance_chosen_path_diff", "group", NULL, NULL, "Change avg. distance path to chosen", "Group", mylabels, "none")
-p6b <- box_agg_change(sm_change_data, "group", "path_diff", "group", NULL, NULL, "Change path length", "Group", mylabels, "none")
-# p7b <- box_agg_change(sm_change_data, "group", "time_diff", "group", NULL, NULL, "Change time", "Group", mylabels, "none")
-p8b <- box_agg_change(sm_change_data, "group", "velocity_diff", "group", NULL, NULL, "Change velocity", "Group", mylabels, "none")
-# p9b <- box_agg_change(sm_change_data, "group", "sum_head_rotation_diff", "group", NULL, NULL, "Change sum z rotation", "Group", mylabels, "none")
-
+p1b <- box_agg_change(sm_change_data, "group", "correct_diff", "group", NULL, NULL, "Change (T2 - T1)", "Group", mylabels, "none")
+p1c <- box_agg_change(sm_change_data, "group", "correct_ratio", "group", NULL, NULL, "Change (T2 - T1) / T1", "Group", mylabels, "none")
+# p2b <- box_agg_change(sm_change_data, "group", "direct_path_diff", "group", NULL, NULL, "Change % shortest path", "Group", mylabels, "none")
+p3b <- box_agg_change(sm_change_data, "group", "final_distance_diff", "group", NULL, NULL, "Change (T2 - T1)", "Group", mylabels, "none")
+p3c <- box_agg_change(sm_change_data, "group", "final_distance_ratio", "group", NULL, NULL, "Change (T2 - T1) / T1", "Group", mylabels, "none")
+p3d <- box_agg_change(sm_change_data, "group", "final_distance_log", "group", NULL, NULL, "Change log((T2 - T1) / T1)", "Group", mylabels, "none")
+# p4b <- box_agg_change(sm_change_data, "group", "avg_distance_path_diff", "group", NULL, NULL, "Change avg. distance path", "Group", mylabels, "none")
+# p5b <- box_agg_change(sm_change_data, "group", "avg_distance_chosen_path_diff", "group", NULL, NULL, "Change avg. distance path to chosen", "Group", mylabels, "none")
+# p6b <- box_agg_change(sm_change_data, "group", "path_diff", "group", NULL, NULL, "Change path length", "Group", mylabels, "none")
+# # p7b <- box_agg_change(sm_change_data, "group", "time_diff", "group", NULL, NULL, "Change time", "Group", mylabels, "none")
+# p8b <- box_agg_change(sm_change_data, "group", "velocity_diff", "group", NULL, NULL, "Change velocity", "Group", mylabels, "none")
+# 
 
 # # combine 
 # p1a + p1b + plot_layout(widths = c(2,1))
@@ -385,12 +407,9 @@ p8b <- box_agg_change(sm_change_data, "group", "velocity_diff", "group", NULL, N
 # p6a + p6b + plot_layout(widths = c(2,1))
 # # p7a + p7b + plot_layout(widths = c(2,1))
 # p8a + p8b + plot_layout(widths = c(2,1))
-# # p9a + p9b + plot_layout(widths = c(2,1))
 
-
-# # focus: type comparison
-# box_agg(sm_ind_data %>% filter(trial_condition=="ego_ret" | trial_condition=="allo_ret"),
-#         "trial_condition", "correct_goal", "trial_condition", "session", "group", NULL, NULL, "Correct goal", "Type", mylabels, "top")
+p1a + p1b + p1c + plot_layout(widths = c(1,1,1))
+p3a + p3b + p3c + p3d + plot_layout(widths = c(1,1,1,1))
 
 ## ----
 rm()
@@ -743,6 +762,7 @@ final_bars(final_alley %>% filter(trial_condition=="allo_ret"), "group", "percen
 scat_data <- sm_trial_data %>% 
   group_by(id, group, session, trial_condition) %>% 
   summarize(performance=mean(correct_goal)) %>% 
+  #summarize(performance=mean(final_distance)) %>% 
   filter(trial_condition=="ego_ret" | trial_condition=="allo_ret") %>% 
   pivot_wider(names_from=trial_condition, 
               values_from=performance)
@@ -824,6 +844,25 @@ nonav <- ggplot(pt_data_ind, aes(x=group, y=mean_score, fill=group)) +
        x=NULL,
        y="Performance score",
        fill=NULL) 
+
+# nonav2 <- ggplot(pt_data_ind, aes(x=group, y=mean_score, fill=group)) + 
+#   geom_boxplot(outlier.shape=NA) + 
+#   geom_point(position=position_jitterdodge(seed=999), size=0.5) + 
+#   facet_wrap(~ factor(trial_condition, level=level_order1), nrow=1,
+#              labeller=as_labeller(c(`shape_recog`="Layout recognition", 
+#                                     `lm_recog`="Landmark recognition", 
+#                                     `obj_recog`="Object recognition", 
+#                                     `pos_recall`="Mean GMDA Score"))) + 
+#   scale_fill_manual(values=mycolors, labels=mylabels) + # nicer color palette 
+#   theme_classic() + 
+#   theme(legend.position="bottom", 
+#         axis.title.x=element_blank(),
+#         axis.ticks.x=element_blank(),
+#         axis.text.x=element_blank()) + 
+#   labs(title="General overview",
+#        x=NULL,
+#        y="Performance score",
+#        fill=NULL) 
 
 
 # details: shape recognition 
