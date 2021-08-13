@@ -233,9 +233,12 @@ p4 <- box_agg(sm_ind_data %>% filter(trial_condition=="main_learn"),
 # aggregated plots for T1 (recall)
 p11 <- box_agg(sm_ind_data %>% filter(trial_condition=="ego_ret" | trial_condition=="allo_ret"),
         "group", "correct_goal", "group", "trial_condition", "none", NULL, NULL, "% correct goal", "Group", mylabels, "top")
+p11b <- box_agg(sm_ind_data %>% filter(trial_condition=="ego_ret" | trial_condition=="allo_ret"),
+               "group", "correct_goal_ego", "group", "trial_condition", "none", NULL, NULL, "% egocentric goal", "Group", mylabels, "top")
 
 p12 <- box_agg(sm_ind_data %>% filter(trial_condition=="ego_ret" | trial_condition=="allo_ret"),
               "group", "final_distance", "group", "trial_condition", "none", NULL, NULL, "Final distance (vm)", "Group", mylabels, "top")
+p12 + geom_hline(yintercept = 0.1, color='red', linetype='dotted')
 
 p13 <- box_agg(sm_ind_data %>% filter(trial_condition=="ego_ret" | trial_condition=="allo_ret"), 
               "group", "direct_path", "group", "trial_condition", "none", NULL, NULL, "% shortest path to corect goal", "Group", mylabels, "top")
@@ -298,7 +301,7 @@ box_agg_change <- function(data, xvar, yvar, fillby, title, xlabel, ylabel, fill
     coord_cartesian(clip="off") + 
     facet_wrap(~ trial_condition, labeller=facetlabel) + # facet grouping
     scale_fill_manual(name=fillbylabel, labels=facetlabel, values=mycolors) +
-    #scale_y_continuous(limits=c(-1,1)) + 
+    scale_y_continuous(limits=c(-1,1)) + 
     theme_classic() + # theme
     theme(legend.position=legendPos,
           legend.key.size = unit(0.5, 'cm'),
@@ -535,7 +538,7 @@ stratlabels <- as_labeller(c(`direct` = "direct",
                              `1`="Day 2", `2`="Day 14"))
 
 
-# data for strategy choice bar plots: caculate percentage of strategies per group and session 
+# data for strategy choice bar plots: calculate percentage of strategies per group and session 
 strategy_data_ind <- sm_trial_data %>%
   filter(trial_condition!="practise_motor") %>%
   group_by(id, group, session, search_strategy_no) %>% 
@@ -582,6 +585,87 @@ s2 <- strategy_bars(strategy_data_allo_ind, strategy_data_allo_sum, "search_stra
 
 # strategy choice plots for egocentric trials 
 s3 <- strategy_bars(strategy_data_ego_ind, strategy_data_ego_sum, "search_strategy_no", "percent", "Egocentric trials", "Relative % of use", "Strategy", stratlabels, "Purples", "bottom")
+
+
+# check egocentric goal location
+temp <- sm_trial_data %>%
+  filter(trial_condition=="allo_ret") %>% 
+  group_by(group, correct_goal_ego) %>% 
+  tally() %>%
+  mutate(percent=n/sum(n))
+temp 
+rm(temp)
+# egocentric goal location only chosen very few times 
+
+
+# check path and egocentric path marker
+temp <- sm_trial_data %>%
+  filter(trial_condition=="allo_ret") %>% 
+  select(id, group, session, trial, search_strategy_no, correct_goal, correct_goal_ego,
+         dev_ideal_path, dev_ideal_path_chosen, dev_ideal_path_ego) %>% 
+  group_by(session, group, search_strategy_no) %>% 
+  pivot_longer(cols=c("dev_ideal_path", "dev_ideal_path_chosen", "dev_ideal_path_ego"),
+               names_pattern = "dev_ideal_(.*)") %>%
+  # pivot_longer(cols=c("dev_ideal_path", "dev_ideal_path_ego"),
+  #              names_pattern = "dev_ideal_(.*)") %>% 
+  mutate(value=log1p(value))
+
+ggplot(temp, aes(x=name, y=value, fill=group)) +
+  geom_boxplot() + 
+  scale_fill_manual(name=NULL, labels=mylabels, values=mycolors) +
+  facet_grid(~ search_strategy_no) + 
+  theme_classic() + 
+  theme(legend.position = "top") +
+  labs(x="deviation to ...",
+       y="log (value)")
+# path_ego deviation higher for reoriented --> would not speak in favor of ego behavior
+# however also other path markers higher 
+# inconclusive at the moment 
+
+
+# check reorient trials for alley entries (alley 4 is starting alley)
+strategy_data_allo_reorient <- sm_trial_data %>%
+  filter(trial_condition=="allo_ret" & search_strategy_no=="reoriented") %>% 
+  left_join(sm_trial_data_support) %>% 
+  select(id, group, session, trial, trial_condition, search_strategy_no, 
+         start_pos, goal_loc, goal_alley, chosen_goal_loc, chosen_alley_loc, 
+         final_distance, correct_goal, correct_final_alley,
+         entry_alley_1, entry_alley_2, entry_alley_3, entry_alley_4, entry_alley_5) %>% 
+  mutate(entry_alley_1=case_when(start_pos==1 & entry_alley_1>0 ~ entry_alley_1-1, 
+                                 goal_loc==1 & entry_alley_1>0 ~ entry_alley_1-1, 
+                                 T ~ entry_alley_1),
+         entry_alley_2=case_when(start_pos==3 & entry_alley_2>0 ~ entry_alley_2-1, 
+                                 goal_loc==2 & entry_alley_2>0 ~ entry_alley_2-1, 
+                                 T ~ entry_alley_2),
+         entry_alley_3=case_when(start_pos==5 & entry_alley_3>0 ~ entry_alley_3-1,  
+                                 T ~ entry_alley_3),
+         entry_alley_4=case_when(start_pos==7 & entry_alley_4>0 ~ entry_alley_4-1, 
+                                 T ~ entry_alley_4),
+         entry_alley_5=case_when(start_pos==9 & entry_alley_5>0 ~ entry_alley_5-1,  
+                                 goal_loc==3 & entry_alley_5>0 ~ entry_alley_5-1, 
+                                 T ~ entry_alley_5)) %>% 
+  #group_by(session, group) %>% 
+  group_by(group) %>% 
+  summarize(alley_1=sum(entry_alley_1),
+            alley_2=sum(entry_alley_2),
+            alley_3=sum(entry_alley_3),
+            alley_4=sum(entry_alley_4),
+            alley_5=sum(entry_alley_5)) %>% 
+  pivot_longer(cols=c("alley_1", "alley_2", "alley_3","alley_4", "alley_5"),
+               names_pattern = "alley_(.*)") %>% 
+  group_by(group) %>% 
+  mutate(percent=value/sum(value))
+
+ggplot(strategy_data_allo_reorient, aes(x=name, y=percent, fill=group)) +
+  geom_bar(stat="identity", color="black") + 
+  scale_fill_manual(name=NULL, labels=mylabels, values=mycolors) +
+  facet_wrap(~ group) + 
+  theme_classic() + 
+  theme(legend.position = "bottom") + 
+  labs(title="(Unnecessary) alley entries in trials with reorientation", 
+       subtitle="Start alley is no 4",
+       x="alley number",
+       y="% of entries (per group)")
 ## ---- 
 rm(strategy_data_ego, strategy_bars)
 
@@ -771,7 +855,7 @@ scatter <- function(data, x, y, xlab, ylab){
   p1 <- ggplot(data, aes_string(x=x, y=y)) +
     geom_point(position=position_jitter(width=0.02, height=0.02, seed=1111)) + 
     geom_smooth(method="lm") + 
-    facet_grid(session ~ group) + 
+    facet_grid(session ~ group, labeller = mylabels) + 
     scale_x_continuous(labels = scales::percent, breaks=c(0, 0.25, 0.5, 0.75, 1)) + 
     scale_y_continuous(labels = scales::percent, breaks=c(0, 0.25, 0.5, 0.75, 1)) + 
     theme_classic() + # 
