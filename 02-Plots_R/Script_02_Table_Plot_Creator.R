@@ -654,7 +654,9 @@ strategy_data_allo_reorient <- sm_trial_data %>%
   pivot_longer(cols=c("alley_1", "alley_2", "alley_3","alley_4", "alley_5"),
                names_pattern = "alley_(.*)") %>% 
   group_by(group) %>% 
-  mutate(percent=value/sum(value))
+  mutate(percent=value/sum(value)) %>% 
+  ungroup() %>% 
+  mutate(percent_total=value/sum(value))
 
 ggplot(strategy_data_allo_reorient, aes(x=name, y=percent, fill=group)) +
   geom_bar(stat="identity", color="black") + 
@@ -665,7 +667,24 @@ ggplot(strategy_data_allo_reorient, aes(x=name, y=percent, fill=group)) +
   labs(title="(Unnecessary) alley entries in trials with reorientation", 
        subtitle="Start alley is no 4",
        x="alley number",
-       y="% of entries (per group)")
+       y="% of entries (per group)") 
+
+ggplot(strategy_data_allo_reorient, aes(x=name, y=percent, fill=group)) +
+  geom_bar(stat="identity", color="black") + 
+  scale_fill_manual(name=NULL, labels=mylabels, values=mycolors) +
+  geom_text(aes(y=0.1, label=round(percent,3)*100), size=3) + 
+  facet_wrap(~ group, nrow=2) + 
+  coord_polar(theta = "x") +
+  theme_classic() + 
+  guides(size=11) + 
+  theme(title = element_text(size=10),
+        legend.position = "bottom",
+        axis.title = element_blank(),
+        axis.ticks = element_blank(),
+        axis.text.y = element_blank(),
+        axis.text.x = element_blank()) + 
+  labs(title="Distribution of alley entries in % for trials with reorientation", 
+       subtitle="excluding start and goal alley entries") 
 ## ---- 
 rm(strategy_data_ego, strategy_bars)
 
