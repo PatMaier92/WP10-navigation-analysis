@@ -511,8 +511,9 @@ rm(sm_ind_data, raincloud, raincloud_sub, r1, r2, r3, r4, r5, r6, r7, r8, r9)
 # function for strategy choice bar plots
 strategy_bars <- function(data_ind, data_sum, x, y, title, ylabel, flabel, filllabels, mypalette, legendPos) {
   p <- ggplot(data_ind, aes_string(x=x, y=y, fill=x)) + # set up data 
-    geom_bar(data=data_sum, stat="identity", colour="black") + 
-    geom_point(position=position_jitterdodge(seed=999), size=0.5) + 
+    # geom_bar(data=data_sum, stat="identity", colour="black") + 
+    geom_boxplot(outlier.shape=NA) + 
+    geom_point(position=position_jitterdodge(seed=999), size=0.75) + 
     facet_grid(session ~ group, labeller=filllabels) +
     coord_cartesian(clip="off") +
     scale_fill_brewer(palette = mypalette, direction=-1, labels=filllabels) + # nicer color palette 
