@@ -194,9 +194,9 @@ p111 + p112 + p113 + p114 +
 
 ```
 
-``` {r, agg_diff_s2_s1, echo=FALSE, warning=FALSE, fig.width=8, fig.height=10, fig.align="center"}
+``` {r, agg_diff_s2_s1, echo=FALSE, warning=FALSE, fig.width=8, fig.height=6, fig.align="center"}
 
-p1a + p1b + p3a + p3b + p2a + p2b + p4a + p4b + 
+p1a + p1c + p3a + p3c + 
   plot_annotation(title="Averaged values during free recall in session 2 and changes to average from session 1",
                   subtitle="egocentric and allocentric trials only (goal invisible)",
                   tag_levels = 'A') + 
