@@ -246,7 +246,7 @@ p13 <- box_agg(sm_ind_data %>% filter(trial_condition=="ego_ret" | trial_conditi
 p14 <- box_agg(sm_ind_data %>% filter(trial_condition=="ego_ret" | trial_condition=="allo_ret"), 
               "group", "avg_distance_path", "group", "trial_condition", "none", NULL, NULL, "Avg. distance to path to goal", "Group", mylabels, "top")
 p14b <- box_agg(sm_ind_data %>% filter(trial_condition=="ego_ret" | trial_condition=="allo_ret"), 
-               "group", "avg_distance_chosen_path", "group", "trial_condition", "none", NULL, NULL, "Avg. distance to path to goal", "Group", mylabels, "top")
+               "group", "avg_distance_chosen_path", "group", "trial_condition", "none", NULL, NULL, "Avg. distance to path to chosen goal", "Group", mylabels, "top")
 
 p15 <- box_agg(sm_ind_data %>% filter(trial_condition=="ego_ret" | trial_condition=="allo_ret"), 
               "group", "time", "group", "trial_condition", "none", NULL, NULL, "Time (sec)", "Group", mylabels, "top")
@@ -256,6 +256,26 @@ p16 <- box_agg(sm_ind_data %>% filter(trial_condition=="ego_ret" | trial_conditi
 
 p17 <- box_agg(sm_ind_data %>% filter(trial_condition=="ego_ret" | trial_condition=="allo_ret"), 
               "group", "velocity", "group", "trial_condition", "none", NULL, NULL, "velocity (path length (vm)/time (sec))", "Group", mylabels, "top")
+
+
+# additional: final distance in correct trials 
+# session 1
+sm_ind_data_cor_1 <- sm_trial_data %>%
+  filter(session==1 & trial_condition %in% c("ego_ret", "allo_ret") & correct_goal==1) %>% 
+  group_by(id, group, trial_condition) 
+sm_ind_data_cor_1 <- mean_func(sm_ind_data_cor_1)
+
+p12b <- box_agg(sm_ind_data_cor_1,"group", "final_distance", "group", "trial_condition", "none", "Session 1", NULL, "Final distance (vm) in correct trials", "Group", mylabels, "top")
+
+# session 2
+sm_ind_data_cor_2 <- sm_trial_data %>%
+  filter(session==2 & trial_condition %in% c("ego_ret", "allo_ret") & correct_goal==1) %>% 
+  group_by(id, group, trial_condition) 
+sm_ind_data_cor_2 <- mean_func(sm_ind_data_cor_2)
+
+p12c <- box_agg(sm_ind_data_cor_2,"group", "final_distance", "group", "trial_condition", "none", "Session 2", NULL, "Final distance (vm) in correct trials", "Group", mylabels, "top")
+
+p12b + p12c + plot_layout(guides="collect") & theme(legend.position='bottom')
 
 ## ----
 rm (p1, p2, p3, p4, p11, p12, p13, p14, p15, p16, p17, sm_ind_data)
@@ -373,7 +393,9 @@ sm_change_data <- mean_func(sm_change_data) %>%
             final_distance_ratio = final_distance_diff / final_distance_1,
             final_distance_log = log1p(final_distance_ratio),
             avg_distance_path_diff = avg_distance_path_2 - avg_distance_path_1, 
-            avg_distance_path_ratio = avg_distance_path_diff / avg_distance_path_1)
+            avg_distance_path_ratio = avg_distance_path_diff / avg_distance_path_1,
+            avg_distance_chosen_path_diff = avg_distance_chosen_path_2 - avg_distance_chosen_path_1, 
+            avg_distance_chosen_path_ratio = avg_distance_chosen_path_diff / avg_distance_chosen_path_1)
 
 
 # comparing time points 
@@ -395,7 +417,8 @@ p3b <- box_agg_change(sm_change_data, "group", "final_distance_diff", "group", N
 p3c <- box_agg_change(sm_change_data, "group", "final_distance_ratio", "group", NULL, NULL, "Change (T2 - T1) / T1", "Group", mylabels, "none")
 p3d <- box_agg_change(sm_change_data, "group", "final_distance_log", "group", NULL, NULL, "Change log((T2 - T1) / T1)", "Group", mylabels, "none")
 # p4b <- box_agg_change(sm_change_data, "group", "avg_distance_path_diff", "group", NULL, NULL, "Change avg. distance path", "Group", mylabels, "none")
-# p5b <- box_agg_change(sm_change_data, "group", "avg_distance_chosen_path_diff", "group", NULL, NULL, "Change avg. distance path to chosen", "Group", mylabels, "none")
+p5b <- box_agg_change(sm_change_data, "group", "avg_distance_chosen_path_diff", "group", NULL, NULL, "Change avg. distance path to chosen", "Group", mylabels, "none")
+p5c <- box_agg_change(sm_change_data, "group", "avg_distance_chosen_path_ratio", "group", NULL, NULL, "Change (T2 - T1) / T1", "Group", mylabels, "none")
 # p6b <- box_agg_change(sm_change_data, "group", "path_diff", "group", NULL, NULL, "Change path length", "Group", mylabels, "none")
 # # p7b <- box_agg_change(sm_change_data, "group", "time_diff", "group", NULL, NULL, "Change time", "Group", mylabels, "none")
 # p8b <- box_agg_change(sm_change_data, "group", "velocity_diff", "group", NULL, NULL, "Change velocity", "Group", mylabels, "none")
