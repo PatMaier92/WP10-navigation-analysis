@@ -46,7 +46,8 @@ mylabels <- as_labeller(c(`YoungKids` = "Y-CH", `OldKids` = "O-CH",
                           `YoungAdults` = "Y-AD", `OldAdults` = "O-AD",
                           `main_learn` = "Learning", `main_ret` = "Retrieval", 
                           `allo_ret` = "Allocentric", `ego_ret` = "Egocentric",
-                          `1`="T1 - Immediate Recall", `2`=" T2 - Delayed Recall"))
+                          `1`="T1 - Immediate", `2`=" T2 - Delayed",
+                          "Consolidation"="Consolidation"))
 # colors
 mycolors <- c("YoungKids" = "#CC6666", "OldKids" = "#FFCC99", "YoungAdults" = "#969C97", "OldAdults" = "#000000",
               "main_learn" = "#6699CC", "main_ret" = "#99CCFF", "allo_ret" = "#FFCC33", "ego_ret" = "#669933",
@@ -336,17 +337,18 @@ sm_change_data <- mean_func(sm_change_data) %>%
             avg_distance_path_diff = avg_distance_path_2 - avg_distance_path_1, 
             avg_distance_path_ratio = avg_distance_path_diff / avg_distance_path_1,
             avg_distance_chosen_path_diff = avg_distance_chosen_path_2 - avg_distance_chosen_path_1, 
-            avg_distance_chosen_path_ratio = avg_distance_chosen_path_diff / avg_distance_chosen_path_1)
+            avg_distance_chosen_path_ratio = avg_distance_chosen_path_diff / avg_distance_chosen_path_1) %>% 
+  mutate(session="Consolidation")
 
 
 # change plots 
-p121c <- box_agg_change(sm_change_data, "group", "correct_ratio", "group", "none", NULL, NULL, "Change (T2 - T1) / T1", "Group", mylabels, "none")
+p121c <- box_agg_change(sm_change_data, "group", "correct_ratio", "group", "session", NULL, NULL, "Change (T2 - T1) / T1", "Group", mylabels, "none")
 
-p122c <- box_agg_change(sm_change_data, "group", "final_distance_ratio", "group", "none", NULL, NULL, "Change (T2 - T1) / T1", "Group", mylabels, "none")
+p122c <- box_agg_change(sm_change_data, "group", "final_distance_ratio", "group", "session", NULL, NULL, "Change (T2 - T1) / T1", "Group", mylabels, "none")
 
-p124c <- box_agg_change(sm_change_data, "group", "avg_distance_path_ratio", "group", "none", NULL, NULL, "Change avg. distance path", "Group", mylabels, "none")
+p124c <- box_agg_change(sm_change_data, "group", "avg_distance_path_ratio", "group", "session", NULL, NULL, "Change avg. distance path", "Group", mylabels, "none")
 
-p125c <- box_agg_change(sm_change_data, "group", "avg_distance_chosen_path_ratio", "group", "none", NULL, NULL, "Change (T2 - T1) / T1", "Group", mylabels, "none")
+p125c <- box_agg_change(sm_change_data, "group", "avg_distance_chosen_path_ratio", "group", "session", NULL, NULL, "Change (T2 - T1) / T1", "Group", mylabels, "none")
 
 
 # additional: only in correct trials 
@@ -362,11 +364,13 @@ sm_ind_data_cor_t12_change <- mean_func(sm_ind_data_cor_t12) %>%
   summarise(final_distance_diff = final_distance_2 - final_distance_1,
             final_distance_ratio = final_distance_diff / final_distance_1,
             avg_distance_path_diff = avg_distance_path_2 - avg_distance_path_1, 
-            avg_distance_path_ratio = avg_distance_path_diff / avg_distance_path_1)
+            avg_distance_path_ratio = avg_distance_path_diff / avg_distance_path_1) %>% 
+  mutate(session="Consolidation")
 
-p122d <- box_agg_change(sm_ind_data_cor_t12_change, "group", "final_distance_ratio", "group", "none", NULL, NULL, "Change (T2 - T1) / T1", "Group", mylabels, "none")
 
-p124d <- box_agg_change(sm_ind_data_cor_t12_change, "group", "avg_distance_path_ratio", "group", "none", NULL, NULL, "Change (T2 - T1) / T1", "Group", mylabels, "none")
+p122d <- box_agg_change(sm_ind_data_cor_t12_change, "group", "final_distance_ratio", "group", "session", NULL, NULL, "Change (T2 - T1) / T1", "Group", mylabels, "none")
+
+p124d <- box_agg_change(sm_ind_data_cor_t12_change, "group", "avg_distance_path_ratio", "group", "session", NULL, NULL, "Change (T2 - T1) / T1", "Group", mylabels, "none")
 ## ----
 #rm(p121c, p122c, p124c, p125c, p122d, p124d, sm_change_data)
 
@@ -384,26 +388,26 @@ sm_ind_data <- mean_func(sm_ind_data)
 
 # % correct goal
 g1a <- box_agg(sm_ind_data %>%  filter(trial_condition=="allo_ret"), "group", "correct_goal", "group", "session", "none", "Allocentric probe trials", NULL, "% correct goal", NULL, mylabels, "bottom")
-g1b <- box_agg_change(sm_change_data %>%  filter(trial_condition=="allo_ret"), "group", "correct_ratio", "group", "none", NULL, NULL, "change (T2 - T1) / T1", NULL, mylabels, "none")
+g1b <- box_agg_change(sm_change_data %>%  filter(trial_condition=="allo_ret"), "group", "correct_ratio", "group", "session", NULL, NULL, "change (T2 - T1) / T1", NULL, mylabels, "none")
 
 g_allo_c <- (g1a & theme(legend.position="none", axis.ticks.x=element_line(), 
                          axis.text.x=element_text()) & scale_x_discrete(labels=mylabels)) +
   (g1b & theme(legend.position="none", axis.ticks.x=element_line(), 
                axis.text.x=element_text()) & scale_x_discrete(labels=mylabels)) +
-  plot_layout(widths=c(0.7,0.3))
+  plot_layout(widths=c(0.68,0.32))
 
-ggsave("Allo_perc_cor.jpeg", g_allo_c, width=5.3, height=3.7, dpi=600)
+ggsave("Allo_perc_cor.jpeg", g_allo_c, width=5, height=3.7, dpi=600)
 
 g2a <- box_agg(sm_ind_data %>%  filter(trial_condition=="ego_ret"), "group", "correct_goal", "group", "session", "none", "Egocentric probe trials", NULL, "% correct goal", NULL, mylabels, "bottom")
-g2b <- box_agg_change(sm_change_data %>%  filter(trial_condition=="ego_ret"), "group", "correct_ratio", "group", "none", NULL, NULL, "change (T2 - T1) / T1", NULL, mylabels, "none")
+g2b <- box_agg_change(sm_change_data %>%  filter(trial_condition=="ego_ret"), "group", "correct_ratio", "group", "session", NULL, NULL, "change (T2 - T1) / T1", NULL, mylabels, "none")
 
 g_ego_c <- (g2a & theme(legend.position="none", axis.ticks.x=element_line(), 
                         axis.text.x=element_text()) & scale_x_discrete(labels=mylabels)) +
   (g2b & theme(legend.position="none", axis.ticks.x=element_line(), 
                axis.text.x=element_text()) & scale_x_discrete(labels=mylabels)) +
-  plot_layout(widths=c(0.7,0.3))
+  plot_layout(widths=c(0.68,0.32))
 
-ggsave("Ego_perc_cor.jpeg", g_ego_c, width=5.3, height=3.7, dpi=600)
+ggsave("Ego_perc_cor.jpeg", g_ego_c, width=5, height=3.7, dpi=600)
 
 
 # final distance in correct 
@@ -413,7 +417,7 @@ sm_ind_data_cor <- sm_trial_data %>%
 sm_ind_data_cor <- mean_func(sm_ind_data_cor)
 
 g1c <- box_agg(sm_ind_data_cor %>%  filter(trial_condition=="allo_ret"), "group", "final_distance", "group", "session", "none", "Allocentric probe trials", NULL, "final distance in correct trials", NULL, mylabels, "bottom")
-g1d <- box_agg_change(sm_ind_data_cor_t12_change %>%  filter(trial_condition=="allo_ret"), "group", "final_distance_ratio", "group", "none", NULL, NULL, "change (T2 - T1) / T1", NULL, mylabels, "none")
+g1d <- box_agg_change(sm_ind_data_cor_t12_change %>%  filter(trial_condition=="allo_ret"), "group", "final_distance_ratio", "group", "session", NULL, NULL, "change (T2 - T1) / T1", NULL, mylabels, "none")
 
 g_allo_fd <- (g1c & theme(legend.position="none", axis.ticks.x=element_line(), 
                           axis.text.x=element_text()) & scale_x_discrete(labels=mylabels) &
@@ -421,13 +425,13 @@ g_allo_fd <- (g1c & theme(legend.position="none", axis.ticks.x=element_line(),
   (g1d & theme(legend.position="none", axis.ticks.x=element_line(), 
                axis.text.x=element_text()) & scale_x_discrete(labels=mylabels) & 
      scale_y_continuous(limits=c(-2,5))) + 
-  plot_layout(widths=c(0.7,0.3))
+  plot_layout(widths=c(0.68,0.32))
 
-ggsave("Allo_fd.jpeg", g_allo_fd, width=5.3, height=3.7, dpi=600)
+ggsave("Allo_fd.jpeg", g_allo_fd, width=5, height=3.7, dpi=600)
 
 
 g2c <- box_agg(sm_ind_data_cor %>% filter(trial_condition=="ego_ret"), "group", "final_distance", "group", "session", "none", "Egocentric probe trials", NULL, "final distance in correct trials", NULL, mylabels, "bottom")
-g2d <- box_agg_change(sm_ind_data_cor_t12_change %>%  filter(trial_condition=="ego_ret"), "group", "final_distance_ratio", "group", "none", NULL, NULL, "change (T2 - T1) / T1", NULL, mylabels, "none")
+g2d <- box_agg_change(sm_ind_data_cor_t12_change %>%  filter(trial_condition=="ego_ret"), "group", "final_distance_ratio", "group", "session", NULL, NULL, "change (T2 - T1) / T1", NULL, mylabels, "none")
 
 g_ego_fd <- (g2c & theme(legend.position="none", axis.ticks.x=element_line(), 
                          axis.text.x=element_text()) & scale_x_discrete(labels=mylabels) &
@@ -435,25 +439,25 @@ g_ego_fd <- (g2c & theme(legend.position="none", axis.ticks.x=element_line(),
   (g2d & theme(legend.position="none", axis.ticks.x=element_line(), 
                axis.text.x=element_text()) & scale_x_discrete(labels=mylabels) & 
      scale_y_continuous(limits=c(-2,5))) + 
-  plot_layout(widths=c(0.7,0.3))
+  plot_layout(widths=c(0.68,0.32))
 
-ggsave("Ego_fd.jpeg", g_ego_fd, width=5.3, height=3.7, dpi=600)
+ggsave("Ego_fd.jpeg", g_ego_fd, width=5, height=3.7, dpi=600)
 
 
 # path error in correct 
 g1e <- box_agg(sm_ind_data %>%  filter(trial_condition=="allo_ret"), "group", "avg_distance_path", "group", "session", "none", "Allocentric probe trials", NULL, "path error in correct trials", NULL, mylabels, "bottom")
-g1f <- box_agg_change(sm_change_data %>%  filter(trial_condition=="allo_ret"), "group", "avg_distance_path_ratio", "group", "none", NULL, NULL, "change (T2 - T1) / T1", NULL, mylabels, "none")
+g1f <- box_agg_change(sm_change_data %>%  filter(trial_condition=="allo_ret"), "group", "avg_distance_path_ratio", "group", "session", NULL, NULL, "change (T2 - T1) / T1", NULL, mylabels, "none")
 
 g_allo_p <- (g1e & theme(legend.position="bottom") & scale_y_continuous(limits=c(0,0.2))) + 
   (g1f & theme(legend.position="none") & scale_y_continuous(limits=c(-2,4))) + 
-  plot_layout(widths=c(0.7,0.3))
+  plot_layout(widths=c(0.68,0.32))
 
 g2e <- box_agg(sm_ind_data %>%  filter(trial_condition=="ego_ret"), "group", "avg_distance_path", "group", "session", "none", "Egocentric probe trials", NULL, "path error in correct trials", NULL, mylabels, "bottom")
-g2f <- box_agg_change(sm_change_data %>%  filter(trial_condition=="ego_ret"), "group", "avg_distance_path_ratio", "group", "none", NULL, NULL, "change (T2 - T1) / T1", NULL, mylabels, "none")
+g2f <- box_agg_change(sm_change_data %>%  filter(trial_condition=="ego_ret"), "group", "avg_distance_path_ratio", "group", "session", NULL, NULL, "change (T2 - T1) / T1", NULL, mylabels, "none")
 
 g_ego_p <- (g2e & theme(legend.position="bottom") & scale_y_continuous(limits=c(0,0.2))) + 
   (g2f & theme(legend.position="none") & scale_y_continuous(limits=c(-2,4))) + 
-  plot_layout(widths=c(0.7,0.3))
+  plot_layout(widths=c(0.68,0.32))
 
 ##################################################################################
 
@@ -555,7 +559,7 @@ stratlabels <- as_labeller(c(`direct` = "direct",
                              `reoriented` = "reoriented",
                              `YoungKids` = "Y-CH", `OldKids` = "O-CH",
                              `YoungAdults` = "Y-AD", `OldAdults` = "O-AD",
-                             `1`="T1 - Immediate Recall", `2`="T2 - Delayed Recall"))
+                             `1`="T1 - Immediate", `2`="T2 - Delayed"))
 
 
 # data for strategy choice box plots: calculate percentage of strategies per group and session 
@@ -595,11 +599,11 @@ s_ego_box <- strategy_box(strategy_data_ego_ind, strategy_data_ego_sum, "search_
 # stacked bar plots 
 s_allo_bar <- strategy_stacked_bar(strategy_data_allo_sum, "group", "percent", "search_strategy_no", "session", stratlabels, "Allocentric probe trials", NULL, "% of strategy use", NULL, "Greys")
 
-ggsave("Allo_strat.jpeg", s_allo_bar, width=4, height=3.7, dpi=600)
+ggsave("Allo_strat.jpeg", s_allo_bar, width=4.2, height=3.7, dpi=600)
 
 s_ego_bar <- strategy_stacked_bar(strategy_data_ego_sum, "group", "percent", "search_strategy_no", "session", stratlabels, "Egocentric probe trials", NULL, "% of strategy use", NULL, "Greys")
 
-ggsave("Ego_strat.jpeg", s_ego_bar, width=4, height=3.7, dpi=600)
+ggsave("Ego_strat.jpeg", s_ego_bar, width=4.2, height=3.7, dpi=600)
 
 # # check egocentric goal location
 # temp <- sm_trial_data %>%
