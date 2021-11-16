@@ -3,93 +3,53 @@ clear; close all; clc; format long;
 addpath(genpath(pwd)) % add subfolder functions to path
 
 %% Starmaze Data Processing
-% @ date 20191001 @ author Deetje Iggena
-% @ date 20201106 update by @ Patrizia Maier & now tracked by git 
-% for starmaze version WP10 Frankfurt
+% @ date 2019-10-01 @ author Deetje Iggena
+% @ date 2020-11-06 update by @ Patrizia Maier & now tracked by git 
+% for Starmaze version WP10 Frankfurt
+% requires Matlab 2021a or later
 
-% The script requires .csv as input-files. 
-% For the path analysis and body-rotations, xy-coordinates are required, 
-% for the time analysis, a timestamp, for head-rotations, z-coordinates in degree are required.
-% for trial info trial_results.csv is required
+% The script requires .csv files as input. 
+% One tracker file per trial with timestamp, xy-coordinates for movememt
+% and z-coordinates for rotation. 
+% One trial_results file with general information (id, session, condition,
+% etc.). 
 
-% Script starts with input: 
+% The script starts with input: 
 %   1. Provide the span of subjects you would like to analyse, start with
 %   the first subjectnumber, end with the last subjectnumber (Attention:
 %   the folder with S001 has to be in a folder that is named after the
 %   subjectnumber)
-%   2. Provide the total number of recorded sessions
+%   2. Provide the total number of recorded sessions.
 
 % BE AWARE:
-% In case you change the tracker input-format, please check which coloumns do
-% contain your data and adjust the script accordingly to ensure the right
-% input.
+% In case you change the tracker file format, please check which coloumns 
+% contain your data and adjust the script accordingly.
 
-% Block 1: 
-% Preparation of input and output folders and participant list. 
-% In "test-figure" the script creates a starmaze depending on the
-% provided coordinates of the corners of the starmaze. The coordinates are
-% taken from a provided .csv.
+% Block 1: Set up Starmaze and Practise environment 
 
-% Block 2: 
-% Data Preprocessing: In this block, the script will read-in csv-data, 
-% clean and rewrite tracker trial files to xlsx-file.
-% If you have xls/xlsx-data already, you can skip this step. 
-% Besides, the script assumes you have a "log.csv" and a
-% "trial_results.csv" file.
+% Block 2: Set up input/output
 
-% Block 3:
-% Read-in of cleaned tracker trial xlsx-files. 
-% The actual analysis starts, i.e. calculation of different variables. 
+% Block 3: Data preprocessing
 
-% Block 4: 
-% Writing data in xlsx-files.
-% In case you would like to have different headlines or a different order
-% change the headlines and order in this part
+% Block 4: Analysis 
 
-%% Block 1: Input/output and Starmaze definition 
-disp('Welcome to the star-maze-analysis-tool. Please follow the instructions. Press CTRL+C to quit')
+% Block 5: Save output 
 
-%% Get folders and subject list 
-% folder with all input data 
-[dataFolder]=sm_inputPath(); 
-
-% folder for output results 
-folderOut2=[dataFolder '\WP10_results'];
-if ~exist(folderOut2, 'dir')
-    mkdir(folderOut2);
-    disp('Your outputfolder for results didn''t exist, a new folder was created')
-end
-
-% load/save data
-targetFileName         = '\wp10_results_table.mat';
-if isfile(fullfile(folderOut2, targetFileName))
-    load(fullfile(folderOut2, targetFileName))
-end
-save(fullfile(folderOut2, targetFileName));
- 
-if ~exist('sm.sub')
-    sm.sub={};
-end
-[row,participant]=size(sm.sub);
-p=participant+1;
-
-[subject_start,subject_end]=sm_inputSubjectsNo();
-[sessionNo]=sm_wp10_inputSessionNo();
-
-wp=10; % work package default 
- 
-%% Starmaze creation 
-% Min-Max values
+%% Block 1: Set up Starmaze and Practise environment 
+%% Starmaze 
+% coordinates min/max values
 values=table2array(readtable('wp10_values.csv'));
 [sm.coord.xmin,sm.coord.xmax,sm.coord.ymin,sm.coord.ymax]=sm_wp10_minMaxValues(values);
-% start positions(normalized!)
+
+% coordinates start positions (normalized!)
 start=table2array(readtable('wp10_start.csv'));
 [sm.coord.start_x,sm.coord.start_y]=sm_wp10_start(start,sm.coord.xmin,sm.coord.xmax,sm.coord.ymin,sm.coord.ymax);
-% goal positions(normalized!)
+
+% coordinates goal positions (normalized!)
 goal=table2array(readtable('wp10_goal.csv'));
 [sm.coord.goal_x,sm.coord.goal_y]=sm_wp10_goal(goal,sm.coord.xmin,sm.coord.xmax,sm.coord.ymin,sm.coord.ymax);
 
-% coordinates alley-corner (normalized!)
+% coordinates alley corners (normalized!)
 alley_x=table2array(readtable('wp10_alley_x.csv'));
 [cornerNo,alleyNo] = size(alley_x);
 for alley=1:alleyNo
@@ -103,72 +63,106 @@ for alley=1:alleyNo
         alley_y(corner,alley)=datanorm(alley_y(corner,alley),sm.coord.ymin,sm.coord.ymax);
     end
 end
-% combined pentagon
+% coordinates combined pentagon (normalized!)
 pentagon_x=table2array(readtable('wp10_pentagon_x.csv'));
 pentagon_y=table2array(readtable('wp10_pentagon_y.csv'));
 [cP_x,cP_y,cP,pent_x,pent_y]=sm_wp10_pentagon(alley_x,alley_y,pentagon_x,pentagon_y,sm.coord.xmin,...
     sm.coord.xmax,sm.coord.ymin,sm.coord.ymax);
 
-% alley_polyshape
+% create polyshapes 
+% alley polyshape
 [alley_full_x,alley_full_y,alley_polyshape, alley_half_out_x, alley_half_out_y, alley_polyshape_1,...
     alley_half_in_x, alley_half_in_y, alley_polyshape_2]=sm_wp10_alleyPolyshape(alley_x,alley_y);
-% rectangle_polyshape
+% rectangle polyshape
 [rec_x,rec_y,rec]=sm_wp10_rectPolyshape(alleyNo, alley_x, alley_y, pent_x, pent_y);
-% triangle_polyshape
+% triangle polyshape
 [tri_x,tri_y,tri]=sm_wp10_trianglePolyshape(alleyNo, alley_x, alley_y, pent_x, pent_y);
-
+% joint polyshape 
 polyshape_array=[alley_polyshape_1{1,1} alley_polyshape_2{1,1} alley_polyshape_1{1,2} alley_polyshape_2{1,2}...
     alley_polyshape_1{1,3} alley_polyshape_2{1,3} alley_polyshape_1{1,4} alley_polyshape_2{1,4}...
     alley_polyshape_1{1,5} alley_polyshape_1{1,5} alley_polyshape_2{1,5} cP];
 
-% information (ordered)
+% create graph 
+% for automated shortest path calculation (requires Matlab 2021a)
+[myGraph,graph_x,graph_y]=sm_wp10_createGraph(sm.coord.start_x, sm.coord.start_y,...
+    tri_x, tri_y, sm.coord.goal_x, sm.coord.goal_y);
+
+% add (ordered) information 
 goal_locs=["MA", "MC", "MI"]; 
 start_locs=["Player_MA" "Player_MB" "Player_MC" "Player_MD" "Player_ME" "Player_MF" "Player_MG" ...
     "Player_MH" "Player_MI", "Player_MJ", "Player_MX"];
 alley_locs=["A" "B" "C" "D" "E" "F" "G" "H" "I" "J"];
 
-% graph (for automated shortest path calculation) 
-% requires Matlab 2021a
-[myGraph,graph_x,graph_y]=sm_wp10_createGraph(sm.coord.start_x, sm.coord.start_y,...
-    tri_x, tri_y, sm.coord.goal_x, sm.coord.goal_y);
-
 % create test figure plot 
 % sm_wp10_testfig("s_maze",polyshape_array,sm.coord.goal_x,sm.coord.goal_y,sm.coord.start_x,sm.coord.start_y,goal_locs,myGraph,graph_x,graph_y);
 
-%% Practise maze creation (motor control) 
-% Min-Max-values
+%% Practise maze (motor control task) 
+% coordinates min/max values
 pract_values=table2array(readtable('wp10_practise_values.csv'));
 [pm.coord.xmin,pm.coord.xmax,pm.coord.ymin,pm.coord.ymax]=sm_wp10_minMaxValues(pract_values);
-% start position(normalized!)
+
+% coordinates start position (normalized!)
 pract_start=table2array(readtable('wp10_practise_start.csv'));
 [pm.coord.start_x,pm.coord.start_y]=sm_wp10_start(pract_start,pm.coord.xmin,pm.coord.xmax,pm.coord.ymin,pm.coord.ymax);
-% goal-positions(normalized!)
+
+% coordinates goal positions (normalized!)
 pract_goal=table2array(readtable('wp10_practise_goal.csv'));
 [pm.coord.goal_x,pm.coord.goal_y]=sm_wp10_goal(pract_goal,pm.coord.xmin,pm.coord.xmax,pm.coord.ymin,pm.coord.ymax);
 
-% coordinates alley-corner (normalized!)
+% coordinates alley corners (normalized!)
 pract_alley_x=table2array(readtable('wp10_practise_x.csv'));
 [cornerNo,~] = size(pract_alley_x);
 for corner=1:cornerNo
     pract_alley_x(corner,1)=datanorm(pract_alley_x(corner,1),pm.coord.xmin,pm.coord.xmax);
 end
-
 pract_alley_y=table2array(readtable('wp10_practise_y.csv'));
 for corner=1:cornerNo
     pract_alley_y(corner,1)=datanorm(pract_alley_y(corner,1),pm.coord.ymin,pm.coord.ymax);
 end
 
-% alley_polyshape
+% create polyshape
 pract_polyshape=polyshape(pract_alley_x(:),pract_alley_y(:));
 
-% information (ordered)
+% add (ordered) information 
 pract_goal_locs=["1", "2", "3", "4", "5", "6", "7", "8" , "9", "10" ]; 
 pract_start_locs="Player_P0"; 
 
 % create test figure plot 
 % sm_wp10_testfig("p_maze",pract_polyshape,pm.coord.goal_x,pm.coord.goal_y,pm.coord.start_x,pm.coord.start_y,pract_goal_locs,myGraph,graph_x,graph_y);
 
-%% Block 2: Data preprocessing
+%% Block 2: Set up input/output
+%% Folder and participant information
+[inputFolder]  = sm_inputPath(); % provide folder with all input data 
+sessionNo      = 3; % default 3 
+[subject_start,subject_end] = sm_inputSubjectsNo();
+
+%% Result folder
+% folder for output results 
+resultFolder=[inputFolder '\WP10_results'];
+if ~exist(resultFolder, 'dir')
+    mkdir(resultFolder);
+    disp('Your output folder did not exist, a new folder was created.')
+end
+
+%% Data table for saving data
+% load existing data table
+targetFileName         = '\wp10_results_table.mat';
+targetFilePath         = fullfile(resultFolder, targetFileName);
+if isfile(fullfile(resultFolder, targetFileName))
+    load(fullfile(resultFolder, targetFileName))
+end
+% initialize data table if non-existing
+if ~exist('sm','var')
+    sm = []; % sm.sub = {}; 
+    save(targetFilePath, 'sm');
+end
+
+% get data index 
+[~,participant]=size(sm);
+%[~,participant]=size(sm.sub);
+p=participant+1;
+
+%% Block 3: Data preprocessing
 rand_dict={};
 for subject=subject_start:subject_end
     pstr=['p',num2str(subject)];
@@ -176,7 +170,7 @@ for subject=subject_start:subject_end
 for session=1:sessionNo
     sstr=['s',num2str(session)];
     [finalFolderString]=sm_wp10_getFolderstring(session);
-    [folderIn,folderOut]=sm_wp10_folder(dataFolder,subject,finalFolderString);
+    [folderIn,folderOut]=sm_wp10_folder(inputFolder,subject,finalFolderString);
     % save data
     targetFileName_Subject         = ['\' num2str(subject) '_results_table.mat'];
     save(fullfile(folderOut, targetFileName_Subject));
@@ -198,7 +192,6 @@ for session=1:sessionNo
 s=session; % s=session --> row, p=participant --> coloumn
 sm.sub{p}.id=subject;
 ID=num2str(sm.sub{p}.id);
-sm.sub{p}.wp=wp; 
 [sm.sub{p}.group,sm.sub{p}.Group,sm.sub{p}.sex,sm.sub{p}.Sex]=sm_wp10_callGroup(sm.sub{p}.id); % provide group information
 sm.sub{p}.session{s}.session=trial_data.session_num(1,1); % provide session information
 
@@ -554,7 +547,7 @@ else
         uniq_rect=uniq_rect(2:end,:); % remove first row (start) for outer starts, as it's always zero 
     end 
     
-    %% Block 3: Data analysis, i.e. calculcation of variables
+    %% Block 4: Data analysis, i.e. calculcation of variables
     %% Time analysis: already done
     %% Chosen goal location
     [sm.sub{p}.session{s}.trial{k}.result.chosen_goal_int,...
@@ -976,9 +969,9 @@ end
 % save data
 save(fullfile(folderOut, targetFileName_Subject),'sm', '-append'); 
 
-%% Block 4: Writing data ---> result sheet XLSX for single trials %%
+%% Block 5: Writing data ---> result sheet XLSX for single trials %%
 % header
-col_header={'wp','date_analysis','id','sex','group','session','session_duration',...
+col_header={'date_analysis','id','sex','group','session','session_duration',...
     'trial','block','trial_in_block','trial_condition',...
     'start_pos','goal_loc','goal_alley','goal_object','goal_vis',...
     'goal_alley_ego','chosen_goal_loc','chosen_alley_loc','obj_at_chosen_loc',...
@@ -1035,7 +1028,7 @@ col_header_3={'correct_crit','goal_x','goal_y','goal_x_ego','goal_y_ego',...
 % name of excel-file
 Trial=num2str(sm.sub{p}.session{s}.trial{k}.trial_num);
 Session=num2str(sm.sub{p}.session{s}.session);
-group_var=[sm.sub{p}.wp string(yyyymmdd(datetime)) sm.sub{p}.id sm.sub{p}.sex sm.sub{p}.group ...  
+group_var=[string(yyyymmdd(datetime)) sm.sub{p}.id sm.sub{p}.sex sm.sub{p}.group ...  
     sm.sub{p}.session{s}.session sm.sub{p}.session{s}.session_duration ...
     sm.sub{p}.session{s}.trial{k}.trial_num sm.sub{p}.session{s}.trial{k}.block ...
     sm.sub{p}.session{s}.trial{k}.trial_in_block sm.sub{p}.session{s}.trial{k}.trial_condition ...    
@@ -1044,7 +1037,7 @@ group_var=[sm.sub{p}.wp string(yyyymmdd(datetime)) sm.sub{p}.id sm.sub{p}.sex sm
     sm.sub{p}.session{s}.trial{k}.fb sm.sub{p}.session{s}.trial{k}.ego_alley ...
     sm.sub{p}.session{s}.trial{k}.result.chosen_goal_int sm.sub{p}.session{s}.trial{k}.result.chosen_alley_int ...
     sm.sub{p}.session{s}.trial{k}.result.obj_at_chosen_loc sm.sub{p}.session{s}.trial{k}.exclude_trial_matlab ];
-file_name = ['results_' num2str(wp) '_' sm.sub{p}.Group '_' ID '_' Session '_' Trial '.xls'];
+file_name = ['results_' sm.sub{p}.Group '_' ID '_' Session '_' Trial '.xls'];
 new_file = fullfile(folderOut, file_name);
 
 % write data
@@ -1139,7 +1132,7 @@ end
 
 %% Write summaries for a selection of variables
 new_name2 = [sm.sub{p}.Group '_' num2str(sm.sub{p}.id)  '_results'];
-new_file = fullfile(folderOut2, new_name2);
+new_file = fullfile(resultFolder, new_name2);
 sm_wp10_table_allTrials(folderOut,new_file,col_header,col_header_2,col_header_3,'BU','EO','data_vars','support_vars');
 
 p=p+1;
@@ -1147,7 +1140,7 @@ p=p+1;
 end 
 
 %% Save data
-targetFilePath         = [folderOut2, targetFileName];  
+targetFilePath         = [resultFolder, targetFileName];  
 save(targetFilePath, 'sm', '-append')
 
 clear
