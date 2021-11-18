@@ -25,9 +25,9 @@ addpath(genpath(pwd)) % add subfolder functions to path
 % In case you change the tracker file format, please check which coloumns 
 % contain your data and adjust the script accordingly.
 
-% Block 1: Set up Starmaze and Practise environment 
+% Block 1: Set up input/output
 
-% Block 2: Set up input/output
+% Block 2: Set up Starmaze and Practise environment 
 
 % Block 3: Data preprocessing
 
@@ -35,7 +35,39 @@ addpath(genpath(pwd)) % add subfolder functions to path
 
 % Block 5: Save output 
 
-%% Block 1: Set up Starmaze and Practise environment 
+%% Block 1: Set up input/output 
+%% Folder and participant information
+[inputFolder]  = sm_inputPath(); % provide folder with all input data 
+[subject_start,subject_end] = sm_inputSubjectsNo();
+sessionNo      = 3; % default 3 
+
+%% Result folder
+% folder for output results 
+resultFolder=[inputFolder '\WP10_results'];
+if ~exist(resultFolder, 'dir')
+    mkdir(resultFolder);
+    disp('Your output folder did not exist, a new folder was created.')
+end
+
+%% Data table for saving data
+% load existing data table
+targetFileName         = '\wp10_results_table.mat';
+targetFilePath         = fullfile(resultFolder, targetFileName);
+if isfile(fullfile(resultFolder, targetFileName))
+    load(fullfile(resultFolder, targetFileName))
+end
+% initialize data table if non-existing
+if ~exist('sm','var')
+    sm = []; % sm.sub = {}; 
+    save(targetFilePath, 'sm');
+end
+
+% get data index 
+[~,participant]=size(sm);
+%[~,participant]=size(sm.sub);
+p=participant+1;
+
+%% Block 2: Set up Starmaze and Practise environment
 %% Starmaze 
 % coordinates min/max values
 values=table2array(readtable('wp10_values.csv'));
@@ -71,30 +103,30 @@ pentagon_y=table2array(readtable('wp10_pentagon_y.csv'));
 
 % create polyshapes 
 % alley polyshape
-[alley_full_x,alley_full_y,alley_polyshape, alley_half_out_x, alley_half_out_y, alley_polyshape_1,...
+[alley_full_x,alley_full_y,sm.coord.alley_polyshape, alley_half_out_x, alley_half_out_y, alley_polyshape_1,...
     alley_half_in_x, alley_half_in_y, alley_polyshape_2]=sm_wp10_alleyPolyshape(alley_x,alley_y);
 % rectangle polyshape
-[rec_x,rec_y,rec]=sm_wp10_rectPolyshape(alleyNo, alley_x, alley_y, pent_x, pent_y);
+[rec_x,rec_y,sm.coord.rec]=sm_wp10_rectPolyshape(alleyNo, alley_x, alley_y, pent_x, pent_y);
 % triangle polyshape
-[tri_x,tri_y,tri]=sm_wp10_trianglePolyshape(alleyNo, alley_x, alley_y, pent_x, pent_y);
+[tri_x,tri_y,sm.coord.tri]=sm_wp10_trianglePolyshape(alleyNo, alley_x, alley_y, pent_x, pent_y);
 % joint polyshape 
-polyshape_array=[alley_polyshape_1{1,1} alley_polyshape_2{1,1} alley_polyshape_1{1,2} alley_polyshape_2{1,2}...
+sm.coord.polyshape_array=[alley_polyshape_1{1,1} alley_polyshape_2{1,1} alley_polyshape_1{1,2} alley_polyshape_2{1,2}...
     alley_polyshape_1{1,3} alley_polyshape_2{1,3} alley_polyshape_1{1,4} alley_polyshape_2{1,4}...
     alley_polyshape_1{1,5} alley_polyshape_1{1,5} alley_polyshape_2{1,5} cP];
 
 % create graph 
 % for automated shortest path calculation (requires Matlab 2021a)
-[myGraph,graph_x,graph_y]=sm_wp10_createGraph(sm.coord.start_x, sm.coord.start_y,...
+[sm.coord.myGraph,sm.coord.graph_x,sm.coord.graph_y]=sm_wp10_createGraph(sm.coord.start_x, sm.coord.start_y,...
     tri_x, tri_y, sm.coord.goal_x, sm.coord.goal_y);
 
 % add (ordered) information 
-goal_locs=["MA", "MC", "MI"]; 
-start_locs=["Player_MA" "Player_MB" "Player_MC" "Player_MD" "Player_ME" "Player_MF" "Player_MG" ...
+sm.coord.goal_locs=["MA", "MC", "MI"]; 
+sm.coord.start_locs=["Player_MA" "Player_MB" "Player_MC" "Player_MD" "Player_ME" "Player_MF" "Player_MG" ...
     "Player_MH" "Player_MI", "Player_MJ", "Player_MX"];
-alley_locs=["A" "B" "C" "D" "E" "F" "G" "H" "I" "J"];
+sm.coord.alley_locs=["A" "B" "C" "D" "E" "F" "G" "H" "I" "J"];
 
 % create test figure plot 
-% sm_wp10_testfig("s_maze",polyshape_array,sm.coord.goal_x,sm.coord.goal_y,sm.coord.start_x,sm.coord.start_y,goal_locs,myGraph,graph_x,graph_y);
+% sm_wp10_testfig("s_maze",sm.coord.polyshape_array,sm.coord.goal_x,sm.coord.goal_y,sm.coord.start_x,sm.coord.start_y,sm.coord.goal_locs,myGraph,graph_x,graph_y);
 
 %% Practise maze (motor control task) 
 % coordinates min/max values
@@ -121,46 +153,14 @@ for corner=1:cornerNo
 end
 
 % create polyshape
-pract_polyshape=polyshape(pract_alley_x(:),pract_alley_y(:));
+pm.coord.pract_polyshape=polyshape(pract_alley_x(:),pract_alley_y(:));
 
 % add (ordered) information 
-pract_goal_locs=["1", "2", "3", "4", "5", "6", "7", "8" , "9", "10" ]; 
-pract_start_locs="Player_P0"; 
+pm.coord.pract_goal_locs=["1", "2", "3", "4", "5", "6", "7", "8" , "9", "10" ]; 
+pm.coord.pract_start_locs="Player_P0"; 
 
 % create test figure plot 
-% sm_wp10_testfig("p_maze",pract_polyshape,pm.coord.goal_x,pm.coord.goal_y,pm.coord.start_x,pm.coord.start_y,pract_goal_locs,myGraph,graph_x,graph_y);
-
-%% Block 2: Set up input/output
-%% Folder and participant information
-[inputFolder]  = sm_inputPath(); % provide folder with all input data 
-[subject_start,subject_end] = sm_inputSubjectsNo();
-sessionNo      = 3; % default 3 
-
-%% Result folder
-% folder for output results 
-resultFolder=[inputFolder '\WP10_results'];
-if ~exist(resultFolder, 'dir')
-    mkdir(resultFolder);
-    disp('Your output folder did not exist, a new folder was created.')
-end
-
-%% Data table for saving data
-% load existing data table
-targetFileName         = '\wp10_results_table.mat';
-targetFilePath         = fullfile(resultFolder, targetFileName);
-if isfile(fullfile(resultFolder, targetFileName))
-    load(fullfile(resultFolder, targetFileName))
-end
-% initialize data table if non-existing
-if ~exist('sm','var')
-    sm = []; % sm.sub = {}; 
-    save(targetFilePath, 'sm');
-end
-
-% get data index 
-[~,participant]=size(sm);
-%[~,participant]=size(sm.sub);
-p=participant+1;
+% sm_wp10_testfig("p_maze",pm.coord.pract_polyshape,pm.coord.goal_x,pm.coord.goal_y,pm.coord.start_x,pm.coord.start_y,pm.coord.pract_goal_locs,myGraph,graph_x,graph_y);
 
 %% Block 3: Data preprocessing
 rand_dict={};
@@ -260,10 +260,10 @@ sm.sub{p}.session{s}.trial{k}.trial_goal=trial_data.trial_goal(k,1);
 [sm.sub{p}.session{s}.trial{k}.goal_x,sm.sub{p}.session{s}.trial{k}.goal_y,...
     sm.sub{p}.session{s}.trial{k}.goal_int,sm.sub{p}.session{s}.trial{k}.goal_str,...
     sm.sub{p}.session{s}.trial{k}.goal_alley]=sm_wp10_trialGoal(char(sm.sub{p}.session{s}.trial{k}.trial_goal),...
-    sm.coord.goal_x,sm.coord.goal_y,goal_locs,alley_locs);
+    sm.coord.goal_x,sm.coord.goal_y,sm.coord.goal_locs,sm.coord.alley_locs);
 
 sm.sub{p}.session{s}.trial{k}.trial_startpos=trial_data.trial_player(k,1);
-[sm.sub{p}.session{s}.trial{k}.start]=sm_wp10_trialStart(sm.sub{p}.session{s}.trial{k}.trial_startpos,start_locs);
+[sm.sub{p}.session{s}.trial{k}.start]=sm_wp10_trialStart(sm.sub{p}.session{s}.trial{k}.trial_startpos,sm.coord.start_locs);
 
 %% Time analysis using timestamp
 b=t(end); a=t(1);
@@ -500,7 +500,7 @@ else
         sm.sub{p}.session{s}.trial{k}.ideal_headturnNo]=sm_wp10_depStartVariables(myGraph,graph_x,graph_y,...
         sm.sub{p}.session{s}.trial{k}.start, sm.sub{p}.session{s}.trial{k}.goal_int,...
         sm.sub{p}.session{s}.trial{k}.x_end, sm.sub{p}.session{s}.trial{k}.y_end, ...
-        alley_full_x, alley_full_y, rec_x, rec_y, cP, polyshape_array);
+        alley_full_x, alley_full_y, rec_x, rec_y, cP, sm.coord.polyshape_array);
 
     % interpolate data for further analysis
     % using 'interparc' function by John D'Errico (Matlab File Exchanger) 
@@ -515,7 +515,7 @@ else
     
 %     % test plot
 %     figure;
-%     plot(polyshape_array);
+%     plot(sm.coord.polyshape_array);
 %     hold on
 %     plot(x_line, y_line, 'k+', xi_al, yi_al, 'k-',...
 %         x_line_ego, y_line_ego, 'rx', xi_eg, yi_eg, 'r-',...
@@ -554,7 +554,7 @@ else
         sm.sub{p}.session{s}.trial{k}.result.chosen_alley_str,...
         sm.sub{p}.session{s}.trial{k}.result.chosen_alley_int,...
         sm.sub{p}.session{s}.trial{k}.result.obj_at_chosen_loc]=sm_wp10_chosenGoal(rand_dict,...
-        pstr, sstr, char(trial_data.chosen_goal(k,1)), goal_locs, alley_locs);
+        pstr, sstr, char(trial_data.chosen_goal(k,1)), sm.coord.goal_locs, sm.coord.alley_locs);
     
     %% Coordinate analysis using x-/y-coordinates
     % Path analysis
@@ -1116,14 +1116,14 @@ save(fullfile(folderOut, targetFileName_Subject),'sm', '-append');
 if session==3
     sm_wp10_plotMotorControl(sm.sub{p}.session{s}.trial{k}.trial_num,sm.sub{p}.session{s}.session,...
         sm.sub{p}.id,sm.sub{p}.Group,...
-        pract_polyshape,pm.coord.goal_x,pm.coord.goal_y,pm.coord.start_x,pm.coord.start_y,...
-        pract_goal_locs,x,y,xi_al,yi_al,folderOut)
+        pm.coord.pract_polyshape,pm.coord.goal_x,pm.coord.goal_y,pm.coord.start_x,pm.coord.start_y,...
+        pm.coord.pract_goal_locs,x,y,xi_al,yi_al,folderOut)
 else
     sm_wp10_plotTrack(sm.sub{p}.session{s}.trial{k}.trial_num,sm.sub{p}.session{s}.session,...
         sm.sub{p}.session{s}.trial{k}.trial_condition,sm.sub{p}.session{s}.trial{k}.start,...
         sm.sub{p}.id,sm.sub{p}.Group,sm.sub{p}.session{s}.trial{k}.result.success,...
         sm.sub{p}.session{s}.trial{k}.result.direct_path,sm.sub{p}.session{s}.trial{k}.result.search_strategy_no,...
-        alley_polyshape_1,alley_polyshape_2,tri,rec,x,y,x_line_ego,y_line_ego,x_line,y_line,...
+        alley_polyshape_1,alley_polyshape_2,sm.coord.tri,sm.coord.rec,x,y,x_line_ego,y_line_ego,x_line,y_line,...
         sm.sub{p}.session{s}.trial{k}.goal_x,sm.sub{p}.session{s}.trial{k}.goal_y,folderOut)
 end
 end
