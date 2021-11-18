@@ -165,12 +165,15 @@ pm.coord.pract_start_locs="Player_P0";
 %% Block 3: Data preprocessing
 rand_dict={};
 for subject=subject_start:subject_end
-    pstr=['p',num2str(subject)];
+%     pstr=['p',num2str(subject)];
 
 for session=1:sessionNo
-    sstr=['s',num2str(session)];
-    [finalFolderString]=sm_wp10_getFolderstring(session);
+%     sstr=['s',num2str(session)];
+
+    finalFolderString = "S00" + session; 
+    %[finalFolderString]=sm_wp10_getFolderstring(session); % TBD: REMOVE 
     [folderIn,folderOut]=sm_wp10_folder(inputFolder,subject,finalFolderString);
+    
     % save data
     targetFileName_Subject         = ['\' num2str(subject) '_results_table.mat'];
     save(fullfile(folderOut, targetFileName_Subject), 'sm');
