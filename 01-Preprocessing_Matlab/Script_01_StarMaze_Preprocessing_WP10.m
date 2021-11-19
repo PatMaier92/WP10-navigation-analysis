@@ -266,10 +266,10 @@ for subj=subject_start:subject_end
             sm.subject(partNo).session(sesNo).trial(k).trial_in_block=trial_data.trial_num_in_block(k,1);
             
             sm.subject(partNo).session(sesNo).trial(k).fb=string(trial_data.trial_feedback(k,1));
-            sm.subject(partNo).session(sesNo).trial(k).feedback=int8(strcmp(sm.subject(partNo).session(sesNo).trial(k).feedback,'true'));
+            sm.subject(partNo).session(sesNo).trial(k).feedback=int8(strcmp(sm.subject(partNo).session(sesNo).trial(k).fb,'true'));
             
             sm.subject(partNo).session(sesNo).trial(k).tc=string(trial_data.trial_type(k,1));
-            sm.subject(partNo).session(sesNo).trial(k).trial_condition=sm_wp10_trialCondition(sm.subject(partNo).session(sesNo).trial(k).trial_type,sm.subject(partNo).session(sesNo).trial(k).feedback);
+            sm.subject(partNo).session(sesNo).trial(k).trial_condition=sm_wp10_trialCondition(sm.subject(partNo).session(sesNo).trial(k).tc,sm.subject(partNo).session(sesNo).trial(k).feedback);
             
             n_goals=4;
             sm.subject(partNo).session(sesNo).trial(k).tgi=string(trial_data.trial_goal_identity(k,1));
@@ -284,228 +284,225 @@ for subj=subject_start:subject_end
             sm.subject(partNo).session(sesNo).trial(k).ts=char(trial_data.trial_player(k,1));
             [sm.subject(partNo).session(sesNo).trial(k).start_int]=sm_wp10_trialStart(sm.subject(partNo).session(sesNo).trial(k).ts,sm.coord.start_locs);
             
-            %% Time analysis using timestamp
-            b=t(end); a=t(1);
-            sm.sub{partNo}.session{sesNo}.trial{k}.result.time=sm_time(a,b); % total amount of time
+            %% Time analysis
+            sm.subject(partNo).session(sesNo).trial(k).result.time=sm_time(t(1),t(end)); % total amount of time
             
             fprintf('Time analysis done for %d, session %d, file no %d.\n', subj, session, k);
             
             %% For motor control navigation trial
             % analysis of path and time
-            if sm.sub{partNo}.session{sesNo}.trial{k}.trial_condition==4
+            if sm.subject(partNo).session(sesNo).trial(k).trial_condition==4
                 %% Calculate variables depending on single trial settings
                 % ideal path coordinates & length
-                x_line_motor=[pm.coord.start_x; pm.coord.goal_x];
-                y_line_motor=[pm.coord.start_y; pm.coord.goal_y];
-                sm.sub{partNo}.session{sesNo}.trial{k}.ideal_path_length=sm_wp10_idealPathLength(x_line_motor, y_line_motor);
+                x_line_motor=[pm.coord.start_x; pm.coord.goal_x]; y_line_motor=[pm.coord.start_y; pm.coord.goal_y];
+                sm.subject(partNo).session(sesNo).trial(k).support.ideal_path_length=sm_wp10_idealPathLength(x_line_motor,y_line_motor);
                 
                 % interpolate data for further analysis
                 % using 'interparc' function by John D'Errico (Matlab File Exchanger)
-                [xi_al,yi_al]=sm_wp10_dataInterpolation(x_line_motor, y_line_motor,...
-                    sm.sub{partNo}.session{sesNo}.trial{k}.ideal_path_length);
+                [xi_al,yi_al]=sm_wp10_dataInterpolation(x_line_motor,y_line_motor,...
+                    sm.subject(partNo).session(sesNo).trial(k).ideal_path_length);
                 
                 %% Time analysis: already done
                 %% Coordinate analysis using x-/y-coordinates
                 % Path analysis
-                sm.sub{partNo}.session{sesNo}.trial{k}.result.path_length=0; % reset/initiate variables
+                sm.subject(partNo).session(sesNo).trial(k).result.path_length=0; % reset/initiate variables
                 for i=1:sdata_length
                     % PATH to all TARGETS
                     % cumulative distance traveled (used in path accuracy)
-                    sm.sub{partNo}.session{sesNo}.trial{k}.result.path_length=sm.sub{partNo}.session{sesNo}.trial{k}.result.path_length+sum(sm_distance(x(i),x(i+1),y(i),y(i+1)));
+                    sm.subject(partNo).session(sesNo).trial(k).result.path_length=sm.subject(partNo).session(sesNo).trial(k).result.path_length+sum(sm_distance(x(i),x(i+1),y(i),y(i+1)));
                 end
                 
                 % Interpolated IDEAL PATH LENGTH value
-                sm.sub{partNo}.session{sesNo}.trial{k}.ideal_path_length_interpol=0; % start-initiation
+                sm.subject(partNo).session(sesNo).trial(k).support.ideal_path_length_interpol=0; % start-initiation
                 xi_length=length(xi_al)-1;
                 for i=1:xi_length
                     % ideal path traveled (based on interpolated values)
-                    sm.sub{partNo}.session{sesNo}.trial{k}.ideal_path_length_interpol=sm.sub{partNo}.session{sesNo}.trial{k}.ideal_path_length_interpol+sum(sm_distance(xi_al(i),xi_al(i+1),yi_al(i),yi_al(i+1)));
+                    sm.subject(partNo).session(sesNo).trial(k).support.ideal_path_length_interpol=sm.subject(partNo).session(sesNo).trial(k).support.ideal_path_length_interpol+sum(sm_distance(xi_al(i),xi_al(i+1),yi_al(i),yi_al(i+1)));
                 end
                 
                 % PATH ACCURACY to all TARGETS
-                sm.sub{partNo}.session{sesNo}.trial{k}.result.path_accuracy=sm_ac(sm.sub{partNo}.session{sesNo}.trial{k}.result.path_length,sm.sub{partNo}.session{sesNo}.trial{k}.ideal_path_length_interpol);
-                % sm.sub{p}.session{s}.trial{k}.result.path_accuracy=sm_ac(sm.sub{p}.session{s}.trial{k}.result.path_length,sm.sub{p}.session{s}.trial{k}.ideal_path_length);
-                
+                sm.subject(partNo).session(sesNo).trial(k).result.path_accuracy=sm_ac(sm.subject(partNo).session(sesNo).trial(k).result.path_length,sm.subject(partNo).session(sesNo).trial(k).support.ideal_path_length_interpol);
+                 
                 % VELOCITY
-                sm.sub{partNo}.session{sesNo}.trial{k}.result.velocity=sm.sub{partNo}.session{sesNo}.trial{k}.result.path_length/sm.sub{partNo}.session{sesNo}.trial{k}.result.time;
+                sm.subject(partNo).session(sesNo).trial(k).result.velocity=sm.subject(partNo).session(sesNo).trial(k).result.path_length/sm.subject(partNo).session(sesNo).trial(k).result.time;
                 
-                % dummy values for all other results variables
-                sm.sub{partNo}.session{sesNo}.trial{k}.ego_alley=0;
-                sm.sub{partNo}.session{sesNo}.trial{k}.result.chosen_goal_int=0;
-                sm.sub{partNo}.session{sesNo}.trial{k}.result.chosen_alley_int=0;
-                sm.sub{partNo}.session{sesNo}.trial{k}.result.obj_at_chosen_loc=0;
-                sm.sub{partNo}.session{sesNo}.trial{k}.exclude_trial_matlab=0;
-                
-                sm.sub{partNo}.session{sesNo}.trial{k}.result.success=999;
-                sm.sub{partNo}.session{sesNo}.trial{k}.result.success_ego=999;
-                sm.sub{partNo}.session{sesNo}.trial{k}.result.correct_final_alley=999;
-                sm.sub{partNo}.session{sesNo}.trial{k}.result.correct_final_alley_ego=999;
-                sm.sub{partNo}.session{sesNo}.trial{k}.result.final_distance=999;
-                sm.sub{partNo}.session{sesNo}.trial{k}.result.final_distance_ego=999;
-                sm.sub{partNo}.session{sesNo}.trial{k}.result.path_accuracy=999;
-                sm.sub{partNo}.session{sesNo}.trial{k}.result.path_accuracy_chosen=999;
-                sm.sub{partNo}.session{sesNo}.trial{k}.result.path_accuracy_ego=999;
-                sm.sub{partNo}.session{sesNo}.trial{k}.result.avg_distance_target=999;
-                sm.sub{partNo}.session{sesNo}.trial{k}.result.total_distance_target=999;
-                sm.sub{partNo}.session{sesNo}.trial{k}.result.sum_data_points=999;
-                sm.sub{partNo}.session{sesNo}.trial{k}.result.avg_distance_chosen_target=999;
-                sm.sub{partNo}.session{sesNo}.trial{k}.result.total_distance_chosen_target=999;
-                sm.sub{partNo}.session{sesNo}.trial{k}.result.avg_distance_ego_target=999;
-                sm.sub{partNo}.session{sesNo}.trial{k}.result.total_distance_ego_target=999;
-                sm.sub{partNo}.session{sesNo}.trial{k}.result.distance_accuracy=999;
-                sm.sub{partNo}.session{sesNo}.trial{k}.result.distance_accuracy_chosen=999;
-                sm.sub{partNo}.session{sesNo}.trial{k}.result.distance_accuracy_ego=999;
-                sm.sub{partNo}.session{sesNo}.trial{k}.result.avg_distance_path_pure=999;
-                sm.sub{partNo}.session{sesNo}.trial{k}.result.total_distance_path_pure=999;
-                sm.sub{partNo}.session{sesNo}.trial{k}.result.avg_distance_path=999;
-                sm.sub{partNo}.session{sesNo}.trial{k}.result.total_distance_path=999;
-                sm.sub{partNo}.session{sesNo}.trial{k}.result.avg_distance_chosen_path=999;
-                sm.sub{partNo}.session{sesNo}.trial{k}.result.total_distance_chosen_path=999;
-                sm.sub{partNo}.session{sesNo}.trial{k}.result.avg_distance_chosen_path_pure=999;
-                sm.sub{partNo}.session{sesNo}.trial{k}.result.total_distance_chosen_path_pure=999;
-                sm.sub{partNo}.session{sesNo}.trial{k}.result.avg_distance_ego_path=999;
-                sm.sub{partNo}.session{sesNo}.trial{k}.result.total_distance_ego_path=999;
-                sm.sub{partNo}.session{sesNo}.trial{k}.result.avg_distance_ego_path_pure=999;
-                sm.sub{partNo}.session{sesNo}.trial{k}.result.total_distance_ego_path_pure=999;
-                sm.sub{partNo}.session{sesNo}.trial{k}.result.direct_path=999;
-                sm.sub{partNo}.session{sesNo}.trial{k}.result.direct_path_percent=999;
-                sm.sub{partNo}.session{sesNo}.trial{k}.result.arm_explored=999;
-                sm.sub{partNo}.session{sesNo}.trial{k}.result.arm_score=999;
-                sm.sub{partNo}.session{sesNo}.trial{k}.result.path_explored=999;
-                sm.sub{partNo}.session{sesNo}.trial{k}.result.path_score=999;
-                sm.sub{partNo}.session{sesNo}.trial{k}.result.search_strategy_no=999;
-                sm.sub{partNo}.session{sesNo}.trial{k}.result.searchStrategy.direct=999;
-                sm.sub{partNo}.session{sesNo}.trial{k}.result.searchStrategy.detour=999;
-                sm.sub{partNo}.session{sesNo}.trial{k}.result.searchStrategy.reoriented=999;
-                sm.sub{partNo}.session{sesNo}.trial{k}.result.sum_head_rotation=999;
-                sm.sub{partNo}.session{sesNo}.trial{k}.result.no_full_head_rotation=999;
-                sm.sub{partNo}.session{sesNo}.trial{k}.result.no_head_turn=999;
-                sm.sub{partNo}.session{sesNo}.trial{k}.result.head_turn_accuracy=999;
-                sm.sub{partNo}.session{sesNo}.trial{k}.result.sum_body_rotation=999;
-                sm.sub{partNo}.session{sesNo}.trial{k}.result.body_rotation_accuracy=999;
-                sm.sub{partNo}.session{sesNo}.trial{k}.result.no_body_turn=999;
-                sm.sub{partNo}.session{sesNo}.trial{k}.result.body_turn_accuracy=999;
-                
-                success_criterium=0;
-                sm.sub{partNo}.session{sesNo}.trial{k}.goal_x_ego=0; sm.sub{partNo}.session{sesNo}.trial{k}.goal_y_ego=0;
-                sm.sub{partNo}.session{sesNo}.trial{k}.x_end=0; sm.sub{partNo}.session{sesNo}.trial{k}.y_end=0;
-                sm.sub{partNo}.session{sesNo}.trial{k}.ideal_path_length_chosen=999;
-                sm.sub{partNo}.session{sesNo}.trial{k}.ideal_path_length_chosen_interpol=999;
-                sm.sub{partNo}.session{sesNo}.trial{k}.ideal_path_length_ego=999;
-                sm.sub{partNo}.session{sesNo}.trial{k}.ideal_path_length_ego_interpol=999;
-                sm.sub{partNo}.session{sesNo}.trial{k}.ideal_avg_distance_target=999;
-                sm.sub{partNo}.session{sesNo}.trial{k}.ideal_total_distance_target=999;
-                sm.sub{partNo}.session{sesNo}.trial{k}.ideal_sum_data_points=999;
-                sm.sub{partNo}.session{sesNo}.trial{k}.ideal_avg_distance_chosen_target=999;
-                sm.sub{partNo}.session{sesNo}.trial{k}.ideal_total_distance_chosen_target=999;
-                sm.sub{partNo}.session{sesNo}.trial{k}.ideal_sum_data_points_chosen=999;
-                sm.sub{partNo}.session{sesNo}.trial{k}.ideal_avg_distance_ego_target=999;
-                sm.sub{partNo}.session{sesNo}.trial{k}.ideal_total_distance_ego_target=999;
-                sm.sub{partNo}.session{sesNo}.trial{k}.ideal_sum_data_points_ego=999;
-                sm.sub{partNo}.session{sesNo}.trial{k}.ideal_sum_body_rotation=999;
-                sm.sub{partNo}.session{sesNo}.trial{k}.ideal_no_body_turn=999;
-                sm.sub{partNo}.session{sesNo}.trial{k}.ideal_headturnNo=999;
-                sm.sub{partNo}.session{sesNo}.trial{k}.zone.alley_zone(1,1)=999;
-                sm.sub{partNo}.session{sesNo}.trial{k}.zone.alley_zone(1,2)=999;
-                sm.sub{partNo}.session{sesNo}.trial{k}.zone.alley_zone(1,3)=999;
-                sm.sub{partNo}.session{sesNo}.trial{k}.zone.alley_zone(1,4)=999;
-                sm.sub{partNo}.session{sesNo}.trial{k}.zone.alley_zone(1,5)=999;
-                sm.sub{partNo}.session{sesNo}.trial{k}.zone.pentagon_zone=999;
-                sm.sub{partNo}.session{sesNo}.trial{k}.zone.triangle_zone(1,1)=999;
-                sm.sub{partNo}.session{sesNo}.trial{k}.zone.triangle_zone(1,2)=999;
-                sm.sub{partNo}.session{sesNo}.trial{k}.zone.triangle_zone(1,3)=999;
-                sm.sub{partNo}.session{sesNo}.trial{k}.zone.triangle_zone(1,4)=999;
-                sm.sub{partNo}.session{sesNo}.trial{k}.zone.triangle_zone(1,5)=999;
-                sm.sub{partNo}.session{sesNo}.trial{k}.zone.rectangle_zone(1,1)=999;
-                sm.sub{partNo}.session{sesNo}.trial{k}.zone.rectangle_zone(1,2)=999;
-                sm.sub{partNo}.session{sesNo}.trial{k}.zone.rectangle_zone(1,3)=999;
-                sm.sub{partNo}.session{sesNo}.trial{k}.zone.rectangle_zone(1,4)=999;
-                sm.sub{partNo}.session{sesNo}.trial{k}.zone.rectangle_zone(1,5)=999;
-                sm.sub{partNo}.session{sesNo}.trial{k}.zone.rel_alley_zone(1,1)=999;
-                sm.sub{partNo}.session{sesNo}.trial{k}.zone.rel_alley_zone(1,2)=999;
-                sm.sub{partNo}.session{sesNo}.trial{k}.zone.rel_alley_zone(1,3)=999;
-                sm.sub{partNo}.session{sesNo}.trial{k}.zone.rel_alley_zone(1,4)=999;
-                sm.sub{partNo}.session{sesNo}.trial{k}.zone.rel_alley_zone(1,5)=999;
-                sm.sub{partNo}.session{sesNo}.trial{k}.zone.rel_pentagon_zone=999;
-                sm.sub{partNo}.session{sesNo}.trial{k}.zone.rel_triangle_zone(1,1)=999;
-                sm.sub{partNo}.session{sesNo}.trial{k}.zone.rel_triangle_zone(1,2)=999;
-                sm.sub{partNo}.session{sesNo}.trial{k}.zone.rel_triangle_zone(1,3)=999;
-                sm.sub{partNo}.session{sesNo}.trial{k}.zone.rel_triangle_zone(1,4)=999;
-                sm.sub{partNo}.session{sesNo}.trial{k}.zone.rel_triangle_zone(1,5)=999;
-                sm.sub{partNo}.session{sesNo}.trial{k}.zone.rel_rectangle_zone(1,1)=999;
-                sm.sub{partNo}.session{sesNo}.trial{k}.zone.rel_rectangle_zone(1,2)=999;
-                sm.sub{partNo}.session{sesNo}.trial{k}.zone.rel_rectangle_zone(1,3)=999;
-                sm.sub{partNo}.session{sesNo}.trial{k}.zone.rel_rectangle_zone(1,4)=999;
-                sm.sub{partNo}.session{sesNo}.trial{k}.zone.rel_rectangle_zone(1,5)=999;
-                sm.sub{partNo}.session{sesNo}.trial{k}.zone.alley_entry(1,1)=999;
-                sm.sub{partNo}.session{sesNo}.trial{k}.zone.alley_entry(1,2)=999;
-                sm.sub{partNo}.session{sesNo}.trial{k}.zone.alley_entry(1,3)=999;
-                sm.sub{partNo}.session{sesNo}.trial{k}.zone.alley_entry(1,4)=999;
-                sm.sub{partNo}.session{sesNo}.trial{k}.zone.alley_entry(1,5)=999;
-                sm.sub{partNo}.session{sesNo}.trial{k}.zone.alley_entry_out(1,1)=999;
-                sm.sub{partNo}.session{sesNo}.trial{k}.zone.alley_entry_out(1,2)=999;
-                sm.sub{partNo}.session{sesNo}.trial{k}.zone.alley_entry_out(1,3)=999;
-                sm.sub{partNo}.session{sesNo}.trial{k}.zone.alley_entry_out(1,4)=999;
-                sm.sub{partNo}.session{sesNo}.trial{k}.zone.alley_entry_out(1,5)=999;
-                sm.sub{partNo}.session{sesNo}.trial{k}.zone.alley_entry_in(1,1)=999;
-                sm.sub{partNo}.session{sesNo}.trial{k}.zone.alley_entry_in(1,2)=999;
-                sm.sub{partNo}.session{sesNo}.trial{k}.zone.alley_entry_in(1,3)=999;
-                sm.sub{partNo}.session{sesNo}.trial{k}.zone.alley_entry_in(1,4)=999;
-                sm.sub{partNo}.session{sesNo}.trial{k}.zone.alley_entry_in(1,5)=999;
-                sm.sub{partNo}.session{sesNo}.trial{k}.zone.pentagon_entry=999;
-                sm.sub{partNo}.session{sesNo}.trial{k}.zone.triangle_entry(1,1)=999;
-                sm.sub{partNo}.session{sesNo}.trial{k}.zone.triangle_entry(1,2)=999;
-                sm.sub{partNo}.session{sesNo}.trial{k}.zone.triangle_entry(1,3)=999;
-                sm.sub{partNo}.session{sesNo}.trial{k}.zone.triangle_entry(1,4)=999;
-                sm.sub{partNo}.session{sesNo}.trial{k}.zone.triangle_entry(1,5)=999;
-                sm.sub{partNo}.session{sesNo}.trial{k}.zone.rectangle_entry(1,1)=999;
-                sm.sub{partNo}.session{sesNo}.trial{k}.zone.rectangle_entry(1,2)=999;
-                sm.sub{partNo}.session{sesNo}.trial{k}.zone.rectangle_entry(1,3)=999;
-                sm.sub{partNo}.session{sesNo}.trial{k}.zone.rectangle_entry(1,4)=999;
-                sm.sub{partNo}.session{sesNo}.trial{k}.zone.rectangle_entry(1,5)=999;
-                sm.sub{partNo}.session{sesNo}.trial{k}.time.alley_time(1,1)=999;
-                sm.sub{partNo}.session{sesNo}.trial{k}.time.alley_time(1,2)=999;
-                sm.sub{partNo}.session{sesNo}.trial{k}.time.alley_time(1,3)=999;
-                sm.sub{partNo}.session{sesNo}.trial{k}.time.alley_time(1,4)=999;
-                sm.sub{partNo}.session{sesNo}.trial{k}.time.alley_time(1,5)=999;
-                sm.sub{partNo}.session{sesNo}.trial{k}.time.pentagon_time=999;
-                sm.sub{partNo}.session{sesNo}.trial{k}.time.triangle_time(1,1)=999;
-                sm.sub{partNo}.session{sesNo}.trial{k}.time.triangle_time(1,2)=999;
-                sm.sub{partNo}.session{sesNo}.trial{k}.time.triangle_time(1,3)=999;
-                sm.sub{partNo}.session{sesNo}.trial{k}.time.triangle_time(1,4)=999;
-                sm.sub{partNo}.session{sesNo}.trial{k}.time.triangle_time(1,5)=999;
-                sm.sub{partNo}.session{sesNo}.trial{k}.time.rectangle_time(1,1)=999;
-                sm.sub{partNo}.session{sesNo}.trial{k}.time.rectangle_time(1,2)=999;
-                sm.sub{partNo}.session{sesNo}.trial{k}.time.rectangle_time(1,3)=999;
-                sm.sub{partNo}.session{sesNo}.trial{k}.time.rectangle_time(1,4)=999;
-                sm.sub{partNo}.session{sesNo}.trial{k}.time.rectangle_time(1,5)=999;
-                sm.sub{partNo}.session{sesNo}.trial{k}.zone.alley_rotations(1,1)=999;
-                sm.sub{partNo}.session{sesNo}.trial{k}.zone.alley_rotations(1,2)=999;
-                sm.sub{partNo}.session{sesNo}.trial{k}.zone.alley_rotations(1,3)=999;
-                sm.sub{partNo}.session{sesNo}.trial{k}.zone.alley_rotations(1,4)=999;
-                sm.sub{partNo}.session{sesNo}.trial{k}.zone.alley_rotations(1,5)=999;
-                sm.sub{partNo}.session{sesNo}.trial{k}.zone.alley_rotations_in(1,1)=999;
-                sm.sub{partNo}.session{sesNo}.trial{k}.zone.alley_rotations_in(1,2)=999;
-                sm.sub{partNo}.session{sesNo}.trial{k}.zone.alley_rotations_in(1,3)=999;
-                sm.sub{partNo}.session{sesNo}.trial{k}.zone.alley_rotations_in(1,4)=999;
-                sm.sub{partNo}.session{sesNo}.trial{k}.zone.alley_rotations_in(1,5)=999;
-                sm.sub{partNo}.session{sesNo}.trial{k}.zone.alley_rotations_out(1,1)=999;
-                sm.sub{partNo}.session{sesNo}.trial{k}.zone.alley_rotations_out(1,2)=999;
-                sm.sub{partNo}.session{sesNo}.trial{k}.zone.alley_rotations_out(1,3)=999;
-                sm.sub{partNo}.session{sesNo}.trial{k}.zone.alley_rotations_out(1,4)=999;
-                sm.sub{partNo}.session{sesNo}.trial{k}.zone.alley_rotations_out(1,5)=999;
-                sm.sub{partNo}.session{sesNo}.trial{k}.zone.triangle_rotations(1,1)=999;
-                sm.sub{partNo}.session{sesNo}.trial{k}.zone.triangle_rotations(1,2)=999;
-                sm.sub{partNo}.session{sesNo}.trial{k}.zone.triangle_rotations(1,3)=999;
-                sm.sub{partNo}.session{sesNo}.trial{k}.zone.triangle_rotations(1,4)=999;
-                sm.sub{partNo}.session{sesNo}.trial{k}.zone.triangle_rotations(1,5)=999;
-                sm.sub{partNo}.session{sesNo}.trial{k}.zone.rectangle_rotations(1,1)=999;
-                sm.sub{partNo}.session{sesNo}.trial{k}.zone.rectangle_rotations(1,2)=999;
-                sm.sub{partNo}.session{sesNo}.trial{k}.zone.rectangle_rotations(1,3)=999;
-                sm.sub{partNo}.session{sesNo}.trial{k}.zone.rectangle_rotations(1,4)=999;
-                sm.sub{partNo}.session{sesNo}.trial{k}.zone.rectangle_rotations(1,5)=999;
-                
-                fprintf('Motor control analysis done for %d, session %d, file no %d.\n', subj, session, k);
+%                 % dummy values for all other results variables
+%                 sm.sub{partNo}.session{sesNo}.trial{k}.ego_alley=0;
+%                 sm.sub{partNo}.session{sesNo}.trial{k}.result.chosen_goal_int=0;
+%                 sm.sub{partNo}.session{sesNo}.trial{k}.result.chosen_alley_int=0;
+%                 sm.sub{partNo}.session{sesNo}.trial{k}.result.obj_at_chosen_loc=0;
+%                 sm.sub{partNo}.session{sesNo}.trial{k}.exclude_trial_matlab=0;
+%                 
+%                 sm.sub{partNo}.session{sesNo}.trial{k}.result.success=999;
+%                 sm.sub{partNo}.session{sesNo}.trial{k}.result.success_ego=999;
+%                 sm.sub{partNo}.session{sesNo}.trial{k}.result.correct_final_alley=999;
+%                 sm.sub{partNo}.session{sesNo}.trial{k}.result.correct_final_alley_ego=999;
+%                 sm.sub{partNo}.session{sesNo}.trial{k}.result.final_distance=999;
+%                 sm.sub{partNo}.session{sesNo}.trial{k}.result.final_distance_ego=999;
+%                 sm.sub{partNo}.session{sesNo}.trial{k}.result.path_accuracy=999;
+%                 sm.sub{partNo}.session{sesNo}.trial{k}.result.path_accuracy_chosen=999;
+%                 sm.sub{partNo}.session{sesNo}.trial{k}.result.path_accuracy_ego=999;
+%                 sm.sub{partNo}.session{sesNo}.trial{k}.result.avg_distance_target=999;
+%                 sm.sub{partNo}.session{sesNo}.trial{k}.result.total_distance_target=999;
+%                 sm.sub{partNo}.session{sesNo}.trial{k}.result.sum_data_points=999;
+%                 sm.sub{partNo}.session{sesNo}.trial{k}.result.avg_distance_chosen_target=999;
+%                 sm.sub{partNo}.session{sesNo}.trial{k}.result.total_distance_chosen_target=999;
+%                 sm.sub{partNo}.session{sesNo}.trial{k}.result.avg_distance_ego_target=999;
+%                 sm.sub{partNo}.session{sesNo}.trial{k}.result.total_distance_ego_target=999;
+%                 sm.sub{partNo}.session{sesNo}.trial{k}.result.distance_accuracy=999;
+%                 sm.sub{partNo}.session{sesNo}.trial{k}.result.distance_accuracy_chosen=999;
+%                 sm.sub{partNo}.session{sesNo}.trial{k}.result.distance_accuracy_ego=999;
+%                 sm.sub{partNo}.session{sesNo}.trial{k}.result.avg_distance_path_pure=999;
+%                 sm.sub{partNo}.session{sesNo}.trial{k}.result.total_distance_path_pure=999;
+%                 sm.sub{partNo}.session{sesNo}.trial{k}.result.avg_distance_path=999;
+%                 sm.sub{partNo}.session{sesNo}.trial{k}.result.total_distance_path=999;
+%                 sm.sub{partNo}.session{sesNo}.trial{k}.result.avg_distance_chosen_path=999;
+%                 sm.sub{partNo}.session{sesNo}.trial{k}.result.total_distance_chosen_path=999;
+%                 sm.sub{partNo}.session{sesNo}.trial{k}.result.avg_distance_chosen_path_pure=999;
+%                 sm.sub{partNo}.session{sesNo}.trial{k}.result.total_distance_chosen_path_pure=999;
+%                 sm.sub{partNo}.session{sesNo}.trial{k}.result.avg_distance_ego_path=999;
+%                 sm.sub{partNo}.session{sesNo}.trial{k}.result.total_distance_ego_path=999;
+%                 sm.sub{partNo}.session{sesNo}.trial{k}.result.avg_distance_ego_path_pure=999;
+%                 sm.sub{partNo}.session{sesNo}.trial{k}.result.total_distance_ego_path_pure=999;
+%                 sm.sub{partNo}.session{sesNo}.trial{k}.result.direct_path=999;
+%                 sm.sub{partNo}.session{sesNo}.trial{k}.result.direct_path_percent=999;
+%                 sm.sub{partNo}.session{sesNo}.trial{k}.result.arm_explored=999;
+%                 sm.sub{partNo}.session{sesNo}.trial{k}.result.arm_score=999;
+%                 sm.sub{partNo}.session{sesNo}.trial{k}.result.path_explored=999;
+%                 sm.sub{partNo}.session{sesNo}.trial{k}.result.path_score=999;
+%                 sm.sub{partNo}.session{sesNo}.trial{k}.result.search_strategy_no=999;
+%                 sm.sub{partNo}.session{sesNo}.trial{k}.result.searchStrategy.direct=999;
+%                 sm.sub{partNo}.session{sesNo}.trial{k}.result.searchStrategy.detour=999;
+%                 sm.sub{partNo}.session{sesNo}.trial{k}.result.searchStrategy.reoriented=999;
+%                 sm.sub{partNo}.session{sesNo}.trial{k}.result.sum_head_rotation=999;
+%                 sm.sub{partNo}.session{sesNo}.trial{k}.result.no_full_head_rotation=999;
+%                 sm.sub{partNo}.session{sesNo}.trial{k}.result.no_head_turn=999;
+%                 sm.sub{partNo}.session{sesNo}.trial{k}.result.head_turn_accuracy=999;
+%                 sm.sub{partNo}.session{sesNo}.trial{k}.result.sum_body_rotation=999;
+%                 sm.sub{partNo}.session{sesNo}.trial{k}.result.body_rotation_accuracy=999;
+%                 sm.sub{partNo}.session{sesNo}.trial{k}.result.no_body_turn=999;
+%                 sm.sub{partNo}.session{sesNo}.trial{k}.result.body_turn_accuracy=999;
+%                 
+%                 success_criterium=0;
+%                 sm.sub{partNo}.session{sesNo}.trial{k}.goal_x_ego=0; sm.sub{partNo}.session{sesNo}.trial{k}.goal_y_ego=0;
+%                 sm.sub{partNo}.session{sesNo}.trial{k}.x_end=0; sm.sub{partNo}.session{sesNo}.trial{k}.y_end=0;
+%                 sm.sub{partNo}.session{sesNo}.trial{k}.ideal_path_length_chosen=999;
+%                 sm.sub{partNo}.session{sesNo}.trial{k}.ideal_path_length_chosen_interpol=999;
+%                 sm.sub{partNo}.session{sesNo}.trial{k}.ideal_path_length_ego=999;
+%                 sm.sub{partNo}.session{sesNo}.trial{k}.ideal_path_length_ego_interpol=999;
+%                 sm.sub{partNo}.session{sesNo}.trial{k}.ideal_avg_distance_target=999;
+%                 sm.sub{partNo}.session{sesNo}.trial{k}.ideal_total_distance_target=999;
+%                 sm.sub{partNo}.session{sesNo}.trial{k}.ideal_sum_data_points=999;
+%                 sm.sub{partNo}.session{sesNo}.trial{k}.ideal_avg_distance_chosen_target=999;
+%                 sm.sub{partNo}.session{sesNo}.trial{k}.ideal_total_distance_chosen_target=999;
+%                 sm.sub{partNo}.session{sesNo}.trial{k}.ideal_sum_data_points_chosen=999;
+%                 sm.sub{partNo}.session{sesNo}.trial{k}.ideal_avg_distance_ego_target=999;
+%                 sm.sub{partNo}.session{sesNo}.trial{k}.ideal_total_distance_ego_target=999;
+%                 sm.sub{partNo}.session{sesNo}.trial{k}.ideal_sum_data_points_ego=999;
+%                 sm.sub{partNo}.session{sesNo}.trial{k}.ideal_sum_body_rotation=999;
+%                 sm.sub{partNo}.session{sesNo}.trial{k}.ideal_no_body_turn=999;
+%                 sm.sub{partNo}.session{sesNo}.trial{k}.ideal_headturnNo=999;
+%                 sm.sub{partNo}.session{sesNo}.trial{k}.zone.alley_zone(1,1)=999;
+%                 sm.sub{partNo}.session{sesNo}.trial{k}.zone.alley_zone(1,2)=999;
+%                 sm.sub{partNo}.session{sesNo}.trial{k}.zone.alley_zone(1,3)=999;
+%                 sm.sub{partNo}.session{sesNo}.trial{k}.zone.alley_zone(1,4)=999;
+%                 sm.sub{partNo}.session{sesNo}.trial{k}.zone.alley_zone(1,5)=999;
+%                 sm.sub{partNo}.session{sesNo}.trial{k}.zone.pentagon_zone=999;
+%                 sm.sub{partNo}.session{sesNo}.trial{k}.zone.triangle_zone(1,1)=999;
+%                 sm.sub{partNo}.session{sesNo}.trial{k}.zone.triangle_zone(1,2)=999;
+%                 sm.sub{partNo}.session{sesNo}.trial{k}.zone.triangle_zone(1,3)=999;
+%                 sm.sub{partNo}.session{sesNo}.trial{k}.zone.triangle_zone(1,4)=999;
+%                 sm.sub{partNo}.session{sesNo}.trial{k}.zone.triangle_zone(1,5)=999;
+%                 sm.sub{partNo}.session{sesNo}.trial{k}.zone.rectangle_zone(1,1)=999;
+%                 sm.sub{partNo}.session{sesNo}.trial{k}.zone.rectangle_zone(1,2)=999;
+%                 sm.sub{partNo}.session{sesNo}.trial{k}.zone.rectangle_zone(1,3)=999;
+%                 sm.sub{partNo}.session{sesNo}.trial{k}.zone.rectangle_zone(1,4)=999;
+%                 sm.sub{partNo}.session{sesNo}.trial{k}.zone.rectangle_zone(1,5)=999;
+%                 sm.sub{partNo}.session{sesNo}.trial{k}.zone.rel_alley_zone(1,1)=999;
+%                 sm.sub{partNo}.session{sesNo}.trial{k}.zone.rel_alley_zone(1,2)=999;
+%                 sm.sub{partNo}.session{sesNo}.trial{k}.zone.rel_alley_zone(1,3)=999;
+%                 sm.sub{partNo}.session{sesNo}.trial{k}.zone.rel_alley_zone(1,4)=999;
+%                 sm.sub{partNo}.session{sesNo}.trial{k}.zone.rel_alley_zone(1,5)=999;
+%                 sm.sub{partNo}.session{sesNo}.trial{k}.zone.rel_pentagon_zone=999;
+%                 sm.sub{partNo}.session{sesNo}.trial{k}.zone.rel_triangle_zone(1,1)=999;
+%                 sm.sub{partNo}.session{sesNo}.trial{k}.zone.rel_triangle_zone(1,2)=999;
+%                 sm.sub{partNo}.session{sesNo}.trial{k}.zone.rel_triangle_zone(1,3)=999;
+%                 sm.sub{partNo}.session{sesNo}.trial{k}.zone.rel_triangle_zone(1,4)=999;
+%                 sm.sub{partNo}.session{sesNo}.trial{k}.zone.rel_triangle_zone(1,5)=999;
+%                 sm.sub{partNo}.session{sesNo}.trial{k}.zone.rel_rectangle_zone(1,1)=999;
+%                 sm.sub{partNo}.session{sesNo}.trial{k}.zone.rel_rectangle_zone(1,2)=999;
+%                 sm.sub{partNo}.session{sesNo}.trial{k}.zone.rel_rectangle_zone(1,3)=999;
+%                 sm.sub{partNo}.session{sesNo}.trial{k}.zone.rel_rectangle_zone(1,4)=999;
+%                 sm.sub{partNo}.session{sesNo}.trial{k}.zone.rel_rectangle_zone(1,5)=999;
+%                 sm.sub{partNo}.session{sesNo}.trial{k}.zone.alley_entry(1,1)=999;
+%                 sm.sub{partNo}.session{sesNo}.trial{k}.zone.alley_entry(1,2)=999;
+%                 sm.sub{partNo}.session{sesNo}.trial{k}.zone.alley_entry(1,3)=999;
+%                 sm.sub{partNo}.session{sesNo}.trial{k}.zone.alley_entry(1,4)=999;
+%                 sm.sub{partNo}.session{sesNo}.trial{k}.zone.alley_entry(1,5)=999;
+%                 sm.sub{partNo}.session{sesNo}.trial{k}.zone.alley_entry_out(1,1)=999;
+%                 sm.sub{partNo}.session{sesNo}.trial{k}.zone.alley_entry_out(1,2)=999;
+%                 sm.sub{partNo}.session{sesNo}.trial{k}.zone.alley_entry_out(1,3)=999;
+%                 sm.sub{partNo}.session{sesNo}.trial{k}.zone.alley_entry_out(1,4)=999;
+%                 sm.sub{partNo}.session{sesNo}.trial{k}.zone.alley_entry_out(1,5)=999;
+%                 sm.sub{partNo}.session{sesNo}.trial{k}.zone.alley_entry_in(1,1)=999;
+%                 sm.sub{partNo}.session{sesNo}.trial{k}.zone.alley_entry_in(1,2)=999;
+%                 sm.sub{partNo}.session{sesNo}.trial{k}.zone.alley_entry_in(1,3)=999;
+%                 sm.sub{partNo}.session{sesNo}.trial{k}.zone.alley_entry_in(1,4)=999;
+%                 sm.sub{partNo}.session{sesNo}.trial{k}.zone.alley_entry_in(1,5)=999;
+%                 sm.sub{partNo}.session{sesNo}.trial{k}.zone.pentagon_entry=999;
+%                 sm.sub{partNo}.session{sesNo}.trial{k}.zone.triangle_entry(1,1)=999;
+%                 sm.sub{partNo}.session{sesNo}.trial{k}.zone.triangle_entry(1,2)=999;
+%                 sm.sub{partNo}.session{sesNo}.trial{k}.zone.triangle_entry(1,3)=999;
+%                 sm.sub{partNo}.session{sesNo}.trial{k}.zone.triangle_entry(1,4)=999;
+%                 sm.sub{partNo}.session{sesNo}.trial{k}.zone.triangle_entry(1,5)=999;
+%                 sm.sub{partNo}.session{sesNo}.trial{k}.zone.rectangle_entry(1,1)=999;
+%                 sm.sub{partNo}.session{sesNo}.trial{k}.zone.rectangle_entry(1,2)=999;
+%                 sm.sub{partNo}.session{sesNo}.trial{k}.zone.rectangle_entry(1,3)=999;
+%                 sm.sub{partNo}.session{sesNo}.trial{k}.zone.rectangle_entry(1,4)=999;
+%                 sm.sub{partNo}.session{sesNo}.trial{k}.zone.rectangle_entry(1,5)=999;
+%                 sm.sub{partNo}.session{sesNo}.trial{k}.time.alley_time(1,1)=999;
+%                 sm.sub{partNo}.session{sesNo}.trial{k}.time.alley_time(1,2)=999;
+%                 sm.sub{partNo}.session{sesNo}.trial{k}.time.alley_time(1,3)=999;
+%                 sm.sub{partNo}.session{sesNo}.trial{k}.time.alley_time(1,4)=999;
+%                 sm.sub{partNo}.session{sesNo}.trial{k}.time.alley_time(1,5)=999;
+%                 sm.sub{partNo}.session{sesNo}.trial{k}.time.pentagon_time=999;
+%                 sm.sub{partNo}.session{sesNo}.trial{k}.time.triangle_time(1,1)=999;
+%                 sm.sub{partNo}.session{sesNo}.trial{k}.time.triangle_time(1,2)=999;
+%                 sm.sub{partNo}.session{sesNo}.trial{k}.time.triangle_time(1,3)=999;
+%                 sm.sub{partNo}.session{sesNo}.trial{k}.time.triangle_time(1,4)=999;
+%                 sm.sub{partNo}.session{sesNo}.trial{k}.time.triangle_time(1,5)=999;
+%                 sm.sub{partNo}.session{sesNo}.trial{k}.time.rectangle_time(1,1)=999;
+%                 sm.sub{partNo}.session{sesNo}.trial{k}.time.rectangle_time(1,2)=999;
+%                 sm.sub{partNo}.session{sesNo}.trial{k}.time.rectangle_time(1,3)=999;
+%                 sm.sub{partNo}.session{sesNo}.trial{k}.time.rectangle_time(1,4)=999;
+%                 sm.sub{partNo}.session{sesNo}.trial{k}.time.rectangle_time(1,5)=999;
+%                 sm.sub{partNo}.session{sesNo}.trial{k}.zone.alley_rotations(1,1)=999;
+%                 sm.sub{partNo}.session{sesNo}.trial{k}.zone.alley_rotations(1,2)=999;
+%                 sm.sub{partNo}.session{sesNo}.trial{k}.zone.alley_rotations(1,3)=999;
+%                 sm.sub{partNo}.session{sesNo}.trial{k}.zone.alley_rotations(1,4)=999;
+%                 sm.sub{partNo}.session{sesNo}.trial{k}.zone.alley_rotations(1,5)=999;
+%                 sm.sub{partNo}.session{sesNo}.trial{k}.zone.alley_rotations_in(1,1)=999;
+%                 sm.sub{partNo}.session{sesNo}.trial{k}.zone.alley_rotations_in(1,2)=999;
+%                 sm.sub{partNo}.session{sesNo}.trial{k}.zone.alley_rotations_in(1,3)=999;
+%                 sm.sub{partNo}.session{sesNo}.trial{k}.zone.alley_rotations_in(1,4)=999;
+%                 sm.sub{partNo}.session{sesNo}.trial{k}.zone.alley_rotations_in(1,5)=999;
+%                 sm.sub{partNo}.session{sesNo}.trial{k}.zone.alley_rotations_out(1,1)=999;
+%                 sm.sub{partNo}.session{sesNo}.trial{k}.zone.alley_rotations_out(1,2)=999;
+%                 sm.sub{partNo}.session{sesNo}.trial{k}.zone.alley_rotations_out(1,3)=999;
+%                 sm.sub{partNo}.session{sesNo}.trial{k}.zone.alley_rotations_out(1,4)=999;
+%                 sm.sub{partNo}.session{sesNo}.trial{k}.zone.alley_rotations_out(1,5)=999;
+%                 sm.sub{partNo}.session{sesNo}.trial{k}.zone.triangle_rotations(1,1)=999;
+%                 sm.sub{partNo}.session{sesNo}.trial{k}.zone.triangle_rotations(1,2)=999;
+%                 sm.sub{partNo}.session{sesNo}.trial{k}.zone.triangle_rotations(1,3)=999;
+%                 sm.sub{partNo}.session{sesNo}.trial{k}.zone.triangle_rotations(1,4)=999;
+%                 sm.sub{partNo}.session{sesNo}.trial{k}.zone.triangle_rotations(1,5)=999;
+%                 sm.sub{partNo}.session{sesNo}.trial{k}.zone.rectangle_rotations(1,1)=999;
+%                 sm.sub{partNo}.session{sesNo}.trial{k}.zone.rectangle_rotations(1,2)=999;
+%                 sm.sub{partNo}.session{sesNo}.trial{k}.zone.rectangle_rotations(1,3)=999;
+%                 sm.sub{partNo}.session{sesNo}.trial{k}.zone.rectangle_rotations(1,4)=999;
+%                 sm.sub{partNo}.session{sesNo}.trial{k}.zone.rectangle_rotations(1,5)=999;
+%                 
+                fprintf('Motor control analysis done for %d, session %d, file no %d.\n', subj, sesNo, k);
                 
             else
                 %% For all other navigation trials
