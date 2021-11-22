@@ -1,11 +1,10 @@
 function [chosen_goal_int, chosen_alley_string, chosen_alley_int, ...
-    obj_at_chosen_loc]=sm_wp10_chosenGoal(rand_dict, pstr, sstr, ...
-    chosen_goal_string, goal_locs, alley_locs)
+    obj_at_chosen_loc]=sm_wp10_chosenGoal(rand_dict, chosen_goal_string, ...
+    goal_locs, alley_locs)
 % SM_WP10_CHOSENGOALALLEY Stores chosen goal as int and string in new variables.  
 %
 % Input: 
 % rand_dict with randomization info (structure/dictionary)
-% pstr and sstr for participant id and session (strings)
 % chosen_goal_string (string, e.g. "MC")
 % goal_locs is ordered array of goals (string)
 % alley_locs is ordered array of alley letters (string)
@@ -34,11 +33,11 @@ end
 
 % extract correct object at chosen location 
 obj_at_chosen_loc=999; 
-fields = fieldnames(rand_dict.(pstr).(sstr)); 
+fields = fieldnames(rand_dict); 
 for i=1:length(fields)
     if string(chosen_goal_string)==string(fields{i})
         key=fields{i};
-        temp=char(rand_dict.(pstr).(sstr).(key).object);
+        temp=char(rand_dict.(key).object);
         obj_at_chosen_loc=double(string(temp(1:2))); 
     end
 end 
