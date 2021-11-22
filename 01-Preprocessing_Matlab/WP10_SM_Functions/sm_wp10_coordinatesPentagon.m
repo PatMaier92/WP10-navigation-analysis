@@ -1,10 +1,9 @@
 function [pentagon_zone,rel_pentagon_zone,pentagon_entry,pentagon_rot]=sm_wp10_coordinatesPentagon(x,...
-    y,r,pentagon_x,pentagon_y,lengthX)
+    y,r,pentagon_x,pentagon_y)
 % SM_WP10_COORDINATESPENTAGON Used for zone analysis. 
 % 
 % Input: 
 % x, y, r are vectors with all recorded data points (x-/y-trajectory and z-rotation)
-% lengthX is number of data points
 % pentagon_x, pentagon_y are x-/y-coordinates (boundaries) of inner pentagon 
 % 
 % Returns: 
@@ -12,6 +11,7 @@ function [pentagon_zone,rel_pentagon_zone,pentagon_entry,pentagon_rot]=sm_wp10_c
 % rel_pentagon_zone is vector with relative percentage in inner pentagon
 % pentagon_entry is vector with number of (re-)entries in inner pentagon
 
+lengthX=length(x); 
 pentagon_entry=0;
 pentagon_rot=0; 
 
