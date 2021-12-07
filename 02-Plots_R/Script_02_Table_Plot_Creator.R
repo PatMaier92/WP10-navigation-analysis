@@ -597,11 +597,11 @@ s_ego_box <- strategy_box(strategy_data_ego_ind, strategy_data_ego_sum, "search_
 
 
 # stacked bar plots 
-s_allo_bar <- strategy_stacked_bar(strategy_data_allo_sum, "group", "percent", "search_strategy_no", "session", stratlabels, "Allocentric probe trials", NULL, "% of strategy use", NULL, "Greys")
+s_allo_bar <- strategy_stacked_bar(strategy_data_allo_sum, "group", "percent", "search_strategy_no", "session", stratlabels, "Allocentric probe trials", NULL, "% of strategy use", NULL, "Oranges")
 
 ggsave("Allo_strat.jpeg", s_allo_bar, width=4.2, height=3.7, dpi=600)
 
-s_ego_bar <- strategy_stacked_bar(strategy_data_ego_sum, "group", "percent", "search_strategy_no", "session", stratlabels, "Egocentric probe trials", NULL, "% of strategy use", NULL, "Greys")
+s_ego_bar <- strategy_stacked_bar(strategy_data_ego_sum, "group", "percent", "search_strategy_no", "session", stratlabels, "Egocentric probe trials", NULL, "% of strategy use", NULL, "Blues")
 
 ggsave("Ego_strat.jpeg", s_ego_bar, width=4.2, height=3.7, dpi=600)
 
@@ -1100,7 +1100,7 @@ landmarks_details <- ggplot(lm_data, aes(x=group, y=perc, fill=lm_group)) +
   geom_bar(stat="identity", position=position_stack(reverse=TRUE), color="black") + 
   ylim(0,1) +  
   scale_x_discrete(labels=mylabels) + 
-  scale_fill_brewer(palette="Greys", direction=-1) +
+  scale_fill_brewer(palette="Greens", direction=-1) +
   facet_wrap(~ trial_condition, labeller=post_labels) + 
   theme_classic() + 
   theme(legend.position="right", 
