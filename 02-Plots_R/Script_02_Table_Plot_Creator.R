@@ -1146,7 +1146,7 @@ all_gmda <- gmda
 
 # prepare data
 sm_support <- sm_trial_data_support %>% 
-  select(id, session, group, trial, trial_condition, 
+  select(id, group, session, block, trial, trial_condition, 
          start_pos, goal_loc, goal_object, goal_x, goal_y, 
          chosen_x, chosen_y) %>% 
   filter(trial_condition %in% c("ego_ret", "allo_ret")) %>% 
@@ -1154,12 +1154,12 @@ sm_support <- sm_trial_data_support %>%
 
 
 # labels 
-mylabels <- as_labeller(c(`YoungKids` = "Y-CH", `OldKids` = "O-CH", `YoungAdults` = "AD",
-                          `1`="T1 - Immediate", `2`=" T2 - Delayed"))
+mylabels <- labeller(group = c(`YoungKids` = "Y-CH", `OldKids` = "O-CH", `YoungAdults` = "AD"),
+                     session = c(`1`="T1 - Immediate", `2`=" T2 - Delayed"))
 
 
 # function for plotting chosen goal locations as dots
-goal_dots <- function(mydata, mytitle, w=7.5, h=6) {
+goal_dots <- function(mydata, mytitle, facetr="session", facetc="group", w=7.5, h=6) {
   p <- ggplot(mydata, aes(x=chosen_x, y=chosen_y, shape=goal_loc)) + 
     geom_point(aes(color=goal_loc), size=1.5) +
     geom_point(data=mydata, aes(x=goal_x, y=goal_y, fill=goal_loc, shape=goal_loc), size=4) +
@@ -1169,7 +1169,7 @@ goal_dots <- function(mydata, mytitle, w=7.5, h=6) {
     scale_x_continuous(breaks=c(0, 0.5, 1), labels=c(0, 0.5, 1)) + 
     scale_y_continuous(breaks=c(0, 0.5, 1), labels=c(0, 0.5, 1)) + 
     coord_fixed(ratio=1, xlim=c(0, 1), ylim=c(0, 1), expand=TRUE, clip="on") +
-    facet_grid(session ~ group, labeller=mylabels) + 
+    facet_grid(formula(paste(facetr, "~", facetc)), labeller=mylabels) +  
     theme_bw() +
     theme(legend.position="top",
           legend.justification=c(0, 0),
@@ -1194,22 +1194,24 @@ goal_dots(sm_support %>% filter(trial_condition=="allo_ret"), "Allocentric")
 
 # group-wise 
 goal_dots(sm_support %>% filter(group=="YoungKids", trial_condition=="ego_ret"), 
-          "Egocentric - Young Children", w=4, h=6)
+          "Egocentric - Young Children", facetr="session", facetc="goal_loc", w=4, h=6)
 
 goal_dots(sm_support %>% filter(group=="OldKids", trial_condition=="ego_ret"), 
-          "Egocentric - Older Children", w=4, h=6)
+          "Egocentric - Older Children", facetr="session", facetc="goal_loc", w=4, h=6)
 
 goal_dots(sm_support %>% filter(group=="YoungAdults", trial_condition=="ego_ret"), 
-          "Egocentric - Adults", w=4, h=6)
+          "Egocentric - Adults", facetr="session", facetc="goal_loc", w=4, h=6)
 
 goal_dots(sm_support %>% filter(group=="YoungKids", trial_condition=="allo_ret"), 
-          "Allocentric - Young Children", w=4, h=6)
+          "Allocentric - Young Children", facetr="session", facetc="goal_loc", w=4, h=6)
 
 goal_dots(sm_support %>% filter(group=="OldKids", trial_condition=="allo_ret"), 
-          "Allocentric - Older Children", w=4, h=6)
+          "Allocentric - Older Children", facetr="session", facetc="goal_loc", w=4, h=6)
 
 goal_dots(sm_support %>% filter(group=="YoungAdults", trial_condition=="allo_ret"), 
-          "Allocentric - Adults", w=4, h=6)
+          "Allocentric - Adults", facetr="session", facetc="goal_loc", w=4, h=6)
+
+
 
 ## ----
 
