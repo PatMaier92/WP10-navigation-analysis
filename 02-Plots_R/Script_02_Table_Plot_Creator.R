@@ -1194,22 +1194,22 @@ goal_dots(sm_support %>% filter(trial_condition=="allo_ret"), "Allocentric")
 
 # group-wise 
 goal_dots(sm_support %>% filter(group=="YoungKids", trial_condition=="ego_ret"), 
-          "Egocentric - Young Children", facetr="session", facetc="goal_loc", w=4, h=6)
+          "Egocentric - Young Children", facetr="session", facetc="goal_loc")
 
 goal_dots(sm_support %>% filter(group=="OldKids", trial_condition=="ego_ret"), 
-          "Egocentric - Older Children", facetr="session", facetc="goal_loc", w=4, h=6)
+          "Egocentric - Older Children", facetr="session", facetc="goal_loc")
 
 goal_dots(sm_support %>% filter(group=="YoungAdults", trial_condition=="ego_ret"), 
-          "Egocentric - Adults", facetr="session", facetc="goal_loc", w=4, h=6)
+          "Egocentric - Adults", facetr="session", facetc="goal_loc")
 
 goal_dots(sm_support %>% filter(group=="YoungKids", trial_condition=="allo_ret"), 
-          "Allocentric - Young Children", facetr="session", facetc="goal_loc", w=4, h=6)
+          "Allocentric - Young Children", facetr="session", facetc="goal_loc")
 
 goal_dots(sm_support %>% filter(group=="OldKids", trial_condition=="allo_ret"), 
-          "Allocentric - Older Children", facetr="session", facetc="goal_loc", w=4, h=6)
+          "Allocentric - Older Children", facetr="session", facetc="goal_loc")
 
 goal_dots(sm_support %>% filter(group=="YoungAdults", trial_condition=="allo_ret"), 
-          "Allocentric - Adults", facetr="session", facetc="goal_loc", w=4, h=6)
+          "Allocentric - Adults", facetr="session", facetc="goal_loc")
 
 
 
