@@ -325,17 +325,9 @@ for subj=subject_start:subject_end
                     % cumulative distance traveled (used in path accuracy)
                     sm.subject(partNo).session(sesNo).trial(k).result.path_length=sm.subject(partNo).session(sesNo).trial(k).result.path_length+sum(sm_distance(x(i),x(i+1),y(i),y(i+1)));
                 end
-                
-                % Interpolated IDEAL PATH LENGTH value
-                sm.subject(partNo).session(sesNo).trial(k).support.ideal_path_length_interpol=0; % start-initiation
-                xi_length=length(xi_al)-1;
-                for i=1:xi_length
-                    % ideal path traveled (based on interpolated values)
-                    sm.subject(partNo).session(sesNo).trial(k).support.ideal_path_length_interpol=sm.subject(partNo).session(sesNo).trial(k).support.ideal_path_length_interpol+sum(sm_distance(xi_al(i),xi_al(i+1),yi_al(i),yi_al(i+1)));
-                end
-                
+                              
                 % PATH ACCURACY to all TARGETS
-                sm.subject(partNo).session(sesNo).trial(k).result.path_accuracy=sm_ac(sm.subject(partNo).session(sesNo).trial(k).result.path_length,sm.subject(partNo).session(sesNo).trial(k).support.ideal_path_length_interpol);
+                sm.subject(partNo).session(sesNo).trial(k).result.path_accuracy=sm_ac(sm.subject(partNo).session(sesNo).trial(k).result.path_length,sm.subject(partNo).session(sesNo).trial(k).support.ideal_path_length);
                  
                 % VELOCITY
                 sm.subject(partNo).session(sesNo).trial(k).result.velocity=sm.subject(partNo).session(sesNo).trial(k).result.path_length/sm.subject(partNo).session(sesNo).trial(k).result.time;
@@ -384,9 +376,7 @@ for subj=subject_start:subject_end
 %                     xlim([0 1]);
 %                     ylim([0 1]);
 %                     hold off
-
-                % TBD: check inpolygon function alley/rec/tri_x und y oder polyshapes % 
-                
+               
                 % zone analysis for ideal paths
                 [~, ~, sm.subject(partNo).session(sesNo).trial(k).support.zone.ideal_alley_entry, ...
                     ~]=sm_wp10_coordinatesZonesStatic(xi_al,...
@@ -467,11 +457,9 @@ for subj=subject_start:subject_end
 %                 sm.subject(partNo).session(sesNo).trial(k).result.sum_data_points=sdata_length(1);
                 
                 % Cumulative IDEAL DISTANCE to CORRECT target
-                sm.subject(partNo).session(sesNo).trial(k).support.ideal_path_length_interpol=0;id_total_dist_to_goal=0; id_total_dist_to_goal_chosen=0; % start-initiation
+                id_total_dist_to_goal=0; % start-initiation
                 xi_length=length(xi_al)-1;
                 for i=1:xi_length
-                    % ideal cumulative distance traveled (based on interpolated values)
-                    sm.subject(partNo).session(sesNo).trial(k).support.ideal_path_length_interpol=sm.subject(partNo).session(sesNo).trial(k).support.ideal_path_length_interpol+sm_distance(xi_al(i),xi_al(i+1),yi_al(i),yi_al(i+1));
                     % ideal cumulative distance to allocentric target
                     id_total_dist_to_goal=id_total_dist_to_goal+sm_distance(xi_al(i),sm.subject(partNo).session(sesNo).trial(k).goal_x,yi_al(i),sm.subject(partNo).session(sesNo).trial(k).goal_y);
                 end
@@ -484,7 +472,7 @@ for subj=subject_start:subject_end
                 % PATH ACCURACY to CORRECT target
                 sm.subject(partNo).session(sesNo).trial(k).result.path_accuracy=sm_ac(...
                     sm.subject(partNo).session(sesNo).trial(k).result.path_length, ...
-                    sm.subject(partNo).session(sesNo).trial(k).support.ideal_path_length_interpol);
+                    sm.subject(partNo).session(sesNo).trial(k).support.ideal_path_length);
                 
 %                 % DISTANCE ACCURACY to CORRECT target
 %                 sm.subject(partNo).session(sesNo).trial(k).result.distance_accuracy=sm_ac(...
@@ -533,11 +521,9 @@ for subj=subject_start:subject_end
 %                     % sum data points: same as in analyis above
                     
 %                     % Cumulative IDEAL DISTANCE to EGOCENTRIC target
-%                     sm.subject(partNo).session(sesNo).trial(k).support.ideal_path_length_ego_interpol=0;id_total_dist_to_goal_ego=0; % start-initiation
+%                     id_total_dist_to_goal_ego=0; % start-initiation
 %                     xi_eg_length=length(xi_eg)-1;
 %                     for i=1:xi_eg_length
-%                         % ideal cumulative distance traveled (based on interpolated values)
-%                         sm.subject(partNo).session(sesNo).trial(k).support.ideal_path_length_ego_interpol=sm.subject(partNo).session(sesNo).trial(k).support.ideal_path_length_ego_interpol+sm_distance(xi_eg(i),xi_eg(i+1),yi_eg(i),yi_eg(i+1));% cumulative distance traveled
 %                         % ideal cumulative distance to egocentric target
 %                         id_total_dist_to_goal_ego=id_total_dist_to_goal_ego+sm_distance(xi_eg(i),sm.subject(partNo).session(sesNo).trial(k).support.goal_x_ego,yi_eg(i),sm.subject(partNo).session(sesNo).trial(k).support.goal_y_ego);
 %                     end
@@ -550,7 +536,7 @@ for subj=subject_start:subject_end
                     % PATH ACCURACY to EGOCENTRIC target
                     sm.subject(partNo).session(sesNo).trial(k).result.path_accuracy_ego=sm_ac(...
                         sm.subject(partNo).session(sesNo).trial(k).result.path_length, ...
-                        sm.subject(partNo).session(sesNo).trial(k).support.ideal_path_length_ego_interpol);
+                        sm.subject(partNo).session(sesNo).trial(k).support.ideal_path_length_ego);
                     
 %                     % DISTANCE ACCURACY to EGOCENTRIC target
 %                     sm.subject(partNo).session(sesNo).trial(k).result.distance_accuracy_ego=sm_ac(...
@@ -569,7 +555,6 @@ for subj=subject_start:subject_end
                     sm.subject(partNo).session(sesNo).trial(k).result.distance_accuracy_ego=999;
                     
                     sm.subject(partNo).session(sesNo).trial(k).support.ideal_path_length_ego=999;
-                    sm.subject(partNo).session(sesNo).trial(k).support.ideal_path_length_ego_interpol=999;
                     sm.subject(partNo).session(sesNo).trial(k).support.ideal_avg_distance_ego_target=999;
                     sm.subject(partNo).session(sesNo).trial(k).support.ideal_total_distance_ego_target=999;
                     sm.subject(partNo).session(sesNo).trial(k).support.ideal_sum_data_points_ego=999;
@@ -600,11 +585,9 @@ for subj=subject_start:subject_end
 %                     % sum data points: same as in analyis above
                     
 %                     % Cumulative IDEAL DISTANCE to CHOSEN target
-%                     sm.subject(partNo).session(sesNo).trial(k).support.ideal_path_length_chosen_interpol=0; id_total_dist_to_goal_chosen=0; % start-initiation
+%                     id_total_dist_to_goal_chosen=0; % start-initiation
 %                     xi_ch_length=length(xi_ch)-1;
 %                     for i=1:xi_ch_length
-%                         % ideal cumulative distance traveled (based on interpolated values)
-%                         sm.subject(partNo).session(sesNo).trial(k).support.ideal_path_length_chosen_interpol=sm.subject(partNo).session(sesNo).trial(k).support.ideal_path_length_chosen_interpol+sm_distance(xi_ch(i),xi_ch(i+1),yi_ch(i),yi_ch(i+1));% cumulative distance traveled
 %                         % ideal cumulative distance to chosen target
 %                         id_total_dist_to_goal_chosen=id_total_dist_to_goal_chosen+sm_distance(xi_ch(i),x(end),yi_ch(i),y(end));
 %                     end
@@ -615,7 +598,7 @@ for subj=subject_start:subject_end
 %                     sm.subject(partNo).session(sesNo).trial(k).support.ideal_sum_data_points_chosen=xi_ch_length;
                      
                     % PATH ACCURACY to CHOSEN target
-                    sm.subject(partNo).session(sesNo).trial(k).result.path_accuracy_chosen=sm_ac(sm.subject(partNo).session(sesNo).trial(k).result.path_length,sm.subject(partNo).session(sesNo).trial(k).support.ideal_path_length_chosen_interpol);
+                    sm.subject(partNo).session(sesNo).trial(k).result.path_accuracy_chosen=sm_ac(sm.subject(partNo).session(sesNo).trial(k).result.path_length,sm.subject(partNo).session(sesNo).trial(k).support.ideal_path_length_chosen);
                     
 %                     % DISTANCE ACCURACY to CHOSEN target
 %                     sm.subject(partNo).session(sesNo).trial(k).result.distance_accuracy_chosen=sm_ac(sm.subject(partNo).session(sesNo).trial(k).result.avg_distance_chosen_target,sm.subject(partNo).session(sesNo).trial(k).support.ideal_avg_distance_chosen_target);
@@ -631,7 +614,6 @@ for subj=subject_start:subject_end
                     sm.subject(partNo).session(sesNo).trial(k).result.distance_accuracy_chosen=999;
                     
                     sm.subject(partNo).session(sesNo).trial(k).support.ideal_path_length_chosen=999;
-                    sm.subject(partNo).session(sesNo).trial(k).support.ideal_path_length_chosen_interpol=999;
                     sm.subject(partNo).session(sesNo).trial(k).support.ideal_avg_distance_chosen_target=999;
                     sm.subject(partNo).session(sesNo).trial(k).support.ideal_total_distance_chosen_target=999;
                     sm.subject(partNo).session(sesNo).trial(k).support.ideal_sum_data_points_chosen=999;
@@ -886,9 +868,10 @@ for subj=subject_start:subject_end
             %
             % % support analysis variables
             % col_header_3={'correct_crit','goal_x','goal_y','goal_x_ego','goal_y_ego',...
-            %     'chosen_x','chosen_y','ideal_path_length','ideal_path_length_interpol',...
-            %     'ideal_path_length_chosen', 'ideal_path_length_chosen_interpol',...
-            %     'ideal_path_length_ego','ideal_path_length_ego_interpol',...
+            %     'chosen_x','chosen_y',...
+            %     'ideal_path_length',...
+            %     'ideal_path_length_chosen',...
+            %     'ideal_path_length_ego',...
             %     'ideal_avg_distance_target','ideal_total_distance_target','ideal_sum_data_points',...
             %     'ideal_avg_distance_chosen_target','ideal_total_distance_chosen_target','ideal_sum_data_points_chosen',...
             %     'ideal_avg_distance_ego_target','ideal_total_distance_ego_target','ideal_sum_data_points_ego',...
@@ -962,9 +945,9 @@ for subj=subject_start:subject_end
             %     sm.sub{p}.session{s}.trial{k}.goal_x sm.sub{p}.session{s}.trial{k}.goal_y ...
             %     sm.sub{p}.session{s}.trial{k}.goal_x_ego sm.sub{p}.session{s}.trial{k}.goal_y_ego ...
             %     sm.sub{p}.session{s}.trial{k}.x_end sm.sub{p}.session{s}.trial{k}.y_end ...
-            %     sm.sub{p}.session{s}.trial{k}.ideal_path_length sm.sub{p}.session{s}.trial{k}.ideal_path_length_interpol ...
-            %     sm.sub{p}.session{s}.trial{k}.ideal_path_length_chosen sm.sub{p}.session{s}.trial{k}.ideal_path_length_chosen_interpol ...
-            %     sm.sub{p}.session{s}.trial{k}.ideal_path_length_ego sm.sub{p}.session{s}.trial{k}.ideal_path_length_ego_interpol ...
+            %     sm.sub{p}.session{s}.trial{k}.ideal_path_length ...
+            %     sm.sub{p}.session{s}.trial{k}.ideal_path_length_chosen ...
+            %     sm.sub{p}.session{s}.trial{k}.ideal_path_length_ego ...
             %     sm.sub{p}.session{s}.trial{k}.ideal_avg_distance_target sm.sub{p}.session{s}.trial{k}.ideal_total_distance_target ...
             %     sm.sub{p}.session{s}.trial{k}.ideal_sum_data_points ...
             %     sm.sub{p}.session{s}.trial{k}.ideal_avg_distance_chosen_target sm.sub{p}.session{s}.trial{k}.ideal_total_distance_chosen_target ...
