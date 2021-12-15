@@ -243,7 +243,7 @@ for subj=subject_start:subject_end
             sm.subject(partNo).session(sesNo).trial(k).support.origAvgSamplingRate=sum(originalSamplingRate)/length(originalSamplingRate);
                        
 %             %%% ACTIVATE IF SAMPLING RATE DIFFERS %%% 
-%             %%% needs to be checked if appropriate (alternative function 'resample' or activate only for higher sampling rates) %%% 
+%             %%% needs to be checked if appropriate (alternative function 'decimate', 'resample' or activate only for higher sampling rates) %%% 
 %             % temporal normalization (downsampling) 
 %             data = downsample(data,round(sm.subject(partNo).session(sesNo).trial(k).support.origAvgSamplingRate*1000));
 %             
@@ -549,17 +549,19 @@ for subj=subject_start:subject_end
                 [xi_eg,yi_eg]=sm_wp10_dataInterpolation(x_line_ego, y_line_ego, ...
                     sm.subject(partNo).session(sesNo).trial(k).support.ideal_path_length_ego);
                 
-                %     % test plot
-                %     figure;
-                %     plot(sm.coord.polyshape_array);
-                %     hold on
-                %     plot(x_line, y_line, 'k+', xi_al, yi_al, 'k-',...
-                %         x_line_ego, y_line_ego, 'rx', xi_eg, yi_eg, 'r-',...
-                %         x_line_chosen, y_line_chosen, 'bx', xi_ch, yi_ch, 'b-');
-                % %     plot(x_line, y_line, 'k-', x_line_chosen, y_line_chosen, 'r-');
-                %     xlim([0 1]);
-                %     ylim([0 1]);
-                %     hold off
+%                     % test plot
+%                     figure;
+%                     plot(sm.coord.polyshape_array);
+%                     hold on
+%                     plot(x_line, y_line, 'k+', xi_al, yi_al, 'k-',...
+%                         x_line_ego, y_line_ego, 'rx', xi_eg, yi_eg, 'r-',...
+%                         x_line_chosen, y_line_chosen, 'bx', xi_ch, yi_ch, 'b-');
+%                 %     plot(x_line, y_line, 'k-', x_line_chosen, y_line_chosen, 'r-');
+%                     xlim([0 1]);
+%                     ylim([0 1]);
+%                     hold off
+
+                % TBD: check inpolygon function % 
                 
                 % zone analysis for ideal paths
                 [~, ~, sm.subject(partNo).session(sesNo).trial(k).support.zone.ideal_alley_entry, ...
@@ -589,9 +591,10 @@ for subj=subject_start:subject_end
                     sm.subject(partNo).session(sesNo).trial(k).result.chosen_alley_int,...
                     sm.subject(partNo).session(sesNo).trial(k).result.obj_at_chosen_loc]=sm_wp10_chosenGoal(...
                     sm.subject(partNo).session(sesNo).rand_dict, ...
-                    char(trial_data.chosen_goal(k,1)), ...
-                    sm.coord.goal_locs, sm.coord.alley_locs);
-                
+                    char(trial_data.chosen_goal(k,1)), sm.coord, ...
+                    sm.subject(partNo).session(sesNo).trial(k).result.x_end, ...
+                    sm.subject(partNo).session(sesNo).trial(k).result.y_end);
+                               
                 %% Coordinate analysis using x-/y-coordinates
                 % Path analysis
                 sm.subject(partNo).session(sesNo).trial(k).result.path_length=0; total_dist_to_goal=0; total_dist_to_goal_ego=0; total_dist_to_chosen_goal=0; % reset/initiate variables
