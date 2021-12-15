@@ -254,7 +254,7 @@ for subj=subject_start:subject_end
 %             end
 %             sm.subject(partNo).session(sesNo).trial(k).support.newAvgSamplingRate=sum(newSamplingRate)/length(newSamplingRate);
             
-            % extrct data 
+            % extract data 
             t=data.time; % time
             x=data.pos_x; % coordinates
             y=data.pos_z; % coordinates
@@ -271,6 +271,20 @@ for subj=subject_start:subject_end
             
             sm.subject(partNo).session(sesNo).trial(k).result.x_start=x(1); sm.subject(partNo).session(sesNo).trial(k).result.y_start=y(1);
             sm.subject(partNo).session(sesNo).trial(k).result.x_end=x(end); sm.subject(partNo).session(sesNo).trial(k).result.y_end=y(end);
+            
+            % unique x-/y values,excluding periods without movement
+            xy_unique = unique([x y],'rows','stable'); % excluding row duplicates
+            x_uni = xy_unique(:,1);
+            y_uni = xy_unique(:,2);
+            
+%             % test plot
+%             figure;
+%             plot(sm.coord.polyshape_array);
+%             hold on
+%             plot(x_uni, y_uni, 'r-', xi_al, yi_al, 'k-');
+%             xlim([0 1]);
+%             ylim([0 1]);
+%             hold off
             
             %% Get single trial info from trial_results
             sm.subject(partNo).session(sesNo).session_duration=round(minutes(trial_data.timestamp(numel(files),1) - trial_data.timestamp(1,1))); 
@@ -445,7 +459,7 @@ for subj=subject_start:subject_end
                 sm.subject(partNo).session(sesNo).trial(k).result.total_distance_path=sum(distance_to_path);
                 
                 % AVERAGE DISTANCE to CORRECT path (only path, remove duplicates due to waiting/rotation)
-                xy_unique = unique([x y],'rows'); % remove row duplicates
+%                 xy_unique = unique([x y],'rows'); % remove row duplicates
                 [~,distance_to_path_unique] = dsearchn([xi_al, yi_al], xy_unique); % returns euclidian distance to nearest neighbour on interpolated ideal path
                 distance_to_path_unique = [distance_to_path_unique; sm.subject(partNo).session(sesNo).trial(k).result.final_distance]; % add final distance as last data point
                 sm.subject(partNo).session(sesNo).trial(k).result.avg_distance_path_pure=mean(distance_to_path_unique);
