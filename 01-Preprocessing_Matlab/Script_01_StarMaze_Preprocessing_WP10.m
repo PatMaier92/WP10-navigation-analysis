@@ -7,6 +7,7 @@ addpath(genpath(pwd)) % add subfolder functions to path
 % @ date 2020-11-06 update by @ Patrizia Maier & now tracked by git
 % for Starmaze version WP10 Frankfurt
 % requires Matlab 2021a or later
+% requires Signal Processing Toolbox for downsample function
 
 % The script requires .csv files as input.
 % One tracker file per trial with timestamp, xy-coordinates for movememt
@@ -234,13 +235,26 @@ for subj=subject_start:subject_end
             % read-in data
             data=readtable(fullfile(folderIn, name));
             
-            % check sampling rate
-            samplingRate=zeros(length(data.time)-1,1);
+            % original sampling rate
+            originalSamplingRate=zeros(length(data.time)-1,1);
             for i=1:length(data.time)-1
-                samplingRate(i)=data.time(i+1)-data.time(i);
+                originalSamplingRate(i)=data.time(i+1)-data.time(i);
             end
-            sm.subject(partNo).session(sesNo).trial(k).support.avgSamplingRate=sum(samplingRate)/length(samplingRate);
+            sm.subject(partNo).session(sesNo).trial(k).support.origAvgSamplingRate=sum(originalSamplingRate)/length(originalSamplingRate);
+                       
+%             %%% ACTIVATE IF SAMPLING RATE DIFFERS %%% 
+%             %%% needs to be checked if appropriate (alternative function 'resample' or activate only for higher sampling rates) %%% 
+%             % temporal normalization (downsampling) 
+%             data = downsample(data,round(sm.subject(partNo).session(sesNo).trial(k).support.origAvgSamplingRate*1000));
+%             
+%             % new sampling rate %%% TBC %%%
+%             newSamplingRate=zeros(length(data.time)-1,1);
+%             for i=1:length(data.time)-1
+%                 newSamplingRate(i)=data.time(i+1)-data.time(i);
+%             end
+%             sm.subject(partNo).session(sesNo).trial(k).support.newAvgSamplingRate=sum(newSamplingRate)/length(newSamplingRate);
             
+            % extrct data 
             t=data.time; % time
             x=data.pos_x; % coordinates
             y=data.pos_z; % coordinates
@@ -248,7 +262,7 @@ for subj=subject_start:subject_end
             data_length=length(x);
             sdata_length=(size(x))-1;
             
-            % normalization of coordinates
+            % spatial normalization
             if sesNo==3 % practise maze
                 x=datanorm(x,pm.coord.xmin,pm.coord.xmax); y=datanorm(y,pm.coord.ymin,pm.coord.ymax);
             else % star maze
