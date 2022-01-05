@@ -274,18 +274,9 @@ for subj=subject_start:subject_end
             
             % unique x-/y values,excluding periods without movement
             xy_unique = unique([x y],'rows','stable'); % excluding row duplicates
-            x_uni = xy_unique(:,1);
-            y_uni = xy_unique(:,2);
-            
-%             % test plot
-%             figure;
-%             plot(sm.coord.polyshape_array);
-%             hold on
-%             plot(x_uni, y_uni, 'r-', xi_al, yi_al, 'k-');
-%             xlim([0 1]);
-%             ylim([0 1]);
-%             hold off
-            
+            x_unique = xy_unique(:,1);
+            y_unique = xy_unique(:,2);
+                       
             %% Get single trial info from trial_results
             sm.subject(partNo).session(sesNo).session_duration=round(minutes(trial_data.timestamp(numel(files),1) - trial_data.timestamp(1,1))); 
             
@@ -386,7 +377,6 @@ for subj=subject_start:subject_end
 %                     plot(x_line, y_line, 'k+', xi_al, yi_al, 'k-',...
 %                         x_line_ego, y_line_ego, 'rx', xi_eg, yi_eg, 'r-',...
 %                         x_line_chosen, y_line_chosen, 'bx', xi_ch, yi_ch, 'b-');
-%                 %     plot(x_line, y_line, 'k-', x_line_chosen, y_line_chosen, 'r-');
 %                     xlim([0 1]);
 %                     ylim([0 1]);
 %                     hold off
@@ -423,7 +413,7 @@ for subj=subject_start:subject_end
                     sm.subject(partNo).session(sesNo).trial(k).result.x_end, ...
                     sm.subject(partNo).session(sesNo).trial(k).result.y_end);
                                
-                %% Coordinate analysis using x-/y-coordinates
+                %% Standard coordinate analysis using x-/y-coordinates
                 % Path analysis
                 sm.subject(partNo).session(sesNo).trial(k).result.path_length=0; total_dist_to_goal=0; total_dist_to_goal_ego=0; total_dist_to_chosen_goal=0; % reset/initiate variables
                 for i=1:sdata_length
@@ -459,11 +449,20 @@ for subj=subject_start:subject_end
                 sm.subject(partNo).session(sesNo).trial(k).result.total_distance_path=sum(distance_to_path);
                 
                 % AVERAGE DISTANCE to CORRECT path (only path, remove duplicates due to waiting/rotation)
-%                 xy_unique = unique([x y],'rows'); % remove row duplicates
                 [~,distance_to_path_unique] = dsearchn([xi_al, yi_al], xy_unique); % returns euclidian distance to nearest neighbour on interpolated ideal path
                 distance_to_path_unique = [distance_to_path_unique; sm.subject(partNo).session(sesNo).trial(k).result.final_distance]; % add final distance as last data point
                 sm.subject(partNo).session(sesNo).trial(k).result.avg_distance_path_pure=mean(distance_to_path_unique);
                 sm.subject(partNo).session(sesNo).trial(k).result.total_distance_path_pure=sum(distance_to_path_unique);
+                
+%                 % test plot
+%                 figure;
+%                 plot(sm.coord.polyshape_array);
+%                 hold on
+%                 plot(xi_al, yi_al, 'k-', x, y, 'r-',...
+%                     x_unique, y_unique, 'g--');
+%                 xlim([0 1]);
+%                 ylim([0 1]);
+%                 hold off
                 
 %                 % AVERAGE DISTANCE to CORRECT target
 %                 sm.subject(partNo).session(sesNo).trial(k).result.avg_distance_target=total_dist_to_goal/sdata_length(1);
@@ -499,6 +498,65 @@ for subj=subject_start:subject_end
                 
                 fprintf('Path, distance and velocity analysis done for %d, session %d, file no %d.\n', subj, sesNo, k);
                 
+                %% Additional analysis for all probe trials: Distance in relation to chosen target
+                
+                if sm.subject(partNo).session(sesNo).trial(k).feedback==0
+                    % Path analysis to CHOSEN target: same as above
+                    % PATH to CHOSEN target: same as above
+                    % DISTANCE to CHOSEN target: see as above
+                    
+                    % AVERAGE DISTANCE to ideal PATH to CHOSEN target (full trajectory including waiting/rotation)
+                    [~,distance_to_chosen_path] = dsearchn([xi_ch, yi_ch],[x,y]); % returns euclidian distance to nearest neighbour on interpolated ideal path
+                    sm.subject(partNo).session(sesNo).trial(k).result.avg_distance_chosen_path=mean(distance_to_chosen_path);
+                    sm.subject(partNo).session(sesNo).trial(k).result.total_distance_chosen_path=sum(distance_to_chosen_path);
+                    
+                    % AVERAGE DISTANCE to ideal PATH to CHOSEN target (only path, remove duplicates due to waiting/rotation)
+                    [~,distance_to_chosen_path_unique] = dsearchn([xi_ch, yi_ch],xy_unique); % returns euclidian distance to nearest neighbour on interpolated ideal path
+                    sm.subject(partNo).session(sesNo).trial(k).result.avg_distance_chosen_path_pure=mean(distance_to_chosen_path_unique);
+                    sm.subject(partNo).session(sesNo).trial(k).result.total_distance_chosen_path_pure=sum(distance_to_chosen_path_unique);
+                    
+%                     % AVERAGE DISTANCE to CHOSEN target
+%                     sm.subject(partNo).session(sesNo).trial(k).result.avg_distance_chosen_target=total_dist_to_chosen_goal/sdata_length(1);
+%                     sm.subject(partNo).session(sesNo).trial(k).result.total_distance_chosen_target=total_dist_to_chosen_goal;
+%                     % sum data points: same as in analyis above
+                    
+%                     % Cumulative IDEAL DISTANCE to CHOSEN target
+%                     id_total_dist_to_goal_chosen=0; % start-initiation
+%                     xi_ch_length=length(xi_ch)-1;
+%                     for i=1:xi_ch_length
+%                         % ideal cumulative distance to chosen target
+%                         id_total_dist_to_goal_chosen=id_total_dist_to_goal_chosen+sm_distance(xi_ch(i),x(end),yi_ch(i),y(end));
+%                     end
+                    
+%                     % IDEAL AVERAGE DISTANCE to CHOSEN target
+%                     sm.subject(partNo).session(sesNo).trial(k).support.ideal_avg_distance_chosen_target=id_total_dist_to_goal_chosen/xi_ch_length;
+%                     sm.subject(partNo).session(sesNo).trial(k).support.ideal_total_distance_chosen_target=id_total_dist_to_goal_chosen;
+%                     sm.subject(partNo).session(sesNo).trial(k).support.ideal_sum_data_points_chosen=xi_ch_length;
+                     
+                    % PATH ACCURACY to CHOSEN target
+                    sm.subject(partNo).session(sesNo).trial(k).result.path_accuracy_chosen=sm_ac(sm.subject(partNo).session(sesNo).trial(k).result.path_length,sm.subject(partNo).session(sesNo).trial(k).support.ideal_path_length_chosen);
+                    
+%                     % DISTANCE ACCURACY to CHOSEN target
+%                     sm.subject(partNo).session(sesNo).trial(k).result.distance_accuracy_chosen=sm_ac(sm.subject(partNo).session(sesNo).trial(k).result.avg_distance_chosen_target,sm.subject(partNo).session(sesNo).trial(k).support.ideal_avg_distance_chosen_target);
+                else
+                    % set dummy variables
+                    sm.subject(partNo).session(sesNo).trial(k).result.avg_distance_chosen_path=999;
+                    sm.subject(partNo).session(sesNo).trial(k).result.total_distance_chosen_path=999;
+                    sm.subject(partNo).session(sesNo).trial(k).result.avg_distance_chosen_path_pure=999;
+                    sm.subject(partNo).session(sesNo).trial(k).result.total_distance_chosen_path_pure=999;
+                    sm.subject(partNo).session(sesNo).trial(k).result.avg_distance_chosen_target=999;
+                    sm.subject(partNo).session(sesNo).trial(k).result.total_distance_chosen_target=999;
+                    sm.subject(partNo).session(sesNo).trial(k).result.path_accuracy_chosen=999;
+                    sm.subject(partNo).session(sesNo).trial(k).result.distance_accuracy_chosen=999;
+                    
+                    sm.subject(partNo).session(sesNo).trial(k).support.ideal_path_length_chosen=999;
+                    sm.subject(partNo).session(sesNo).trial(k).support.ideal_avg_distance_chosen_target=999;
+                    sm.subject(partNo).session(sesNo).trial(k).support.ideal_total_distance_chosen_target=999;
+                    sm.subject(partNo).session(sesNo).trial(k).support.ideal_sum_data_points_chosen=999;
+                end
+                
+                fprintf('Additional: Distance in relation to chosen target done for %d, session %d, file no %d.\n', subj, sesNo, k);
+          
                 %% Additional analysis for allocentric probe trials with potential egocentric response
                 % excludes allocentric trials with inner starts (even integer) as there
                 % is no clearly identifiable egocentric path/goal location from these starts
@@ -575,66 +633,7 @@ for subj=subject_start:subject_end
                 end
                 
                 fprintf('Additional: Distance in relation to egocentric target done for %d, session %d, file no %d.\n', subj, sesNo, k);
-                
-                %% Additional analysis for probe trials: Distance in relation to chosen target
-                
-                if sm.subject(partNo).session(sesNo).trial(k).feedback==0
-                    % Path analysis to CHOSEN target: same as above
-                    % PATH to CHOSEN target: same as above
-                    % DISTANCE to CHOSEN target: see as above
-                    
-                    % AVERAGE DISTANCE to ideal PATH to CHOSEN target (full trajectory including waiting/rotation)
-                    [~,distance_to_chosen_path] = dsearchn([xi_ch, yi_ch],[x,y]); % returns euclidian distance to nearest neighbour on interpolated ideal path
-                    sm.subject(partNo).session(sesNo).trial(k).result.avg_distance_chosen_path=mean(distance_to_chosen_path);
-                    sm.subject(partNo).session(sesNo).trial(k).result.total_distance_chosen_path=sum(distance_to_chosen_path);
-                    
-                    % AVERAGE DISTANCE to ideal PATH to CHOSEN target (only path, remove duplicates due to waiting/rotation)
-                    [~,distance_to_chosen_path_unique] = dsearchn([xi_ch, yi_ch],xy_unique); % returns euclidian distance to nearest neighbour on interpolated ideal path
-                    sm.subject(partNo).session(sesNo).trial(k).result.avg_distance_chosen_path_pure=mean(distance_to_chosen_path_unique);
-                    sm.subject(partNo).session(sesNo).trial(k).result.total_distance_chosen_path_pure=sum(distance_to_chosen_path_unique);
-                    
-%                     % AVERAGE DISTANCE to CHOSEN target
-%                     sm.subject(partNo).session(sesNo).trial(k).result.avg_distance_chosen_target=total_dist_to_chosen_goal/sdata_length(1);
-%                     sm.subject(partNo).session(sesNo).trial(k).result.total_distance_chosen_target=total_dist_to_chosen_goal;
-%                     % sum data points: same as in analyis above
-                    
-%                     % Cumulative IDEAL DISTANCE to CHOSEN target
-%                     id_total_dist_to_goal_chosen=0; % start-initiation
-%                     xi_ch_length=length(xi_ch)-1;
-%                     for i=1:xi_ch_length
-%                         % ideal cumulative distance to chosen target
-%                         id_total_dist_to_goal_chosen=id_total_dist_to_goal_chosen+sm_distance(xi_ch(i),x(end),yi_ch(i),y(end));
-%                     end
-                    
-%                     % IDEAL AVERAGE DISTANCE to CHOSEN target
-%                     sm.subject(partNo).session(sesNo).trial(k).support.ideal_avg_distance_chosen_target=id_total_dist_to_goal_chosen/xi_ch_length;
-%                     sm.subject(partNo).session(sesNo).trial(k).support.ideal_total_distance_chosen_target=id_total_dist_to_goal_chosen;
-%                     sm.subject(partNo).session(sesNo).trial(k).support.ideal_sum_data_points_chosen=xi_ch_length;
-                     
-                    % PATH ACCURACY to CHOSEN target
-                    sm.subject(partNo).session(sesNo).trial(k).result.path_accuracy_chosen=sm_ac(sm.subject(partNo).session(sesNo).trial(k).result.path_length,sm.subject(partNo).session(sesNo).trial(k).support.ideal_path_length_chosen);
-                    
-%                     % DISTANCE ACCURACY to CHOSEN target
-%                     sm.subject(partNo).session(sesNo).trial(k).result.distance_accuracy_chosen=sm_ac(sm.subject(partNo).session(sesNo).trial(k).result.avg_distance_chosen_target,sm.subject(partNo).session(sesNo).trial(k).support.ideal_avg_distance_chosen_target);
-                else
-                    % set dummy variables
-                    sm.subject(partNo).session(sesNo).trial(k).result.avg_distance_chosen_path=999;
-                    sm.subject(partNo).session(sesNo).trial(k).result.total_distance_chosen_path=999;
-                    sm.subject(partNo).session(sesNo).trial(k).result.avg_distance_chosen_path_pure=999;
-                    sm.subject(partNo).session(sesNo).trial(k).result.total_distance_chosen_path_pure=999;
-                    sm.subject(partNo).session(sesNo).trial(k).result.avg_distance_chosen_target=999;
-                    sm.subject(partNo).session(sesNo).trial(k).result.total_distance_chosen_target=999;
-                    sm.subject(partNo).session(sesNo).trial(k).result.path_accuracy_chosen=999;
-                    sm.subject(partNo).session(sesNo).trial(k).result.distance_accuracy_chosen=999;
-                    
-                    sm.subject(partNo).session(sesNo).trial(k).support.ideal_path_length_chosen=999;
-                    sm.subject(partNo).session(sesNo).trial(k).support.ideal_avg_distance_chosen_target=999;
-                    sm.subject(partNo).session(sesNo).trial(k).support.ideal_total_distance_chosen_target=999;
-                    sm.subject(partNo).session(sesNo).trial(k).support.ideal_sum_data_points_chosen=999;
-                end
-                
-                fprintf('Additional: Distance in relation to chosen target done for %d, session %d, file no %d.\n', subj, sesNo, k);
-                
+                      
                  %% Body rotation analysis
 %                 % Body rotation analysis
 %                 sm.subject(partNo).session(sesNo).trial(k).result.sum_body_rotation=0; br=zeros(1,data_length);
