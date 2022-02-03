@@ -1,17 +1,19 @@
-###         GMDA Helper Script          ###
-# Author: Patrizia Maier                  #
+### ----------------------- GMDA Helper Script ----------------------- ###
+### Author: Patrizia Maier                                             ###
 
 
-# get packages 
+# ::: get packages ::: #
+
 library(tidyverse)
 library(ggtext)
-library(openxlsx)
 library(corrplot)
 library(patchwork)
 
 
-######################################################################
-# Preprocessing for GMDA scoring 
+# ######################################################### #
+
+
+# ::: Preprocessing for GMDA scoring: get goal objects for id ::: # 
 
 # read-in data
 my_path <- "../WP10_data/WP10_results/"
@@ -34,16 +36,23 @@ giveMeGoals <- function(data){
 giveMeGoals(pt_trial_data)
 
 
-######################################################################
-# Read-in GMDA Scoring result files and preprocess
 
-# define path to data 
+# clear workspace
+rm(list = ls())
+
+
+# ######################################################### #
+
+
+# ::: Preprocessing for GMDA scoring: process result files after scoring ::: # 
+
+#  read-in data
 my_path="GMDA/Data/"
 pattern <- list.files(path=my_path, pattern = "_Summary\\.csv$")
 file_list <- paste(my_path, pattern, sep="")
 
 
-# gmda data 
+# process gmda data 
 gmda_data <- file_list %>%
   purrr::map_df(read_csv,
                 col_names=c("Measure Type", "Filename", "Measure", "Score", "Score_2"), 
@@ -60,7 +69,7 @@ gmda_data <- file_list %>%
   separate(Filename, sep="_", into=c("ID", "Type"))
   
 
-# bdr data 
+# process bdr data 
 brd_data <- file_list %>%
   purrr::map_df(read_csv, 
                 col_names=c("Measure Type", "Filename", "Measure", "Score"), 
@@ -89,19 +98,15 @@ brd_data <- file_list %>%
 #   separate(Filename, sep="_", into=c("ID", "Type"))
 
 
-# check theta
-# get "bad" theta values
+# check for "bad" theta values (> 20)
 bad_theta <- brd_data %>% filter(Measure=="theta") %>% filter(abs(Score) > 20) 
+bad_theta
 
 
-#######################################################################
-# Save data 
-
-# Data overview/compare groups
+# select and combine data 
 temp_brd <- brd_data %>% 
   select(!`Measure Type`) %>%
   filter(Measure %in% c("r", "theta"))
-
 
 data_gmda <- gmda_data %>% 
   select(!`Measure Type`) %>% 
@@ -122,85 +127,35 @@ data_gmda <- gmda_data %>%
   filter(Measure!="theta")
 
 
-# file identifier 
+# save as Rdata 
 date <- readline("Enter date and scoring protocol info: ")
 
-# save output
-# as Rdata 
 out_file_R <-  paste("WP10_GMDA_data_", date, ".Rdata", sep="")
 save(data_gmda, file=out_file_R)
 
-# as excel 
-out_file_XLSX <-  paste("WP10_GMDA_data_", date, ".xlsx", sep="")
 
-wb <- createWorkbook()
-addWorksheet(wb, "GMDA")
-writeData(wb, "GMDA", data_gmda)
-
-saveWorkbook(wb, out_file_XLSX, overwrite = TRUE)
-rm(wb)
+# clear workspace
+rm(list = ls())
 
 
-#######################################################################
-# Plot data 
+# ######################################################### #
 
-# file identifier 
+
+# ::: Plot data: compare measures for main protocol ::: #
+
+# read-in data  
 date <- readline("Enter date and scoring protocol info: ")
 
-# read data 
-in_file_R <-  paste("Data/WP10_GMDA_data_", date, ".Rdata", sep="")
+in_file_R <-  paste("WP10_GMDA_data_", date, ".Rdata", sep="")
 load(in_file_R)
 
 
-# compare scoring protocols 
-protocol_all <- data_gmda
-protocol_lm <- temp
-protocol_go <- data_gmda
-data <- bind_rows(protocol_all, protocol_lm, protocol_go)
-
-# compare protocols 
-d1 <- data %>%
-  pivot_wider(id_cols=c(ID, Measure, group),
-              names_prefix="Score_",
-              names_from=protocol,
-              values_from=Score)
-
-M <- d1 %>% ungroup() %>% filter(Measure=="SQRT(CanOrg)") %>% select(Score_all, Score_landmarks, Score_goals) %>% cor()
-corrplot(M, method="number", title="SQRT(CanOrg)")
-
-M <- d1 %>% ungroup() %>% filter(Measure=="CanAcc") %>% select(Score_all, Score_landmarks, Score_goals) %>% cor()
-corrplot(M, method="number", title="CanAcc")
-
-M <- d1 %>% ungroup() %>% filter(Measure=="DistAcc") %>% select(Score_all, Score_landmarks, Score_goals) %>% cor()
-corrplot(M, method="number", title="DistAcc")
-
-M <- d1 %>% ungroup() %>% filter(Measure=="AngleAcc") %>% select(Score_all, Score_landmarks, Score_goals) %>% cor()
-corrplot(M, method="number", title="AngleAcc")
-
-# compare measures 
-d2 <- data %>%
-  pivot_wider(id_cols=c(ID, protocol, group),
-              names_from=Measure,
-              values_from=c(Score))
-
-M <- d2 %>% ungroup() %>% filter(protocol=="all") %>% 
-  select(-c(ID, group, protocol, CanOrg)) %>% cor()
-corrplot(M, method="number", title="Protocol all")
-
-M <- d2 %>% ungroup() %>% filter(protocol=="landmarks") %>% 
-  select(-c(ID, group, protocol, CanOrg)) %>% cor()
-corrplot(M, method="number", title="Protocol landmarks")
-
-M <- d2 %>% ungroup() %>% filter(protocol=="goals") %>% 
-  select(-c(ID, group, protocol, CanOrg)) %>% cor()
-corrplot(M, method="number", title="Protocol goals")
-
-
-# overview plot 
+# outlier function
 # # outlier plotter 
 # is_outlier <- function(x) {
 #   return(x < quantile(x, 0.25) - 1.5 * IQR(x) | x > quantile(x, 0.75) + 1.5 * IQR(x))
 # }
+
 
 # level order 
 level_order <- c("SQRT(CanOrg)",
@@ -210,7 +165,8 @@ level_order <- c("SQRT(CanOrg)",
                  "AngleAcc",
                  "r") 
 
-# make plot
+
+# plot: compare all measures 
 ggplot(data_gmda, aes(x=group, y=Score, fill=group)) +
   geom_boxplot() + 
   geom_point() + 
@@ -227,11 +183,10 @@ ggplot(data_gmda, aes(x=group, y=Score, fill=group)) +
        x="")
 
 
-# reduced overview plot
+# plot: compare all relevant measures
 data_gmda_cl <-data_gmda %>% 
   filter(!Measure %in% c("r", "CanOrg"))
 
-# make plot
 ggplot(data_gmda_cl, aes(x=group, y=Score, fill=group)) +
   geom_boxplot() + 
   geom_point() + 
@@ -247,16 +202,88 @@ ggplot(data_gmda_cl, aes(x=group, y=Score, fill=group)) +
        y="Score",
        x="")
 
-ggplot(data_gmda_cl, aes(x=Score, color=group)) + 
-  geom_freqpoly(bins=5) + 
-  facet_grid(~ factor(Measure, level=level_order)) + 
-  scale_color_manual(values=c("red", "blue", "yellow")) + 
-  theme_classic() +
-  theme(legend.position="bottom", 
-        axis.text.x = element_blank(),
-        axis.ticks = element_blank()) + 
-  labs(title="GMDA scores",
-       subtitle=paste("scoring template ", date, sep=""),
-       y="Count",
-       x="")
 
+# # plot: freqpoly/histogramm
+# ggplot(data_gmda_cl, aes(x=Score, color=group)) + 
+#   geom_freqpoly(bins=5) + 
+#   facet_grid(~ factor(Measure, level=level_order)) + 
+#   scale_color_manual(values=c("red", "blue", "yellow")) + 
+#   theme_classic() +
+#   theme(legend.position="bottom", 
+#         axis.text.x = element_blank(),
+#         axis.ticks = element_blank()) + 
+#   labs(title="GMDA scores",
+#        subtitle=paste("scoring template ", date, sep=""),
+#        y="Count",
+#        x="")
+
+
+# clear workspace
+rm(list = ls())
+
+
+# ######################################################### #
+
+
+# ::: Plot data: compare all protocols (sanity check) ::: #
+
+# read-in data (repeatedly)
+date <- readline("Enter date and scoring protocol info: ")
+
+in_file_R <-  paste("WP10_GMDA_data_", date, ".Rdata", sep="")
+load(in_file_R)
+
+# temp save (select)
+protocol_all <- data_gmda %>% mutate(protocol="all")
+protocol_lm <- data_gmda %>% mutate(protocol="landmark")
+protocol_go <- data_gmda %>% mutate(protocol="goals")
+
+# combine data 
+data <- bind_rows(protocol_all, protocol_lm, protocol_go)
+rm(data_gmda, protocol_all, protocol_lm, protocol_go)
+
+
+# plots: correlation between protocols 
+d1 <- data %>%
+  pivot_wider(id_cols=c(ID, Measure, group),
+              names_prefix="Score_",
+              names_from=protocol,
+              values_from=Score)
+
+M <- d1 %>% ungroup() %>% filter(Measure=="SQRT(CanOrg)") %>% select(Score_all, Score_landmark, Score_goals) %>% cor()
+corrplot(M, method="number", title="SQRT(CanOrg)")
+
+M <- d1 %>% ungroup() %>% filter(Measure=="CanAcc") %>% select(Score_all, Score_landmark, Score_goals) %>% cor()
+corrplot(M, method="number", title="CanAcc")
+
+M <- d1 %>% ungroup() %>% filter(Measure=="DistAcc") %>% select(Score_all, Score_landmark, Score_goals) %>% cor()
+corrplot(M, method="number", title="DistAcc")
+
+M <- d1 %>% ungroup() %>% filter(Measure=="AngleAcc") %>% select(Score_all, Score_landmark, Score_goals) %>% cor()
+corrplot(M, method="number", title="AngleAcc")
+
+
+# plots: correlation between measures in protocols
+d2 <- data %>%
+  pivot_wider(id_cols=c(ID, protocol, group),
+              names_from=Measure,
+              values_from=c(Score))
+
+M <- d2 %>% ungroup() %>% filter(protocol=="all") %>% 
+  select(-c(ID, group, protocol, CanOrg)) %>% cor()
+corrplot(M, method="number", title="Protocol all")
+
+M <- d2 %>% ungroup() %>% filter(protocol=="landmark") %>% 
+  select(-c(ID, group, protocol, CanOrg)) %>% cor()
+corrplot(M, method="number", title="Protocol landmarks")
+
+M <- d2 %>% ungroup() %>% filter(protocol=="goals") %>% 
+  select(-c(ID, group, protocol, CanOrg)) %>% cor()
+corrplot(M, method="number", title="Protocol goals")
+
+
+
+# clear workspace
+rm(list = ls())
+
+# ######################################################### #
