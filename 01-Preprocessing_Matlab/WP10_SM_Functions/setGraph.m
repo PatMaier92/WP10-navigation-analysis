@@ -1,10 +1,10 @@
-function [G,x,y]=sm_wp10_createGraph(start_x, start_y,...
+function [G,x,y]=setGraph(start_x, start_y,...
     tri_x, tri_y, goal_x, goal_y)
-% SM_WP10_CREATEGRAPH Define graph between all locations. 
+% setGraph: Define graph between all locations. 
 % 
 % Input: start_x,start_y,tri_x,tri_y,goal_x,goal_y are vectors of xy-coordinates
 %
-% Returns: G is a graph
+% Returns: G is a graph, x and y are coordinate vectors.
 
 % start nodes
 st=[ 1 1 ... % start connections 

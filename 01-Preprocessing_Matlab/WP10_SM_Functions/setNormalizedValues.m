@@ -1,6 +1,6 @@
-function DN=datanorm(c,cmin,cmax)
-% DATANORM Data-normalization for coordinates.
-%
+function DN=setNormalizedValues(c,cmin,cmax)
+% setNormalizedValues: Normalizes coordinates based on min/max values. 
+
 % Input: 
 % c is input value to be normalized.
 % cmin, cmax are minumum, maximum values.

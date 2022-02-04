@@ -23,8 +23,8 @@ addpath(genpath(pwd)) % add subfolder functions to path
 
 %% Block 1: Set up input and output folders, starmaze and practise environment 
 %% Data input folder and participant information
-[data_folder]  = sm_inputPath(); % provide folder with all raw data
-[participant_start,participant_end] = sm_inputSubjectsNo(); % provide participant range
+[data_folder]  = setInputPath(); % provide folder with all raw data
+[participant_start,participant_end] = setParticipants(); % provide participant range
 n_sessions      = 3; % default 3
 
 %% Result folder
@@ -49,46 +49,46 @@ if ~exist('sm','var')
     %% Set up Starmaze environment 
     % coordinates of min/max values
     values=table2array(readtable('wp10_values.csv'));
-    [sm.coord.xmin,sm.coord.xmax,sm.coord.ymin,sm.coord.ymax]=sm_wp10_minMaxValues(values);
+    [sm.coord.xmin,sm.coord.xmax,sm.coord.ymin,sm.coord.ymax]=setMinMaxValues(values);
 
     % coordinates of start positions (normalized!)
     start=table2array(readtable('wp10_start.csv'));
-    [sm.coord.start_x,sm.coord.start_y]=sm_wp10_start(start,sm.coord.xmin,sm.coord.xmax,sm.coord.ymin,sm.coord.ymax);
+    [sm.coord.start_x,sm.coord.start_y]=setStartValues(start,sm.coord.xmin,sm.coord.xmax,sm.coord.ymin,sm.coord.ymax);
 
     % coordinates of goal positions (normalized!)
     goal=table2array(readtable('wp10_goal.csv'));
-    [sm.coord.goal_x,sm.coord.goal_y]=sm_wp10_goal(goal,sm.coord.xmin,sm.coord.xmax,sm.coord.ymin,sm.coord.ymax);
+    [sm.coord.goal_x,sm.coord.goal_y]=setGoalValues(goal,sm.coord.xmin,sm.coord.xmax,sm.coord.ymin,sm.coord.ymax);
 
     % coordinates of alley corners (normalized!)
     alley_x=table2array(readtable('wp10_alley_x.csv'));
     [n_corners,n_alleys] = size(alley_x);
     for i_alley=1:n_alleys
         for i_corner=1:n_corners
-            alley_x(i_corner,i_alley)=datanorm(alley_x(i_corner,i_alley),sm.coord.xmin,sm.coord.xmax);
+            alley_x(i_corner,i_alley)=setNormalizedValues(alley_x(i_corner,i_alley),sm.coord.xmin,sm.coord.xmax);
         end
     end
     alley_y=table2array(readtable('wp10_alley_y.csv'));
     for i_alley=1:n_alleys
         for i_corner=1:n_corners
-            alley_y(i_corner,i_alley)=datanorm(alley_y(i_corner,i_alley),sm.coord.ymin,sm.coord.ymax);
+            alley_y(i_corner,i_alley)=setNormalizedValues(alley_y(i_corner,i_alley),sm.coord.ymin,sm.coord.ymax);
         end
     end
 
     % coordinates of combined pentagon (normalized!) and central polyshape
     pentagon_x=table2array(readtable('wp10_pentagon_x.csv'));
     pentagon_y=table2array(readtable('wp10_pentagon_y.csv'));
-    [sm.coord.central_x,sm.coord.central_y,sm.coord.central_poly,pentagon_x,pentagon_y]=sm_wp10_pentagon(alley_x,alley_y,pentagon_x,pentagon_y,...
+    [sm.coord.central_x,sm.coord.central_y,sm.coord.central_poly,pentagon_x,pentagon_y]=setPentagonValues(alley_x,alley_y,pentagon_x,pentagon_y,...
         sm.coord.xmin,sm.coord.xmax,sm.coord.ymin,sm.coord.ymax);
 
     % create other polyshapes
     % alley polyshape
     [sm.coord.alley_full_x,sm.coord.alley_full_y,sm.coord.alley_poly,...
         sm.coord.alley_half_out_x,sm.coord.alley_half_out_y,sm.coord.alley_poly_out,...
-        sm.coord.alley_half_in_x,sm.coord.alley_half_in_y,sm.coord.alley_poly_in]=sm_wp10_alleyPolyshape(alley_x,alley_y);
+        sm.coord.alley_half_in_x,sm.coord.alley_half_in_y,sm.coord.alley_poly_in]=setAlleyPolyshape(alley_x,alley_y);
     % rectangle polyshape
-    [sm.coord.rec_x,sm.coord.rec_y,sm.coord.rec_poly]=sm_wp10_rectPolyshape(n_alleys,alley_x,alley_y,pentagon_x,pentagon_y);
+    [sm.coord.rec_x,sm.coord.rec_y,sm.coord.rec_poly]=setRectPolyshape(n_alleys,alley_x,alley_y,pentagon_x,pentagon_y);
     % triangle polyshape
-    [sm.coord.tri_x,sm.coord.tri_y,sm.coord.tri_poly]=sm_wp10_trianglePolyshape(n_alleys,alley_x,alley_y,pentagon_x,pentagon_y);
+    [sm.coord.tri_x,sm.coord.tri_y,sm.coord.tri_poly]=setTriPolyshape(n_alleys,alley_x,alley_y,pentagon_x,pentagon_y);
     % joint polyshape
     sm.coord.full_poly=[sm.coord.alley_poly_out{1,1} sm.coord.alley_poly_in{1,1}...
         sm.coord.alley_poly_out{1,2} sm.coord.alley_poly_in{1,2}...
@@ -98,13 +98,11 @@ if ~exist('sm','var')
 
     % create graph
     % for automated shortest path calculation (requires Matlab 2021a)
-    [sm.coord.graph,sm.coord.graph_x,sm.coord.graph_y]=sm_wp10_createGraph(sm.coord.start_x,sm.coord.start_y,...
+    [sm.coord.graph,sm.coord.graph_x,sm.coord.graph_y]=setGraph(sm.coord.start_x,sm.coord.start_y,...
         sm.coord.tri_x,sm.coord.tri_y,sm.coord.goal_x,sm.coord.goal_y);
 
     % add (ordered) information
     sm.coord.goal_names=["MA", "MC", "MI"];
-    % sm.coord.start_names=["Player_MA" "Player_MB" "Player_MC" "Player_MD" "Player_ME" "Player_MF" "Player_MG" ...
-    %     "Player_MH" "Player_MI", "Player_MJ", "Player_MX"];
     sm.coord.start_names=["A" "B" "C" "D" "E" "F" "G" "H" "I" "J" "X"];
     sm.coord.alley_names=["A" "B" "C" "D" "E" "F" "G" "H" "I" "J"];
 
@@ -116,25 +114,25 @@ if ~exist('sm','var')
     %% Set up Practise environment (for motor control task)
     % coordinates of min/max values
     practise_values=table2array(readtable('wp10_practise_values.csv'));
-    [sm.coord.practise.xmin,sm.coord.practise.xmax,sm.coord.practise.ymin,sm.coord.practise.ymax]=sm_wp10_minMaxValues(practise_values);
+    [sm.coord.practise.xmin,sm.coord.practise.xmax,sm.coord.practise.ymin,sm.coord.practise.ymax]=setMinMaxValues(practise_values);
 
     % coordinates of start position (normalized!)
     practise_start=table2array(readtable('wp10_practise_start.csv'));
-    [sm.coord.practise.start_x,sm.coord.practise.start_y]=sm_wp10_start(practise_start,sm.coord.practise.xmin,sm.coord.practise.xmax,sm.coord.practise.ymin,sm.coord.practise.ymax);
+    [sm.coord.practise.start_x,sm.coord.practise.start_y]=setStartValues(practise_start,sm.coord.practise.xmin,sm.coord.practise.xmax,sm.coord.practise.ymin,sm.coord.practise.ymax);
 
     % coordinates of goal positions (normalized!)
     practise_goal=table2array(readtable('wp10_practise_goal.csv'));
-    [sm.coord.practise.goal_x,sm.coord.practise.goal_y]=sm_wp10_goal(practise_goal,sm.coord.practise.xmin,sm.coord.practise.xmax,sm.coord.practise.ymin,sm.coord.practise.ymax);
+    [sm.coord.practise.goal_x,sm.coord.practise.goal_y]=setGoalValues(practise_goal,sm.coord.practise.xmin,sm.coord.practise.xmax,sm.coord.practise.ymin,sm.coord.practise.ymax);
 
     % coordinates of alley corners (normalized!)
     practise_alley_x=table2array(readtable('wp10_practise_x.csv'));
     [n_corners,~] = size(practise_alley_x);
     for i_corner=1:n_corners
-        practise_alley_x(i_corner,1)=datanorm(practise_alley_x(i_corner,1),sm.coord.practise.xmin,sm.coord.practise.xmax);
+        practise_alley_x(i_corner,1)=setNormalizedValues(practise_alley_x(i_corner,1),sm.coord.practise.xmin,sm.coord.practise.xmax);
     end
     practise_alley_y=table2array(readtable('wp10_practise_y.csv'));
     for i_corner=1:n_corners
-        practise_alley_y(i_corner,1)=datanorm(practise_alley_y(i_corner,1),sm.coord.practise.ymin,sm.coord.practise.ymax);
+        practise_alley_y(i_corner,1)=setNormalizedValues(practise_alley_y(i_corner,1),sm.coord.practise.ymin,sm.coord.practise.ymax);
     end
 
     % create polyshape
@@ -258,9 +256,9 @@ for i_participant=participant_start:participant_end
             
             % spatial normalization
             if s==3 % practise maze
-                x=datanorm(x,sm.coord.practise.xmin,sm.coord.practise.xmax); y=datanorm(y,sm.coord.practise.ymin,sm.coord.practise.ymax);
+                x=setNormalizedValues(x,sm.coord.practise.xmin,sm.coord.practise.xmax); y=setNormalizedValues(y,sm.coord.practise.ymin,sm.coord.practise.ymax);
             else % star maze
-                x=datanorm(x,sm.coord.xmin,sm.coord.xmax); y=datanorm(y,sm.coord.ymin,sm.coord.ymax);
+                x=setNormalizedValues(x,sm.coord.xmin,sm.coord.xmax); y=setNormalizedValues(y,sm.coord.ymin,sm.coord.ymax);
             end
             
             sm.participant(p).session(s).trial(k).result.x_start=x(1); sm.participant(p).session(s).trial(k).result.y_start=y(1);

@@ -1,16 +1,15 @@
-function [alley_full_x,alley_full_y,alley_polyshape, alley_half_out_x, alley_half_out_y, alley_polyshape_1,...
-    alley_half_in_x, alley_half_in_y, alley_polyshape_2]=sm_wp10_alleyPolyshape(alley_x,alley_y)
-
-% SM_WP10_ALLEYPOLYSHAPE Creates a polyshape of Starmaze WP10 alleys. 
+function [alley_full_x,alley_full_y,alley_polyshape,...
+    alley_half_out_x, alley_half_out_y, alley_polyshape_1,...
+    alley_half_in_x, alley_half_in_y, alley_polyshape_2]=setAlleyPolyshape(alley_x,alley_y)
+% setAlleyPolyshape: Creates a polyshape of Starmaze WP10 alleys. 
 %
-% Input: alley_x,alley_y are arrays with x and y coordinates for all alley
-% corners (4 x 5).
+% Input: alley_x, alley_y are 4*5 arrays with x and y coordinates corners.
 %
 % Returns: Polyshapes for all alleys, both full and half alleys and combined. 
 
-[cornerNo, alleyNo]=size(alley_x);
+[~, n]=size(alley_x);
 
-for alley=1:alleyNo
+for alley=1:n
     alley_full_x(:,alley)=[alley_x(1,alley);alley_x(2,alley);alley_x(3,alley);alley_x(4,alley);alley_x(1,alley)];
     alley_full_y(:,alley)=[alley_y(1,alley);alley_y(2,alley);alley_y(3,alley);alley_y(4,alley);alley_y(1,alley)];
     alley_polyshape{alley}=polyshape(alley_full_x(:,alley),alley_full_y(:,alley));
