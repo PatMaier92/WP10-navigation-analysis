@@ -23,12 +23,12 @@ if chosen_goal_str == "Timeout"
     disp('Timeout in chosenGoal.m. Set to 999.\n');
 else 
     for c=1:5
-        if inpolygon(xend, yend, sm_coord.alley_polyshape{c}.Vertices(:,1), sm_coord.alley_polyshape{c}.Vertices(:,2)) ...
-                || inpolygon(xend, yend, sm_coord.tri{c}.Vertices(:,1), sm_coord.tri{c}.Vertices(:,2)) % chosen location in alley or triangle (outer arm)
+        if inpolygon(xend, yend, sm_coord.alley_poly{c}.Vertices(:,1), sm_coord.alley_poly{c}.Vertices(:,2)) ...
+                || inpolygon(xend, yend, sm_coord.tri_poly{c}.Vertices(:,1), sm_coord.tri_poly{c}.Vertices(:,2)) % chosen location in alley or triangle (outer arm)
             % chosen alley integer
             chosen_alley_int = c*2-1;
             break; 
-        elseif inpolygon(xend, yend, sm_coord.rec{c}.Vertices(:,1), sm_coord.rec{c}.Vertices(:,2)) % chosen locaiton in rectangle (inner arm)
+        elseif inpolygon(xend, yend, sm_coord.rec_poly{c}.Vertices(:,1), sm_coord.rec_poly{c}.Vertices(:,2)) % chosen locaiton in rectangle (inner arm)
              % chosen alley integer
             chosen_alley_int = c*2;
             break;
@@ -36,10 +36,10 @@ else
     end 
     
     % chosen alley string
-    chosen_alley_str = sm_coord.alley_locs(chosen_alley_int);
+    chosen_alley_str = sm_coord.alley_names(chosen_alley_int);
     
     % chosen goal string
-    chosen_goal_int = find(contains(sm_coord.goal_locs, chosen_alley_str)); 
+    chosen_goal_int = find(contains(sm_coord.goal_names, chosen_alley_str)); 
     if isempty(chosen_goal_int)
         chosen_goal_int = 999;
         fprintf('Unknown goal int input %s in chosenGoal.m. Set to 999.\n', chosen_goal_str);

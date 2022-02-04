@@ -49,6 +49,16 @@ wp=10; % work package default
  
 %% Block 2: Data analysis
 for subject=subject_start:subject_end
+    
+%     % TBD: add this
+%     % check input folder
+%     folderIn=[inputFolder '\' num2str(subj) '\' finalFolderString];
+%     if ~exist(folderIn, 'dir')
+%         fprintf('Subject %d, session %d does not exist. Continue with next folder.\n', subj, session);
+%         continue;
+%     end
+%     %
+    
     pstr=['p',num2str(subject)];
     sstr=['s',num2str(session)];
     [finalFolderString]=sm_wp10_getFolderstring(session);
