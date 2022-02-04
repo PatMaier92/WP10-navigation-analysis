@@ -1,5 +1,5 @@
-function [goal_identity_int]=sm_wp10_trialGoalIdentity(goal_num, goal_identity)
-% SM_WP10_TRIALGOALIDENTITY Return goal identity for this trial for Starmaze
+function [goal_identity_int]=setTrialGoalIdentity(goal_num, goal_identity)
+% setTrialGoalIdentity: Returns goal identity for this trial for Starmaze
 % WP10. 
 %
 % Input: 

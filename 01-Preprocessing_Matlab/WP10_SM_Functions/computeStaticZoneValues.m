@@ -1,5 +1,5 @@
-function [abs_zone,rel_zone,entry,rot_zone]=sm_wp10_coordinatesZonesStatic(x,y,r,zone_full_x,zone_full_y)
-% SM_WP10_COORDINATESZONESSTATIC Used for zone analysis. 
+function [abs_zone,rel_zone,entry,rot_zone]=computeStaticZoneValues(x,y,r,zone_full_x,zone_full_y)
+% computeStaticZoneValues: Used for static zone analysis. 
 % 
 % Input: 
 % x, y, r are vectors with all recorded data points (x-/y-trajectory and z-rotation)

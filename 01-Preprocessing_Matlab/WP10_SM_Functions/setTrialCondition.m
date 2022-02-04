@@ -1,9 +1,8 @@
-function [TC]=sm_wp10_trialCondition(trial_type,feedback)
-% SM_WP10_TRIALCONDITION Function for assinging trial condition 
-% for Starmaze WP10.
+function [TC]=setTrialCondition(condition,feedback)
+% setTrialCondition Assigns trial condition for Starmaze WP10.
 %
 % Input: 
-% trial_type is trial condition information (string) 
+% condition is trial condition information (string) 
 % feedback indicates whether goal is visible (yes/no) (boolean)
 %
 % Returns: TC is trial type (integer)
@@ -11,16 +10,16 @@ function [TC]=sm_wp10_trialCondition(trial_type,feedback)
 % 4 = practise motor control
 
 training='main_learn';
-% note: main_learn + no Feedback (simple retrieval) is not marked as
+% note: main_learn + no feedback (simple retrieval) is not marked as
 % extra category in Starmaze WP10 output files yet.
 allo='main_allo';
 ego='main_ego';
 mc='practise_motor'; 
 
-TC_training=contains(trial_type,training);
-TC_allo=contains(trial_type,allo);
-TC_ego=contains(trial_type,ego);
-TC_mc=contains(trial_type,mc); 
+TC_training=contains(condition,training);
+TC_allo=contains(condition,allo);
+TC_ego=contains(condition,ego);
+TC_mc=contains(condition,mc); 
 
 if TC_training==1
     if feedback==0

@@ -1,13 +1,13 @@
-function [goal_x,goal_y,goal_int,goal_str,alley_int]=sm_wp10_trialGoal(trial_goal,...
-    all_goal_x,all_goal_y,goal_locs,alley_locs)
-% SM_WP10_TRIALGOAL Return goal information for this trial for Starmaze
-% WP10.
+function [goal_x,goal_y,goal_int,goal_str,alley_int]=setTrialGoalLocation(trial_goal,...
+    all_goal_x,all_goal_y,goal_names,alles_names)
+% setTrialGoalLocation: Returns goal location information for this trial 
+% for Starmaze WP10.
 %
 % Input:
 % trial_goal information (char).
 % goal_x, goal_y are xy-coordinate vectors of all goals.
-% goal_locs is ordered string array of goals.
-% alley_locs is ordered string array of alley letters.
+% goal_names is ordered string array of goals.
+% goal_names is ordered string array of alley letters.
 %
 % Returns: goal information (integer, string), alley information (integer)
 % and x-/y-coordinates.
@@ -16,8 +16,8 @@ function [goal_x,goal_y,goal_int,goal_str,alley_int]=sm_wp10_trialGoal(trial_goa
 goal_str=trial_goal(end);
 
 % integer
-goal_int=find(contains(goal_locs, goal_str));
-alley_int=find(contains(alley_locs, goal_str));
+goal_int=find(contains(goal_names, goal_str));
+alley_int=find(contains(alles_names, goal_str));
 
 % coordinates
 goal_x=all_goal_x(goal_int);

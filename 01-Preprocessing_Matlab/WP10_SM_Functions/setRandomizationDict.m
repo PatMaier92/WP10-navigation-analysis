@@ -1,8 +1,8 @@
-function [rand_dict]=sm_wp10_preprocLogData(log_data, subject)
-% SM_WP10_PREPROCLOGDATA Preprocessing of log data with information on
+function [rand_dict]=setRandomizationDict(log_data, subject)
+% setRandomizationDict Preprocessing of log data with information on
 % randomization of goals and starts.
 %
-% Input: cleaned log_data (cell structure) from csv. file
+% Input: cleaned log data (cell).
 %
 % Returns: rand_dict (structure) contains randomization info.
 

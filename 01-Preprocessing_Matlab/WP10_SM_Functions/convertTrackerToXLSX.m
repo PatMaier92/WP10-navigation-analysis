@@ -1,11 +1,11 @@
-function sm_wp10_dataPrep(folderIn,ID,Group, Session)
-% SM_WP10_DATAPREP Data preparation, cleaning, re-saving of trial tracker files. 
+function convertTrackerToXLSX(folderIn,id,group,session)
+% convertTrackerToXLSX: Data preparation, cleaning, re-saving of trial tracker files. 
 %
 % Input: 
 % folderIn is input folder path (string)
-% ID is participant identifier (integer)
-% Group is group condition (string)
-% Session is session number (integer)
+% id is participant identifier (integer)
+% group is group condition (string)
+% session is session number (integer)
 %
 % Returns: Cleanes and saves files as .xlsx
 
@@ -20,7 +20,6 @@ oldname = files{k};
 % jump trial_results and log file
 jump1 = strfind(oldname,'trial_results');
 jump2 = strfind(oldname,'log');
-
 if (~isempty(jump1))||(~isempty(jump2))
     continue
 end
@@ -32,7 +31,7 @@ end
         % delete rows
         c(2:3,:)=[]; % delete first two data rows to get rid of info from last trial
         c(strcmp(c(:,5),'True'),:) = []; % remove rows when gameIsPaused == True
-        if Session~=3 % skip this for Motor Control Task
+        if session~=3 % skip this for Motor Control Task
             c(strcmp(c(:,6),'1'),:) = []; % remove row when trialEvent == 1 (i.e. after goal was found)
         end
         % delete columns 
@@ -43,7 +42,7 @@ end
         % change delimiter (compatibility with German Excel)
         c = strrep(c, '.', ','); % comma, not points as decimal character
     new_name = strrep(['dt_' oldname],'csv','xlsx');
-    new_file = fullfile(folderIn, [Group '_' num2str(ID) '_' num2str(Session) '_' new_name]);
+    new_file = fullfile(folderIn, [group '_' num2str(id) '_' num2str(session) '_' new_name]);
 
 % save 
 xlswrite(new_file,c);

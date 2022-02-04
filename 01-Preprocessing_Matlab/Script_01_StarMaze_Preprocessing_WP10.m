@@ -22,19 +22,19 @@ addpath(genpath(pwd)) % add subfolder functions to path
 % Block 3: Analysis
 
 %% Block 1: Set up input and output folders, starmaze and practise environment 
-%% Data input folder and participant information
+%% data input folder and participant information
 [data_folder]  = setInputPath(); % provide folder with all raw data
 [participant_start,participant_end] = setParticipants(); % provide participant range
 n_sessions      = 3; % default 3
 
-%% Result folder
+%% result folder
 result_folder=[data_folder '\WP10_results'];
 if ~exist(result_folder, 'dir')
     mkdir(result_folder);
     disp('Your output folder did not exist, a new folder was created.')
 end
 
-%% Load data table or create new one 
+%% load data table or create new one 
 % load existing data
 file_name         = '\wp10_results_table.mat';
 file_path         = fullfile(result_folder, file_name);
@@ -46,7 +46,7 @@ end
 if ~exist('sm','var')
     sm = []; 
 
-    %% Set up Starmaze environment 
+    %% set up Starmaze environment 
     % coordinates of min/max values
     values=table2array(readtable('wp10_values.csv'));
     [sm.coord.xmin,sm.coord.xmax,sm.coord.ymin,sm.coord.ymax]=setMinMaxValues(values);
@@ -111,7 +111,7 @@ if ~exist('sm','var')
 
     clear alley_x alley_y pentagon_x pentagon_y i_alley n_alleys i_corner n_corners start goal values; 
     
-    %% Set up Practise environment (for motor control task)
+    %% set up Practise environment (for motor control task)
     % coordinates of min/max values
     practise_values=table2array(readtable('wp10_practise_values.csv'));
     [sm.coord.practise.xmin,sm.coord.practise.xmax,sm.coord.practise.ymin,sm.coord.practise.ymax]=setMinMaxValues(practise_values);
@@ -147,66 +147,66 @@ if ~exist('sm','var')
 
     clear practise_alley_x practise_alley_y i_corner n_corners practise_start practise_goal practise_values; 
     
-    %% Save sm data 
+    %% save sm data 
     save(file_path, 'sm');
+    
+    %% initialize participant index
+    p=1; 
+    
+else
+    %% get participant index %% TBD CHECK THIS (and make so recognizes participant) %%
+    [~,n]=size(sm);
+    p=n+1;
+    clear n; 
+    
 end
-
-% get data index % TBD check this
-[~,n_participants]=size(sm);
-p=n_participants+1;
 
 %% Block 2: Data preprocessing
 for i_participant=participant_start:participant_end
     
-    for s=1:n_sessions
-        session_string=convertStringsToChars("S00" + s);
-        
-        %% Individual input and output folder
+    for s=1:n_sessions        
+        %% individual input and output folder
         % input folder
-        input_folder=[data_folder '\' num2str(i_participant) '\' session_string];
+        input_folder=[data_folder '\' num2str(i_participant) '\S00' num2str(s)]; 
         if ~exist(input_folder, 'dir')
             fprintf('Folder for participant %d, session %d does not exist. Continue with next iteration.\n', i_participant, session);
             continue;
         end
         
         % output folder (only for trial plots)
-        output_folder=[data_folder '\' num2str(i_participant) '\results'];
+        output_folder=[data_folder '\' num2str(i_participant) '\plots'];
         if ~exist(output_folder, 'dir')
             mkdir(output_folder);
             fprintf('Your output folder for participant %d did not exist, a new folder was created.\n', i_participant);
         end
         
-%         % save individual matlab file % TBD remove
-%         file_name_Subject = ['\' num2str(i_participant) '_results_table.mat'];
-%         save(fullfile(output_folder, file_name_Subject), 'sm');
-        
-        %% Read-in trial file
+        %% read-in trial file
         opts=detectImportOptions([input_folder, '\trial_results.csv']);
         opts=setvaropts(opts,'timestamp','InputFormat','MM/dd/uuuu hh:mm:ss aa');
-        trial_data=readtable([input_folder, '\trial_results.csv'], opts);
+        trial_data=readtable([input_folder, '\trial_results.csv'], opts); clear opts; 
         
         % add participant information to sm
         sm.participant(p).id=i_participant;
         [sm.participant(p).group,sm.participant(p).group_s, ...
-            sm.participant(p).sex,sm.participant(p).sex_s]=sm_wp10_callGroup(sm.participant(p).id);
+            sm.participant(p).sex,sm.participant(p).sex_s]=setGroupSexInfo(sm.participant(p).id);
         sm.participant(p).session(s).session_number=trial_data.session_num(1,1);
         
-        %% Read-in log file
+        %% read-in log file %% TBD: only read-in once in session 1 (once checked for correctness)
         opts=detectImportOptions([input_folder, '\log.csv']);
         opts.SelectedVariableNames = {'message'};
         log_data=table2cell(readtable([input_folder, '\log.csv'], opts)); % read in log-file-info
         log_data=log_data(contains(log_data,'ID is'));
-        [sm.participant(p).session(s).rand_dict]=sm_wp10_preprocLogData(log_data, i_participant);
+        [sm.participant(p).session(s).rand_dict]=setRandomizationDict(log_data, i_participant);
+        clear log_data opts; 
         
-        %% Read-in individual tracker trial files
+        %% read-in individual tracker trial files
         d=dir(fullfile(input_folder, '*.xlsx')); % every .xlsx is detected --> change if different file-format
         
-        % first time: clean and convert csv to xlsx files
+        % first time: clean and convert csv to xlsx files %% TBD: do not
+        % save this but do it as part of data load 
         if isempty(d)
-            
             % preprocess individual tracker trial csv files
-            sm_wp10_dataPrep(input_folder,i_participant,sm.participant(p).group_s,s);
-            
+            convertTrackerToXLSX(input_folder,i_participant,sm.participant(p).group_s,s);
             % update d
             d=dir(fullfile(input_folder, '*.xlsx'));
         end
@@ -233,7 +233,8 @@ for i_participant=participant_start:participant_end
                 sampling_rate_original(i)=data.time(i+1)-data.time(i);
             end
             sm.participant(p).session(s).trial(k).support.sampling_rate=sum(sampling_rate_original)/length(sampling_rate_original);
-                       
+            clear sampling_rate_original i; 
+            
 %             %%% ACTIVATE IF SAMPLING RATE DIFFERS %%% 
 %             %%% needs to be checked if appropriate (alternative function 'decimate', 'resample' or activate only for higher sampling rates) %%% 
 %             % temporal normalization (downsampling) 
@@ -252,7 +253,7 @@ for i_participant=participant_start:participant_end
             y=data.pos_z; % coordinates
             r=data.rot_y; % head rotations
             data_length=length(x);
-            sdata_length=(size(x))-1;
+            sdata_length=data_length-1;
             
             % spatial normalization
             if s==3 % practise maze
@@ -261,15 +262,16 @@ for i_participant=participant_start:participant_end
                 x=setNormalizedValues(x,sm.coord.xmin,sm.coord.xmax); y=setNormalizedValues(y,sm.coord.ymin,sm.coord.ymax);
             end
             
+            % save start and end points 
             sm.participant(p).session(s).trial(k).result.x_start=x(1); sm.participant(p).session(s).trial(k).result.y_start=y(1);
             sm.participant(p).session(s).trial(k).result.x_end=x(end); sm.participant(p).session(s).trial(k).result.y_end=y(end);
             
-            % unique x-/y values,excluding periods without movement
+            % unique x-/y values, excluding periods without movement
             xy_unique = unique([x y],'rows','stable'); % excluding row duplicates
             x_unique = xy_unique(:,1);
             y_unique = xy_unique(:,2);
                        
-            %% Get single trial info from trial_results
+            %% get single trial info from trial_results
             sm.participant(p).session(s).session_duration=round(minutes(trial_data.timestamp(numel(files),1) - trial_data.timestamp(1,1))); 
             
             sm.participant(p).session(s).trial(k).block=trial_data.block_num(k,1);
@@ -280,29 +282,30 @@ for i_participant=participant_start:participant_end
             sm.participant(p).session(s).trial(k).feedback=int8(strcmp(sm.participant(p).session(s).trial(k).feedback_s,'true'));
             
             sm.participant(p).session(s).trial(k).condition_s=string(trial_data.trial_type(k,1));
-            sm.participant(p).session(s).trial(k).condition=sm_wp10_trialCondition(sm.participant(p).session(s).trial(k).condition_s,sm.participant(p).session(s).trial(k).feedback);
+            sm.participant(p).session(s).trial(k).condition=setTrialCondition(sm.participant(p).session(s).trial(k).condition_s,sm.participant(p).session(s).trial(k).feedback);
             
             n_goals=4;
             sm.participant(p).session(s).trial(k).goal_identity_s=string(trial_data.trial_goal_identity(k,1));
-            sm.participant(p).session(s).trial(k).goal_identity=sm_wp10_trialGoalIdentity(n_goals, char(trial_data.trial_goal_identity(k,1)));
+            sm.participant(p).session(s).trial(k).goal_identity=setTrialGoalIdentity(n_goals, char(trial_data.trial_goal_identity(k,1)));
+            clear n_goals; 
             
             [sm.participant(p).session(s).trial(k).goal_x,sm.participant(p).session(s).trial(k).goal_y,...
                 sm.participant(p).session(s).trial(k).goal_i,sm.participant(p).session(s).trial(k).goal_s,...
-                sm.participant(p).session(s).trial(k).goal_alley]=sm_wp10_trialGoal(char(string(trial_data.trial_goal(k,1))),...
+                sm.participant(p).session(s).trial(k).goal_alley]=setTrialGoalLocation(char(string(trial_data.trial_goal(k,1))),...
                 sm.coord.goal_x,sm.coord.goal_y,sm.coord.goal_names,sm.coord.alley_names);
             
-            start_name=char(trial_data.trial_player(k,1)); sm.participant(p).session(s).trial(k).start_s=start_name(end);
-            [sm.participant(p).session(s).trial(k).start_i]=sm_wp10_trialStart(sm.participant(p).session(s).trial(k).start_s,sm.coord.start_names);
+            start_name=char(trial_data.trial_player(k,1)); sm.participant(p).session(s).trial(k).start_s=start_name(end); clear start_name; 
+            [sm.participant(p).session(s).trial(k).start_i]=setTrialStartLocation(sm.participant(p).session(s).trial(k).start_s,sm.coord.start_names);
             
-            %% Time analysis
-            sm.participant(p).session(s).trial(k).result.time=sm_time(t(1),t(end)); % total amount of time
+            %% time analysis
+            sm.participant(p).session(s).trial(k).result.time=computeTime(t(1),t(end)); % total amount of time
             
             fprintf('Time analysis done for %d, session %d, file no %d.\n', i_participant, s, k);
             
-            %% For motor control navigation trial
+            %% for motor control navigation trial
             % analysis of path and time
             if sm.participant(p).session(s).trial(k).condition==4
-                %% Calculate variables depending on single trial settings
+                %% calculate variables depending on single trial settings
                 % ideal path coordinates & length
                 x_line_motor=[sm.coord.practise.start_x; sm.coord.practise.goal_x]; y_line_motor=[sm.coord.practise.start_y; sm.coord.practise.goal_y];
                 sm.participant(p).session(s).trial(k).support.ideal_path_length=sm_wp10_idealPathLength(x_line_motor,y_line_motor);
@@ -312,8 +315,8 @@ for i_participant=participant_start:participant_end
                 [xi_al,yi_al]=sm_wp10_dataInterpolation(x_line_motor,y_line_motor,...
                     sm.participant(p).session(s).trial(k).support.ideal_path_length);
                 
-                %% Time analysis: already done
-                %% Coordinate analysis using x-/y-coordinates
+                %% time analysis: already done
+                %% coordinate analysis using x-/y-coordinates
                 % Path analysis
                 sm.participant(p).session(s).trial(k).result.path_length=0; % reset/initiate variables
                 for i=1:sdata_length
@@ -331,35 +334,36 @@ for i_participant=participant_start:participant_end
                 fprintf('Motor control analysis done for %d, session %d, file no %d.\n', i_participant, s, k);
                 
             else
-                %% For all other navigation trials
-                %% Calculate variables depending on single trial settings
+                %% for all other navigation trials
+                %% compute variables depending on this trial's settings
                 % ideal path coordinates & length, ideal egocentric path coordinates & length
-                % Caution: dummy values for egocentric for inner starts (because no clear ideal egocentric path)
-                [sm.participant(p).session(s).trial(k).support.goal_x_ego, ...
-                    sm.participant(p).session(s).trial(k).support.goal_y_ego, ...
-                    x_line, y_line, x_line_chosen, y_line_chosen, x_line_ego, y_line_ego, ...
-                    sm.participant(p).session(s).trial(k).support.ideal_path_length, ...
-                    sm.participant(p).session(s).trial(k).support.ideal_path_length_chosen, ...
-                    sm.participant(p).session(s).trial(k).support.ideal_path_length_ego, ...
-                    sm.participant(p).session(s).trial(k).support.ego_alley, ...
-                    sm.participant(p).session(s).trial(k).support.ideal_headturnNo]=sm_wp10_depStartVariables(...
-                    sm.coord.graph, sm.coord.graph_x, sm.coord.graph_y, ...
-                    sm.participant(p).session(s).trial(k).start_i, ...
+                % Caveat: dummy values for egocentric for inner starts (because no clear ideal egocentric path)
+                [sm.participant(p).session(s).trial(k).support.goal_x_ego,...
+                    sm.participant(p).session(s).trial(k).support.goal_y_ego,...
+                    x_line, y_line, x_line_chosen, y_line_chosen, x_line_ego, y_line_ego,...
+                    sm.participant(p).session(s).trial(k).support.ideal_path_length,...
+                    sm.participant(p).session(s).trial(k).support.ideal_path_length_chosen,...
+                    sm.participant(p).session(s).trial(k).support.ideal_path_length_ego,...
+                    sm.participant(p).session(s).trial(k).support.ego_alley,...
+                    sm.participant(p).session(s).trial(k).support.ideal_headturn_no]=computeStartDependentIdealVariables(...
+                    sm.coord.graph, sm.coord.graph_x, sm.coord.graph_y,...
+                    sm.participant(p).session(s).trial(k).start_i,...
                     sm.participant(p).session(s).trial(k).goal_i,...
-                    sm.participant(p).session(s).trial(k).result.x_end, ...
-                    sm.participant(p).session(s).trial(k).result.y_end, ...
-                    sm.coord.alley_full_x, sm.coord.alley_full_y, ...
-                    sm.coord.rec_x, sm.coord.rec_y, sm.coord.central_poly, sm.coord.full_poly);
+                    sm.participant(p).session(s).trial(k).result.x_end,...
+                    sm.participant(p).session(s).trial(k).result.y_end,...
+                    sm.coord.alley_full_x, sm.coord.alley_full_y,...
+                    sm.coord.rec_x, sm.coord.rec_y, sm.coord.central_poly, ...
+                    sm.coord.full_poly);
                 
                 % interpolate data for further analysis
                 % using 'interparc' function by John D'Errico (Matlab File Exchanger)
-                [xi_al,yi_al]=sm_wp10_dataInterpolation(x_line, y_line, ...
+                [xi_al,yi_al]=interpolateData(x_line, y_line, ...
                     sm.participant(p).session(s).trial(k).support.ideal_path_length);
                 
-                [xi_ch,yi_ch]=sm_wp10_dataInterpolation(x_line_chosen, y_line_chosen, ...
+                [xi_ch,yi_ch]=interpolateData(x_line_chosen, y_line_chosen, ...
                     sm.participant(p).session(s).trial(k).support.ideal_path_length_chosen);
                 
-                [xi_eg,yi_eg]=sm_wp10_dataInterpolation(x_line_ego, y_line_ego, ...
+                [xi_eg,yi_eg]=interpolateData(x_line_ego, y_line_ego, ...
                     sm.participant(p).session(s).trial(k).support.ideal_path_length_ego);
                 
 %                     % test plot
@@ -375,18 +379,18 @@ for i_participant=participant_start:participant_end
                
                 % zone analysis for ideal paths
                 [~, ~, sm.participant(p).session(s).trial(k).support.zone.ideal_alley_entry, ...
-                    ~]=sm_wp10_coordinatesZonesStatic(xi_al,...
-                    yi_al, zeros(length(xi_al),1), sm.coord.alley_full_x, sm.coord.alley_full_y);
+                    ~]=computeStaticZoneValues(xi_al, yi_al,...
+                    zeros(length(xi_al),1), sm.coord.alley_full_x, sm.coord.alley_full_y);
                 
                 [~, ~, sm.participant(p).session(s).trial(k).support.zone.ideal_rectangle_entry, ...
-                    ~]= sm_wp10_coordinatesZonesStatic(xi_al,...
-                    yi_al, zeros(length(xi_al),1), sm.coord.rec_x, sm.coord.rec_y);
+                    ~]=computeStaticZoneValues(xi_al, yi_al,...
+                    zeros(length(xi_al),1), sm.coord.rec_x, sm.coord.rec_y);
                 
-%                 [ideal_alley_entry_mat]=sm_wp10_coordinatesZonesDynamic(xi_al,...
+%                 [ideal_alley_entry_mat]=computeDynamicZoneValues(xi_al,...
 %                     yi_al, sm.coord.alley_full_x, sm.coord.alley_full_y);
 %                 [uniq_alley]=unique(ideal_alley_entry_mat,'rows');
 %                 
-%                 [ideal_rectangle_entry_mat]=sm_wp10_coordinatesZonesDynamic(xi_al,...
+%                 [ideal_rectangle_entry_mat]=computeDynamicZoneValues(xi_al,...
 %                     yi_al, sm.coord.rec_x, sm.coord.rec_y);
 %                 [uniq_rect]=unique(ideal_rectangle_entry_mat,'rows');
 %                 if mod(sm.participant(p).session(s).trial(k).start_i,2) % even number = outer start
@@ -480,9 +484,9 @@ for i_participant=participant_start:participant_end
                 
                 
 %                 % AVERAGE DISTANCE to CORRECT target
-%                 sm.participant(p).session(s).trial(k).result.avg_distance_target=total_dist_to_goal/sdata_length(1);
+%                 sm.participant(p).session(s).trial(k).result.avg_distance_target=total_dist_to_goal/sdata_length;
 %                 sm.participant(p).session(s).trial(k).result.total_distance_target=total_dist_to_goal;
-%                 sm.participant(p).session(s).trial(k).result.sum_data_points=sdata_length(1);
+%                 sm.participant(p).session(s).trial(k).result.sum_data_points=sdata_length;
                 
                 % Cumulative IDEAL DISTANCE to CORRECT target
                 id_total_dist_to_goal=0; % start-initiation
@@ -531,7 +535,7 @@ for i_participant=participant_start:participant_end
                     sm.participant(p).session(s).trial(k).result.total_distance_chosen_path_pure=sum(distance_to_chosen_path_unique);
                     
 %                     % AVERAGE DISTANCE to CHOSEN target
-%                     sm.participant(p).session(s).trial(k).result.avg_distance_chosen_target=total_dist_to_chosen_goal/sdata_length(1);
+%                     sm.participant(p).session(s).trial(k).result.avg_distance_chosen_target=total_dist_to_chosen_goal/sdata_length;
 %                     sm.participant(p).session(s).trial(k).result.total_distance_chosen_target=total_dist_to_chosen_goal;
 %                     % sum data points: same as in analyis above
                     
@@ -603,7 +607,7 @@ for i_participant=participant_start:participant_end
                     sm.participant(p).session(s).trial(k).result.total_distance_ego_path_pure=sum(distance_to_ego_path_unique);
                     
 %                     % AVERAGE DISTANCE to EGOCENTRIC target
-%                     sm.participant(p).session(s).trial(k).result.avg_distance_ego_target=total_dist_to_goal_ego/sdata_length(1);
+%                     sm.participant(p).session(s).trial(k).result.avg_distance_ego_target=total_dist_to_goal_ego/sdata_length;
 %                     sm.participant(p).session(s).trial(k).result.total_distance_ego_target=total_dist_to_goal_ego;
 %                     % sum data points: same as in analyis above
                     
@@ -742,7 +746,7 @@ for i_participant=participant_start:participant_end
 %                 sm.participant(p).session(s).trial(k).result.no_head_turn=sm.participant(p).session(s).trial(k).result.head_turn_right+sm.participant(p).session(s).trial(k).result.head_turn_left;
 %                 
 %                 % Head-turn-accuracy
-%                 sm.participant(p).session(s).trial(k).result.head_turn_accuracy=sm_ac(sm.participant(p).session(s).trial(k).result.no_head_turn,sm.participant(p).session(s).trial(k).support.ideal_headturnNo);
+%                 sm.participant(p).session(s).trial(k).result.head_turn_accuracy=sm_ac(sm.participant(p).session(s).trial(k).result.no_head_turn,sm.participant(p).session(s).trial(k).support.ideal_headturn_no);
 %                 
 %                 fprintf('Head turn analysis done for %d, session %d, file no %d.\n', i_participant, s, k);
                 
@@ -863,9 +867,6 @@ for i_participant=participant_start:participant_end
                     end
                 end
             end
-            
-%             % save data % TBD remove
-%             save(fullfile(output_folder, file_name_Subject),'sm', '-append');
             
             %% Create plots
             if s==3
