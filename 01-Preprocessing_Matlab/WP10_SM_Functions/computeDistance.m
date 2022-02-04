@@ -1,5 +1,5 @@
-function D=sm_distance(x1,x2,y1,y2)
-% SM_DISTANCE Calculates distance traveled between two points.
+function D=computeDistance(x1,x2,y1,y2)
+% computeDistance Calculates distance traveled between two points.
 %
 % Input: 
 % y1, x1 coordinates.

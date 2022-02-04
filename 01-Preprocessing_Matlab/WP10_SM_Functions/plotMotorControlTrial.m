@@ -1,7 +1,7 @@
-function sm_wp10_plotMotorControl(trial,session,id,Group,...
+function plotMotorControlTrial(trial,session,id,Group,...
     pract_polyshape,goal_x,goal_y,start_x,start_y,...
-    pract_goal_locs,x,y,xi_al,yi_al,folderOut)
-% SM_WP1_PLOTTMOTORCONTROL Creates plot for motor control trial. 
+    pract_goal_locs,x,y,xi_al,yi_al,output_folder)
+% plotMotorControlTrial: Creates plot for motor control trial. 
 %
 % Input: Information for creating and naming the plot, including
 % geometrical information and egocentric and allocentric tracks. 
@@ -11,7 +11,7 @@ function sm_wp10_plotMotorControl(trial,session,id,Group,...
 T=int2str(trial);
 Session=num2str(session);
 ID=num2str(id); 
-type = ' (Motor Control)'; 
+type=' (Motor Control)'; 
 
 wfig=figure('Position',[500 200 580 500]);
 set(gca,'xtick',[0 1],'ytick',[0 1]);
@@ -37,9 +37,7 @@ legend([line1 line2],{'actual path','ideal path'},'Location','north');
 hold off
 
 % save plot
-filename1 =['Motor_Plot_' Group '_' ID '_' Session '_' T];
-filename2 = [filename1,'.jpeg'];
-fullFileName2 = fullfile(folderOut, filename2);
-saveas(wfig,fullFileName2)
+file_name =['Motor_Plot_' Group '_' ID '_' Session '_' T '.jpeg'];
+saveas(wfig, fullfile(output_folder, file_name)); 
 
 end
