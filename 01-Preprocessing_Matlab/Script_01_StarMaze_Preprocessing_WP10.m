@@ -623,103 +623,48 @@ for i_participant=participant_start:participant_end
                 
                 fprintf('Additional: Distance in relation to egocentric target done for %d, session %d, file no %d.\n', i_participant, s, k);
                       
-                %% body rotation analysis
-%                 % Body rotation analysis
-%                 sm.participant(p).session(s).trial(k).result.sum_body_rotation=0; br=zeros(1,data_length);
-%                 for i=2:(data_length-2)
-%                     br(i)=sm_b_rot(y(i-1),x(i-1),y(i),x(i));
-%                 end
-%                 sm.participant(p).session(s).trial(k).result.sum_body_rotation=sum(br);
-%                 
-%                 % Ideal sum of body roatations
-%                 l_xi_al=length(xi_al);
-%                 sm.participant(p).session(s).trial(k).support.ideal_sum_body_rotation=0; br_i=zeros(1,l_xi_al);
-%                 for i=2:(l_xi_al-2)
-%                     br_i(i)=sm_b_rot(yi_al(i-1),xi_al(i-1),yi_al(i),xi_al(i));
-%                 end
-%                 sm.participant(p).session(s).trial(k).support.ideal_sum_body_rotation=sum(br_i);
-%                 
-%                 % Body-rotation-accuracy
-%                 sm.participant(p).session(s).trial(k).result.body_rotation_accuracy=computeDeviationToIdealValue(sm.participant(p).session(s).trial(k).result.sum_body_rotation,sm.participant(p).session(s).trial(k).support.ideal_sum_body_rotation);
-%                 
-%                 fprintf('Body rotation analysis done for %d, session %d, file no %d.\n', i_participant, s, k);
+                %% rotation analysis
                 
-                %% body turn analysis
-%                 % Cumulative body turns
-%                 body_turn=zeros(1,data_length);
-%                 sm.participant(p).session(s).trial(k).result.body_turn_left=0;sm.participant(p).session(s).trial(k).result.body_turn_right=0;body_walk_straight=0;
-%                 for j=2:(length(br)-1)
-%                     body_turn(j)=heaviside((br(j+1)-br(j)));
-%                     if body_turn(j)==1 && (body_turn(j-1)==0 || body_turn(j-1)==0.5)
-%                         sm.participant(p).session(s).trial(k).result.body_turn_right=sm.participant(p).session(s).trial(k).result.body_turn_right+1;
-%                     elseif body_turn(j)==0 &&(body_turn(j-1)==1 || body_turn(j-1)==0.5)
-%                         sm.participant(p).session(s).trial(k).result.body_turn_left=sm.participant(p).session(s).trial(k).result.body_turn_left+1;
-%                     else
-%                         body_walk_straight=body_walk_straight+1;
-%                     end
-%                 end
-%                 sm.participant(p).session(s).trial(k).result.no_body_turn=sm.participant(p).session(s).trial(k).result.body_turn_right+sm.participant(p).session(s).trial(k).result.body_turn_left;
-%                 
-%                 % Cumulative ideal body turns
-%                 body_turn_i=zeros(1,l_xi_al);
-%                 sm.participant(p).session(s).trial(k).support.ideal_body_turn_left=0;sm.participant(p).session(s).trial(k).support.ideal_body_turn_right=0;ideal_body_walk_straight=0;
-%                 for j=2:(length(br_i)-1)
-%                     body_turn_i(j)=heaviside((br_i(j+1)-br_i(j)));
-%                     if body_turn_i(j)==1 && (body_turn_i(j-1)==0 || body_turn_i(j-1)==0.5)
-%                         sm.participant(p).session(s).trial(k).support.ideal_body_turn_right=sm.participant(p).session(s).trial(k).support.ideal_body_turn_right+1;
-%                     elseif body_turn_i(j)==0 &&(body_turn_i(j-1)==1 || body_turn_i(j-1)==0.5)
-%                         sm.participant(p).session(s).trial(k).support.ideal_body_turn_left=sm.participant(p).session(s).trial(k).support.ideal_body_turn_left+1;
-%                     else
-%                         ideal_body_walk_straight=ideal_body_walk_straight+1;
-%                     end
-%                 end
-%                 sm.participant(p).session(s).trial(k).support.ideal_no_body_turn=sm.participant(p).session(s).trial(k).support.ideal_body_turn_right+sm.participant(p).session(s).trial(k).support.ideal_body_turn_left;
-%                 
-%                 % Body-turn-accuracy
-%                 sm.participant(p).session(s).trial(k).result.body_turn_accuracy=computeDeviationToIdealValue(sm.participant(p).session(s).trial(k).result.no_body_turn,sm.participant(p).session(s).trial(k).support.ideal_no_body_turn);
-%                 
-%                 fprintf('Body turn analysis done for %d, session %d, file no %d.\n', i_participant, s, k);
-%                 
-                %% head rotation analysis
-%                 % Head rotation information from column 4 of M stored as r
-%                 
-%                 ro=length(r); sm.participant(p).session(s).trial(k).result.final_deviation=0; % final deviation from start to target angle
-%                 sm.participant(p).session(s).trial(k).result.sum_head_rotation=0; % cumulative rotation, sum of head rotations
-%                 for j=1:(ro-1)
-%                     sm.participant(p).session(s).trial(k).result.final_deviation=sm.participant(p).session(s).trial(k).result.final_deviation+(r(j+1)-r(j)); % deviation
-%                     sm.participant(p).session(s).trial(k).result.sum_head_rotation=sm.participant(p).session(s).trial(k).result.sum_head_rotation+abs(r(j+1)-r(j)); % sum of head roations
-%                 end
-%                 sm.participant(p).session(s).trial(k).result.no_full_head_rotation=sm.participant(p).session(s).trial(k).result.sum_head_rotation/360;
-%                 
-%                 fprintf('Head rotation analysis done for %d, session %d, file no %d.\n', i_participant, s, k);
+                % calculate total rotation based on change in yaw rotation (r)
+                % this value includes rotation due to x-/y-trajectory (i.e. left turn)
+                % and additional voluntary rotation on the spot (i.e. exploration) 
+                r1=0;
+                for j=2:length(r)
+                    r1=r1+abs(r(j)-r(j-1));
+                end
+                sm.participant(p).session(s).trial(k).result.sum_rotation=r1; clear r1; 
                 
-               %% head turn analysis
-%                 % Cumulative amount of completed head-turns
-%                 head_turn=zeros(1, ro);
-%                 sm.participant(p).session(s).trial(k).result.head_turn_left=0;sm.participant(p).session(s).trial(k).result.head_turn_right=0;head_walk_straight=0;head_left=0; head_right=0;
-%                 for j=2:(ro-1)
-%                     head_turn(j)=heaviside((r(j+1)-r(j)));
-%                     if head_turn(j)==1 && (head_turn(j-1)==0 || head_turn(j-1)==0.5)
-%                         sm.participant(p).session(s).trial(k).result.head_turn_right=sm.participant(p).session(s).trial(k).result.head_turn_right+1;
-%                     elseif head_turn(j)==0 && (head_turn(j-1)==1 || head_turn(j-1)==0.5)
-%                         sm.participant(p).session(s).trial(k).result.head_turn_left=sm.participant(p).session(s).trial(k).result.head_turn_left+1;
-%                     elseif (head_turn(j)==0 && head_turn(j-1)==0)
-%                         head_straight=head_walk_straight+1;
-%                     elseif head_turn(j)==1 && head_turn(j-1)==1
-%                         head_right=head_right+1;
-%                     elseif head_turn(j)==0.5 && head_turn(j-1)==0.5
-%                         head_left=head_left+1;
-%                     end
-%                 end
-%                 
-%                 % Head-turn total
-%                 sm.participant(p).session(s).trial(k).result.no_head_turn=sm.participant(p).session(s).trial(k).result.head_turn_right+sm.participant(p).session(s).trial(k).result.head_turn_left;
-%                 
-%                 % Head-turn-accuracy
-%                 sm.participant(p).session(s).trial(k).result.head_turn_accuracy=computeDeviationToIdealValue(sm.participant(p).session(s).trial(k).result.no_head_turn,sm.participant(p).session(s).trial(k).support.ideal_headturn_no);
-%                 
-%                 fprintf('Head turn analysis done for %d, session %d, file no %d.\n', i_participant, s, k);
                 
+%                 % normalize value 
+%                 % with rotation due to x-/y-trajectory
+%                 sm.participant(p).session(s).trial(k).support.ideal_rotation=0; 
+%                 br=zeros(1,length(r)-1); 
+%                 for i=2:length(r)
+%                     br(i-1)=abs(atan2d(y(i-1),x(i-1))-atan2d(y(i),x(i)));
+%                     % br(i-1)=sm_b_rot(y(i-1),x(i-1),y(i),x(i)); % br(i)=mod(atan2d(y(i-1),x(i-1))-atan2d(y(i),x(i)),360); 
+%                 end
+%                 br_value = sum(br); 
+%                 
+%                 % with rotation in ideal trajectory 
+%                 br_i=zeros(1,length(x_line));
+%                 for i=2:length(x_line)
+%                     br_i1(i-1)=abs(atan2d(y_line(i-1),x_line(i-1))-atan2d(y_line(i),x_line(i)));
+%                     br_i2(i-1)=mod(atan2d(y_line(i-1),x_line(i-1))-atan2d(y_line(i),x_line(i)),360);
+%                     br_i3(i-1)=sm_b_rot(y_line(i-1),x_line(i-1),y_line(i),x_line(i)); 
+%                 end
+
+                    P0 = [x_line(2), y_line(2), 0];
+                    P1 = [x_line(1), y_line(1), 0];
+                    P2 = [x_line(3), y_line(3), 0];
+                    n1 = (P2 - P0) / norm(P2 - P0);
+                    n2 = (P1 - P0) / norm(P1 - P0);
+                    atan2d(norm(cross(n1, n2)), dot(n1, n2))
+                 
+%                 % normalize value
+%                 sm.participant(p).session(s).trial(k).result.TEST=computeDeviationToIdealValue(ACTUAL, IDEAL);
+                
+                fprintf('Rotation analysis done for %d, session %d, file no %d.\n', i_participant, s, k);
+                        
                 %% zone analysis
                 [sm.participant(p).session(s).trial(k).result.zone.alley_zone,...
                     sm.participant(p).session(s).trial(k).result.zone.rel_alley_zone,...
