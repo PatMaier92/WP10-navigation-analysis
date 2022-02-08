@@ -625,43 +625,26 @@ for i_participant=participant_start:participant_end
                       
                 %% rotation analysis
                 
-                % calculate total rotation based on change in yaw rotation (r)
-                % this value includes rotation due to x-/y-trajectory (i.e. left turn)
-                % and additional voluntary rotation on the spot (i.e. exploration) 
+                % calculate total rotation as change in yaw rotation (r)
+                % this value includes rotation due to x-/y-trajectory (i.e. left-forward movement)
+                % and additional rotation on the spot (i.e. left movement) 
                 r1=0;
                 for j=2:length(r)
                     r1=r1+abs(r(j)-r(j-1));
                 end
-                sm.participant(p).session(s).trial(k).result.sum_rotation=r1; clear r1; 
+                sm.participant(p).session(s).trial(k).rotation=r1; clear r1; 
                 
+                % calculate rotation due to unqiue x-/y-trajectory (i.e. left-forward movement)
+                rotation_xy = computeXYRotation(x_unique, y_unique);
+                % and use as norm value for total rotation
+                sm.participant(p).session(s).trial(k).rotation_accuracy = computeDeviationToIdealValue(...
+                    sm.participant(p).session(s).trial(k).rotation, rotation_xy); 
                 
-%                 % normalize value 
-%                 % with rotation due to x-/y-trajectory
-%                 sm.participant(p).session(s).trial(k).support.ideal_rotation=0; 
-%                 br=zeros(1,length(r)-1); 
-%                 for i=2:length(r)
-%                     br(i-1)=abs(atan2d(y(i-1),x(i-1))-atan2d(y(i),x(i)));
-%                     % br(i-1)=sm_b_rot(y(i-1),x(i-1),y(i),x(i)); % br(i)=mod(atan2d(y(i-1),x(i-1))-atan2d(y(i),x(i)),360); 
-%                 end
-%                 br_value = sum(br); 
-%                 
-%                 % with rotation in ideal trajectory 
-%                 br_i=zeros(1,length(x_line));
-%                 for i=2:length(x_line)
-%                     br_i1(i-1)=abs(atan2d(y_line(i-1),x_line(i-1))-atan2d(y_line(i),x_line(i)));
-%                     br_i2(i-1)=mod(atan2d(y_line(i-1),x_line(i-1))-atan2d(y_line(i),x_line(i)),360);
-%                     br_i3(i-1)=sm_b_rot(y_line(i-1),x_line(i-1),y_line(i),x_line(i)); 
-%                 end
-
-                    P0 = [x_line(2), y_line(2), 0];
-                    P1 = [x_line(1), y_line(1), 0];
-                    P2 = [x_line(3), y_line(3), 0];
-                    n1 = (P2 - P0) / norm(P2 - P0);
-                    n2 = (P1 - P0) / norm(P1 - P0);
-                    atan2d(norm(cross(n1, n2)), dot(n1, n2))
-                 
-%                 % normalize value
-%                 sm.participant(p).session(s).trial(k).result.TEST=computeDeviationToIdealValue(ACTUAL, IDEAL);
+%                 % alternative: calculate rotation in ideal, shortest x-/y-trajectory 
+%                 rotation_xy = computeXYRotation(x_line, y_line); 
+%                 % and use as norm value for total rotation
+%                 sm.participant(p).session(s).trial(k).rotation_accuracy = computeDeviationToIdealValue(...
+%                     sm.participant(p).session(s).trial(k).rotation, rotation_xy); 
                 
                 fprintf('Rotation analysis done for %d, session %d, file no %d.\n', i_participant, s, k);
                         
