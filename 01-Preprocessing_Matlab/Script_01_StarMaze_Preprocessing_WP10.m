@@ -162,22 +162,22 @@ else
 end
 
 %% Block 2: Data preprocessing
-for i_participant=participant_start:participant_end
+for id=participant_start:participant_end
     
     for s=1:n_sessions        
         %% individual input and output folder
         % input folder
-        input_folder=[data_folder '\' num2str(i_participant) '\S00' num2str(s)]; 
+        input_folder=[data_folder '\' num2str(id) '\S00' num2str(s)]; 
         if ~exist(input_folder, 'dir')
-            fprintf('Folder for participant %d, session %d does not exist. Continue with next iteration.\n', i_participant, session);
+            fprintf('Folder for participant %d, session %d does not exist. Continue with next iteration.\n', id, session);
             continue;
         end
         
         % output folder (only for trial plots)
-        output_folder=[data_folder '\' num2str(i_participant) '\plots'];
+        output_folder=[data_folder '\' num2str(id) '\plots'];
         if ~exist(output_folder, 'dir')
             mkdir(output_folder);
-            fprintf('Your output folder for participant %d did not exist, a new folder was created.\n', i_participant);
+            fprintf('Your output folder for participant %d did not exist, a new folder was created.\n', id);
         end
         
         %% read-in trial file
@@ -186,7 +186,7 @@ for i_participant=participant_start:participant_end
         trial_data=readtable([input_folder, '\trial_results.csv'], opts); clear opts; 
         
         % add participant information to sm
-        sm.participant(p).id=i_participant;
+        sm.participant(p).id=id;
         [sm.participant(p).group,sm.participant(p).group_s, ...
             sm.participant(p).sex,sm.participant(p).sex_s]=setGroupSexInfo(sm.participant(p).id);
         sm.participant(p).session(s).session_number=trial_data.session_num(1,1);
@@ -196,7 +196,7 @@ for i_participant=participant_start:participant_end
         opts.SelectedVariableNames = {'message'};
         log_data=table2cell(readtable([input_folder, '\log.csv'], opts)); % read in log-file-info
         log_data=log_data(contains(log_data,'ID is'));
-        [sm.participant(p).session(s).rand_dict]=setRandomizationDict(log_data, i_participant);
+        [sm.participant(p).session(s).rand_dict]=setRandomizationDict(log_data, id);
         clear log_data opts; 
         
         %% read-in individual tracker trial files
@@ -206,7 +206,7 @@ for i_participant=participant_start:participant_end
         % save this but do it as part of data load 
         if isempty(d)
             % preprocess individual tracker trial csv files
-            convertTrackerToXLSX(input_folder,i_participant,sm.participant(p).group_s,s);
+            convertTrackerToXLSX(input_folder,id,sm.participant(p).group_s,s);
             % update d
             d=dir(fullfile(input_folder, '*.xlsx'));
         end
@@ -300,7 +300,7 @@ for i_participant=participant_start:participant_end
             %% time analysis
             sm.participant(p).session(s).trial(k).result.time=computeTime(t(1),t(end)); % total amount of time
             
-            fprintf('Time analysis done for %d, session %d, file no %d.\n', i_participant, s, k);
+            fprintf('Time analysis done for %d, session %d, file no %d.\n', id, s, k);
             
             %% For all normal navigation trials (i.e., not motor control task)
             if sm.participant(p).session(s).trial(k).condition~=4
@@ -485,7 +485,7 @@ for i_participant=participant_start:participant_end
                 sm.participant(p).session(s).trial(k).result.velocity=sm.participant(p).session(s).trial(k).result.path_length / ...
                     sm.participant(p).session(s).trial(k).result.time;
                 
-                fprintf('Path, distance and velocity analysis done for %d, session %d, file no %d.\n', i_participant, s, k);
+                fprintf('Path, distance and velocity analysis done for %d, session %d, file no %d.\n', id, s, k);
                 
                 %% additional analysis for all probe trials: Distance in relation to chosen target
                 
@@ -527,24 +527,9 @@ for i_participant=participant_start:participant_end
                     
 %                     % DISTANCE ACCURACY to CHOSEN target
 %                     sm.participant(p).session(s).trial(k).result.distance_accuracy_chosen=computeDeviationToIdealValue(sm.participant(p).session(s).trial(k).result.avg_distance_chosen_target,sm.participant(p).session(s).trial(k).support.ideal_avg_distance_chosen_target);
-                else
-                    % set dummy variables
-                    sm.participant(p).session(s).trial(k).result.avg_distance_chosen_path=999;
-                    sm.participant(p).session(s).trial(k).result.total_distance_chosen_path=999;
-                    sm.participant(p).session(s).trial(k).result.avg_distance_chosen_path_pure=999;
-                    sm.participant(p).session(s).trial(k).result.total_distance_chosen_path_pure=999;
-                    sm.participant(p).session(s).trial(k).result.avg_distance_chosen_target=999;
-                    sm.participant(p).session(s).trial(k).result.total_distance_chosen_target=999;
-                    sm.participant(p).session(s).trial(k).result.path_accuracy_chosen=999;
-                    sm.participant(p).session(s).trial(k).result.distance_accuracy_chosen=999;
-                    
-                    sm.participant(p).session(s).trial(k).support.ideal_path_length_chosen=999;
-                    sm.participant(p).session(s).trial(k).support.ideal_avg_distance_chosen_target=999;
-                    sm.participant(p).session(s).trial(k).support.ideal_total_distance_chosen_target=999;
-                    sm.participant(p).session(s).trial(k).support.ideal_sum_data_points_chosen=999;
                 end
                 
-                fprintf('Additional: Distance in relation to chosen target done for %d, session %d, file no %d.\n', i_participant, s, k);
+                fprintf('Additional: Distance in relation to chosen target done for %d, session %d, file no %d.\n', id, s, k);
           
                 %% additional analysis for allocentric probe trials with potential egocentric response
                 % excludes allocentric trials with inner starts (even integer) as there
@@ -603,50 +588,31 @@ for i_participant=participant_start:participant_end
 %                     sm.participant(p).session(s).trial(k).result.distance_accuracy_ego=computeDeviationToIdealValue(...
 %                         sm.participant(p).session(s).trial(k).result.avg_distance_ego_target, ...
 %                         sm.participant(p).session(s).trial(k).support.ideal_avg_distance_ego_target);
-                else
-                    % set dummy values
-                    sm.participant(p).session(s).trial(k).result.final_distance_ego=999;
-                    sm.participant(p).session(s).trial(k).result.avg_distance_ego_path=999;
-                    sm.participant(p).session(s).trial(k).result.total_distance_ego_path=999;
-                    sm.participant(p).session(s).trial(k).result.avg_distance_ego_path_pure=999;
-                    sm.participant(p).session(s).trial(k).result.total_distance_ego_path_pure=999;
-                    sm.participant(p).session(s).trial(k).result.avg_distance_ego_target=999;
-                    sm.participant(p).session(s).trial(k).result.total_distance_ego_target=999;
-                    sm.participant(p).session(s).trial(k).result.path_accuracy_ego=999;
-                    sm.participant(p).session(s).trial(k).result.distance_accuracy_ego=999;
-                    
-                    sm.participant(p).session(s).trial(k).support.ideal_path_length_ego=999;
-                    sm.participant(p).session(s).trial(k).support.ideal_avg_distance_ego_target=999;
-                    sm.participant(p).session(s).trial(k).support.ideal_total_distance_ego_target=999;
-                    sm.participant(p).session(s).trial(k).support.ideal_sum_data_points_ego=999;
                 end
                 
-                fprintf('Additional: Distance in relation to egocentric target done for %d, session %d, file no %d.\n', i_participant, s, k);
+                fprintf('Additional: Distance in relation to egocentric target done for %d, session %d, file no %d.\n', id, s, k);
                       
                 %% rotation analysis
                 
                 % calculate total rotation as change in yaw rotation (r)
                 % this value includes rotation due to x-/y-trajectory (i.e. left-forward movement)
                 % and additional rotation on the spot (i.e. left movement) 
-                r1=0;
+                rot=0;
                 for j=2:length(r)
-                    r1=r1+abs(r(j)-r(j-1));
+                    rot=rot+abs(r(j)-r(j-1));
                 end
-                sm.participant(p).session(s).trial(k).rotation=r1; clear r1; 
+                sm.participant(p).session(s).trial(k).rotation_xyz=rot; clear rot; 
                 
                 % calculate rotation due to unqiue x-/y-trajectory (i.e. left-forward movement)
-                rotation_xy = computeXYRotation(x_unique, y_unique);
-                % and use as norm value for total rotation
-                sm.participant(p).session(s).trial(k).rotation_accuracy = computeDeviationToIdealValue(...
-                    sm.participant(p).session(s).trial(k).rotation, rotation_xy); 
+                sm.participant(p).session(s).trial(k).rotation_xy = computeXYRotation(x_unique, y_unique);
                 
-%                 % alternative: calculate rotation in ideal, shortest x-/y-trajectory 
-%                 rotation_xy = computeXYRotation(x_line, y_line); 
-%                 % and use as norm value for total rotation
-%                 sm.participant(p).session(s).trial(k).rotation_accuracy = computeDeviationToIdealValue(...
-%                     sm.participant(p).session(s).trial(k).rotation, rotation_xy); 
-                
-                fprintf('Rotation analysis done for %d, session %d, file no %d.\n', i_participant, s, k);
+                % calculate 'pure' z rotation (i.e. left movement on the spot) 
+                sm.participant(p).session(s).trial(k).rotation_z = sm.participant(p).session(s).trial(k).rotation_xyz - sm.participant(p).session(s).trial(k).rotation_xy;
+                sm.participant(p).session(s).trial(k).rotation_z_percent = computeDeviationToIdealValue(...
+                    sm.participant(p).session(s).trial(k).rotation_xyz, ...
+                    sm.participant(p).session(s).trial(k).rotation_xy); 
+                               
+                fprintf('Rotation analysis done for %d, session %d, file no %d.\n', id, s, k);
                         
                 %% zone analysis
                 [sm.participant(p).session(s).trial(k).result.zone.alley_zone,...
@@ -701,7 +667,7 @@ for i_participant=participant_start:participant_end
                     sm.participant(p).session(s).trial(k).result.zone.rel_triangle_zone, ...
                     sm.participant(p).session(s).trial(k).result.zone.rel_rectangle_zone);
                 
-                fprintf('Zone analysis done for %d, session %d, file no %d.\n', i_participant, s, k);
+                fprintf('Zone analysis done for %d, session %d, file no %d.\n', id, s, k);
                 
                 %% exploration analysis
                 % Arm score and Path score as indicators of alley-exploration
@@ -748,7 +714,7 @@ for i_participant=participant_start:participant_end
 %                     sm.participant(p).session(s).trial(k).result.path_explored,...
 %                     sm.participant(p).session(s).trial(k).result.path_score);
                 
-                fprintf('Exploration analysis done for %d, session %d, file no %d.\n', i_participant, s, k);
+                fprintf('Exploration analysis done for %d, session %d, file no %d.\n', id, s, k);
                 
                 %% set marker for excluded trials
                 % criteria: timeout, or no movement/very short trial time (i.e. path_length=0, body_rot_abs=0, or time < 3)
@@ -809,7 +775,7 @@ for i_participant=participant_start:participant_end
                 % VELOCITY
                 sm.participant(p).session(s).trial(k).result.velocity=sm.participant(p).session(s).trial(k).result.path_length/sm.participant(p).session(s).trial(k).result.time;
                 
-                fprintf('Motor control analysis done for %d, session %d, file no %d.\n', i_participant, s, k);
+                fprintf('Motor control analysis done for %d, session %d, file no %d.\n', id, s, k);
                 
                 %% create plot 
                 plotMotorControlTrial(sm.participant(p).session(s).trial(k).trial_num,...
