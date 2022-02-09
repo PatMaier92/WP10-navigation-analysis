@@ -13,10 +13,6 @@ addpath(genpath(pwd)) % add subfolder functions to path
 % and z-coordinates for rotation.
 % One trial_results file with general information (id, session, condition).
 
-% The script starts with input:
-%   1. Provide the span of participants you would like to analyse
-%   2. Provide the total number of recorded sessions.
-
 % Block 1: Set up input/output folders, Starmaze and Practise environment
 % Block 2: Data preparation 
 % Block 3: Data analysis
@@ -25,7 +21,7 @@ addpath(genpath(pwd)) % add subfolder functions to path
 %% data input folder and participant information
 [data_folder]  = setInputPath(); % provide folder with all raw data
 [participant_start,participant_end] = setParticipants(); % provide participant range
-n_sessions      = 3; % default 3
+n_sessions      = 2; % default 3 %% TBD MAKE SESSION 3 WORK %%
 
 %% result folder
 result_folder=[data_folder '\WP10_results'];
@@ -147,29 +143,36 @@ if ~exist('sm','var')
 
     clear practise_alley_x practise_alley_y i_corner n_corners practise_start practise_goal practise_values; 
     
-    %% save sm data 
-    save(file_path, 'sm');
-    
     %% initialize participant index
     p=1; 
     
 else
-    %% get participant index %% TBD CHECK THIS (and make so recognizes participant) %%
-    [~,n]=size(sm);
-    p=n+1;
-    clear n; 
-    
+    p=0; % dummy value 
 end
 
 %% Block 2: Data preprocessing
 for id=participant_start:participant_end
     
+    % set participant index
+    if p~=1 
+        % check if ID exists in data 
+        p_ind = find([sm.participant.id]==id); 
+        if isempty(p_ind) % if not: append participant data    
+            [~,n]=size(sm.participant);
+            p=n+1; clear n; 
+        else % if yes: overwrite participant data
+            p=p_ind; clear p_ind;
+            fprintf('Data for participant %d already existed and is overwritten now.\n', id);
+        end
+    end 
+    
+    % loop over sessions 
     for s=1:n_sessions        
         %% individual input and output folder
         % input folder
         input_folder=[data_folder '\' num2str(id) '\S00' num2str(s)]; 
         if ~exist(input_folder, 'dir')
-            fprintf('Folder for participant %d, session %d does not exist. Continue with next iteration.\n', id, session);
+            fprintf('Folder for participant %d, session %d does not exist. Continue with next iteration.\n', id, s);
             continue;
         end
         
@@ -213,6 +216,7 @@ for id=participant_start:participant_end
         
         files={d.name};
         
+        % loop over trials 
         for k=1:numel(files)
             name=files{k};
             
@@ -252,6 +256,7 @@ for id=participant_start:participant_end
             x=data.pos_x; % coordinates
             y=data.pos_z; % coordinates
             r=data.rot_y; % yaw rotations
+            clear data; 
             
             % spatial normalization
             if s==3 % practise maze
@@ -339,14 +344,14 @@ for id=participant_start:participant_end
 %                 ylim([0 1]);
 %                 hold off
                
-                % zone analysis for ideal paths
-                [~, ~, sm.participant(p).session(s).trial(k).support.zone.ideal_alley_entry, ...
-                    ~]=computeStaticZoneValues(xi_al, yi_al,...
-                    zeros(length(xi_al),1), sm.coord.alley_full_x, sm.coord.alley_full_y);
-                
-                [~, ~, sm.participant(p).session(s).trial(k).support.zone.ideal_rectangle_entry, ...
-                    ~]=computeStaticZoneValues(xi_al, yi_al,...
-                    zeros(length(xi_al),1), sm.coord.rec_x, sm.coord.rec_y);
+%                 % zone analysis for ideal paths
+%                 [~, ~, sm.participant(p).session(s).trial(k).support.zone.ideal_alley_entry, ...
+%                     ~]=computeStaticZoneValues(xi_al, yi_al,...
+%                     zeros(length(xi_al),1), sm.coord.alley_full_x, sm.coord.alley_full_y);
+%                 
+%                 [~, ~, sm.participant(p).session(s).trial(k).support.zone.ideal_rectangle_entry, ...
+%                     ~]=computeStaticZoneValues(xi_al, yi_al,...
+%                     zeros(length(xi_al),1), sm.coord.rec_x, sm.coord.rec_y);
                 
 %                 [ideal_alley_entry_mat]=computeDynamicZoneValues(xi_al,...
 %                     yi_al, sm.coord.alley_full_x, sm.coord.alley_full_y);
@@ -492,7 +497,7 @@ for id=participant_start:participant_end
                 for j=2:length(r)
                     rot=rot+abs(r(j)-r(j-1));
                 end
-                sm.participant(p).session(s).trial(k).rotation_xyz=rot; clear rot; 
+                sm.participant(p).session(s).trial(k).rotation_xyz=rot; clear rot j; 
                 
                 % XY ROTATION
                 % calculate rotation due to unqiue x-/y-trajectory (i.e. left-forward movement)
@@ -531,6 +536,7 @@ for id=participant_start:participant_end
                     sm.participant(p).session(s).trial(k).goal_alley,...
                     sm.participant(p).session(s).trial(k).support.ego_alley,...
                     sm.participant(p).session(s).trial(k).chosen_alley_i);
+                clear criterion; 
                 
                 % fprintf('Success performance analysis done for %d, session %d, file no %d.\n', id, s, k);
                 
@@ -592,16 +598,16 @@ for id=participant_start:participant_end
                 
                 %% exploration analysis
                 % Path score as indicators of exploration
-                sm.participant(p).session(s).trial(k).zones_explored=computeZoneExploration(...
-                    sm.participant(p).session(s).trial(k).zone.alley_zone_out,...
-                    sm.participant(p).session(s).trial(k).zone.alley_zone_in,...
-                    sm.participant(p).session(s).trial(k).zone.rectangle_zone,...
-                    sm.participant(p).session(s).trial(k).zone.triangle_zone);
-                sm.participant(p).session(s).trial(k).zones_entered=computeZoneScore(...
-                    sm.participant(p).session(s).trial(k).zone.alley_entry_out,...
-                    sm.participant(p).session(s).trial(k).zone.alley_entry_in,...
-                    sm.participant(p).session(s).trial(k).zone.rectangle_entry,...
-                    sm.participant(p).session(s).trial(k).zone.triangle_entry);
+%                 sm.participant(p).session(s).trial(k).zones_explored=computeZoneExploration(...
+%                     sm.participant(p).session(s).trial(k).zone.alley_zone_out,...
+%                     sm.participant(p).session(s).trial(k).zone.alley_zone_in,...
+%                     sm.participant(p).session(s).trial(k).zone.rectangle_zone,...
+%                     sm.participant(p).session(s).trial(k).zone.triangle_zone);
+%                 sm.participant(p).session(s).trial(k).zones_entered=computeZoneScore(...
+%                     sm.participant(p).session(s).trial(k).zone.alley_entry_out,...
+%                     sm.participant(p).session(s).trial(k).zone.alley_entry_in,...
+%                     sm.participant(p).session(s).trial(k).zone.rectangle_entry,...
+%                     sm.participant(p).session(s).trial(k).zone.triangle_entry);
                  
 %                 % Direct path to target
 %                 [ideal_no, match_abs, ...
@@ -635,20 +641,20 @@ for id=participant_start:participant_end
                     end
                 end
                 
-                %% create plots
-                sm_wp10_plotTrack(sm.participant(p).session(s).trial(k).trial_num, ...
-                    sm.participant(p).session(s).session_number, ...
-                    sm.participant(p).session(s).trial(k).condition, ...
-                    sm.participant(p).session(s).trial(k).start_i, ...
-                    sm.participant(p).id,sm.participant(p).group_s, ...
-                    sm.participant(p).session(s).trial(k).correct_goal, ...
-                    sm.participant(p).session(s).trial(k).direct_path, ...
-                    sm.participant(p).session(s).trial(k).search_strategy_no, ...
-                    sm.coord.alley_poly_out, sm.coord.alley_poly_in, sm.coord.tri_poly, sm.coord.rec_poly, ...
-                    x, y, x_line_ego, y_line_ego, x_line, y_line, ...
-                    sm.participant(p).session(s).trial(k).goal_x, ...
-                    sm.participant(p).session(s).trial(k).goal_y,...
-                    output_folder)
+                 %% create plots
+%                 sm_wp10_plotTrack(sm.participant(p).session(s).trial(k).trial_num, ...
+%                     sm.participant(p).session(s).session_number, ...
+%                     sm.participant(p).session(s).trial(k).condition, ...
+%                     sm.participant(p).session(s).trial(k).start_i, ...
+%                     sm.participant(p).id,sm.participant(p).group_s, ...
+%                     sm.participant(p).session(s).trial(k).correct_goal, ...
+%                     sm.participant(p).session(s).trial(k).direct_path, ...
+%                     sm.participant(p).session(s).trial(k).search_strategy_no, ...
+%                     sm.coord.alley_poly_out, sm.coord.alley_poly_in, sm.coord.tri_poly, sm.coord.rec_poly, ...
+%                     x, y, x_line_ego, y_line_ego, x_line, y_line, ...
+%                     sm.participant(p).session(s).trial(k).goal_x, ...
+%                     sm.participant(p).session(s).trial(k).goal_y,...
+%                     output_folder)
                 
             else 
                 %% For motor control navigation trial
@@ -685,20 +691,21 @@ for id=participant_start:participant_end
                     sm.coord.practise.practise_goal_names, x, y , x_line_motor, y_line_motor, output_folder)
                 clear x_line_motor y_line_motor;     
             end
+            
+            % save .mat data %% TBD check %%
+%             save(file_path, 'sm', '-append') 
+            save(file_path, 'sm') 
+            
+            clear x* y* t r name;
         end   
-    end
-    
-    % save .mat data %% TBD check %%
-    save(file_path, 'sm', '-append')
-    
-    % TBD clear all unneeded variables
-
-    % update participant index
-    p=p+1;
-    
+        
+        clear d files trial_data input_folder; 
+        
+        fprintf('Analysis done for %d, session %d.\n', id, s);
+    end    
 end
 
-%% save .mat data %% TBD check %%
-save(file_path, 'sm', '-append')
+% %% save .mat data %% TBD check %%
+% save(file_path, 'sm', '-append')
 
-clear all; 
+clear; 
