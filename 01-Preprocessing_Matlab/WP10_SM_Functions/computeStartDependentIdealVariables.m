@@ -1,7 +1,6 @@
 function [goal_x_ego, goal_y_ego, x_line, y_line, x_line_chosen, y_line_chosen,...
     x_line_ego, y_line_ego,...
-    ideal_path, ideal_path_chosen, ideal_ego_path, ego_alley,...
-    ideal_headturn_n]=computeStartDependentIdealVariables(Graph,...
+    ideal_path, ideal_path_chosen, ideal_ego_path, ego_alley]=computeStartDependentIdealVariables(Graph,...
     graph_x, graph_y, start, goal, chosen_x, chosen_y,...
     alley_full_x, alley_full_y, rec_x, rec_y, cp_polyshape, polyshape_array)
 % computeStartDependentIdealVariables: Function for determining starting point dependent
@@ -20,7 +19,6 @@ function [goal_x_ego, goal_y_ego, x_line, y_line, x_line_chosen, y_line_chosen,.
 % x_line, y_line, x_line_ego, y_line_ego, x_line_chose, y_line_chosen are vectors with ideal x-/y-coordinates
 % ideal_path, ideal_chosen_path, ideal_ego_path are ideal distance values
 % ego_alley is identifier for hypothetical egocentric goal alley
-% ideal_headturn_n is ideal number of head turns. 
 
 %% shortest path from original start 
 o_start_node=7; 
@@ -125,9 +123,6 @@ y_line=graph_y(path_nodes);
 % ylim([0 1]);
 % highlight(pl,path_nodes,'EdgeColor','r');
 % hold off; 
-
-% calculate ideal number of turns 
-ideal_headturn_n=numel(x_line)-2; % minus start and end points (no head turns there)
 
 %% shortest path to chosen goal (only relevant for probe trials)
 % find nearest vertex in central polygon for chosen goal 
