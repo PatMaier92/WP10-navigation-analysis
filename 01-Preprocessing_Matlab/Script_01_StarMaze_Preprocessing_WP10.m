@@ -227,7 +227,7 @@ for id=participant_start:participant_end
             % read-in data
             data=readtable(fullfile(input_folder, name));
             
-            % original sampling rate
+            % get sampling rate
             sampling_rate_original=zeros(length(data.time)-1,1);
             for i=1:length(data.time)-1
                 sampling_rate_original(i)=data.time(i+1)-data.time(i);
@@ -251,9 +251,7 @@ for id=participant_start:participant_end
             t=data.time; % time
             x=data.pos_x; % coordinates
             y=data.pos_z; % coordinates
-            r=data.rot_y; % head rotations
-            data_length=length(x);
-            sdata_length=data_length-1;
+            r=data.rot_y; % yaw rotations
             
             % spatial normalization
             if s==3 % practise maze
@@ -269,7 +267,8 @@ for id=participant_start:participant_end
             % unique x-/y values, excluding periods without movement
             xy_unique = unique([x y],'rows','stable'); % excluding row duplicates
             x_unique = xy_unique(:,1);
-            y_unique = xy_unique(:,2);
+            y_unique = xy_unique(:,2); 
+            clear xy_unique; 
                        
             %% get single trial info from trial_results
             sm.participant(p).session(s).session_duration=round(minutes(trial_data.timestamp(numel(files),1) - trial_data.timestamp(1,1))); 
@@ -381,11 +380,20 @@ for id=participant_start:participant_end
                     sm.participant(p).session(s).trial(k).y_n);
                                
                 %% standard coordinate analysis using x-/y-coordinates
-                % Path analysis
+                % 1) Path analysis
                 % PATH LENGTH 
                 sm.participant(p).session(s).trial(k).path_length=computePathLength(x,y); 
                 
-                % Distance analysis
+                % PATH LENGTH ERROR 
+                sm.participant(p).session(s).trial(k).path_length_error=computeDeviationToIdealValue(...
+                    sm.participant(p).session(s).trial(k).path_length, ...
+                    sm.participant(p).session(s).trial(k).support.ideal_path_length);
+                
+                % VELOCITY 
+                sm.participant(p).session(s).trial(k).velocity=sm.participant(p).session(s).trial(k).path_length / ...
+                    sm.participant(p).session(s).trial(k).time;
+                
+                % 2) Distance analysis
                 % FINAL DISTANCE to CORRECT target
                 sm.participant(p).session(s).trial(k).final_distance=0;
                 if sm.participant(p).session(s).trial(k).feedback==0
@@ -396,102 +404,58 @@ for id=participant_start:participant_end
                         sm.participant(p).session(s).trial(k).y_n);
                 end
                 
-                % AVERAGE DISTANCE to CORRECT path 
+                % AVERAGE DISTANCE to PATH
                 % with full x-/y-trajectory
-                [sm.participant(p).session(s).trial(k).path_error, ~] = computePathDistance(...
-                    xi_al, yi_al, x, y, sm.participant(p).session(s).trial(k).final_distance, true); 
-                                
-                % with unique x-/y-trajectory (duplicates due to waiting/rotation are removed)              
-                [sm.participant(p).session(s).trial(k).path_error_unique, ~] = computePathDistance(...
+                [sm.participant(p).session(s).trial(k).path_distance, ~] = computePathDistance(...
+                    xi_al, yi_al, x, y, sm.participant(p).session(s).trial(k).final_distance, true);  
+                % with unique x-/y-trajectory (duplicates due to waiting and rotation are removed)              
+                [sm.participant(p).session(s).trial(k).adj_path_distance, ~] = computePathDistance(...
                     xi_al, yi_al, x_unique, y_unique, sm.participant(p).session(s).trial(k).final_distance, true);        
                 
-%                 % AVERAGE DISTANCE to CORRECT target
-%                 sm.participant(p).session(s).trial(k).avg_distance_target=total_dist_to_goal/sdata_length;
-%                 sm.participant(p).session(s).trial(k).total_distance_target=total_dist_to_goal;
-%                 sm.participant(p).session(s).trial(k).sum_data_points=sdata_length;
+                % AVERAGE DISTANCE to TARGET 
+                % target distance 
+                [sm.participant(p).session(s).trial(k).target_distance, ~]=computeTargetDistance(x,y,...
+                    sm.participant(p).session(s).trial(k).goal_x,sm.participant(p).session(s).trial(k).goal_y); 
+                % ideal target distance 
+                [ideal_distance_target, ~]=computeTargetDistance(xi_al,yi_al,...
+                    sm.participant(p).session(s).trial(k).goal_x,sm.participant(p).session(s).trial(k).goal_y); 
+                % target distance error 
+                sm.participant(p).session(s).trial(k).target_distance_error=computeDeviationToIdealValue(...
+                    sm.participant(p).session(s).trial(k).target_distance, ideal_distance_target);
+                clear ideal_distance_target; 
                 
-                % Cumulative IDEAL DISTANCE to CORRECT target
-                id_total_dist_to_goal=0; % start-initiation
-                xi_length=length(xi_al)-1;
-                for i=1:xi_length
-                    % ideal cumulative distance to allocentric target
-                    id_total_dist_to_goal=id_total_dist_to_goal+computeDistance(xi_al(i),sm.participant(p).session(s).trial(k).goal_x,yi_al(i),sm.participant(p).session(s).trial(k).goal_y);
-                end
+                fprintf('Standard path and distance analysis done for %d, session %d, file no %d.\n', id, s, k);
                 
-%                 % IDEAL AVERAGE DISTANCE to CORRECT target
-%                 sm.participant(p).session(s).trial(k).support.ideal_avg_distance_target=id_total_dist_to_goal/xi_length;
-%                 sm.participant(p).session(s).trial(k).support.ideal_total_distance_target=id_total_dist_to_goal;
-%                 sm.participant(p).session(s).trial(k).support.ideal_sum_data_points=xi_length;
-                
-                % PATH ACCURACY to CORRECT target
-                sm.participant(p).session(s).trial(k).path_accuracy=computeDeviationToIdealValue(...
-                    sm.participant(p).session(s).trial(k).path_length, ...
-                    sm.participant(p).session(s).trial(k).support.ideal_path_length);
-                
-%                 % DISTANCE ACCURACY to CORRECT target
-%                 sm.participant(p).session(s).trial(k).distance_accuracy=computeDeviationToIdealValue(...
-%                     sm.participant(p).session(s).trial(k).avg_distance_target, ...
-%                     sm.participant(p).session(s).trial(k).support.ideal_avg_distance_target);
-                
-                % VELOCITY
-                sm.participant(p).session(s).trial(k).velocity=sm.participant(p).session(s).trial(k).path_length / ...
-                    sm.participant(p).session(s).trial(k).time;
-                
-                fprintf('Path, distance and velocity analysis done for %d, session %d, file no %d.\n', id, s, k);
-                
-                %% additional analysis for all probe trials: Distance in relation to chosen target
-                
-                if sm.participant(p).session(s).trial(k).feedback==0
-                    % Path analysis to CHOSEN target: same as above
-                    % PATH to CHOSEN target: same as above
-                    % DISTANCE to CHOSEN target: see as above
-                    
-                    % AVERAGE DISTANCE to ideal PATH to CHOSEN target 
+                %% additional analysis for probe trials  
+                if sm.participant(p).session(s).trial(k).feedback==0   
+                    % 1) Distance analysis
+                    % AVERAGE DISTANCE to PATH to CHOSEN target 
                     % with full x-/y-trajectory
-                    [sm.participant(p).session(s).trial(k).path_error_chosen, ~] = computePathDistance(...
+                    [sm.participant(p).session(s).trial(k).chosen_path_distance, ~] = computePathDistance(...
                         xi_ch, yi_ch, x, y, 0, false); 
-
                     % with unique x-/y-trajectory (duplicates due to waiting/rotation are removed)              
-                    [sm.participant(p).session(s).trial(k).path_error_chosen_unique, ~] = computePathDistance(...
+                    [sm.participant(p).session(s).trial(k).adj_chosen_path_distance, ~] = computePathDistance(...
                         xi_ch, yi_ch, x_unique, y_unique, 0, false);     
                     
-                    
-%                     % AVERAGE DISTANCE to CHOSEN target
-%                     sm.participant(p).session(s).trial(k).avg_distance_chosen_target=total_dist_to_chosen_goal/sdata_length;
-%                     sm.participant(p).session(s).trial(k).total_distance_chosen_target=total_dist_to_chosen_goal;
-%                     % sum data points: same as in analyis above
-                    
-%                     % Cumulative IDEAL DISTANCE to CHOSEN target
-%                     id_total_dist_to_goal_chosen=0; % start-initiation
-%                     xi_ch_length=length(xi_ch)-1;
-%                     for i=1:xi_ch_length
-%                         % ideal cumulative distance to chosen target
-%                         id_total_dist_to_goal_chosen=id_total_dist_to_goal_chosen+computeDistance(xi_ch(i),x(end),yi_ch(i),y(end));
-%                     end
-                    
-%                     % IDEAL AVERAGE DISTANCE to CHOSEN target
-%                     sm.participant(p).session(s).trial(k).support.ideal_avg_distance_chosen_target=id_total_dist_to_goal_chosen/xi_ch_length;
-%                     sm.participant(p).session(s).trial(k).support.ideal_total_distance_chosen_target=id_total_dist_to_goal_chosen;
-%                     sm.participant(p).session(s).trial(k).support.ideal_sum_data_points_chosen=xi_ch_length;
-                     
-                    % PATH ACCURACY to CHOSEN target
-                    sm.participant(p).session(s).trial(k).path_accuracy_chosen=computeDeviationToIdealValue(sm.participant(p).session(s).trial(k).path_length,sm.participant(p).session(s).trial(k).support.ideal_path_length_chosen);
-                    
-%                     % DISTANCE ACCURACY to CHOSEN target
-%                     sm.participant(p).session(s).trial(k).distance_accuracy_chosen=computeDeviationToIdealValue(sm.participant(p).session(s).trial(k).avg_distance_chosen_target,sm.participant(p).session(s).trial(k).support.ideal_avg_distance_chosen_target);
+                    % AVERAGE DISTANCE to CHOSEN TARGET
+                    % target distance 
+                    [sm.participant(p).session(s).trial(k).chosen_target_distance, ~]=computeTargetDistance(x,y,x(end),y(end)); 
+                    % ideal target distance 
+                    [ideal_chosen_target_distance, ~]=computeTargetDistance(xi_ch,yi_ch,x(end),y(end)); 
+                    % target distance error 
+                    sm.participant(p).session(s).trial(k).chosen_target_distance_error=computeDeviationToIdealValue(...
+                        sm.participant(p).session(s).trial(k).chosen_target_distance, ideal_chosen_target_distance);  
+                    clear ideal_chosen_target_distance; 
                 end
                 
-                fprintf('Additional: Distance in relation to chosen target done for %d, session %d, file no %d.\n', id, s, k);
+                fprintf('Additional: Distance analysis to chosen target done for %d, session %d, file no %d.\n', id, s, k);
           
                 %% additional analysis for allocentric probe trials with potential egocentric response
                 % excludes allocentric trials with inner starts (even integer) as there
-                % is no clearly identifiable egocentric path/goal location from these starts
-                
+                % is no clear egocentric path/goal location from these starts 
                 if sm.participant(p).session(s).trial(k).condition==1 && ...
                         mod(sm.participant(p).session(s).trial(k).start_i,2)
-                    % Path analysis to EGOCENTRIC target: same as above
-                   
-                    % Distance analysis
+                    % 1) Distance analysis
                     % FINAL DISTANCE to EGOCENTRIC target
                     sm.participant(p).session(s).trial(k).final_distance_ego=computeDistance(...
                         sm.participant(p).session(s).trial(k).support.goal_x_ego,...
@@ -501,47 +465,31 @@ for id=participant_start:participant_end
                     
                     % AVERAGE DISTANCE to EGOCENTRIC PATH
                     % with full x-/y-trajectory
-                    [sm.participant(p).session(s).trial(k).path_error_ego, ~] = computePathDistance(...
+                    [sm.participant(p).session(s).trial(k).ego_path_distance, ~] = computePathDistance(...
                         xi_eg, yi_eg, x, y, sm.participant(p).session(s).trial(k).final_distance_ego, true); 
 
                     % with unique x-/y-trajectory (duplicates due to waiting/rotation are removed)              
-                    [sm.participant(p).session(s).trial(k).path_error_ego_unique, ~] = computePathDistance(...
+                    [sm.participant(p).session(s).trial(k).adj_ego_path_distance, ~] = computePathDistance(...
                         xi_eg, yi_eg, x_unique, y_unique, sm.participant(p).session(s).trial(k).final_distance_ego, true);        
-                    
-                    
-%                     % AVERAGE DISTANCE to EGOCENTRIC target
-%                     sm.participant(p).session(s).trial(k).avg_distance_ego_target=total_dist_to_goal_ego/sdata_length;
-%                     sm.participant(p).session(s).trial(k).total_distance_ego_target=total_dist_to_goal_ego;
-%                     % sum data points: same as in analyis above
-                    
-%                     % Cumulative IDEAL DISTANCE to EGOCENTRIC target
-%                     id_total_dist_to_goal_ego=0; % start-initiation
-%                     xi_eg_length=length(xi_eg)-1;
-%                     for i=1:xi_eg_length
-%                         % ideal cumulative distance to egocentric target
-%                         id_total_dist_to_goal_ego=id_total_dist_to_goal_ego+computeDistance(xi_eg(i),sm.participant(p).session(s).trial(k).support.goal_x_ego,yi_eg(i),sm.participant(p).session(s).trial(k).support.goal_y_ego);
-%                     end
-                    
-%                     % IDEAL AVERAGE DISTANCE to EGOCENTRIC target
-%                     sm.participant(p).session(s).trial(k).support.ideal_avg_distance_ego_target=id_total_dist_to_goal_ego/xi_eg_length;
-%                     sm.participant(p).session(s).trial(k).support.ideal_total_distance_ego_target=id_total_dist_to_goal_ego;
-%                     sm.participant(p).session(s).trial(k).support.ideal_sum_data_points_ego=xi_eg_length;
-                    
-                    % PATH ACCURACY to EGOCENTRIC target
-                    sm.participant(p).session(s).trial(k).path_accuracy_ego=computeDeviationToIdealValue(...
-                        sm.participant(p).session(s).trial(k).path_length, ...
-                        sm.participant(p).session(s).trial(k).support.ideal_path_length_ego);
-                    
-%                     % DISTANCE ACCURACY to EGOCENTRIC target
-%                     sm.participant(p).session(s).trial(k).distance_accuracy_ego=computeDeviationToIdealValue(...
-%                         sm.participant(p).session(s).trial(k).avg_distance_ego_target, ...
-%                         sm.participant(p).session(s).trial(k).support.ideal_avg_distance_ego_target);
+ 
+                    % AVERAGE DISTANCE to EGOCENTRIC TARGET
+                    % target distance 
+                    [sm.participant(p).session(s).trial(k).ego_target_distance, ~]=computeTargetDistance(x,y,...
+                        sm.participant(p).session(s).trial(k).support.goal_x_ego,...
+                        sm.participant(p).session(s).trial(k).support.goal_y_ego); 
+                    % ideal target distance 
+                    [ideal_ego_target_distance, ~]=computeTargetDistance(xi_eg,yi_eg,...
+                        sm.participant(p).session(s).trial(k).support.goal_x_ego,...
+                        sm.participant(p).session(s).trial(k).support.goal_y_ego); 
+                    % target distance error 
+                    sm.participant(p).session(s).trial(k).ego_target_distance_error=computeDeviationToIdealValue(...
+                        sm.participant(p).session(s).trial(k).ego_target_distance, ideal_ego_target_distance); 
+                    clear ideal_ego_target_distance;
                 end
                 
-                fprintf('Additional: Distance in relation to egocentric target done for %d, session %d, file no %d.\n', id, s, k);
+                fprintf('Additional: Distance analysis to egocentric target done for %d, session %d, file no %d.\n', id, s, k);
                       
                 %% rotation analysis
-                
                 % calculate total rotation as change in yaw rotation (r)
                 % this value includes rotation due to x-/y-trajectory (i.e. left-forward movement)
                 % and additional rotation on the spot (i.e. left movement) 
@@ -556,13 +504,13 @@ for id=participant_start:participant_end
                 
                 % calculate 'pure' z rotation (i.e. left movement on the spot) 
                 sm.participant(p).session(s).trial(k).rotation_z = sm.participant(p).session(s).trial(k).rotation_xyz - sm.participant(p).session(s).trial(k).rotation_xy;
-                sm.participant(p).session(s).trial(k).rotation_z_percent = computeDeviationToIdealValue(...
+                sm.participant(p).session(s).trial(k).rotation_z_by_xy = computeDeviationToIdealValue(...
                     sm.participant(p).session(s).trial(k).rotation_xyz, ...
                     sm.participant(p).session(s).trial(k).rotation_xy); 
                                
                 fprintf('Rotation analysis done for %d, session %d, file no %d.\n', id, s, k);
                         
-                %% zone analysis
+                %% TBD zone analysis
                 [sm.participant(p).session(s).trial(k).zone.alley_zone,...
                     sm.participant(p).session(s).trial(k).zone.rel_alley_zone,...
                     sm.participant(p).session(s).trial(k).zone.alley_entry,...
