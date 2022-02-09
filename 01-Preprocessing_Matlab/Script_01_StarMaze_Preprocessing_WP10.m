@@ -396,50 +396,14 @@ for id=participant_start:participant_end
                         sm.participant(p).session(s).trial(k).y_n);
                 end
                 
-                % AVERAGE DISTANCE to CORRECT path (full trajectory including waiting/rotation)
-                [~,distance_to_path] = dsearchn([xi_al, yi_al],[x, y]); % returns euclidian distance to nearest neighbour on interpolated ideal path
-                distance_to_path = [distance_to_path; sm.participant(p).session(s).trial(k).final_distance]; % add final distance as last data point
-                sm.participant(p).session(s).trial(k).avg_distance_path=mean(distance_to_path);
-                sm.participant(p).session(s).trial(k).total_distance_path=sum(distance_to_path);
-                
-                % AVERAGE DISTANCE to CORRECT path (only path, remove duplicates due to waiting/rotation)
-                [~,distance_to_path_unique] = dsearchn([xi_al, yi_al], xy_unique); % returns euclidian distance to nearest neighbour on interpolated ideal path
-                distance_to_path_unique = [distance_to_path_unique; sm.participant(p).session(s).trial(k).final_distance]; % add final distance as last data point
-                sm.participant(p).session(s).trial(k).avg_distance_path_pure=mean(distance_to_path_unique);
-                sm.participant(p).session(s).trial(k).total_distance_path_pure=sum(distance_to_path_unique);
-                
-               
-%                 %%% EXPLORATORY
-%                 dtw([xi_al, yi_al]',xy_unique');
-%                 dtw([xi_al, yi_al]',[x, y]');
-% 
-%                 [sdtw,~,~] = dtw([xi_al, yi_al]', xy_unique'); 
-%                 ncdtw = exp(-(sdtw/length(xi_al)*10)); %*0.1 * 100
-%                 ndtw = exp(-(sdtw/length(xi_al))); 
-%                 
-%                 %%%
-%                 [dtw_trajectory,i1,i2] = dtw([xi_al, yi_al]',xy_unique');
-%                 ndtw = exp(-(dtw_trajectory/length(xy_unique)*0.1)); 
-%                 X = [xi_al(i1),xi_al(i1)]; Y = [x_unique(i2),y_unique(i2)];
-%                 [dissimimlarityRatio,Z,~] = procrustes(X,Y,'Scaling',false,'reflection',false);
-%                 figure; 
-%                 plot(X(:,1),X(:,2),'r.',Y(:,1),Y(:,2),'y.',...
-%                     Z(:,1),Z(:,2),'b.'); 
-%                 xlim([0 1]);
-%                 ylim([0 1]);
-%                 
-%                 % test plot
-%                 figure;
-%                 plot(sm.coord.full_poly);
-%                 hold on
-%                 plot(xi_al, yi_al, 'k-', x, y, 'r-',...
-%                     x_unique, y_unique, 'g--');
-%                 xlim([0 1]);
-%                 ylim([0 1]);
-%                 hold off
-%                 
-%                 %%% EXPLORATORY
-                
+                % AVERAGE DISTANCE to CORRECT path 
+                % with full x-/y-trajectory
+                [sm.participant(p).session(s).trial(k).path_error, ~] = computePathDistance(...
+                    xi_al, yi_al, x, y, sm.participant(p).session(s).trial(k).final_distance, true); 
+                                
+                % with unique x-/y-trajectory (duplicates due to waiting/rotation are removed)              
+                [sm.participant(p).session(s).trial(k).path_error_unique, ~] = computePathDistance(...
+                    xi_al, yi_al, x_unique, y_unique, sm.participant(p).session(s).trial(k).final_distance, true);        
                 
 %                 % AVERAGE DISTANCE to CORRECT target
 %                 sm.participant(p).session(s).trial(k).avg_distance_target=total_dist_to_goal/sdata_length;
@@ -482,15 +446,15 @@ for id=participant_start:participant_end
                     % PATH to CHOSEN target: same as above
                     % DISTANCE to CHOSEN target: see as above
                     
-                    % AVERAGE DISTANCE to ideal PATH to CHOSEN target (full trajectory including waiting/rotation)
-                    [~,distance_to_chosen_path] = dsearchn([xi_ch, yi_ch],[x,y]); % returns euclidian distance to nearest neighbour on interpolated ideal path
-                    sm.participant(p).session(s).trial(k).avg_distance_chosen_path=mean(distance_to_chosen_path);
-                    sm.participant(p).session(s).trial(k).total_distance_chosen_path=sum(distance_to_chosen_path);
+                    % AVERAGE DISTANCE to ideal PATH to CHOSEN target 
+                    % with full x-/y-trajectory
+                    [sm.participant(p).session(s).trial(k).path_error_chosen, ~] = computePathDistance(...
+                        xi_ch, yi_ch, x, y, 0, false); 
+
+                    % with unique x-/y-trajectory (duplicates due to waiting/rotation are removed)              
+                    [sm.participant(p).session(s).trial(k).path_error_chosen_unique, ~] = computePathDistance(...
+                        xi_ch, yi_ch, x_unique, y_unique, 0, false);     
                     
-                    % AVERAGE DISTANCE to ideal PATH to CHOSEN target (only path, remove duplicates due to waiting/rotation)
-                    [~,distance_to_chosen_path_unique] = dsearchn([xi_ch, yi_ch],xy_unique); % returns euclidian distance to nearest neighbour on interpolated ideal path
-                    sm.participant(p).session(s).trial(k).avg_distance_chosen_path_pure=mean(distance_to_chosen_path_unique);
-                    sm.participant(p).session(s).trial(k).total_distance_chosen_path_pure=sum(distance_to_chosen_path_unique);
                     
 %                     % AVERAGE DISTANCE to CHOSEN target
 %                     sm.participant(p).session(s).trial(k).avg_distance_chosen_target=total_dist_to_chosen_goal/sdata_length;
@@ -526,9 +490,7 @@ for id=participant_start:participant_end
                 if sm.participant(p).session(s).trial(k).condition==1 && ...
                         mod(sm.participant(p).session(s).trial(k).start_i,2)
                     % Path analysis to EGOCENTRIC target: same as above
-                    % PATH to CHOSEN target: same as above
-                    % DISTANCE to EGO target: see as above
-                    
+                   
                     % Distance analysis
                     % FINAL DISTANCE to EGOCENTRIC target
                     sm.participant(p).session(s).trial(k).final_distance_ego=computeDistance(...
@@ -537,17 +499,15 @@ for id=participant_start:participant_end
                         sm.participant(p).session(s).trial(k).support.goal_y_ego,...
                         sm.participant(p).session(s).trial(k).y_n);
                     
-                    % AVERAGE DISTANCE to EGOCENTRIC PATH (full trajectory including waiting/rotation)
-                    [~,distance_to_ego_path] = dsearchn([xi_eg, yi_eg],[x,y]); % returns euclidian distance to nearest neighbour on interpolated ideal path
-                    distance_to_ego_path = [distance_to_ego_path; sm.participant(p).session(s).trial(k).final_distance_ego]; % add final distance as last data point
-                    sm.participant(p).session(s).trial(k).avg_distance_ego_path=mean(distance_to_ego_path);
-                    sm.participant(p).session(s).trial(k).total_distance_ego_path=sum(distance_to_ego_path);
+                    % AVERAGE DISTANCE to EGOCENTRIC PATH
+                    % with full x-/y-trajectory
+                    [sm.participant(p).session(s).trial(k).path_error_ego, ~] = computePathDistance(...
+                        xi_eg, yi_eg, x, y, sm.participant(p).session(s).trial(k).final_distance_ego, true); 
+
+                    % with unique x-/y-trajectory (duplicates due to waiting/rotation are removed)              
+                    [sm.participant(p).session(s).trial(k).path_error_ego_unique, ~] = computePathDistance(...
+                        xi_eg, yi_eg, x_unique, y_unique, sm.participant(p).session(s).trial(k).final_distance_ego, true);        
                     
-                    % AVERAGE DISTANCE to EGOCENTRIC PATH (only path, remove duplicates due to waiting/rotation)
-                    [~,distance_to_ego_path_unique] = dsearchn([xi_eg, yi_eg],xy_unique); % returns euclidian distance to nearest neighbour on interpolated ideal path
-                    distance_to_ego_path_unique = [distance_to_ego_path_unique; sm.participant(p).session(s).trial(k).final_distance_ego]; % add final distance as last data point
-                    sm.participant(p).session(s).trial(k).avg_distance_ego_path_pure=mean(distance_to_ego_path_unique);
-                    sm.participant(p).session(s).trial(k).total_distance_ego_path_pure=sum(distance_to_ego_path_unique);
                     
 %                     % AVERAGE DISTANCE to EGOCENTRIC target
 %                     sm.participant(p).session(s).trial(k).avg_distance_ego_target=total_dist_to_goal_ego/sdata_length;
