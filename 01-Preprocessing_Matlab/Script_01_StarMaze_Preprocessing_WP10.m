@@ -107,7 +107,7 @@ if ~exist('sm','var')
     sm.coord.alley_names=["A" "B" "C" "D" "E" "F" "G" "H" "I" "J"];
 
     % create test figure plot
-    % sm_wp10_testfig("s_maze",sm.coord.full_poly,sm.coord.goal_x,sm.coord.goal_y,sm.coord.start_x,sm.coord.start_y,sm.coord.goal_names,sm.coord.graph,sm.coord.graph_x,sm.coord.graph_y);
+    % plotTestfigure("s_maze",sm.coord.full_poly,sm.coord.goal_x,sm.coord.goal_y,sm.coord.start_x,sm.coord.start_y,sm.coord.goal_names,sm.coord.graph,sm.coord.graph_x,sm.coord.graph_y);
 
     clear alley_x alley_y pentagon_x pentagon_y i_alley n_alleys i_corner n_corners start goal values; 
     
@@ -143,7 +143,7 @@ if ~exist('sm','var')
     sm.coord.practise.practise_start_names="Player_P0";
 
     % create test figure plot
-    % sm_wp10_testfig("p_maze",sm.coord.practise.practise_poly,sm.coord.practise.goal_x,sm.coord.practise.goal_y,sm.coord.practise.start_x,sm.coord.practise.start_y,sm.coord.practise.practise_goal_names,sm.coord.graph,sm.coord.graph_x,sm.coord.graph_y);
+    % plotTestfigure("p_maze",sm.coord.practise.practise_poly,sm.coord.practise.goal_x,sm.coord.practise.goal_y,sm.coord.practise.start_x,sm.coord.practise.start_y,sm.coord.practise.practise_goal_names,sm.coord.graph,sm.coord.graph_x,sm.coord.graph_y);
 
     clear practise_alley_x practise_alley_y i_corner n_corners practise_start practise_goal practise_values; 
     
@@ -296,11 +296,6 @@ for id=participant_start:participant_end
             start_name=char(trial_data.trial_player(k,1)); sm.participant(p).session(s).trial(k).start_s=start_name(end); clear start_name; 
             [sm.participant(p).session(s).trial(k).start_i]=setTrialStartLocation(sm.participant(p).session(s).trial(k).start_s,sm.coord.start_names);
             
-            %% time analysis
-            sm.participant(p).session(s).trial(k).time=computeTime(t(1),t(end)); % total amount of time
-            
-            fprintf('Time analysis done for %d, session %d, file no %d.\n', id, s, k);
-            
             %% For all normal navigation trials (i.e., not motor control task)
             if sm.participant(p).session(s).trial(k).condition~=4
                 %% compute variables depending on this trial's settings
@@ -333,16 +328,16 @@ for id=participant_start:participant_end
                 [xi_eg,yi_eg]=interpolateData(x_line_ego, y_line_ego, ...
                     sm.participant(p).session(s).trial(k).support.ideal_path_length_ego);
                 
-%                     % test plot
-%                     figure;
-%                     plot(sm.coord.full_poly);
-%                     hold on
-%                     plot(x_line, y_line, 'k+', xi_al, yi_al, 'k-',...
-%                         x_line_ego, y_line_ego, 'rx', xi_eg, yi_eg, 'r-',...
-%                         x_line_chosen, y_line_chosen, 'bx', xi_ch, yi_ch, 'b-');
-%                     xlim([0 1]);
-%                     ylim([0 1]);
-%                     hold off
+% % test plot
+% figure;
+% plot(sm.coord.full_poly);
+% hold on
+% plot(x_line, y_line, 'k+', xi_al, yi_al, 'k-',...
+% x_line_ego, y_line_ego, 'rx', xi_eg, yi_eg, 'r-',...
+% x_line_chosen, y_line_chosen, 'bx', xi_ch, yi_ch, 'b-');
+% xlim([0 1]);
+% ylim([0 1]);
+% hold off
                
                 % zone analysis for ideal paths
                 [~, ~, sm.participant(p).session(s).trial(k).support.zone.ideal_alley_entry, ...
@@ -365,7 +360,10 @@ for id=participant_start:participant_end
 %                 end
                 
                 %% Block 3: Data analysis, i.e. calculcation of variables
-                %% time analysis: already done
+                %% time analysis
+                % TIME
+                sm.participant(p).session(s).trial(k).time=computeTime(t(1),t(end));
+                % fprintf('Time analysis done for %d, session %d, file no %d.\n', id, s, k);
                 
                 %% compute chosen goal location
                 [sm.participant(p).session(s).trial(k).chosen_goal_i, ...
@@ -380,7 +378,6 @@ for id=participant_start:participant_end
                     sm.participant(p).session(s).trial(k).y_n);
                                
                 %% standard coordinate analysis using x-/y-coordinates
-                % 1) Path analysis
                 % PATH LENGTH 
                 sm.participant(p).session(s).trial(k).path_length=computePathLength(x,y); 
                 
@@ -393,7 +390,6 @@ for id=participant_start:participant_end
                 sm.participant(p).session(s).trial(k).velocity=sm.participant(p).session(s).trial(k).path_length / ...
                     sm.participant(p).session(s).trial(k).time;
                 
-                % 2) Distance analysis
                 % FINAL DISTANCE to CORRECT target
                 sm.participant(p).session(s).trial(k).final_distance=0;
                 if sm.participant(p).session(s).trial(k).feedback==0
@@ -424,11 +420,10 @@ for id=participant_start:participant_end
                     sm.participant(p).session(s).trial(k).target_distance, ideal_distance_target);
                 clear ideal_distance_target; 
                 
-                fprintf('Standard path and distance analysis done for %d, session %d, file no %d.\n', id, s, k);
+                % fprintf('Standard path and distance analysis done for %d, session %d, file no %d.\n', id, s, k);
                 
-                %% additional analysis for probe trials  
+                %% additional distance analysis for probe trials  
                 if sm.participant(p).session(s).trial(k).feedback==0   
-                    % 1) Distance analysis
                     % AVERAGE DISTANCE to PATH to CHOSEN target 
                     % with full x-/y-trajectory
                     [sm.participant(p).session(s).trial(k).chosen_path_distance, ~] = computePathDistance(...
@@ -448,14 +443,12 @@ for id=participant_start:participant_end
                     clear ideal_chosen_target_distance; 
                 end
                 
-                fprintf('Additional: Distance analysis to chosen target done for %d, session %d, file no %d.\n', id, s, k);
+                % fprintf('Additional: Distance analysis to chosen target done for %d, session %d, file no %d.\n', id, s, k);
           
-                %% additional analysis for allocentric probe trials with potential egocentric response
+                %% additional distance analysis for allocentric probe trials with potential egocentric response
                 % excludes allocentric trials with inner starts (even integer) as there
                 % is no clear egocentric path/goal location from these starts 
-                if sm.participant(p).session(s).trial(k).condition==1 && ...
-                        mod(sm.participant(p).session(s).trial(k).start_i,2)
-                    % 1) Distance analysis
+                if sm.participant(p).session(s).trial(k).condition==1 && mod(sm.participant(p).session(s).trial(k).start_i,2)
                     % FINAL DISTANCE to EGOCENTRIC target
                     sm.participant(p).session(s).trial(k).final_distance_ego=computeDistance(...
                         sm.participant(p).session(s).trial(k).support.goal_x_ego,...
@@ -487,9 +480,10 @@ for id=participant_start:participant_end
                     clear ideal_ego_target_distance;
                 end
                 
-                fprintf('Additional: Distance analysis to egocentric target done for %d, session %d, file no %d.\n', id, s, k);
+                % fprintf('Additional: Distance analysis to egocentric target done for %d, session %d, file no %d.\n', id, s, k);
                       
                 %% rotation analysis
+                % TOTAL XYZ ROTATION
                 % calculate total rotation as change in yaw rotation (r)
                 % this value includes rotation due to x-/y-trajectory (i.e. left-forward movement)
                 % and additional rotation on the spot (i.e. left movement) 
@@ -499,16 +493,18 @@ for id=participant_start:participant_end
                 end
                 sm.participant(p).session(s).trial(k).rotation_xyz=rot; clear rot; 
                 
+                % XY ROTATION
                 % calculate rotation due to unqiue x-/y-trajectory (i.e. left-forward movement)
                 sm.participant(p).session(s).trial(k).rotation_xy = computeXYRotation(x_unique, y_unique);
                 
+                % Z ROTATION
                 % calculate 'pure' z rotation (i.e. left movement on the spot) 
                 sm.participant(p).session(s).trial(k).rotation_z = sm.participant(p).session(s).trial(k).rotation_xyz - sm.participant(p).session(s).trial(k).rotation_xy;
                 sm.participant(p).session(s).trial(k).rotation_z_by_xy = computeDeviationToIdealValue(...
                     sm.participant(p).session(s).trial(k).rotation_xyz, ...
                     sm.participant(p).session(s).trial(k).rotation_xy); 
                                
-                fprintf('Rotation analysis done for %d, session %d, file no %d.\n', id, s, k);
+                % fprintf('Rotation analysis done for %d, session %d, file no %d.\n', id, s, k);
                         
                 %% TBD zone analysis
                 [sm.participant(p).session(s).trial(k).zone.alley_zone,...
@@ -563,7 +559,7 @@ for id=participant_start:participant_end
                     sm.participant(p).session(s).trial(k).zone.rel_triangle_zone, ...
                     sm.participant(p).session(s).trial(k).zone.rel_rectangle_zone);
                 
-                fprintf('Zone analysis done for %d, session %d, file no %d.\n', id, s, k);
+                % fprintf('Zone analysis done for %d, session %d, file no %d.\n', id, s, k);
                 
                 %% exploration analysis
                 % Arm score and Path score as indicators of alley-exploration
@@ -610,20 +606,20 @@ for id=participant_start:participant_end
 %                     sm.participant(p).session(s).trial(k).path_explored,...
 %                     sm.participant(p).session(s).trial(k).path_score);
                 
-                fprintf('Exploration analysis done for %d, session %d, file no %d.\n', id, s, k);
+                % fprintf('Exploration analysis done for %d, session %d, file no %d.\n', id, s, k);
                 
                 %% set marker for excluded trials
                 % criteria: timeout, or no movement/very short trial time (i.e. path_length=0, body_rot_abs=0, or time < 3)
                 sm.participant(p).session(s).trial(k).exclude_trial_matlab=0;
-                if sm.participant(p).session(s).trial(k).chosen_alley_int==999
+                if sm.participant(p).session(s).trial(k).chosen_alley_i==999
                     sm.participant(p).session(s).trial(k).exclude_trial_matlab=1;
                     fprintf('Trial %d marked for exclusion due to timeout.\n',k);
                 elseif sm.participant(p).session(s).trial(k).condition ~=4 % not for motor control task
                     if (sm.participant(p).session(s).trial(k).path_length<=0.1 ...
-                            || sm.participant(p).session(s).trial(k).sum_body_rotation==0 ...
+                            || sm.participant(p).session(s).trial(k).rotation_xyz==0 ...
                             || sm.participant(p).session(s).trial(k).time < 3)
                         sm.participant(p).session(s).trial(k).exclude_trial_matlab=1;
-                        fprintf('Trial %d marked for exclusion due lack of movement/short trial time.\n',k);
+                        fprintf('Trial %d marked for exclusion due lack of movement or trial time < 3 sec.\n',k);
                     end
                 end
                 
@@ -646,32 +642,33 @@ for id=participant_start:participant_end
                 %% For motor control navigation trial
                 %% compute variables depending on the trial's settings
                 % ideal path coordinates & length
-                x_line_motor=[sm.coord.practise.start_x; sm.coord.practise.goal_x]; y_line_motor=[sm.coord.practise.start_y; sm.coord.practise.goal_y];
-                sm.participant(p).session(s).trial(k).support.ideal_path_length=computePathLength(x_line_motor,y_line_motor);
+                x_line_motor=[sm.coord.practise.start_x; sm.coord.practise.goal_x]; 
+                y_line_motor=[sm.coord.practise.start_y; sm.coord.practise.goal_y];
+                ideal_motor_path_length=computePathLength(x_line_motor,y_line_motor);
                 
                 % interpolate data for further analysis
                 % using 'interparc' function by John D'Errico (Matlab File Exchanger)
                 [xi_al,yi_al]=interpolateData(x_line_motor,y_line_motor,...
                     sm.participant(p).session(s).trial(k).support.ideal_path_length);
+                clear x_line_motor y_line_motor; 
                 
-                %% time analysis: already done
-                
-                %% coordinate analysis using x-/y-coordinates
-                % Path analysis
-                sm.participant(p).session(s).trial(k).path_length=0; % reset/initiate variables
-                for i=1:sdata_length
-                    % PATH to all TARGETS
-                    % cumulative distance traveled (used in path accuracy)
-                    sm.participant(p).session(s).trial(k).path_length=sm.participant(p).session(s).trial(k).path_length+sum(computeDistance(x(i),x(i+1),y(i),y(i+1)));
-                end
+                %% time analysis
+                % TIME
+                sm.participant(p).session(s).trial(k).time=computeTime(t(1),t(end));
+
+                %% standard coordinate analysis using x-/y-coordinates
+                % PATH LENGTH to all targets
+                sm.participant(p).session(s).trial(k).path_length=computePathLength(x,y); 
                               
-                % PATH ACCURACY to all TARGETS
-                sm.participant(p).session(s).trial(k).path_accuracy=computeDeviationToIdealValue(sm.participant(p).session(s).trial(k).path_length,sm.participant(p).session(s).trial(k).support.ideal_path_length);
+                % PATH LENGTH ERROR to all target
+                sm.participant(p).session(s).trial(k).path_length_error=computeDeviationToIdealValue(...
+                    sm.participant(p).session(s).trial(k).path_length, ideal_motor_path_length);
+                clear ideal_motor_path_length;
                  
                 % VELOCITY
                 sm.participant(p).session(s).trial(k).velocity=sm.participant(p).session(s).trial(k).path_length/sm.participant(p).session(s).trial(k).time;
                 
-                fprintf('Motor control analysis done for %d, session %d, file no %d.\n', id, s, k);
+                % fprintf('Motor control analysis done for %d, session %d, file no %d.\n', id, s, k);
                 
                 %% create plot 
                 plotMotorControlTrial(sm.participant(p).session(s).trial(k).trial_num,...
