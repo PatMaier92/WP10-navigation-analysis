@@ -1,8 +1,8 @@
-function path_length=computeIdealPathLength(x_line, y_line)
-% computeIdealPathLength Calculates sum of distance traveled between points.
+function path_length=computePathLength(x_line, y_line)
+% computePathLength Calculates sum of distance traveled between points.
 %
 % Input: 
-% o_x_line, o_y_line are vectors with x-/y-coordinate points, i.e. a path. 
+% x_line, y_line are vectors with x-/y-coordinate points, i.e. a path. 
 %
 % Returns:  
 % Path length as summation of distance between points (float).

@@ -382,21 +382,8 @@ for id=participant_start:participant_end
                                
                 %% standard coordinate analysis using x-/y-coordinates
                 % Path analysis
-                sm.participant(p).session(s).trial(k).path_length=0; total_dist_to_goal=0; total_dist_to_goal_ego=0; total_dist_to_chosen_goal=0; % reset/initiate variables
-                for i=1:sdata_length
-                    % PATH to target
-                    % cumulative distance traveled (used in path accuracy)
-                    sm.participant(p).session(s).trial(k).path_length=sm.participant(p).session(s).trial(k).path_length+computeDistance(x(i),x(i+1),y(i),y(i+1));
-%                     % DISTANCE to CORRECT target
-%                     % cumulative distance to target (used in distance analysis)
-%                     total_dist_to_goal=total_dist_to_goal+computeDistance(x(i),sm.participant(p).session(s).trial(k).goal_x,y(i),sm.participant(p).session(s).trial(k).goal_y);
-%                     % DISTANCE to EGOCENTRIC target
-%                     % cumulative distance to egocentric target (used in distance analysis)
-%                     total_dist_to_goal_ego=total_dist_to_goal_ego+computeDistance(x(i),sm.participant(p).session(s).trial(k).support.goal_x_ego,y(i),sm.participant(p).session(s).trial(k).support.goal_y_ego);
-%                     % DISTANCE to CHOSEN target
-%                     % cumulative distance to chosen target (used in distance analysis)
-%                     total_dist_to_chosen_goal=total_dist_to_chosen_goal+computeDistance(x(i),x(end),y(i),y(end));
-                end
+                % PATH LENGTH 
+                sm.participant(p).session(s).trial(k).path_length=computePathLength(x,y); 
                 
                 % Distance analysis
                 % FINAL DISTANCE to CORRECT target
@@ -752,7 +739,7 @@ for id=participant_start:participant_end
                 %% compute variables depending on the trial's settings
                 % ideal path coordinates & length
                 x_line_motor=[sm.coord.practise.start_x; sm.coord.practise.goal_x]; y_line_motor=[sm.coord.practise.start_y; sm.coord.practise.goal_y];
-                sm.participant(p).session(s).trial(k).support.ideal_path_length=computeIdealPathLength(x_line_motor,y_line_motor);
+                sm.participant(p).session(s).trial(k).support.ideal_path_length=computePathLength(x_line_motor,y_line_motor);
                 
                 % interpolate data for further analysis
                 % using 'interparc' function by John D'Errico (Matlab File Exchanger)

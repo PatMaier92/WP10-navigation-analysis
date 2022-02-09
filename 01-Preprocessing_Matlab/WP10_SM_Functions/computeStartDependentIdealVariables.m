@@ -103,7 +103,7 @@ for c=1:col
 end
 
 % calculate ideal ego path length value (external function)
-ideal_ego_path=computeIdealPathLength(x_line_ego, y_line_ego);
+ideal_ego_path=computePathLength(x_line_ego, y_line_ego);
 
 %% shortest path from actual start 
 start_node=start;
@@ -137,13 +137,13 @@ node_y=cp_polyshape.Vertices(vertexid,2);
 % extract xy-coordinates and add goal location xy-coordinates 
 x_line_all_nodes=[graph_x(node_path) chosen_x];
 y_line_all_nodes=[graph_y(node_path) chosen_y];
-path_length_all_nodes=computeIdealPathLength(x_line_all_nodes, y_line_all_nodes);
+path_length_all_nodes=computePathLength(x_line_all_nodes, y_line_all_nodes);
 
 % check if it is really the shortest path
 % try path excluding last node 
 x_line_not_last_node=[graph_x(node_path(1:end-1)) chosen_x];
 y_line_not_last_node=[graph_y(node_path(1:end-1)) chosen_y];
-path_length_without_last_nodes=computeIdealPathLength(x_line_not_last_node, y_line_not_last_node);
+path_length_without_last_nodes=computePathLength(x_line_not_last_node, y_line_not_last_node);
 
 % interpolate data (for last segment of path excluding last node) 
 % using 'interparc' function by John D'Errico (Matlab File Exchanger) 
