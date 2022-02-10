@@ -149,6 +149,7 @@ if ~exist('sm','var')
 else
     p=0; % dummy value 
 end
+tic; 
 
 %% Block 2: Data preprocessing
 for id=participant_start:participant_end
@@ -168,7 +169,7 @@ for id=participant_start:participant_end
     
     % loop over sessions 
     for s=1:n_sessions        
-        %% individual input and output folder
+        %% set individual input and output folder
         % input folder
         input_folder=[data_folder '\' num2str(id) '\S00' num2str(s)]; 
         if ~exist(input_folder, 'dir')
@@ -183,7 +184,7 @@ for id=participant_start:participant_end
             fprintf('Your output folder for participant %d did not exist, a new folder was created.\n', id);
         end
         
-        %% read-in trial file
+        %% read-in trial results file
         opts=detectImportOptions([input_folder, '\trial_results.csv']);
         opts=setvaropts(opts,'timestamp','InputFormat','MM/dd/uuuu hh:mm:ss aa');
         trial_data=readtable([input_folder, '\trial_results.csv'], opts); clear opts; 
@@ -204,25 +205,15 @@ for id=participant_start:participant_end
             clear log_data opts; 
         end 
         
-        %% read-in individual tracker trial files
-        d=dir(fullfile(input_folder, '*.xlsx')); % every .xlsx is detected --> change if different file-format
-        
-        % first time: clean and convert csv to xlsx files %% TBD: do not
-        % save this but do it as part of data load 
-        if isempty(d)
-            % preprocess individual tracker trial csv files
-            convertTrackerToXLSX(input_folder,id,sm.participant(p).group_s,s);
-            % update d
-            d=dir(fullfile(input_folder, '*.xlsx'));
-        end
-        
-        files={d.name};
+        %% get individual trial tracker file names 
+        d = dir(fullfile(input_folder, 'trackedpoint_*.csv'));
+        files = {d.name}; clear d;
         
         % loop over trials 
         for k=1:numel(files)
             name=files{k};
             
-            % for practise only process trial 2 (motor control task)
+            % for session 3 only process trial 2 (motor control task)
             if s==3
                 pattern=("_T001"|"_T003"|"_T004"|"_T005"|"_T006"|"_T007");
                 if contains(name, pattern)
@@ -230,9 +221,10 @@ for id=participant_start:participant_end
                 end
             end
             
-            % read-in data
+            % read-in and clean trial tracker data
             data=readtable(fullfile(input_folder, name));
-            
+            data=cleanTrialTrackerFile(data,s); 
+        
             % get sampling rate
             sampling_rate_original=zeros(length(data.time)-1,1);
             for i=1:length(data.time)-1
@@ -699,12 +691,13 @@ for id=participant_start:participant_end
             clear x* y* t r name;
         end   
         
-        clear d files trial_data input_folder; 
+        clear files trial_data input_folder; 
         
         fprintf('Analysis done for %d, session %d.\n', id, s);
     end    
 end
 
 % save(file_path, 'sm') 
- 
+toc; 
+
 clear; 
