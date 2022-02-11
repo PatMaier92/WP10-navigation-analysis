@@ -5,8 +5,9 @@ addpath(genpath(pwd)) % add subfolder functions to path
 % @ date 2019-10-01 @ author Deetje Iggena
 % @ date 2020-11-06 update by @ Patrizia Maier & now tracked by git
 % for Starmaze version WP10 Frankfurt
-% requires Matlab 2021a or later
-% requires Signal Processing Toolbox for downsample function
+% requires Matlab 2021a or later (for shortestpath())
+% requires Signal Processing Toolbox for downsample() and dtw()
+% requires Text Analytics Toolbox for editDistance()
 
 % The script requires .csv files as input.
 % One tracker file per trial with timestamp, x- and y-coordinates for movememt
@@ -540,8 +541,39 @@ for id=participant_start:participant_end
                 
                 % fprintf('Success performance analysis done for %d, session %d, file no %d.\n', id, s, k);
                 
-                %% analysis of exploration behavior %% TBD CHECK IF NECESSARY %%
+                %% analysis of exploration behavior             
+                % compute short zone sequence (based on 15 zones) 
+                % note code: alleys (ACEGI), rectangles (BDFHI), triangles (12345)
+                [seq_15]=computeZoneSequence(x, y, sm.coord.alley_full_x, sm.coord.alley_full_y,...
+                    sm.coord.alley_half_out_x, sm.coord.alley_half_out_y,...
+                    sm.coord.alley_half_in_x, sm.coord.alley_half_in_y,...
+                    sm.coord.rec_x, sm.coord.rec_y, sm.coord.tri_x, sm.coord.tri_y, 15); 
+
+                % compute long zone sequence (based on 20 zones) 
+                % note code: outer alleys (ACEGI), inner alleys (acegi),
+                % rectangles (BDFHI), triangles (12345)
+                [seq_20]=computeZoneSequence(x, y, sm.coord.alley_full_x, sm.coord.alley_full_y,...
+                    sm.coord.alley_half_out_x, sm.coord.alley_half_out_y,...
+                    sm.coord.alley_half_in_x, sm.coord.alley_half_in_y,...
+                    sm.coord.rec_x, sm.coord.rec_y, sm.coord.tri_x, sm.coord.tri_y, 20); 
                 
+                % editDistance(seq_15, seq_20) 
+                
+                % PATH EXPLORATION 
+                % number of explored zones (i.e. re-entries not counted)
+                sm.participant(p).session(s).trial(k).zones_explored=length(unique(seq_20));
+                
+                % PATH SCORE 
+                % number of entered zones (i.e. re-entries counted) 
+                sm.participant(p).session(s).trial(k).zones_entered=length(seq_20);
+                
+%                 % Direct path to target
+%                 [ideal_no, match_abs, ...
+%                     sm.participant(p).session(s).trial(k).direct_path_percent, ...
+%                     sm.participant(p).session(s).trial(k).direct_path]=sm_wp10_directPathCalc(...
+%                     uniq_alley, uniq_rect, alley_entry_mat, rectangle_entry_mat);
+%                 
+%                 % TBD CHECK IF NECESSARY %% 
 %                 % zone analysis for ideal paths
 %                 [~, ~, sm.participant(p).session(s).trial(k).zone.ideal_alley_entry, ...
 %                     ~]=computeStaticZoneValues(xi_al, yi_al,...
@@ -618,19 +650,7 @@ for id=participant_start:participant_end
                 
                 % fprintf('Zone analysis done for %d, session %d, file no %d.\n', id, s, k);
                 
-                %% exploration analysis
-                % Path score as indicators of exploration
-%                 sm.participant(p).session(s).trial(k).zones_explored=computeZoneExploration(...
-%                     sm.participant(p).session(s).trial(k).zone.alley_zone_out,...
-%                     sm.participant(p).session(s).trial(k).zone.alley_zone_in,...
-%                     sm.participant(p).session(s).trial(k).zone.rectangle_zone,...
-%                     sm.participant(p).session(s).trial(k).zone.triangle_zone);
-%                 sm.participant(p).session(s).trial(k).zones_entered=computeZoneScore(...
-%                     sm.participant(p).session(s).trial(k).zone.alley_entry_out,...
-%                     sm.participant(p).session(s).trial(k).zone.alley_entry_in,...
-%                     sm.participant(p).session(s).trial(k).zone.rectangle_entry,...
-%                     sm.participant(p).session(s).trial(k).zone.triangle_entry);
-                 
+                %% exploration analysis                
 %                 % Direct path to target
 %                 [ideal_no, match_abs, ...
 %                     sm.participant(p).session(s).trial(k).direct_path_percent, ...
