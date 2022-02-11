@@ -393,7 +393,13 @@ for id=participant_start:participant_end
                     xi_al, yi_al, x, y, sm.participant(p).session(s).trial(k).final_distance, true);  
                 % with unique x-/y-trajectory (duplicates due to waiting and rotation are removed)              
                 [sm.participant(p).session(s).trial(k).adj_path_distance, ~] = computePathDistance(...
-                    xi_al, yi_al, x_unique, y_unique, sm.participant(p).session(s).trial(k).final_distance, true);        
+                    xi_al, yi_al, x_unique, y_unique, sm.participant(p).session(s).trial(k).final_distance, true);  
+                
+                % Exploratory: DYNAMIC TIME WARPING DISTANCE for PATH 
+                % with full x-/y-trajectory
+                sm.participant(p).session(s).trial(k).dtw_path_distance = dtw([xi_al,yi_al]',[x,y]');
+                % with unique x-/y-trajectory (duplicates due to waiting and rotation are removed) 
+                sm.participant(p).session(s).trial(k).adj_dtw_path_distance = dtw([xi_al,yi_al]',[x_unique,y_unique]');
                 
                 % AVERAGE DISTANCE to TARGET 
                 % target distance 
@@ -534,8 +540,30 @@ for id=participant_start:participant_end
                 
                 % fprintf('Success performance analysis done for %d, session %d, file no %d.\n', id, s, k);
                 
-                %% analysis of exploration behavior
-%                 % zones %% TBD CHECK IF NECESSARY %%
+                %% analysis of exploration behavior %% TBD CHECK IF NECESSARY %%
+                
+%                 % zone analysis for ideal paths
+%                 [~, ~, sm.participant(p).session(s).trial(k).zone.ideal_alley_entry, ...
+%                     ~]=computeStaticZoneValues(xi_al, yi_al,...
+%                     zeros(length(xi_al),1), sm.coord.alley_full_x, sm.coord.alley_full_y);
+%                 
+%                 [~, ~, sm.participant(p).session(s).trial(k).zone.ideal_rectangle_entry, ...
+%                     ~]=computeStaticZoneValues(xi_al, yi_al,...
+%                     zeros(length(xi_al),1), sm.coord.rec_x, sm.coord.rec_y);
+%                 
+%                 [ideal_alley_entry_mat]=computeDynamicZoneValues(xi_al,...
+%                     yi_al, sm.coord.alley_full_x, sm.coord.alley_full_y);
+%                 [uniq_alley]=unique(ideal_alley_entry_mat,'rows');
+%                 
+%                 [ideal_rectangle_entry_mat]=computeDynamicZoneValues(xi_al,...
+%                     yi_al, sm.coord.rec_x, sm.coord.rec_y);
+%                 [uniq_rect]=unique(ideal_rectangle_entry_mat,'rows');
+%                 if mod(sm.participant(p).session(s).trial(k).start_i,2) % even number = outer start
+%                     uniq_rect=uniq_rect(2:end,:); % remove first row (start) for outer starts, as it's always zero
+%                 end
+%                 
+%                 
+%                 % zone analysis for actual paths 
 %                 [sm.participant(p).session(s).trial(k).zone.alley_zone,...
 %                     sm.participant(p).session(s).trial(k).zone.rel_alley_zone,...
 %                     sm.participant(p).session(s).trial(k).zone.alley_entry,...
