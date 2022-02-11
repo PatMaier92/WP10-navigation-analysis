@@ -7,7 +7,7 @@ function [seq]=computeZoneSequence(x,y,zone_alley_x,zone_alley_y,...
 % Input: 
 % x, y are x-/y-coordinates (numeric vector)
 % zone_*_x, zone_*_y are x-/y-coordinates (numeric matrix). 
-% mode is either 15 zones or 20 zones (integer).
+% mode is either 10 zones or 20 zones (integer).
 % 
 % Returns:
 % seq is path sequence of zone entries (string). 
@@ -15,7 +15,7 @@ function [seq]=computeZoneSequence(x,y,zone_alley_x,zone_alley_y,...
 seq=[];
 
 % check mode 
-if ~(mode==15 || mode==20)
+if ~(mode==10 || mode==20)
     disp('Unknown mode in computeZoneSequence. Please enter valid number (mode=15 or mode=20).');
     return;
 end 
@@ -29,36 +29,36 @@ code_tri       = ['1','2','3','4','5'];
 % compute path sequence 
 [~,col]=size(zone_alley_x);
 for i=1:length(x)
-    % alleys (mode: 15 zones)
-    if mode==15
-        for c=1:col
-            if evaluate_zone(i, c, zone_alley_x, zone_alley_y)
-                add_zone(c, code_alley); continue;
-            end
-        end
-    % outer and inner alleys (mode: 20 zones)
-    elseif mode==20
-        for c=1:col
-            if evaluate_zone(i, c, zone_alley_out_x, zone_alley_out_y)
-                add_zone(c, code_alley); continue;
-            end
-        end
-        for c=1:col
-            if evaluate_zone(i, c, zone_alley_in_x, zone_alley_in_y)
-                add_zone(c, code_alley_in); continue;
-            end
-        end
-    end
     % rectangles
     for c=1:col
         if evaluate_zone(i, c, zone_rect_x, zone_rect_y)
             add_zone(c, code_rect); continue;
         end
     end
-    % triangles 
-    for c=1:col
-        if evaluate_zone(i, c, zone_tri_x, zone_tri_y)
-            add_zone(c, code_tri); continue;
+    % plus alleys for mode 10 zones
+    if mode==10
+        for c=1:col
+            if evaluate_zone(i, c, zone_alley_x, zone_alley_y) 
+                add_zone(c, code_alley); continue;
+            end
+        end
+    % plus outer alleys, inner alleys and triangles for mode 20 zones
+    elseif mode==20
+        for c=1:col
+            if evaluate_zone(i, c, zone_alley_out_x, zone_alley_out_y) 
+                add_zone(c, code_alley); continue;
+            end
+        end
+        for c=1:col
+            if evaluate_zone(i, c, zone_alley_in_x, zone_alley_in_y) 
+                add_zone(c, code_alley_in); continue;
+            end
+        end
+        % triangles
+        for c=1:col
+            if evaluate_zone(i, c, zone_tri_x, zone_tri_y)
+                add_zone(c, code_tri); continue;
+            end
         end
     end
 end

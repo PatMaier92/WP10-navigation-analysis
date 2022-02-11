@@ -327,12 +327,12 @@ for id=participant_start:participant_end
                 
                 [xi_eg,yi_eg]=interpolateData(x_line_ego, y_line_ego, ...
                     sm.participant(p).session(s).trial(k).ideal_ego_path_length);
-                
+ 
 %                 % test plot
 %                 figure;
 %                 plot(sm.coord.full_poly);
 %                 hold on
-%                 plot(x_line, y_line, 'k+', xi_al, yi_al, 'k-',...
+%                 plot(x_line, y_line, 'k+', xi_al, yi_al, 'kx',...
 %                 x_line_ego, y_line_ego, 'rx', xi_eg, yi_eg, 'r-',...
 %                 x_line_chosen, y_line_chosen, 'bx', xi_ch, yi_ch, 'b-');
 %                 xlim([0 1]);
@@ -542,12 +542,18 @@ for id=participant_start:participant_end
                 % fprintf('Success performance analysis done for %d, session %d, file no %d.\n', id, s, k);
                 
                 %% analysis of exploration behavior             
-                % compute short zone sequence (based on 15 zones) 
-                % note code: alleys (ACEGI), rectangles (BDFHI), triangles (12345)
-                [seq_15]=computeZoneSequence(x, y, sm.coord.alley_full_x, sm.coord.alley_full_y,...
+                % compute short zone sequence (10 zones) for path 
+                % note code: alleys (ACEGI), rectangles (BDFHI)
+                [seq_10]=computeZoneSequence(x, y, sm.coord.alley_full_x, sm.coord.alley_full_y,...
                     sm.coord.alley_half_out_x, sm.coord.alley_half_out_y,...
                     sm.coord.alley_half_in_x, sm.coord.alley_half_in_y,...
-                    sm.coord.rec_x, sm.coord.rec_y, sm.coord.tri_x, sm.coord.tri_y, 15); 
+                    sm.coord.rec_x, sm.coord.rec_y, sm.coord.tri_x, sm.coord.tri_y, 10); 
+                
+                % compute short zone sequence (10 zones) for IDEAL path 
+                [ideal_seq_10]=computeZoneSequence(x_line, y_line, sm.coord.alley_full_x, sm.coord.alley_full_y,...
+                    sm.coord.alley_half_out_x, sm.coord.alley_half_out_y,...
+                    sm.coord.alley_half_in_x, sm.coord.alley_half_in_y,...
+                    sm.coord.rec_x, sm.coord.rec_y, sm.coord.tri_x, sm.coord.tri_y, 10);
 
                 % compute long zone sequence (based on 20 zones) 
                 % note code: outer alleys (ACEGI), inner alleys (acegi),
@@ -556,9 +562,7 @@ for id=participant_start:participant_end
                     sm.coord.alley_half_out_x, sm.coord.alley_half_out_y,...
                     sm.coord.alley_half_in_x, sm.coord.alley_half_in_y,...
                     sm.coord.rec_x, sm.coord.rec_y, sm.coord.tri_x, sm.coord.tri_y, 20); 
-                
-                % editDistance(seq_15, seq_20) 
-                
+  
                 % PATH EXPLORATION 
                 % number of explored zones (i.e. re-entries not counted)
                 sm.participant(p).session(s).trial(k).zones_explored=length(unique(seq_20));
@@ -567,12 +571,13 @@ for id=participant_start:participant_end
                 % number of entered zones (i.e. re-entries counted) 
                 sm.participant(p).session(s).trial(k).zones_entered=length(seq_20);
                 
-%                 % Direct path to target
-%                 [ideal_no, match_abs, ...
-%                     sm.participant(p).session(s).trial(k).direct_path_percent, ...
-%                     sm.participant(p).session(s).trial(k).direct_path]=sm_wp10_directPathCalc(...
-%                     uniq_alley, uniq_rect, alley_entry_mat, rectangle_entry_mat);
-%                 
+                % SHORTEST PATH to target
+                % compute Edit Distance (rule: Levenshtein) 
+                sm.participant(p).session(s).trial(k).zone_editdistance=editDistance(seq_10, ideal_seq_10); 
+                % TBD (?) sm.participant(p).session(s).trial(k).zone_editdistance_error
+                sm.participant(p).session(s).trial(k).direct_path=sm.participant(p).session(s).trial(k).zone_editdistance==0; 
+
+               
 %                 % TBD CHECK IF NECESSARY %% 
 %                 % zone analysis for ideal paths
 %                 [~, ~, sm.participant(p).session(s).trial(k).zone.ideal_alley_entry, ...
