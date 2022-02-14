@@ -40,7 +40,7 @@ else
     goal_i = find(contains(goal_names, alley_s)); 
     if isempty(goal_i)
         goal_i = 999;
-        fprintf('Unknown goal int input %s in computeChosenGoals.m. Set to 999.\n', goal_s);
+        %fprintf('Unknown goal int input %s in computeChosenGoals.m. Set to 999.\n', goal_s);
     end 
 
     % correct object at chosen location 
