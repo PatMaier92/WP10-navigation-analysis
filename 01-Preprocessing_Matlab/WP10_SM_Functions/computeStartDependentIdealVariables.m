@@ -1,7 +1,6 @@
-function [goal_x_ego, goal_y_ego, x_line, y_line, x_line_chosen, y_line_chosen,...
+function [goal_x_ego, goal_y_ego, x_line, y_line, o_x_line, o_y_line, x_line_chosen, y_line_chosen,...
     x_line_ego, y_line_ego, ideal_path, ideal_path_chosen, ideal_ego_path, ego_alley]=computeStartDependentIdealVariables(Graph,...
-    graph_x, graph_y, start, goal, chosen_x, chosen_y,...
-    alley_full_x, alley_full_y, rec_x, rec_y, cp_polyshape, polyshape_array)
+    graph_x, graph_y, start, goal, chosen_x, chosen_y, alley_full_x, alley_full_y, rec_x, rec_y, cp_polyshape, polyshape_array)
 % computeStartDependentIdealVariables: Function for determining starting point dependent
 % variables in Starmaze WP1. Requires Matlab 2021a for shortestPath function.
 %
@@ -10,13 +9,14 @@ function [goal_x_ego, goal_y_ego, x_line, y_line, x_line_chosen, y_line_chosen,.
 % graph_x, graph_y are the underlying x-/y-coordinates 
 % start, goal are identifying integers
 % chosen_x, chosen_y are final x-/y-coordinates
-% alley_full_x, alley_full_y, rec_x, rec_y are x-/y-coordinate vectors in polyshape-ready form (i.e. repeating initial x/y for closed shape)
-% cp_polyshape is inner ring as one combined polyshape, polyshape_array is array of all polyshape elements
+% alley_full_*, rec_* are x-/y-coordinate vectors in polyshape-ready form (i.e. repeating initial x/y for closed shape)
+% cp_polyshape is inner ring as one combined polyshape
+% polyshape_array is array of all polyshape elements
 %
 % Returns:
 % goal_x_ego, goal_y_ego are x-/y-coordinates of the egocentric goal
-% x_line, y_line, x_line_ego, y_line_ego, x_line_chose, y_line_chosen are vectors with ideal x-/y-coordinates
-% ideal_path, ideal_chosen_path, ideal_ego_path are ideal distance values
+% *x_line*, *y_line* are vectors with ideal x-/y-coordinates
+% ideal_path* are ideal distance values
 % ego_alley is identifier for hypothetical egocentric goal alley
 
 %% shortest path from original start 
