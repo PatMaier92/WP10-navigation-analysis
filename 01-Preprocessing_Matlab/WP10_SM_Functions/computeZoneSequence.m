@@ -16,7 +16,7 @@ seq=[];
 
 % check mode 
 if ~(mode==10 || mode==20)
-    disp('Unknown mode in computeZoneSequence. Please enter valid number (mode=15 or mode=20).');
+    disp('Unknown mode in computeZoneSequence. Please enter valid number (mode=10 or mode=20).');
     return;
 end 
 
