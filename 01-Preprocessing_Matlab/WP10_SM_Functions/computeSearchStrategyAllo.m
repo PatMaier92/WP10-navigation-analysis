@@ -26,7 +26,7 @@ elseif editDistance(sequence,ideal_sequence_egocentric)==0 % 3=direct egocentric
     search_strategy_no=3;
 elseif zones_explored==zones_entered && correct_ego_goal % 4=detour egocentric 
     search_strategy_no=4; 
-elseif editDistance(sequence(strfind(seq_10, 'G'):end),ideal_sequence_from_origin)==0 % back to start alley and then to goal 
+elseif editDistance(sequence(strfind(sequence, 'G'):end),ideal_sequence_from_origin)==0 % back to start alley and then to goal 
     search_strategy_no=5;
 end
 
