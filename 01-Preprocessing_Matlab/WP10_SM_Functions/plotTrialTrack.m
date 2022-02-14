@@ -1,5 +1,5 @@
 function plotTrialTrack(trial,session,condition,start,id,Group,correct_goal,shortest_path,strategy,...
-    polyshape,x,y,x_line_ego,y_line_ego,x_line,y_line,goal_x,goal_y,folder)
+    polyshape,x,y,x_line,y_line,x_line_ego,y_line_ego,x_line_chosen,y_line_chosen,goal_x,goal_y,folder)
 % plotTrialTrack Creates track plots for each individual trial.
 %
 % Input: Information for creating and naming the plot
@@ -23,12 +23,14 @@ viscircles([goal_x goal_y],0.01);
 if condition==0 || condition==2 || condition==3 ||(condition==1 && ~mod(start,2)) % training, egocentric or allocentric inner starts 
     line1=plot(x,y,'k -', 'LineWidth', 1);
     line2=plot(x_line,y_line,'r -.', 'LineWidth', 1);
-    legend([line1 line2],{'actual path','ideal path'});
+    line3=plot(x_line_chosen,y_line_chosen,'b .:', 'LineWidth', 1);
+    legend([line1 line2 line3],{'actual path','ideal path target','ideal path chosen'});
 else % allocentric outer starts
     line1=plot(x,y,'k -', 'LineWidth', 1);
     line2=plot(x_line,y_line,'r -.', 'LineWidth', 1);
-    line3=plot(x_line_ego,y_line_ego,'g .:', 'LineWidth', 0.7);
-    legend([line1 line2 line3],{'actual path','ideal path','egocentric path'});
+    line3=plot(x_line_chosen,y_line_chosen,'b .:', 'LineWidth', 1);
+    line4=plot(x_line_ego,y_line_ego,'g .:', 'LineWidth', 1);
+    legend([line1 line2 line3 line4],{'actual path','ideal path target','ideal path chosen','ideal path ego'});
 end
 
 if condition==0
