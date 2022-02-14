@@ -341,42 +341,6 @@ for id=participant_start:participant_end
                     sm.coord.rec_x, sm.coord.rec_y, sm.coord.tri_x, sm.coord.tri_y, 10);
                                
                 %% Block 3: Data analysis, i.e. calculcation of variables  
-                %% zone analysis for exploration behavior             
-                % compute path zone sequence (10 zones) for actual data 
-                [seq_10]=computeZoneSequence(x, y, sm.coord.alley_full_x, sm.coord.alley_full_y,...
-                    sm.coord.alley_half_out_x, sm.coord.alley_half_out_y, sm.coord.alley_half_in_x, sm.coord.alley_half_in_y,...
-                    sm.coord.rec_x, sm.coord.rec_y, sm.coord.tri_x, sm.coord.tri_y, 10); 
-                
-                % compute path zone sequence (20 zones) for actual data 
-                [seq_20]=computeZoneSequence(x, y, sm.coord.alley_full_x, sm.coord.alley_full_y,...
-                    sm.coord.alley_half_out_x, sm.coord.alley_half_out_y, sm.coord.alley_half_in_x, sm.coord.alley_half_in_y,...
-                    sm.coord.rec_x, sm.coord.rec_y, sm.coord.tri_x, sm.coord.tri_y, 20); 
-  
-                % SCORE for ZONE EXPLORATION 
-                % number of explored zones (i.e. re-entries not counted)
-                sm.participant(p).session(s).trial(k).zones_explored=length(unique(seq_20));
-                
-                % SCORE for ZONE ENTRIES 
-                % number of entered zones (i.e. re-entries counted) 
-                sm.participant(p).session(s).trial(k).zones_entered=length(seq_20);
-                
-                % EDIT DISTANCE 
-                % compute edit distance costs (i.e. deviation between ideal and actual path zone sequence) 
-                % method: Levenshtein - lowest number of insertions, deletions, and substitutions
-                sm.participant(p).session(s).trial(k).zone_editdistance=editDistance(seq_10, ideal_seq_10);
-                
-                % SHORTEST PATH to TARGET
-                % shortest path to correct target given when edit distance of zero (no deviation)
-                sm.participant(p).session(s).trial(k).shortest_path_correct_alley=sm.participant(p).session(s).trial(k).zone_editdistance==0; 
-                        
-                % SEARCH STRATEGY CATEGORY
-                % 1 = direct; 2 = detour; 3 = reoriented
-                [sm.participant(p).session(s).trial(k).search_strategy]=computeSearchStrategy(...
-                    sm.participant(p).session(s).trial(k).shortest_path_correct_alley,...
-                    sm.participant(p).session(s).trial(k).zones_explored, sm.participant(p).session(s).trial(k).zones_entered, ...
-                    seq_10, ideal_seq_10_chosen); 
-                % fprintf('Exploration analysis done for %d, session %d, file no %d.\n', id, s, k);
-                
                 %% time analysis
                 % TIME
                 sm.participant(p).session(s).trial(k).time=computeTime(t(1),t(end));
@@ -461,8 +425,7 @@ for id=participant_start:participant_end
                 % fprintf('Additional: Distance analysis to chosen target done for %d, session %d, file no %d.\n', id, s, k);
           
                 %% additional distance analysis for allocentric probe trials with potential egocentric response
-                % excludes allocentric trials with inner starts (even integer) as there
-                % is no clear egocentric path/goal location from these starts 
+                % excludes allocentric trials with inner starts because no clear egocentric path/goal location from these starts 
                 if sm.participant(p).session(s).trial(k).condition==1 && mod(sm.participant(p).session(s).trial(k).start_i,2)
                     % FINAL DISTANCE to EGOCENTRIC target
                     sm.participant(p).session(s).trial(k).final_distance_ego=computeDistance(...
@@ -540,6 +503,52 @@ for id=participant_start:participant_end
                 clear criterion; 
                 
                 % fprintf('Success performance analysis done for %d, session %d, file no %d.\n', id, s, k);           
+                
+                %% zone analysis for exploration behavior             
+                % compute path zone sequence (10 zones) for actual data 
+                [seq_10]=computeZoneSequence(x, y, sm.coord.alley_full_x, sm.coord.alley_full_y,...
+                    sm.coord.alley_half_out_x, sm.coord.alley_half_out_y, sm.coord.alley_half_in_x, sm.coord.alley_half_in_y,...
+                    sm.coord.rec_x, sm.coord.rec_y, sm.coord.tri_x, sm.coord.tri_y, 10); 
+                
+                % compute path zone sequence (20 zones) for actual data 
+                [seq_20]=computeZoneSequence(x, y, sm.coord.alley_full_x, sm.coord.alley_full_y,...
+                    sm.coord.alley_half_out_x, sm.coord.alley_half_out_y, sm.coord.alley_half_in_x, sm.coord.alley_half_in_y,...
+                    sm.coord.rec_x, sm.coord.rec_y, sm.coord.tri_x, sm.coord.tri_y, 20); 
+  
+                % SCORE for ZONE EXPLORATION 
+                % number of explored zones (i.e. re-entries not counted)
+                sm.participant(p).session(s).trial(k).zones_explored=length(unique(seq_20));
+                
+                % SCORE for ZONE ENTRIES 
+                % number of entered zones (i.e. re-entries counted) 
+                sm.participant(p).session(s).trial(k).zones_entered=length(seq_20);
+                
+                % EDIT DISTANCE 
+                % compute edit distance costs (i.e. deviation between ideal and actual path zone sequence) 
+                % method: Levenshtein - lowest number of insertions, deletions, and substitutions
+                sm.participant(p).session(s).trial(k).zone_editdistance=editDistance(seq_10, ideal_seq_10);
+                
+                % SHORTEST PATH to TARGET
+                % shortest path to correct target given when edit distance of zero (no deviation)
+                sm.participant(p).session(s).trial(k).shortest_path_correct_alley=sm.participant(p).session(s).trial(k).zone_editdistance==0; 
+                        
+                % SEARCH STRATEGY category
+                % 1 = direct; 2 = detour; 3 = reoriented
+                [sm.participant(p).session(s).trial(k).search_strategy]=computeSearchStrategy(...
+                    sm.participant(p).session(s).trial(k).shortest_path_correct_alley,...
+                    sm.participant(p).session(s).trial(k).zones_explored, sm.participant(p).session(s).trial(k).zones_entered, ...
+                    seq_10, ideal_seq_10_chosen); 
+                
+                % additionally: SEARCH STRATEGY in ALLOCENTRIC probe trials with potential EGOCENTRIC response
+                if sm.participant(p).session(s).trial(k).condition==1 && mod(sm.participant(p).session(s).trial(k).start_i,2)
+                    sm.participant(p).session(s).trial(k).search_strategy_allocentric=999;
+                    % TBD:
+                    % [sm.participant(p).session(s).trial(k).search_strategy_allocentric]=computeSearchStrategy(...);                
+                else 
+                    % dummy values
+                    sm.participant(p).session(s).trial(k).search_strategy_allocentric=999;
+                end 
+                % fprintf('Exploration analysis done for %d, session %d, file no %d.\n', id, s, k);
                 
                 %% set marker for excluded trials
                 % criteria: timeout, or no movement/very short trial time (i.e. path_length=0, body_rot_abs=0, or time < 3)
