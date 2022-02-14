@@ -1,5 +1,5 @@
-function sm_wp10_testfig(session,polyshape,goal_x,goal_y,start_x,start_y,goal_locs,G,graph_x,graph_y)
-% SM_WP10_TESTFIG Create Starmaze WP10 testfigure for visualization of all
+function plotTestFigure(session,polyshape,goal_x,goal_y,start_x,start_y,goal_locs,G,graph_x,graph_y)
+% plotTestFigure Create Starmaze WP10 testfigure for visualization of all
 % xy-coordinates, goals and starting points. 
 
 % assign variables for practise or starmaze plot

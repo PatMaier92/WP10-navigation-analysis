@@ -1,6 +1,5 @@
-function plotMotorControlTrial(trial,session,id,Group,...
-    pract_polyshape,goal_x,goal_y,start_x,start_y,...
-    pract_goal_locs,x,y,xi_al,yi_al,output_folder)
+function plotMotorControlTrial(trial,session,id,Group,pract_polyshape,...
+    goal_x,goal_y,start_x,start_y,pract_goal_locs,x,y,xi_al,yi_al,folder)
 % plotMotorControlTrial: Creates plot for motor control trial. 
 %
 % Input: Information for creating and naming the plot, including
@@ -11,14 +10,13 @@ function plotMotorControlTrial(trial,session,id,Group,...
 T=int2str(trial);
 Session=num2str(session);
 ID=num2str(id); 
-type=' (Motor Control)'; 
+Type=' (Motor Control)'; 
 
 wfig=figure('Position',[500 200 580 500]);
-set(gca,'xtick',[0 1],'ytick',[0 1]);
 plot(pract_polyshape);
-axis([0 1 0 1]);
+axis([0 1 0 1]); xticks(0:0.1:1); yticks(0:0.1:1); 
 hold on;
-title({[ID ', ' Group];['Session: ' Session' ', Trial: ' T type]});
+title({[ID ' (' Group ') Session: ' Session' ', Trial: ' T Type]});
 for g=1:length(goal_x)
     viscircles([goal_x(g) goal_y(g)], 0.02);
 end
@@ -38,6 +36,6 @@ hold off;
 
 % save plot
 file_name =['Motor_Plot_' Group '_' ID '_' Session '_' T '.jpeg'];
-saveas(wfig, fullfile(output_folder, file_name)); 
+saveas(wfig, fullfile(folder, file_name)); 
 
 end
