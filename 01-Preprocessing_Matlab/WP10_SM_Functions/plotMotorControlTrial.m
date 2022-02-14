@@ -12,7 +12,7 @@ Session=num2str(session);
 ID=num2str(id); 
 Type=' (Motor Control)'; 
 
-wfig=figure('Position',[500 200 580 500]);
+wfig=figure('Position',[500 200 580 500],'visible','off');
 plot(pract_polyshape);
 axis([0 1 0 1]); xticks(0:0.1:1); yticks(0:0.1:1); 
 hold on;

@@ -150,11 +150,10 @@ if ~exist('sm','var')
 else
     p=0; % dummy value 
 end
-tic; 
 
 %% Block 2: Data preprocessing
 for id=participant_start:participant_end
-    
+tic;     
     % set participant index
     if p~=1 
         % check if ID exists in data 
@@ -571,7 +570,7 @@ for id=participant_start:participant_end
                     sm.participant(p).session(s).trial(k).shortest_path_correct_alley, sm.participant(p).session(s).trial(k).search_strategy,...
                     sm.coord.full_poly, x, y, x_line_ego, y_line_ego, x_line, y_line,...
                     sm.participant(p).session(s).trial(k).goal_x, sm.participant(p).session(s).trial(k).goal_y, output_folder);
-                
+
             else 
                 %% For motor control task               
                 %% compute support variables depending on the trial's settings
@@ -613,10 +612,9 @@ for id=participant_start:participant_end
         clear files trial_data input_folder; 
         
         fprintf('Analysis done for %d, session %d.\n', id, s);
-    end    
+    end
+    toc;
 end
 
 % save(file_path, 'sm') 
-toc; 
-
 clear; 

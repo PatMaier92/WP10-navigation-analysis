@@ -20,7 +20,7 @@ hold on;
 
 viscircles([goal_x goal_y],0.01); 
 
-if condition==0 || condition==2 || (condition==1 && ~mod(start,2)) % training, egocentric or allocentric inner starts 
+if condition==0 || condition==2 || condition==3 ||(condition==1 && ~mod(start,2)) % training, egocentric or allocentric inner starts 
     line1=plot(x,y,'k -', 'LineWidth', 1);
     line2=plot(x_line,y_line,'r -.', 'LineWidth', 1);
     legend([line1 line2],{'actual path','ideal path'});
