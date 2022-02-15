@@ -21,14 +21,22 @@ data=sm.participant; clear sm;
 temp=[];
 [~,p]=size(data);
 for i=1:p
-    for j=1:length(data(i).session)-1 % TBD: integrate session 3 (motor control) with fewer variables
+    for j=1:length(data(i).session)
         [r,~]=size(struct2table(data(i).session(j).trial));
-        g_data=table(repmat(data(i).id,r,1), repmat(data(i).group,r,1), repmat(data(i).group_s,r,1), repmat(data(i).sex,r,1),...
-            repmat(data(i).sex_s,r,1), repmat(data(i).session(j).session_num,r,1),repmat(data(i).session(j).session_duration,r,1),...
-            'VariableNames',{'id' 'group' 'group_s' 'sex' 'sex_s' 'session' 'duration'});
-        t_data=struct2table(data(i).session(j).trial);
-        gt_data=[g_data t_data]; 
-        temp=vertcat(temp, gt_data); clear *_data r; 
+        g_data=table(repmat(data(i).id,r,1), repmat(data(i).group,r,1), string(repmat(data(i).group_s,r,1)), repmat(data(i).sex,r,1),...
+            string(repmat(data(i).sex_s,r,1)), repmat(data(i).session(j).session_num,r,1), repmat(data(i).session(j).session_duration,r,1),...
+            'VariableNames',{'id' 'group' 'group_s' 'sex' 'sex_s' 'session' 'duration'}); 
+        if j==3
+            t_data=struct2table(data(i).session(j).trial(2)); 
+            t_data.goal_s=[]; t_data.start_s=[];  g_data(1,:)=[]; 
+            gt_data=[g_data t_data];
+            temp=outerjoin(temp,gt_data,'MergeKeys',true);
+        else
+            t_data=struct2table(data(i).session(j).trial);
+            gt_data=[g_data t_data]; 
+            temp=vertcat(temp,gt_data);
+        end
+        clear *_data r;
     end
 end
 
