@@ -621,5 +621,7 @@ tic;
     toc;
 end
 
-% save(file_path, 'sm') 
+% % write data to xlsx file
+% writeTableToXLSX(data_folder); 
+
 clear; 
