@@ -146,7 +146,6 @@ if ~exist('sm','var')
     
     %% initialize participant index
     p=1; 
-    
 else
     p=0; % dummy value 
 end
@@ -608,16 +607,15 @@ tic;
                     sm.coord.practise.practise_goal_names, x, y , x_line_motor, y_line_motor, output_folder);
                 clear x_line_motor y_line_motor;     
             end
-             
-            save(file_path, 'sm'); 
             
             clear x* y* t r *seq* name;             
-        end   
+        end
         
         clear files trial_data input_folder; 
-        
         fprintf('Analysis done for %d, session %d.\n', id, s);
     end
+    
+    save(file_path, 'sm'); 
     toc;
 end
 
