@@ -34,7 +34,7 @@ end
 
 %% load data table or create new one 
 % load existing data
-file_name         = '\wp10_results_table.mat';
+file_name         = '\wp10_results_navigation.mat';
 file_path         = fullfile(result_folder, file_name);
 if isfile(file_path)
     load(file_path)
