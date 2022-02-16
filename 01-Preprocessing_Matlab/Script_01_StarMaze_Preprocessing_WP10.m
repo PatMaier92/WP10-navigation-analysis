@@ -17,6 +17,7 @@ addpath(genpath(pwd)) % add subfolder functions to path
 % Block 1: Set up input/output folders, Starmaze and Practise environment
 % Block 2: Data preparation 
 % Block 3: Data analysis
+% Block 4: Write data to xlsx file
 
 %% Block 1: Set up input and output folders, starmaze and practise environment 
 %% data input folder and participant information
@@ -612,7 +613,7 @@ tic;
     toc;
 end
 
-% % write data to xlsx file
+%% Block 4: Write data to xlsx file
 % [data_folder]  = setInputPath();
 % writeTableToXLSX(data_folder); 
 
