@@ -159,7 +159,7 @@ tic;
         p_ind = find([sm.participant.id]==id); 
         if isempty(p_ind) % if not: append participant data    
             [~,n]=size(sm.participant);
-            p=n+1; clear n; 
+            p=n+1; clear n p_ind; 
         else % if yes: overwrite participant data
             p=p_ind; clear p_ind;
             fprintf('Data for participant %d already existed and is overwritten now.\n', id);
@@ -615,6 +615,7 @@ tic;
         fprintf('Analysis done for %d, session %d.\n', id, s);
     end
     
+    p=0; % dummy value
     save(file_path, 'sm'); 
     toc;
 end
