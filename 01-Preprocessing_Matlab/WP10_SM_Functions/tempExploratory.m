@@ -51,3 +51,16 @@
 % xlim([0 1]);
 % ylim([0 1]);
 % hold off
+% 
+% 
+% %%% SAMPLING RATE CORRECTION in case sampling rate differs %%% 
+% %%% needs to be checked if appropriate (alternative function 'decimate', 'resample' or activate only for higher sampling rates) %%% 
+% % temporal normalization (downsampling) 
+% data = downsample(data,round(sm.participant(p).session(s).trial(k).sampling_rate*1000));
+% 
+% % new sampling rate %%% needs to be checked %%%
+% sampling_rate_new=zeros(length(data.time)-1,1);
+% for i=1:length(data.time)-1
+%     sampling_rate_new(i)=data.time(i+1)-data.time(i);
+% end
+% sm.participant(p).session(s).trial(k).new_sampling_rate=sum(sampling_rate_new)/length(sampling_rate_new);

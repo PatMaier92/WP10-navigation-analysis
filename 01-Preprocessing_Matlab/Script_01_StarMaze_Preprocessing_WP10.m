@@ -225,25 +225,16 @@ tic;
             data=readtable(fullfile(input_folder, name));
             data=cleanTrialTrackerFile(data,s); 
         
-            % get sampling rate
+            % get sampling rate 
+            % (if sampling rate differs, data needs to be corrected and 
+            % interpolated before further analysis, however,
+            % sampling rate seems pretty consistent in WP10 data)
             sampling_rate_original=zeros(length(data.time)-1,1);
             for i=1:length(data.time)-1
                 sampling_rate_original(i)=data.time(i+1)-data.time(i);
             end
             sm.participant(p).session(s).trial(k).sampling_rate=sum(sampling_rate_original)/length(sampling_rate_original);
             clear sampling_rate_original i; 
-            
-%             %%% ACTIVATE IF SAMPLING RATE DIFFERS %%% 
-%             %%% needs to be checked if appropriate (alternative function 'decimate', 'resample' or activate only for higher sampling rates) %%% 
-%             % temporal normalization (downsampling) 
-%             data = downsample(data,round(sm.participant(p).session(s).trial(k).sampling_rate*1000));
-%             
-%             % new sampling rate %%% TBC %%%
-%             sampling_rate_new=zeros(length(data.time)-1,1);
-%             for i=1:length(data.time)-1
-%                 sampling_rate_new(i)=data.time(i+1)-data.time(i);
-%             end
-%             sm.participant(p).session(s).trial(k).new_sampling_rate=sum(sampling_rate_new)/length(sampling_rate_new);
             
             % extract data 
             t=data.time; % time
