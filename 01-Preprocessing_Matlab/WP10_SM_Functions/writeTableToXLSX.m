@@ -40,6 +40,9 @@ for i=1:p
     end
 end
 
+% sort order 
+temp=sortrows(temp,{'id','session','trial_num'});
+
 % write data 
 format='yymmdd'; date=datestr(now, format); 
 file_name2=['wp10_data_' date '.xlsx']; 

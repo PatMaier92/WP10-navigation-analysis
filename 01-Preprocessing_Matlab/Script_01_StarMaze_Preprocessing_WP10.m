@@ -622,6 +622,7 @@ tic;
 end
 
 % % write data to xlsx file
+% [data_folder]  = setInputPath();
 % writeTableToXLSX(data_folder); 
 
 clear; 
