@@ -196,9 +196,10 @@ tic;
         
         %% read-in log file (only once in session 1)
         if s==1
-            opts=detectImportOptions([input_folder, '\log.csv']);
+            opts=detectImportOptions([input_folder, '\log.csv'], 'VariableNamesLine', 1, 'Delimiter', ',');
+            opts.DataLines=[2,Inf]; 
             opts.SelectedVariableNames = {'message'};
-            log_data=table2cell(readtable([input_folder, '\log.csv'], opts)); % read in log-file-info
+            log_data=table2cell(readtable([input_folder, '\log.csv'], opts));
             log_data=log_data(contains(log_data,'ID is'));
             [sm.participant(p).rand_dict]=setRandomizationDict(log_data, id);
             clear log_data opts; 
