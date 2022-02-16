@@ -80,14 +80,14 @@ for id=participant_start:participant_end
         % trial
         pt(p).trial(k).trial_num=trial_data.trial_num(k,1); 
         % correct items 
-        pt(p).trial(k).lm_MB=trial_data.lm_MB{1,1}(1:2);
-        pt(p).trial(k).lm_MD=trial_data.lm_MD{1,1}(1:2);
-        pt(p).trial(k).lm_MF=trial_data.lm_MF{1,1}(1:2);
-        pt(p).trial(k).lm_MH=trial_data.lm_MH{1,1}(1:2);
-        pt(p).trial(k).lm_MJ=trial_data.lm_MJ{1,1}(1:2); 
-        pt(p).trial(k).obj_MA=trial_data.obj_MA{1,1}(1:2);
-        pt(p).trial(k).obj_MC=trial_data.obj_MC{1,1}(1:2);
-        pt(p).trial(k).obj_MI=trial_data.obj_MI{1,1}(1:2);
+        pt(p).trial(k).lm_MB=str2double(trial_data.lm_MB{1,1}(1:2));
+        pt(p).trial(k).lm_MD=str2double(trial_data.lm_MD{1,1}(1:2));
+        pt(p).trial(k).lm_MF=str2double(trial_data.lm_MF{1,1}(1:2));
+        pt(p).trial(k).lm_MH=str2double(trial_data.lm_MH{1,1}(1:2));
+        pt(p).trial(k).lm_MJ=str2double(trial_data.lm_MJ{1,1}(1:2)); 
+        pt(p).trial(k).obj_MA=str2double(trial_data.obj_MA{1,1}(1:2));
+        pt(p).trial(k).obj_MC=str2double(trial_data.obj_MC{1,1}(1:2));
+        pt(p).trial(k).obj_MI=str2double(trial_data.obj_MI{1,1}(1:2));
         % dummy for chosen items 
         pt(p).trial(k).obj_1=999;
         pt(p).trial(k).obj_2=999;
@@ -101,7 +101,7 @@ for id=participant_start:participant_end
         % fprintf('Time analysis done for %d, file no %d.\n', id, k);
         
         %% performance analysis
-        if k==1 % SHAPE RECOGNITION
+        if k==1 % SHAPE RECOGNITION 
             if trial_data.suc_1{k,1}=="True"
                 points=1;
             elseif trial_data.suc_1{k,1}=="na"
@@ -109,15 +109,16 @@ for id=participant_start:participant_end
             else
                 points=0;
             end
-            % save score
-            pt(p).trial(k).score=points;
             
             % save item info
             if trial_data.suc_1{k,1}=="na"
                 pt(p).trial(k).obj_1=999; 
-            else 
-                pt(p).trial(k).obj_1=trial_data.obj_1{k,1}(1);
+            else
+                pt(p).trial(k).obj_1=str2double(trial_data.obj_1{k,1}(1));
             end
+            
+            % save score
+            pt(p).trial(k).score=points;
             % fprintf('Shape recognition done for %d, file no %d.\n', id, k);
             
         elseif k==2 % LANDMARK RECOGNITION 
@@ -146,11 +147,11 @@ for id=participant_start:participant_end
             pt(p).trial(k).score=points/5;
             
             % save item info 
-            pt(p).trial(k).obj_1=trial_data.obj_1{k,1}(1:2);
-            pt(p).trial(k).obj_2=trial_data.obj_2{k,1}(1:2);
-            pt(p).trial(k).obj_3=trial_data.obj_3{k,1}(1:2);
-            pt(p).trial(k).obj_4=trial_data.obj_4{k,1}(1:2);
-            pt(p).trial(k).obj_5=trial_data.obj_5{k,1}(1:2);
+            pt(p).trial(k).obj_1=str2double(trial_data.obj_1{k,1}(1:2));
+            pt(p).trial(k).obj_2=str2double(trial_data.obj_2{k,1}(1:2));
+            pt(p).trial(k).obj_3=str2double(trial_data.obj_3{k,1}(1:2));
+            pt(p).trial(k).obj_4=str2double(trial_data.obj_4{k,1}(1:2));
+            pt(p).trial(k).obj_5=str2double(trial_data.obj_5{k,1}(1:2)); 
             % fprintf('Landmark recognition done for %d, file no %d.\n', id, k);
             
         elseif k==3 % GOAL RECOGNITION
@@ -170,9 +171,9 @@ for id=participant_start:participant_end
             pt(p).trial(k).score=points/3; 
             
             % save item information
-            pt(p).trial(k).obj_1=obj_1(1:2);
-            pt(p).trial(k).obj_2=obj_2(1:2);
-            pt(p).trial(k).obj_3=obj_3(1:2);
+            pt(p).trial(k).obj_1=str2double(obj_1(1:2));
+            pt(p).trial(k).obj_2=str2double(obj_2(1:2));
+            pt(p).trial(k).obj_3=str2double(obj_3(1:2));
             % fprintf('Goal recognition done for %d, file no %d.\n', id, k);
            
         else % POSITIONING: done externally with GMDA software

@@ -1,5 +1,5 @@
-function writeTableToXLSX(data_folder)
-% writeTableToXLSX Write data summary table in xlsx format. 
+function writeNavTableToXLSX(data_folder)
+% writeNavTableToXLSX Write data summary table in xlsx format. 
 %
 % Input: path to data folder 
 %
@@ -7,7 +7,7 @@ function writeTableToXLSX(data_folder)
 
 % load data 
 file_path=[data_folder '\WP10_results']; 
-file_name='\wp10_results_table.mat';
+file_name='\wp10_results_navigation.mat';
 full_file=fullfile(file_path, file_name); 
 if isfile(full_file)
     load(full_file, 'sm'); 
@@ -45,7 +45,7 @@ temp=sortrows(temp,{'id','session','trial_num'});
 
 % write data 
 format='yymmdd'; date=datestr(now, format); 
-file_name2=['wp10_data_' date '.xlsx']; 
+file_name2=['wp10_navigation_data_' date '.xlsx']; 
 writetable(temp,fullfile(file_path,file_name2));
 
 end
