@@ -4,10 +4,10 @@
 WP10_testfiles
 WP10_data
 02-Plots_R/WP10_Data_Overview.pdf
-03-GMDA_Scoring/_old
-03-GMDA_Scoring/Data
-03-GMDA_Scoring/GMDA/Data
-03-GMDA_Scoring/GMDA/Configurations
+03-Scoring_GMDA/_old
+03-Scoring_GMDA/Data
+03-Scoring_GMDA/GMDA/Data
+03-Scoring_GMDA/GMDA/Configurations
 
 # History files
 .Rhistory
