@@ -71,7 +71,7 @@ for id=participant_start:participant_end
       
     %% set participant, group and session duration information 
     pt(p).id=id; 
-    [pt(p).group,pt(p).group_s, pt(p).sex,pt(p).sex_s]=setGroupSexInfo(pt(p).id);
+    [~,pt(p).group,~,pt(p).sex]=setGroupSexInfo(pt(p).id);
     pt(p).session_duration=round(minutes(trial_data.timestamp(4,1) - trial_data.timestamp(1,1))); 
 
     % loop over trials
@@ -80,20 +80,20 @@ for id=participant_start:participant_end
         % trial
         pt(p).trial(k).trial_num=trial_data.trial_num(k,1); 
         % correct items 
-        pt(p).trial(k).lm_MB=str2double(trial_data.lm_MB{1,1}(1:2));
-        pt(p).trial(k).lm_MD=str2double(trial_data.lm_MD{1,1}(1:2));
-        pt(p).trial(k).lm_MF=str2double(trial_data.lm_MF{1,1}(1:2));
-        pt(p).trial(k).lm_MH=str2double(trial_data.lm_MH{1,1}(1:2));
-        pt(p).trial(k).lm_MJ=str2double(trial_data.lm_MJ{1,1}(1:2)); 
-        pt(p).trial(k).obj_MA=str2double(trial_data.obj_MA{1,1}(1:2));
-        pt(p).trial(k).obj_MC=str2double(trial_data.obj_MC{1,1}(1:2));
-        pt(p).trial(k).obj_MI=str2double(trial_data.obj_MI{1,1}(1:2));
+        pt(p).trial(k).lm_MB=trial_data.lm_MB{1,1};
+        pt(p).trial(k).lm_MD=trial_data.lm_MD{1,1};
+        pt(p).trial(k).lm_MF=trial_data.lm_MF{1,1};
+        pt(p).trial(k).lm_MH=trial_data.lm_MH{1,1};
+        pt(p).trial(k).lm_MJ=trial_data.lm_MJ{1,1}; 
+        pt(p).trial(k).obj_MA=trial_data.obj_MA{1,1};
+        pt(p).trial(k).obj_MC=trial_data.obj_MC{1,1};
+        pt(p).trial(k).obj_MI=trial_data.obj_MI{1,1};
         % dummy for chosen items 
-        pt(p).trial(k).obj_1=999;
-        pt(p).trial(k).obj_2=999;
-        pt(p).trial(k).obj_3=999;
-        pt(p).trial(k).obj_4=999;
-        pt(p).trial(k).obj_5=999;
+        pt(p).trial(k).obj_1="999";
+        pt(p).trial(k).obj_2="999";
+        pt(p).trial(k).obj_3="999";
+        pt(p).trial(k).obj_4="999";
+        pt(p).trial(k).obj_5="999";
         
         %% time analysis
         b=trial_data.end_time(k,1); a=trial_data.start_time(k,1);
@@ -112,9 +112,9 @@ for id=participant_start:participant_end
             
             % save item info
             if trial_data.suc_1{k,1}=="na"
-                pt(p).trial(k).obj_1=999; 
+                pt(p).trial(k).obj_1="999"; 
             else
-                pt(p).trial(k).obj_1=str2double(trial_data.obj_1{k,1}(1));
+                pt(p).trial(k).obj_1=trial_data.obj_1{k,1};
             end
             
             % save score
@@ -147,11 +147,11 @@ for id=participant_start:participant_end
             pt(p).trial(k).score=points/5;
             
             % save item info 
-            pt(p).trial(k).obj_1=str2double(trial_data.obj_1{k,1}(1:2));
-            pt(p).trial(k).obj_2=str2double(trial_data.obj_2{k,1}(1:2));
-            pt(p).trial(k).obj_3=str2double(trial_data.obj_3{k,1}(1:2));
-            pt(p).trial(k).obj_4=str2double(trial_data.obj_4{k,1}(1:2));
-            pt(p).trial(k).obj_5=str2double(trial_data.obj_5{k,1}(1:2)); 
+            pt(p).trial(k).obj_1=trial_data.obj_1{k,1};
+            pt(p).trial(k).obj_2=trial_data.obj_2{k,1};
+            pt(p).trial(k).obj_3=trial_data.obj_3{k,1};
+            pt(p).trial(k).obj_4=trial_data.obj_4{k,1};
+            pt(p).trial(k).obj_5=trial_data.obj_5{k,1}; 
             % fprintf('Landmark recognition done for %d, file no %d.\n', id, k);
             
         elseif k==3 % GOAL RECOGNITION
@@ -171,9 +171,9 @@ for id=participant_start:participant_end
             pt(p).trial(k).score=points/3; 
             
             % save item information
-            pt(p).trial(k).obj_1=str2double(obj_1(1:2));
-            pt(p).trial(k).obj_2=str2double(obj_2(1:2));
-            pt(p).trial(k).obj_3=str2double(obj_3(1:2));
+            pt(p).trial(k).obj_1=obj_1;
+            pt(p).trial(k).obj_2=obj_2;
+            pt(p).trial(k).obj_3=obj_3;
             % fprintf('Goal recognition done for %d, file no %d.\n', id, k);
            
         else % POSITIONING: done externally with GMDA software
@@ -191,6 +191,6 @@ end
 
 %% Block 3: Write data to xlsx file
 % [data_folder]  = setInputPath();
-% writeTableToXLSX(data_folder); 
+% writePostTableToXLSX(data_folder); 
 
 clear; 
