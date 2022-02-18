@@ -17,7 +17,6 @@ library(tidyverse)
 date = readline(prompt = "Please enter the date string of the result file ")
 file_path <- paste("../WP10_data/WP10_results/wp10_navigation_data_", date, ".xlsx", sep="")
 sm_data <- read_xlsx(file_path, col_names = T, na = "999")
-rm(date, file_path)
 
 
 # tidy data 
@@ -39,8 +38,7 @@ sm_data <- sm_data %>%
          search_strategy_in_allo=factor(search_strategy_in_allo, levels=c(1, 2, 3, 4, 5, 0),
                                         labels=c("direct_allo", "detour_allo", 
                                                  "direct_ego", "detour_ego", 
-                                                 "back_to_start", "unclassified")),
-         exclude_trial_matlab=factor(exclude_trial_matlab)) %>% 
+                                                 "back_to_start", "unclassified"))) %>% 
   select(-sex_s, -group_s, -feedback_s, -condition_s, -goal_identity_s, -goal_s, -start_s, -chosen_alley_s)
 # if no renaming of variables: use mutate_at(cols, factor)
 
