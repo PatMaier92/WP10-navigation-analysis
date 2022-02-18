@@ -10,8 +10,8 @@ library(patchwork)
 library(ggrepel)
 library(gghalves)
 library(corrplot)
-# library(wesanderson) # decent options: GrandBudapest1 IsleofDogs2 BottleRocket2 Royal2 Darjeeling2 Chevalier1 GrandBudapest2 
-# source("R_rainclouds.R") # TBD CHANGE 
+# library(wesanderson) 
+# decent palettes: GrandBudapest1 IsleofDogs2 BottleRocket2 Royal2 Darjeeling2 Chevalier1 GrandBudapest2 
 
 
 # ######################################################### #
@@ -44,12 +44,17 @@ rm(data_gmda)
 mylabels <- as_labeller(c(`YoungKids` = "6-7yo", `OldKids` = "9-10yo", `YoungAdults` = "adults", 
                           `main_learn` = "Learning", `main_ret` = "Retrieval", 
                           `allo_ret` = "Allocentric", `ego_ret` = "Egocentric",
-                          `1`="T1 - Immediate", `2`=" T2 - Delayed", "Consolidation"="Consolidation"))
+                          `1`="T1 - Immediate", `2`=" T2 - Delayed", `Consolidation` = "Consolidation",
+                          `direct` = "direct", `detour` = "detour",`reoriented` = "reoriented",
+                          `direct_allo` = "direct allo", `detour_allo` = "detour allo",
+                          `direct_ego` = "direct ego", `detour_ego` = "detour ego",   
+                          `back_to_start` ="back to start", `unclassified` = "unclassified"))
 
 # colors
 group_colors <- c("YoungKids"="#F1BB7B", "OldKids"="#FD6467", "YoungAdults"="#8A928B")
 type_colors <- c("main_learn" = "#6699CC", "main_ret" = "#99CCFF", "allo_ret" = "#FFCC33", "ego_ret" = "#669933")
 session_colors <- c("1" = "#FFCCCC", "2" ="#999999", "3" = "#333333")
+strategy_colors <- c("direct" = "#FFCCCC", "detour" ="#999999", "reoriented" = "#888888")
 
 # variable labels 
 l_time <- "time in seconds"
@@ -79,7 +84,120 @@ l_search_strategy_allo <- "search strategy in allocentric trials"
 
 # ######################################################### #
 
-# ::: MOTOR CONTROL DATA ::: #
+# ::: plot functions (box, bar, raincloud) ::: #
+
+## ---- plot_functions
+# function for aggregated box plots with individual values 
+box_plot <- function(data, xvar, yvar, fillby, facetr, facetc, subtitle, xlabel, ylabel, facetlabel, legendPos, mycolors){
+  p <- ggplot(data, aes(x=get(xvar), y=get(yvar), fill=get(fillby))) + 
+    geom_boxplot(outlier.shape=NA) +
+    geom_point(position=position_jitterdodge(seed=999), size=0.5) + 
+    scale_fill_manual(labels=facetlabel, values=mycolors) + 
+    coord_cartesian(clip="off", ylim=c(0, NA)) +
+    theme_classic() + 
+    theme(legend.position=legendPos,
+          legend.title=element_blank(),
+          legend.key.size = unit(0.5, 'cm'),
+          legend.justification=c(0,0),
+          axis.ticks.x=element_blank(),
+          axis.text.x=element_blank()) +
+    labs(subtitle=subtitle, 
+         x=xlabel,
+         y=ylabel)
+  
+  if (facetc=="none") {
+    p <- p + facet_wrap(facetr, labeller=facetlabel) 
+  }
+  else {
+    p <- p + facet_grid(formula(paste(facetr, "~", facetc)), labeller=facetlabel) 
+  }
+  
+  return(p)
+}
+
+# function for aggregated box change plots
+change_box_plot <- function(data, xvar, yvar, fillby, facetvar, subtitle, mylabels, legendPos, mycolors, xlabel=NULL, ylabel) {
+  ylabel2 <- paste0("change ", ylabel, " (S2-S1)/S1")
+  p <- ggplot(data, aes(x=get(xvar), y=get(yvar), fill=get(fillby))) +
+    geom_boxplot(outlier.shape=NA) +
+    geom_point(position=position_jitterdodge(seed=999), size=0.5) + 
+    geom_hline(yintercept=0, linetype="dashed", color="red") +
+    coord_cartesian(clip="off") +
+    scale_x_discrete(labels=mylabels) + 
+    scale_fill_manual(labels=mylabels, values=mycolors) +
+    theme_classic() + 
+    theme(legend.position=legendPos,
+          legend.title=element_blank(), 
+          legend.key.size=unit(0.5, 'cm'),
+          legend.justification=c(0,0)) +
+    labs(subtitle=subtitle,
+         x=xlabel,
+         y=ylabel2) 
+  
+  if (facetvar != "none"){
+    p <- p + facet_wrap(facetvar, labeller=mylabels)
+  }
+  
+  return(p)
+}
+
+# function for stacked bar plots 
+stacked_bar_plot <- function(data, xvar, yvar, fillvar, facetvar, mylabels, title, xlabel, ylabel, legendPos, mypalette) {
+  p <- ggplot(data, aes(x=get(xvar), y=get(yvar), fill=get(fillvar))) +
+    geom_bar(stat="identity", position="stack", color="black") +
+    scale_x_discrete(labels=mylabels) +
+    scale_fill_brewer(palette=mypalette, labels=mylabels) +
+    theme_classic() +
+    theme(legend.position=legendPos,
+          legend.title=element_blank(),
+          legend.key.size=unit(0.5, 'cm'),
+          legend.justification=c(0,0)) +
+    labs(title=title,
+         x=xlabel,
+         y=ylabel)
+  
+  if (facetvar!="none") {
+    p <- p + facet_wrap(facetvar, labeller=mylabels)
+  }
+  
+  return(p)
+}
+
+# function for raincloud plots
+raincloud_plot <- function(data, xvar, yvar, xlab, ylab, mylabels, mycolors, ymin="n", ymax="n", mysubtitle=NULL, facetvar="n"){
+  p1 <- ggplot(data, aes(x=get(xvar), y=get(yvar), fill=get(xvar))) +
+    geom_half_violin(aes(color=get(xvar)), position=position_nudge(x=-0.14), side="l",  alpha=0.4) +
+    geom_half_boxplot(position=position_nudge(x=-0.1), side="l", outlier.shape=NA,
+                      center=TRUE, errorbar.draw=FALSE, width=0.15, alpha=1) +
+    geom_point(aes(color=get(xvar)), position=position_jitter(w=0.08, h=0, seed=100), size=1.75, alpha=0.5) +
+    scale_fill_manual(labels=mylabels, values=mycolors) +
+    scale_color_manual(labels=mylabels, values=mycolors) +
+    scale_x_discrete(labels=mylabels, expand=c(0, 0)) +
+    theme_classic() +
+    theme(legend.position="none") +
+    labs(subtitle=mysubtitle,
+         x=xlab,
+         y=ylab)
+  
+  if (ymin == "n" & ymax == "n") {
+    p1 <- p1 + coord_cartesian(clip="off")
+  }
+  else {
+    p1 <- p1 + coord_cartesian(ylim=c(ymin, ymax), clip="off")
+  }
+  
+  if (facetvar != "n") {
+    p1 <- p1 + facet_wrap(facetvar)
+  }
+  
+  return(p1)
+}
+## ----
+
+
+# ######################################################### #
+
+# :::     MOTOR CONTROL DATA    ::: #
 
 ## ---- data_func_motor_control
 is_outlier <- function(x) {
@@ -121,8 +239,8 @@ rm(mc1, mc2, mc3, mc_plot, sm_practise, is_outlier, plot_motor)
 
 # ######################################################### #
 
-# ::: STARMAZE NAVIGATION DATA ::: #
-# :::       data check         ::: #
+# :::     STARMAZE NAVIGATION DATA    ::: #
+# :::           data check            ::: #
 
 ## ---- data_func_excluded
 ex1_data <- sm_orig %>% 
@@ -174,7 +292,7 @@ rm(corr1_data, plot_variables)
 
 # ######################################################### #
 
-# :::   trialwise plots         ::: #
+# :::   session 1 trialwise plots    ::: #
 
 ## ---- data_func_trialwise
 sm_trialwise <- sm_data %>%
@@ -214,69 +332,7 @@ rm(sm_trialwise, trial_plot, tr_cfa, tr_cg, tr_t, tr_pd, tr_ze)
 
 # ########################################## #
 
-# :::   aggregated plots         ::: #
-
-## ---- func_box
-# function for aggregated box plots with individual values 
-box_plot <- function(data, xvar, yvar, fillby, facetr, facetc, title, xlabel, ylabel, facetlabel, legendPos, mycolors){
-  p <- ggplot(data, aes(x=get(xvar), y=get(yvar), fill=get(fillby))) + 
-    geom_boxplot(outlier.shape=NA) +
-    geom_point(position=position_jitterdodge(seed=999), size=0.5) + 
-    scale_fill_manual(labels=facetlabel, values=mycolors) + 
-    coord_cartesian(clip="off", ylim=c(0, NA)) +
-    theme_classic() + 
-    theme(legend.position=legendPos,
-          legend.title=element_blank(),
-          legend.key.size = unit(0.5, 'cm'),
-          legend.justification=c(0,0),
-          axis.ticks.x=element_blank(),
-          axis.text.x=element_blank()) +
-    labs(title=title, 
-         x=xlabel,
-         y=ylabel)
-  
-  if (facetc=="none") {
-    p <- p + facet_wrap(facetr, labeller=facetlabel) 
-  }
-  else {
-    p <- p + facet_grid(formula(paste(facetr, "~", facetc)), labeller=facetlabel) 
-  }
-
-  return(p)
-}
-
-# function for aggregated box change plots
-change_box_plot <- function(data, xvar, yvar, fillby, facetvar, title, mylabels, legendPos, mycolors, xlabel=NULL, ylabel) {
-  ylabel2 <- paste0("change ", ylabel, " (S2-S1)/S1")
-  p <- ggplot(data, aes(x=get(xvar), y=get(yvar), fill=get(fillby))) +
-    geom_boxplot(outlier.shape=NA, colour="BLACK") +
-    geom_point(position=position_jitterdodge(seed=999), size=0.5) + 
-    geom_hline(yintercept=0, linetype="dashed", color="red") +
-    coord_cartesian(clip="off") +
-    scale_x_discrete(labels=mylabels) + 
-    scale_fill_manual(labels=mylabels, values=mycolors) +
-    theme_classic() + 
-    theme(legend.position=legendPos,
-          legend.title=element_blank(), 
-          legend.key.size = unit(0.5, 'cm'),
-          legend.justification=c(0,0)) +
-    labs(title=title,
-         x=xlabel,
-         y=ylabel2) 
-
-  if (facetvar != "none"){
-    p <- p + facet_wrap(facetvar, labeller=mylabels)
-  }
-
-
-  if (yvar %in% c("correct_diff", "correct_ratio")){
-    p <- p + scale_y_continuous(limits=c(-1,1))
-  }
-
-  return(p)
-}
-## ----
-
+# ::: session 1 & 2 aggregated box plots  ::: #
 
 ## ---- data_s1
 sm_s1 <- sm_data %>%
@@ -338,6 +394,7 @@ p1c_pd <- box_plot(sm_s1_cor,"group", "path_distance", "group", "condition", "no
 rm(sm_s1, sm_s1_cor, learning, probe, probe_cor, l_spca, l_ze, l_pd, l_t, p1_cfa, p1_cg, p1_ze, p1_pd, p1c_fd, p1c_pd)
 
 
+
 ## ---- data_s2
 sm_s2 <- sm_data %>%
   filter(session==2) %>% 
@@ -377,6 +434,7 @@ p2c_pd <- box_plot(sm_s2_cor,"group", "path_distance", "group", "condition", "no
 # rm(p1c_fd, p1c_pd)
 ## ----
 rm(sm_s2, sm_s2_cor, learning, probe, probe_cor, p2_cfa, p2_cg, p2_ze, p2_pd, p2c_fd, p2c_pd)
+
 
 
 ## ---- data_change
@@ -432,440 +490,84 @@ pchc_pd <- change_box_plot(sm_change_cor, "group", "pd_ratio", "group", "session
 pchc_fd <- change_box_plot(sm_change_cor, "group", "fd_ratio", "group", "session", NULL, mylabels, "none", group_colors, ylabel=l_final_distance)
 rm(sm_change_cor)
 ## ----
-rm(pch_cfa, pch_cg, pch_ce, pch_pd, pchc_pd, pchc_fd, change_box_plot, ratio)
+rm(pch_cfa, pch_cg, pch_ce, pch_pd, pchc_pd, pchc_fd, ratio)
 
 
-##################################################################################
-
-# ### COMBINE PLOTS FOR POSTER 
+# ## ---- data_rotation ### TBD: explore this further
+# sm_s12 <- sm_data %>%
+#   filter(condition %in% c("ego_ret", "allo_ret"))  %>%
+#   group_by(id, group, session, condition) %>% 
+#   summarise_at(vars(matches("rotation")), mean, na.rm=T)
 # 
-# # joint t1 t2 data
-# sm_ind_data <- sm_trial_data %>%
-#   filter(condition %in% c("ego_ret", "allo_ret")) %>% 
-#   group_by(id, session, group, condition) 
-# sm_ind_data <- mean_func(sm_ind_data)
-# 
-# # % correct goal
-# g1a <- box_agg(sm_ind_data %>%  filter(condition=="allo_ret"), "group", "correct_goal", "group", "session", "none", "Allocentric probe trials", NULL, "% correct goal", NULL, mylabels, "bottom")
-# g1b <- box_agg_change(sm_change_data %>%  filter(condition=="allo_ret"), "group", "correct_ratio", "group", "session", NULL, NULL, "change (T2 - T1) / T1", NULL, mylabels, "none")
-# 
-# g_allo_c <- (g1a & theme(legend.position="none", axis.ticks.x=element_line(), 
-#                          axis.text.x=element_text()) & scale_x_discrete(labels=mylabels)) +
-#   (g1b & theme(legend.position="none", axis.ticks.x=element_line(), 
-#                axis.text.x=element_text()) & scale_x_discrete(labels=mylabels)) +
-#   plot_layout(widths=c(0.68,0.32))
-# 
-# ggsave("Allo_perc_cor.jpeg", g_allo_c, width=5, height=3.7, dpi=600)
-# 
-# g2a <- box_agg(sm_ind_data %>%  filter(condition=="ego_ret"), "group", "correct_goal", "group", "session", "none", "Egocentric probe trials", NULL, "% correct goal", NULL, mylabels, "bottom")
-# g2b <- box_agg_change(sm_change_data %>%  filter(condition=="ego_ret"), "group", "correct_ratio", "group", "session", NULL, NULL, "change (T2 - T1) / T1", NULL, mylabels, "none")
-# 
-# g_ego_c <- (g2a & theme(legend.position="none", axis.ticks.x=element_line(), 
-#                         axis.text.x=element_text()) & scale_x_discrete(labels=mylabels)) +
-#   (g2b & theme(legend.position="none", axis.ticks.x=element_line(), 
-#                axis.text.x=element_text()) & scale_x_discrete(labels=mylabels)) +
-#   plot_layout(widths=c(0.68,0.32))
-# 
-# ggsave("Ego_perc_cor.jpeg", g_ego_c, width=5, height=3.7, dpi=600)
-# 
-# 
-# # final distance in correct 
-# sm_ind_data_cor <- sm_trial_data %>%
-#   filter(condition %in% c("ego_ret", "allo_ret") & correct_goal==1) %>% 
-#   group_by(id, session, group, condition) 
-# sm_ind_data_cor <- mean_func(sm_ind_data_cor)
-# 
-# g1c <- box_agg(sm_ind_data_cor %>%  filter(condition=="allo_ret"), "group", "final_distance", "group", "session", "none", "Allocentric probe trials", NULL, "final distance in correct trials", NULL, mylabels, "bottom")
-# g1d <- box_agg_change(sm_ind_data_cor_t12_change %>%  filter(condition=="allo_ret"), "group", "final_distance_ratio", "group", "session", NULL, NULL, "change (T2 - T1) / T1", NULL, mylabels, "none")
-# 
-# g_allo_fd <- (g1c & theme(legend.position="none", axis.ticks.x=element_line(), 
-#                           axis.text.x=element_text()) & scale_x_discrete(labels=mylabels) &
-#                 scale_y_continuous(limits=c(0,0.12))) + 
-#   (g1d & theme(legend.position="none", axis.ticks.x=element_line(), 
-#                axis.text.x=element_text()) & scale_x_discrete(labels=mylabels) & 
-#      scale_y_continuous(limits=c(-2,5))) + 
-#   plot_layout(widths=c(0.68,0.32))
-# 
-# ggsave("Allo_fd.jpeg", g_allo_fd, width=5, height=3.7, dpi=600)
-# 
-# 
-# g2c <- box_agg(sm_ind_data_cor %>% filter(condition=="ego_ret"), "group", "final_distance", "group", "session", "none", "Egocentric probe trials", NULL, "final distance in correct trials", NULL, mylabels, "bottom")
-# g2d <- box_agg_change(sm_ind_data_cor_t12_change %>%  filter(condition=="ego_ret"), "group", "final_distance_ratio", "group", "session", NULL, NULL, "change (T2 - T1) / T1", NULL, mylabels, "none")
-# 
-# g_ego_fd <- (g2c & theme(legend.position="none", axis.ticks.x=element_line(), 
-#                          axis.text.x=element_text()) & scale_x_discrete(labels=mylabels) &
-#                scale_y_continuous(limits=c(0,0.12))) + 
-#   (g2d & theme(legend.position="none", axis.ticks.x=element_line(), 
-#                axis.text.x=element_text()) & scale_x_discrete(labels=mylabels) & 
-#      scale_y_continuous(limits=c(-2,5))) + 
-#   plot_layout(widths=c(0.68,0.32))
-# 
-# ggsave("Ego_fd.jpeg", g_ego_fd, width=5, height=3.7, dpi=600)
-# 
-# 
-# # path error in correct 
-# g1e <- box_agg(sm_ind_data %>%  filter(condition=="allo_ret"), "group", "avg_distance_path", "group", "session", "none", "Allocentric probe trials", NULL, "path error in correct trials", NULL, mylabels, "bottom")
-# g1f <- box_agg_change(sm_change_data %>%  filter(condition=="allo_ret"), "group", "avg_distance_path_ratio", "group", "session", NULL, NULL, "change (T2 - T1) / T1", NULL, mylabels, "none")
-# 
-# g_allo_p <- (g1e & theme(legend.position="bottom") & scale_y_continuous(limits=c(0,0.2))) + 
-#   (g1f & theme(legend.position="none") & scale_y_continuous(limits=c(-2,4))) + 
-#   plot_layout(widths=c(0.68,0.32))
-# 
-# g2e <- box_agg(sm_ind_data %>%  filter(condition=="ego_ret"), "group", "avg_distance_path", "group", "session", "none", "Egocentric probe trials", NULL, "path error in correct trials", NULL, mylabels, "bottom")
-# g2f <- box_agg_change(sm_change_data %>%  filter(condition=="ego_ret"), "group", "avg_distance_path_ratio", "group", "session", NULL, NULL, "change (T2 - T1) / T1", NULL, mylabels, "none")
-# 
-# g_ego_p <- (g2e & theme(legend.position="bottom") & scale_y_continuous(limits=c(0,0.2))) + 
-#   (g2f & theme(legend.position="none") & scale_y_continuous(limits=c(-2,4))) + 
-#   plot_layout(widths=c(0.68,0.32))
-# 
-# ##################################################################################
+# box_plot(sm_s12,"group", "rotation_xyz", "group", "session", "condition", NULL, NULL, l_rotation_xyz, mylabels, "top", group_colors)
+# ## ----
+# rm(sm_s12)
 
 
+# ########################################## #
 
-# ## ---- data_func_rain
-# raincloud <- function(data, xvar, yvar, xlab, ylab, mylabels, mycolors, ymin="n", ymax="n", mysubtitle=NULL, facetvar="n"){
-#   p1 <- ggplot(data, aes(x=get(xvar), y=get(yvar), fill=get(xvar))) + 
-#     geom_half_violin(aes(color=get(xvar)), position=position_nudge(x=-0.14), side="l",  alpha=0.4) +
-#     geom_half_boxplot(position=position_nudge(x=-0.1), side="l", outlier.shape=NA, 
-#                       center=TRUE, errorbar.draw=FALSE, width=0.15, alpha=1) +
-#     geom_point(aes(color=get(xvar)), position=position_jitter(w=0.08, h=0, seed=100), size=1.75, alpha=0.5) + 
-#     scale_fill_manual(labels=mylabels, values=mycolors) +
-#     scale_color_manual(labels=mylabels, values=mycolors) +
-#     scale_x_discrete(labels=mylabels, expand=c(0, 0)) +
-#     theme_classic() +
-#     theme(legend.position="none") +
-#     labs(subtitle=mysubtitle,
-#          x=xlab,
-#          y=ylab)
-#   
-#   if (ymin == "n" & ymax == "n") {
-#     p1 <- p1 + coord_cartesian(clip="off")
-#   }
-#   else {
-#     p1 <- p1 + coord_cartesian(ylim=c(ymin, ymax), clip="off")
-#   }
-#   
-#   if (facetvar != "n") {
-#     p1 <- p1 + facet_wrap(facetvar)
-#   }
-#   
-#   return(p1)
-# }
-# 
+# :::   session 1 & 2 raincloud plots   ::: #
+
+# ## ---- data_rain
 # sm_s1 <- sm_data %>%
 #   filter(session==1) %>% 
 #   group_by(group, trial_num, condition) %>% 
 #   summarise_at(c("time", "correct_final_alley", "correct_goal", "shortest_path_correct_alley",
 #                  "path_distance", "zones_entered"), mean, na.rm=T)
 # 
-# raincloud(sm_s1, "group", "path_distance", NULL, "Variable", mylabels, group_colors, ymin="n", ymax="n", mysubtitle=NULL, facetvar="n")
+# raincloud_plot(sm_s1, "group", "path_distance", NULL, "Variable", mylabels, group_colors, ymin="n", ymax="n", mysubtitle=NULL, facetvar="n")
 # ## ----
-# rm(raincloud)
 
 
+# ########################################## #
 
-## ---- data_func_strategy
-# function for strategy choice bar plots
-strategy_box <- function(data_ind, data_sum, x, y, title, ylabel, flabel, filllabels, mypalette, legendPos) {
-  p <- ggplot(data_ind, aes_string(x=x, y=y, fill=x)) + # set up data 
-    geom_boxplot(outlier.shape=NA) + 
-    geom_point(position=position_jitterdodge(seed=999), size=0.75) + 
-    facet_grid(session ~ group, labeller=filllabels) +
-    coord_cartesian(clip="off") +
-    scale_fill_brewer(palette = mypalette, direction=-1, labels=filllabels) + # nicer color palette 
-    theme_classic() + # nicer theme
-    theme(legend.position=legendPos,
-          axis.ticks.x=element_blank(),
-          axis.text.x=element_blank(),
-          axis.title.x=element_blank()) + 
-    labs(title=title,
-         y=ylabel,
-         fill=flabel) # labels and title
-  
-  return(p)
-}
+# :::   session 1 & 2 strategy plots    ::: #
 
-strategy_stacked_bar <- function(data, xvar, yvar, fillvar, facetvar, mylabels, title, xlabel, ylabel, filllabel, mypalette) {
-  p <- ggplot(data, aes_string(x=xvar, y=yvar, fill=fillvar)) + 
-    geom_bar(stat="identity", position="stack", color="black") +
-    scale_x_discrete(labels=mylabels) + 
-    scale_fill_brewer(palette=mypalette, labels=mylabels) + 
-    theme_classic() + 
-    theme(legend.position="bottom", 
-          legend.justification=c(0,1)) +
-    labs(title=title,
-         x=xlabel,
-         y=ylabel,
-         fill=filllabel)
-  
-  if(facetvar!="none") {
-    p <- p + facet_wrap(facetvar, labeller=mylabels)
-  }
-  
-  return(p)
-}
-
-
-# strategy labels
-stratlabels <- as_labeller(c(`direct` = "direct", 
-                             `detour` = "detour", 
-                             `reoriented` = "reoriented",
-                             `YoungKids` = "Y-CH", `OldKids` = "O-CH",
-                             `YoungAdults` = "Y-AD", `OldAdults` = "O-AD",
-                             `1`="T1 - Immediate", `2`="T2 - Delayed"))
-
-
-# data for strategy choice box plots: calculate percentage of strategies per group and session 
-# Allocentric
-strategy_data_allo_ind <- sm_trial_data %>%
-  filter(condition=="allo_ret") %>% 
-  group_by(id, group, session, search_strategy_no) %>% 
+## ---- data_strategy
+# strategy box plots
+sm_strat <- sm_data %>%
+  filter(condition %in% c("allo_ret","ego_ret")) %>% 
+  group_by(id, group, session, condition, search_strategy) %>% 
   tally() %>%
   mutate(percent=n/sum(n))
 
-strategy_data_allo_sum <- sm_trial_data %>%
-  filter(condition=="allo_ret") %>% 
-  group_by(group, session, search_strategy_no) %>% 
+stbox_allo <- box_plot(sm_strat %>% filter(condition=="allo_ret"), "search_strategy", "percent", "search_strategy", "session", "group", "Allocentric trials", NULL, "% of use",  mylabels, "bottom", strategy_colors)
+
+stbox_ego <- box_plot(sm_strat %>% filter(condition=="ego_ret"), "search_strategy", "percent", "search_strategy", "session", "group", "Egocentric trials", NULL, "% of use",  mylabels, "bottom", strategy_colors)
+
+
+# strategy stacked bar plots 
+sm_strat2 <- sm_data %>%
+  filter(condition %in% c("allo_ret","ego_ret")) %>% 
+  group_by(group, session, condition, search_strategy) %>% 
   tally() %>%
   mutate(percent=n/sum(n))
 
-# Egocentric
-strategy_data_ego_ind <- sm_trial_data %>%
-  filter(condition=="ego_ret") %>% 
-  group_by(id, group, session, search_strategy_no) %>% 
+stbar_allo <- stacked_bar_plot(sm_strat2 %>% filter(condition=="allo_ret"), "group", "percent", "search_strategy", "session", mylabels, "Allocentric trials", NULL, "% of use", "bottom", "Oranges")
+
+stbar_ego <- stacked_bar_plot(sm_strat2 %>% filter(condition=="ego_ret"), "group", "percent", "search_strategy", "session", mylabels, "Egocentric trials", NULL, "% of use", "bottom", "Oranges")
+## ----
+rm(sm_strat, sm_strat2, stbox_allo, stbox_ego, stbar_allo, stbar_ego)
+
+
+# ########################################## #
+
+# :::   allocentric strategy plots    ::: #
+# strategy bar plots
+
+sm_allo <- sm_data %>%
+  filter(condition %in% c("allo_ret")) %>% 
+  filter(!is.na(search_strategy_in_allo)) %>% 
+  group_by(group, session, search_strategy_in_allo) %>% 
   tally() %>%
   mutate(percent=n/sum(n))
 
-strategy_data_ego_sum <- sm_trial_data %>%
-  filter(condition=="ego_ret") %>% 
-  group_by( group, session, search_strategy_no) %>% 
-  tally() %>%
-  mutate(percent=n/sum(n))
-
-
-# box plots  
-s_allo_box <- strategy_box(strategy_data_allo_ind, strategy_data_allo_sum, "search_strategy_no", "percent", "Allocentric trials", "Relative % of use", "Strategy", stratlabels, "Purples", "bottom")
-
-s_ego_box <- strategy_box(strategy_data_ego_ind, strategy_data_ego_sum, "search_strategy_no", "percent", "Egocentric trials", "Relative % of use", "Strategy", stratlabels, "Purples", "bottom")
-
-
-# stacked bar plots 
-s_allo_bar <- strategy_stacked_bar(strategy_data_allo_sum, "group", "percent", "search_strategy_no", "session", stratlabels, "Allocentric probe trials", NULL, "% of strategy use", NULL, "Oranges")
-
-ggsave("Allo_strat.jpeg", s_allo_bar, width=4.2, height=3.7, dpi=600)
-
-s_ego_bar <- strategy_stacked_bar(strategy_data_ego_sum, "group", "percent", "search_strategy_no", "session", stratlabels, "Egocentric probe trials", NULL, "% of strategy use", NULL, "Blues")
-
-ggsave("Ego_strat.jpeg", s_ego_bar, width=4.2, height=3.7, dpi=600)
-
-# # check egocentric goal location
-# temp <- sm_trial_data %>%
-#   filter(condition=="allo_ret") %>% 
-#   group_by(group, correct_goal_ego) %>% 
-#   tally() %>%
-#   mutate(percent=n/sum(n))
-# temp 
-# rm(temp)
-# # egocentric goal location only chosen very few times 
-
-
-# # check path and egocentric path marker
-# temp <- sm_trial_data %>%
-#   filter(condition=="allo_ret") %>% 
-#   select(id, group, session, trial, search_strategy_no, correct_goal, correct_goal_ego,
-#          dev_ideal_path, dev_ideal_path_chosen, dev_ideal_path_ego) %>% 
-#   group_by(session, group, search_strategy_no) %>% 
-#   pivot_longer(cols=c("dev_ideal_path", "dev_ideal_path_chosen", "dev_ideal_path_ego"),
-#                names_pattern = "dev_ideal_(.*)") %>%
-#   # pivot_longer(cols=c("dev_ideal_path", "dev_ideal_path_ego"),
-#   #              names_pattern = "dev_ideal_(.*)") %>% 
-#   mutate(value=log1p(value))
-# 
-# ggplot(temp, aes(x=name, y=value, fill=group)) +
-#   geom_boxplot() + 
-#   scale_fill_manual(name=NULL, labels=mylabels, values=mycolors) +
-#   facet_grid(~ search_strategy_no) + 
-#   theme_classic() + 
-#   theme(legend.position = "top") +
-#   labs(x="deviation to ...",
-#        y="log (value)")
-# # path_ego deviation higher for reoriented --> would not speak in favor of ego behavior
-# # however also other path markers higher 
-# # inconclusive at the moment 
-
-
-# check reorient trials for alley entries (alley 4 is starting alley)
-strategy_data_allo_reorient <- sm_trial_data %>%
-  filter(condition=="allo_ret" & search_strategy_no=="reoriented") %>% 
-  left_join(sm_trial_data_support) %>% 
-  select(id, group, session, trial, condition, search_strategy_no, 
-         start_pos, goal_loc, goal_alley, chosen_goal_loc, chosen_alley_loc, 
-         final_distance, correct_goal, correct_final_alley,
-         entry_alley_1, entry_alley_2, entry_alley_3, entry_alley_4, entry_alley_5) %>% 
-  mutate(entry_alley_1=case_when(start_pos==1 & entry_alley_1>0 ~ entry_alley_1-1, 
-                                 goal_loc==1 & entry_alley_1>0 ~ entry_alley_1-1, 
-                                 T ~ entry_alley_1),
-         entry_alley_2=case_when(start_pos==3 & entry_alley_2>0 ~ entry_alley_2-1, 
-                                 goal_loc==2 & entry_alley_2>0 ~ entry_alley_2-1, 
-                                 T ~ entry_alley_2),
-         entry_alley_3=case_when(start_pos==5 & entry_alley_3>0 ~ entry_alley_3-1,  
-                                 T ~ entry_alley_3),
-         entry_alley_4=case_when(start_pos==7 & entry_alley_4>0 ~ entry_alley_4-1, 
-                                 T ~ entry_alley_4),
-         entry_alley_5=case_when(start_pos==9 & entry_alley_5>0 ~ entry_alley_5-1,  
-                                 goal_loc==3 & entry_alley_5>0 ~ entry_alley_5-1, 
-                                 T ~ entry_alley_5)) %>% 
-  #group_by(session, group) %>% 
-  group_by(group) %>% 
-  summarize(alley_1=sum(entry_alley_1),
-            alley_2=sum(entry_alley_2),
-            alley_3=sum(entry_alley_3),
-            alley_4=sum(entry_alley_4),
-            alley_5=sum(entry_alley_5)) %>% 
-  pivot_longer(cols=c("alley_1", "alley_2", "alley_3","alley_4", "alley_5"),
-               names_pattern = "alley_(.*)") %>% 
-  group_by(group) %>% 
-  mutate(percent=value/sum(value)) %>% 
-  ungroup() %>% 
-  mutate(percent_total=value/sum(value))
-
-polar <- ggplot(strategy_data_allo_reorient, aes(x=name, y=percent, fill=group)) +
-  geom_bar(stat="identity", color="black") + 
-  scale_fill_manual(name=NULL, labels=mylabels, values=mycolors) +
-  geom_text(aes(y=0.1, label=round(percent,3)*100), size=3) + 
-  facet_wrap(~ group, nrow=2, labeller=mylabels) + 
-  coord_polar(theta = "x") +
-  theme_classic() + 
-  guides(size=11) + 
-  theme(title = element_text(size=10),
-        legend.position = "none",
-        plot.caption = element_text(hjust = 0, size=10),
-        axis.title = element_blank(),
-        axis.ticks = element_blank(),
-        axis.text.y = element_blank(),
-        axis.text.x = element_blank()) + 
-  labs(title="Alley entries in % for allocentric trials with reorientation", 
-       caption="*excluding start alley and goal alley entries") 
-ggsave("Allo_reorient_polar.jpeg", polar, width=4.7, height=4.5, dpi=600)
-
+allobar <- stacked_bar_plot(sm_allo, "group", "percent", "search_strategy_in_allo", "session", mylabels, "Allocentric trials (excl. trials with inner starts)", NULL, "% of use", "bottom", "Oranges")
 ## ---- 
-rm(strategy_box, strategy_bars, strategy_data_allo_ind, strategy_data_ego_ind,
-   strategy_data_allo_sum, strategy_data_ego_sum, strategy_data_allo_reorient)
+rm(allobar)
 
 
-
-# ## ---- data_func_rotation
-# # summary value 
-# sm_trial_data_rot <- sm_trial_data %>%
-#   filter(condition=="main_learn" | condition=="ego_ret" | condition=="allo_ret") %>%
-#   group_by(id, group, session, condition) %>%
-#   summarise(sum_head_rotation=mean(sum_head_rotation, na.rm=T))
-# 
-# 
-# rot <- ggplot(sm_trial_data_rot, aes(x=group, y=sum_head_rotation, fill=group)) + 
-#   geom_boxplot() + 
-#   scale_fill_manual(values=mycolors) + 
-#   facet_grid(session ~ condition, labeller=mylabels) + 
-#   theme_classic() +
-#   theme(legend.position = "bottom",
-#         legend.title = element_blank(),
-#         axis.ticks.x = element_blank(),
-#         axis.title.x = element_blank(),
-#         axis.text.x = element_blank()) + 
-#   labs(subtitle="Overall rotation oer trial",
-#        y="Mean sum of z rotation")
-# 
-# 
-# # area information from Matlab
-# # area inner: area(alley_polyshape_2{1})*1000 = 15.31
-# # area outer: area(alley_polyshape_1{1})*1000 = 15.31
-# # area total arm: 15.31 + 15.31 = 30.62
-# # area tri: area(tri{1})*1000 = 2.99
-# # area rec: area(rec{1})*1000 = 10.82
-# 
-# 
-# # # function for rotation plots 
-# # rot_plot <- function(data, xvar, yvar, fillvar, subtitle) {
-# #   p <- ggplot(data, aes_string(x=xvar, y=yvar, fill=fillvar)) +
-# #     geom_boxplot(outlier.shape=NA) + 
-# #     scale_fill_manual(values=c("#F5562F", "#F5AE50", "#F5D72F")) + 
-# #     ylim(0,80) + 
-# #     theme_classic() +
-# #     theme(legend.title = element_blank(),
-# #           axis.ticks.x = element_blank(),
-# #           axis.title.x = element_blank()) + 
-# #     labs(subtitle=subtitle, 
-# #          y="Mean sum of z rotation (avg. by size)")
-# #   
-# #   return(p)
-# # }
-# # 
-# # 
-# # # full data 
-# # rot_data <- sm_trial_data_support %>%
-# #   filter(condition=="main_learn" | condition=="ego_ret" | condition=="allo_ret") %>%
-# #   select(id, group, session, trial, condition, start_pos,
-# #          rotation_a1, rotation_a2, rotation_a3, rotation_a4, rotation_a5,
-# #          rotation_tri_5, rotation_tri_2, rotation_tri_3, rotation_tri_4, rotation_tri_5_1,
-# #          rotation_rec_1, rotation_rec_2, rotation_rec_3, rotation_rec_4, rotation_rec_5) %>%
-# #   rename(rotation_tri_1=rotation_tri_5, rotation_tri_5=rotation_tri_5_1) %>% # correct for typo
-# #   pivot_longer(cols=starts_with("rotation"), names_to="area") %>%
-# #   group_by(id, group, session, condition, area, start_pos) %>%
-# #   summarise(abs_sum_rot=mean(value, na.rm=T)) %>% 
-# #   mutate(area_size=case_when(str_detect(area, "tri") ~ 2.99,
-# #                              str_detect(area, "rec") ~ 10.82,
-# #                              TRUE ~ 30.62),
-# #          rel_sum_rot=abs_sum_rot/area_size)
-# # 
-# # 
-# # # for learning and egocentric 
-# # r_data <- rot_data %>%
-# #   filter(condition!="allo_ret" &
-# #            area %in% c("rotation_a4", "rotation_tri_4")) %>% 
-# #   mutate(area=factor(area, labels=c("Outer arm", "Intersection"),
-# #                      levels=c("rotation_a4", "rotation_tri_4")))
-# # 
-# # r_data_learn <- r_data %>% filter(condition=="main_learn")
-# # rot1 <- rot_plot(r_data_learn, "group", "rel_sum_rot", "area", "Learning in session 1")
-# # 
-# # r_data_ego_1 <- r_data %>% filter(condition=="ego_ret" & session==1)
-# # rot2 <- rot_plot(r_data_ego_1, "group", "rel_sum_rot", "area", "Egocentric in session 1")
-# # 
-# # r_data_ego_2 <- r_data %>% filter(condition=="ego_ret" & session==2)
-# # rot3 <- rot_plot(r_data_ego_2, "group", "rel_sum_rot", "area", "Egocentric in session 2")
-# # 
-# # 
-# # # for allocentric 
-# # r_data_2 <- rot_data %>%
-# #   filter(condition=="allo_ret") %>% 
-# #   mutate(to_keep=case_when(start_pos==1 & area %in% c("rotation_a1", "rotation_tri_1") ~ TRUE,
-# #                            start_pos==3 & area %in% c("rotation_a2", "rotation_tri_2") ~ TRUE,
-# #                            start_pos==5 & area %in% c("rotation_a3", "rotation_tri_3") ~ TRUE,
-# #                            start_pos==9 & area %in% c("rotation_a5", "rotation_tri_5") ~ TRUE,
-# #                            start_pos==2 & area %in% c("rotation_rec_1") ~ TRUE,
-# #                            start_pos==4 & area %in% c("rotation_rec_2") ~ TRUE,
-# #                            start_pos==6 & area %in% c("rotation_rec_3") ~ TRUE,
-# #                            start_pos==8 & area %in% c("rotation_rec_4") ~ TRUE,
-# #                            start_pos==10 & area %in% c("rotation_rec_5") ~ TRUE,
-# #                            TRUE ~ FALSE)) %>% 
-# #   filter(to_keep) %>% 
-# #   rowwise() %>% 
-# #   mutate(area_2=case_when(str_detect(area, "_a") ~ "Outer arm", 
-# #                           str_detect(area, "_tri") ~ "Intersection",
-# #                           TRUE ~ "Inner arm")) %>% 
-# #   group_by(id, group, session, area_2) %>% 
-# #   summarise(abs_sum_rot=mean(abs_sum_rot, na.rm=T),
-# #             rel_sum_rot=mean(rel_sum_rot, na.rm=T))
-# # 
-# # 
-# # r_data_allo_1 <- r_data_2 %>% filter(session==1)
-# # rot4 <- rot_plot(r_data_allo_1, "group", "rel_sum_rot", "area_2", "Allocentric in session 1")
-# # 
-# # r_data_allo_2 <- r_data_2 %>% filter(session==2)
-# # rot5 <- rot_plot(r_data_allo_2, "group", "rel_sum_rot", "area_2", "Allocentric in session 2")
-# 
-# ## ----
-
+# ########################################## #
 
 
 ## ---- data_func_final_locs
@@ -1271,3 +973,89 @@ goal_dots(sm_support %>% filter(group=="YoungAdults", condition=="allo_ret"),
 
 ## clear workspace
 rm(list = ls())
+
+
+##################################################################################
+
+# ### COMBINE PLOTS FOR POSTER 
+# 
+# # joint t1 t2 data
+# sm_ind_data <- sm_trial_data %>%
+#   filter(condition %in% c("ego_ret", "allo_ret")) %>% 
+#   group_by(id, session, group, condition) 
+# sm_ind_data <- mean_func(sm_ind_data)
+# 
+# # % correct goal
+# g1a <- box_agg(sm_ind_data %>%  filter(condition=="allo_ret"), "group", "correct_goal", "group", "session", "none", "Allocentric probe trials", NULL, "% correct goal", NULL, mylabels, "bottom")
+# g1b <- box_agg_change(sm_change_data %>%  filter(condition=="allo_ret"), "group", "correct_ratio", "group", "session", NULL, NULL, "change (T2 - T1) / T1", NULL, mylabels, "none")
+# 
+# g_allo_c <- (g1a & theme(legend.position="none", axis.ticks.x=element_line(), 
+#                          axis.text.x=element_text()) & scale_x_discrete(labels=mylabels)) +
+#   (g1b & theme(legend.position="none", axis.ticks.x=element_line(), 
+#                axis.text.x=element_text()) & scale_x_discrete(labels=mylabels)) +
+#   plot_layout(widths=c(0.68,0.32))
+# 
+# ggsave("Allo_perc_cor.jpeg", g_allo_c, width=5, height=3.7, dpi=600)
+# 
+# g2a <- box_agg(sm_ind_data %>%  filter(condition=="ego_ret"), "group", "correct_goal", "group", "session", "none", "Egocentric probe trials", NULL, "% correct goal", NULL, mylabels, "bottom")
+# g2b <- box_agg_change(sm_change_data %>%  filter(condition=="ego_ret"), "group", "correct_ratio", "group", "session", NULL, NULL, "change (T2 - T1) / T1", NULL, mylabels, "none")
+# 
+# g_ego_c <- (g2a & theme(legend.position="none", axis.ticks.x=element_line(), 
+#                         axis.text.x=element_text()) & scale_x_discrete(labels=mylabels)) +
+#   (g2b & theme(legend.position="none", axis.ticks.x=element_line(), 
+#                axis.text.x=element_text()) & scale_x_discrete(labels=mylabels)) +
+#   plot_layout(widths=c(0.68,0.32))
+# 
+# ggsave("Ego_perc_cor.jpeg", g_ego_c, width=5, height=3.7, dpi=600)
+# 
+# 
+# # final distance in correct 
+# sm_ind_data_cor <- sm_trial_data %>%
+#   filter(condition %in% c("ego_ret", "allo_ret") & correct_goal==1) %>% 
+#   group_by(id, session, group, condition) 
+# sm_ind_data_cor <- mean_func(sm_ind_data_cor)
+# 
+# g1c <- box_agg(sm_ind_data_cor %>%  filter(condition=="allo_ret"), "group", "final_distance", "group", "session", "none", "Allocentric probe trials", NULL, "final distance in correct trials", NULL, mylabels, "bottom")
+# g1d <- box_agg_change(sm_ind_data_cor_t12_change %>%  filter(condition=="allo_ret"), "group", "final_distance_ratio", "group", "session", NULL, NULL, "change (T2 - T1) / T1", NULL, mylabels, "none")
+# 
+# g_allo_fd <- (g1c & theme(legend.position="none", axis.ticks.x=element_line(), 
+#                           axis.text.x=element_text()) & scale_x_discrete(labels=mylabels) &
+#                 scale_y_continuous(limits=c(0,0.12))) + 
+#   (g1d & theme(legend.position="none", axis.ticks.x=element_line(), 
+#                axis.text.x=element_text()) & scale_x_discrete(labels=mylabels) & 
+#      scale_y_continuous(limits=c(-2,5))) + 
+#   plot_layout(widths=c(0.68,0.32))
+# 
+# ggsave("Allo_fd.jpeg", g_allo_fd, width=5, height=3.7, dpi=600)
+# 
+# 
+# g2c <- box_agg(sm_ind_data_cor %>% filter(condition=="ego_ret"), "group", "final_distance", "group", "session", "none", "Egocentric probe trials", NULL, "final distance in correct trials", NULL, mylabels, "bottom")
+# g2d <- box_agg_change(sm_ind_data_cor_t12_change %>%  filter(condition=="ego_ret"), "group", "final_distance_ratio", "group", "session", NULL, NULL, "change (T2 - T1) / T1", NULL, mylabels, "none")
+# 
+# g_ego_fd <- (g2c & theme(legend.position="none", axis.ticks.x=element_line(), 
+#                          axis.text.x=element_text()) & scale_x_discrete(labels=mylabels) &
+#                scale_y_continuous(limits=c(0,0.12))) + 
+#   (g2d & theme(legend.position="none", axis.ticks.x=element_line(), 
+#                axis.text.x=element_text()) & scale_x_discrete(labels=mylabels) & 
+#      scale_y_continuous(limits=c(-2,5))) + 
+#   plot_layout(widths=c(0.68,0.32))
+# 
+# ggsave("Ego_fd.jpeg", g_ego_fd, width=5, height=3.7, dpi=600)
+# 
+# 
+# # path error in correct 
+# g1e <- box_agg(sm_ind_data %>%  filter(condition=="allo_ret"), "group", "avg_distance_path", "group", "session", "none", "Allocentric probe trials", NULL, "path error in correct trials", NULL, mylabels, "bottom")
+# g1f <- box_agg_change(sm_change_data %>%  filter(condition=="allo_ret"), "group", "avg_distance_path_ratio", "group", "session", NULL, NULL, "change (T2 - T1) / T1", NULL, mylabels, "none")
+# 
+# g_allo_p <- (g1e & theme(legend.position="bottom") & scale_y_continuous(limits=c(0,0.2))) + 
+#   (g1f & theme(legend.position="none") & scale_y_continuous(limits=c(-2,4))) + 
+#   plot_layout(widths=c(0.68,0.32))
+# 
+# g2e <- box_agg(sm_ind_data %>%  filter(condition=="ego_ret"), "group", "avg_distance_path", "group", "session", "none", "Egocentric probe trials", NULL, "path error in correct trials", NULL, mylabels, "bottom")
+# g2f <- box_agg_change(sm_change_data %>%  filter(condition=="ego_ret"), "group", "avg_distance_path_ratio", "group", "session", NULL, NULL, "change (T2 - T1) / T1", NULL, mylabels, "none")
+# 
+# g_ego_p <- (g2e & theme(legend.position="bottom") & scale_y_continuous(limits=c(0,0.2))) + 
+#   (g2f & theme(legend.position="none") & scale_y_continuous(limits=c(-2,4))) + 
+#   plot_layout(widths=c(0.68,0.32))
+# 
+# ##################################################################################
