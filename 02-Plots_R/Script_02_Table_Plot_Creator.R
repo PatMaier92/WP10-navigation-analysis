@@ -48,7 +48,11 @@ mylabels <- as_labeller(c(`YoungKids` = "6-7yo", `OldKids` = "9-10yo", `YoungAdu
                           `direct` = "direct", `detour` = "detour",`reoriented` = "reoriented",
                           `direct_allo` = "direct allo", `detour_allo` = "detour allo",
                           `direct_ego` = "direct ego", `detour_ego` = "detour ego",   
-                          `back_to_start` ="back to start", `unclassified` = "unclassified"))
+                          `back_to_start` ="back to start", `unclassified` = "unclassified",
+                          `layout`="Layout recognition", `landmarks`="Landmark recognition", 
+                          `goals`="Goal recognition", `position`="Positioning (GMDA)",
+                          `1-correct`="1-correct", `2-lure similar`="2-lure similar", `3-lure dissimilar`="3-lure dissimilar",
+                          `SQRT(CanOrg)`="SQRT(CanOrg)", `CanAcc`="CanAcc", `DistAcc`="DistAcc", `AngleAcc`="AngleAcc"))
 
 # colors
 group_colors <- c("YoungKids"="#F1BB7B", "OldKids"="#FD6467", "YoungAdults"="#8A928B")
@@ -88,7 +92,7 @@ l_search_strategy_allo <- "search strategy in allocentric trials"
 
 ## ---- plot_functions
 # function for aggregated box plots with individual values 
-box_plot <- function(data, xvar, yvar, fillby, facetr, facetc, subtitle, xlabel, ylabel, facetlabel, legendPos, mycolors){
+box_plot <- function(data, xvar, yvar, fillby, facetr, facetc, subtitle, xlabel, ylabel, facetlabel, legendPos, mycolors, facetOneLine=F){
   p <- ggplot(data, aes(x=get(xvar), y=get(yvar), fill=get(fillby))) + 
     geom_boxplot(outlier.shape=NA) +
     geom_point(position=position_jitterdodge(seed=999), size=0.5) + 
@@ -105,7 +109,10 @@ box_plot <- function(data, xvar, yvar, fillby, facetr, facetc, subtitle, xlabel,
          x=xlabel,
          y=ylabel)
   
-  if (facetc=="none") {
+  if (facetOneLine==T) {
+    p <- p + facet_wrap(facetr, labeller=facetlabel, nrow=1)
+  }
+  else if (facetc=="none") {
     p <- p + facet_wrap(facetr, labeller=facetlabel) 
   }
   else {
@@ -114,6 +121,7 @@ box_plot <- function(data, xvar, yvar, fillby, facetr, facetc, subtitle, xlabel,
   
   return(p)
 }
+
 
 # function for aggregated box change plots
 change_box_plot <- function(data, xvar, yvar, fillby, facetvar, subtitle, mylabels, legendPos, mycolors, xlabel=NULL, ylabel) {
@@ -141,12 +149,13 @@ change_box_plot <- function(data, xvar, yvar, fillby, facetvar, subtitle, mylabe
   return(p)
 }
 
+
 # function for stacked bar plots 
-stacked_bar_plot <- function(data, xvar, yvar, fillvar, facetvar, mylabels, title, xlabel, ylabel, legendPos, mypalette) {
+stacked_bar_plot <- function(data, xvar, yvar, fillvar, facetvar, mylabels, title, xlabel, ylabel, legendPos, mypalette, paletteDir=1, stackReverse=F) {
   p <- ggplot(data, aes(x=get(xvar), y=get(yvar), fill=get(fillvar))) +
-    geom_bar(stat="identity", position="stack", color="black") +
+    geom_bar(stat="identity", position=position_stack(reverse=stackReverse), color="black") +
     scale_x_discrete(labels=mylabels) +
-    scale_fill_brewer(palette=mypalette, labels=mylabels) +
+    scale_fill_brewer(palette=mypalette, labels=mylabels, direction=paletteDir) +
     theme_classic() +
     theme(legend.position=legendPos,
           legend.title=element_blank(),
@@ -162,6 +171,7 @@ stacked_bar_plot <- function(data, xvar, yvar, fillvar, facetvar, mylabels, titl
   
   return(p)
 }
+
 
 # function for raincloud plots
 raincloud_plot <- function(data, xvar, yvar, xlab, ylab, mylabels, mycolors, ymin="n", ymax="n", mysubtitle=NULL, facetvar="n"){
@@ -191,6 +201,31 @@ raincloud_plot <- function(data, xvar, yvar, xlab, ylab, mylabels, mycolors, ymi
   }
   
   return(p1)
+}
+
+
+# function for dot plots showing chosen locations in relation to actual goal locations
+dot_plots <- function(mydata, xvar, yvar, goalvar, goalx, goaly, mytitle, facetr="session", facetc="group") {
+  p <- ggplot(mydata, aes(x=get(xvar), y=get(yvar), shape=get(goalvar))) + 
+    geom_point(aes(color=get(goalvar)), size=1.5) +
+    geom_point(aes(x=get(goalx), y=get(goaly), fill=get(goalvar), shape=get(goalvar)), size=4) +
+    scale_shape_manual(values=c(21, 22, 24)) +
+    scale_fill_brewer(palette="Set2") + 
+    scale_color_brewer(palette="Set2") + 
+    scale_x_continuous(breaks=c(0, 0.5, 1), labels=c(0, 0.5, 1)) + 
+    scale_y_continuous(breaks=c(0, 0.5, 1), labels=c(0, 0.5, 1)) + 
+    coord_fixed(ratio=1, xlim=c(0, 1), ylim=c(0, 1), expand=TRUE, clip="on") +
+    facet_grid(formula(paste(facetr, "~", facetc)), labeller=mylabels) +  
+    theme_bw() +
+    theme(legend.position="top",
+          legend.justification=c(0, 0),
+          legend.title = element_blank()) + 
+    labs(title=mytitle,
+         subtitle="Remembered goal location for goals 1-3",
+         x="x",
+         y="y")
+  
+  return(p)
 }
 ## ----
 
@@ -292,7 +327,7 @@ rm(corr1_data, plot_variables)
 
 # ######################################################### #
 
-# :::   session 1 trialwise plots    ::: #
+# :::   trialwise plots (session 1)   ::: #
 
 ## ---- data_func_trialwise
 sm_trialwise <- sm_data %>%
@@ -312,7 +347,7 @@ trial_plot <- function(data, xvar, yvar, fillby, facet, title, ylabel, facetlabe
     theme_classic() + 
     theme(legend.position=legendPos,
           legend.title=element_blank(),
-          legend.key.size = unit(0.5, 'cm'),
+          legend.key.size=unit(0.5, 'cm'),
           legend.justification=c(0, 0)) +
     labs(title=title,
          x="trial",
@@ -332,7 +367,7 @@ rm(sm_trialwise, trial_plot, tr_cfa, tr_cg, tr_t, tr_pd, tr_ze)
 
 # ########################################## #
 
-# ::: session 1 & 2 aggregated box plots  ::: #
+# :::     aggregated box plots        ::: #
 
 ## ---- data_s1
 sm_s1 <- sm_data %>%
@@ -458,7 +493,7 @@ sm_change <- sm_data %>%
          pd_ratio=ratio(path_distance_1, path_distance_2),
          fd_ratio=ratio(final_distance_1, final_distance_2),
          session="Consolidation")
-# TBD check Werte > 1 
+# TBD check Plausibilität der Werte > 1 
 pch_cfa <- change_box_plot(sm_change, "group", "cfa_ratio", "group", "session", NULL, mylabels, "none", group_colors, ylabel=l_correct_alley)
 
 pch_cg <- change_box_plot(sm_change, "group", "cg_ratio", "group", "session", NULL, mylabels, "none", group_colors, ylabel=l_correct_goal)
@@ -506,7 +541,7 @@ rm(pch_cfa, pch_cg, pch_ce, pch_pd, pchc_pd, pchc_fd, ratio)
 
 # ########################################## #
 
-# :::   session 1 & 2 raincloud plots   ::: #
+# :::     raincloud plots                ::: #
 
 # ## ---- data_rain
 # sm_s1 <- sm_data %>%
@@ -521,7 +556,23 @@ rm(pch_cfa, pch_cg, pch_ce, pch_pd, pchc_pd, pchc_fd, ratio)
 
 # ########################################## #
 
-# :::   session 1 & 2 strategy plots    ::: #
+# :::     chosen location dot plots       ::: #
+
+## ---- data_chosen_location
+sm_locations <- sm_data %>% 
+  filter(condition %in% c("ego_ret", "allo_ret")) %>% 
+  mutate(goal_i=factor(goal_i))
+
+dots_ego <- dot_plots(sm_locations %>% filter(condition=="ego_ret"), "x_n", "y_n", "goal_i", "goal_x", "goal_y", "Egocentric trials")
+
+dots_allo <- dot_plots(sm_locations %>% filter(condition=="allo_ret"), "x_n", "y_n", "goal_i", "goal_x", "goal_y", "Allocentric trials")
+## ----
+rm(sm_locations, dots_allo, dots_ego)
+
+
+# ########################################## #
+
+# :::     strategy plots                  ::: #
 
 ## ---- data_strategy
 # strategy box plots
@@ -553,87 +604,31 @@ rm(sm_strat, sm_strat2, stbox_allo, stbox_ego, stbar_allo, stbar_ego)
 # ########################################## #
 
 # :::   allocentric strategy plots    ::: #
-# strategy bar plots
 
+## ---- data_allo_strategy
+# strategy bar plots
 sm_allo <- sm_data %>%
-  filter(condition %in% c("allo_ret")) %>% 
-  filter(!is.na(search_strategy_in_allo)) %>% 
-  group_by(group, session, search_strategy_in_allo) %>% 
+  filter(condition %in% c("allo_ret")) %>%
+  filter(!is.na(search_strategy_in_allo)) %>%
+  group_by(group, session, search_strategy_in_allo) %>%
   tally() %>%
   mutate(percent=n/sum(n))
 
 allobar <- stacked_bar_plot(sm_allo, "group", "percent", "search_strategy_in_allo", "session", mylabels, "Allocentric trials (excl. trials with inner starts)", NULL, "% of use", "bottom", "Oranges")
-## ---- 
+## ----
 rm(allobar)
 
 
 # ########################################## #
 
-
-## ---- data_func_final_locs
-# data
-final_alley <- sm_trial_data %>% 
-  filter(condition=="allo_ret" | condition=="ego_ret") %>% 
-  group_by(group, session, condition, goal_alley) %>% 
-  mutate(chosen_alley_loc=case_when(chosen_alley_loc %% 2 == 0 ~ "inner ring",
-                                    TRUE ~ as.character(chosen_alley_loc))) %>% 
-  count(chosen_alley_loc) %>% 
-  mutate(percent=n/sum(n))
-
-
-# function
-final_bars <- function(data, xvar, yvar, f1, f2, title, subtitle, mycolors){
-  p <- ggplot(data, aes_string(x=xvar, y=yvar, fill=xvar)) + 
-    geom_bar(stat="identity", color="black") + 
-    facet_grid(f1 ~ as.factor(f2)) + 
-    facet_grid(formula(paste(f1, "~", f2))) + 
-    ylim(0,1) + 
-    scale_fill_manual(values=mycolors) + 
-    theme_classic() + 
-    theme(legend.position="bottom", 
-          legend.justification = c(0,0),
-          axis.ticks.x=element_blank(),
-          axis.text.x=element_blank(),
-          axis.title.x=element_blank()) + 
-    labs(title=title,
-         subtitle=subtitle,
-         x=NULL,
-         y="% chosen",
-         fill=NULL) 
-  
-  return(p)
-}
-
-
-final_bars(final_alley %>% filter(session==1 & condition=="ego_ret"), "group", "percent", "goal_alley", "chosen_alley_loc", 
-           "Chosen final alley by goal location (999 = inner alleys)", "Egocentric in session 1", mycolors)
-
-final_bars(final_alley %>% filter(session==2 & condition=="ego_ret"), "group", "percent", "goal_alley", "chosen_alley_loc", 
-           "Chosen final alley by goal location (999 = inner alleys)", "Egocentric in session 2", mycolors)
-
-final_bars(final_alley %>% filter(session==1 & condition=="allo_ret"), "group", "percent", "goal_alley", "chosen_alley_loc", 
-           "Chosen final alley by goal location (999 = inner alleys)", "Allocentric in session 1", mycolors)
-
-final_bars(final_alley %>% filter(session==2 & condition=="allo_ret"), "group", "percent", "goal_alley", "chosen_alley_loc", 
-           "Chosen final alley by goal location (999 = inner alleys)", "Allocentric in session 2", mycolors)
-
-final_bars(final_alley %>% filter(condition=="ego_ret"), "group", "percent", "goal_alley", "chosen_alley_loc", 
-           "Chosen final alley by goal location (999 = inner alleys)", "Egocentric across sessions", mycolors)
-
-final_bars(final_alley %>% filter(condition=="allo_ret"), "group", "percent", "goal_alley", "chosen_alley_loc", 
-           "Chosen final alley by goal location (999 = inner alleys)", "Allocentric  across sessions", mycolors)
-## ----
-
-
+# :::     scatter       ::: #
 
 ## ---- data_func_scatter
-scat_data <- sm_trial_data %>% 
+scatter_data <- sm_data %>% 
   filter(condition=="ego_ret" | condition=="allo_ret") %>%   
   group_by(id, group, session, condition) %>% 
-  summarize(performance=mean(correct_goal)) %>% 
-  pivot_wider(names_from=condition, 
-              values_from=performance)
-
+  summarize(performance=mean(correct_final_alley)) %>% 
+  pivot_wider(names_from=condition, values_from=performance)
 
 scatter <- function(data, x, y, xlab, ylab, mylabels){
   p1 <- ggplot(data, aes_string(x=x, y=y)) +
@@ -649,143 +644,35 @@ scatter <- function(data, x, y, xlab, ylab, mylabels){
   return(p1)
 }
 
-scat_allo_ego <- scatter(scat_data, "allo_ret", "ego_ret", "Allocentric", "Egocentric", mylabels)
+scatter(scat_data, "allo_ret", "ego_ret", "Allocentric", "Egocentric", mylabels)
 ## ----
+rm(scatter, scatter_data)
 
 
+# ########################################## #
+
+# :::   POST NAVIGATIONAL MEMORY TESTS     ::: 
 
 ## ---- data_func_post_tests
-# function 
-sum_bars <- function(data, data_sum, xvar, yvar, fillvar, title, xlabel, ylabel, filllabel, myfacetlabels, mycolors, mylabels, legendPos, labelx=TRUE) {
-  p <- ggplot(data, aes_string(x=xvar, y=yvar, fill=fillvar)) + 
-    geom_bar(data=data_sum, stat="identity", colour="black") + 
-    geom_point(position=position_jitterdodge(seed=999), size=0.5) + 
-    facet_wrap(~ factor(condition, level=level_order1), nrow=1,
-               labeller=myfacetlabels) +
-    scale_x_discrete(labels=mylabels) + 
-    scale_y_continuous(limits=c(0,1)) + 
-    scale_fill_manual(values=mycolors, labels=mylabels) + # nicer color palette 
-    theme_classic() + 
-    theme(legend.position=legendPos, 
-          axis.title.x=element_blank()) + 
-    labs(title=title,
-         x=xlabel,
-         y=ylabel,
-         fill=filllabel) 
-  
-  if(!labelx) {
-    p <- p + theme(axis.ticks.x=element_blank(),
-                   axis.text.x=element_blank()) 
-  } 
-  
-  return(p)
-}
+pt_data <- pt_data %>% 
+  mutate(condition=factor(trial_num, levels=c(1,2,3,4), labels=c("layout", "landmarks","goals","position")))
 
 
-sum_box <- function(data, xvar, yvar, fillvar, title, xlabel, ylabel, filllabel, myfacetlabels, mycolors, mylabels, legendPos, labelx=TRUE) {
-  p <- ggplot(data, aes_string(x=xvar, y=yvar, fill=fillvar)) + 
-    geom_boxplot(outlier.shape=NA) + 
-    geom_point(position=position_jitterdodge(seed=999), size=0.5) + 
-    facet_wrap(~ factor(condition, level=level_order1), nrow=1,
-               labeller=myfacetlabels) +
-    scale_x_discrete(labels=mylabels) + 
-    scale_y_continuous(limits=c(0,1)) + 
-    scale_fill_manual(values=mycolors, labels=mylabels) + # nicer color palette 
-    theme_classic() + 
-    theme(legend.position=legendPos, 
-          axis.title.x=element_blank()) + 
-    labs(title=title,
-         x=xlabel,
-         y=ylabel,
-         fill=filllabel) 
-  
-  if(!labelx) {
-    p <- p + theme(axis.ticks.x=element_blank(),
-                   axis.text.x=element_blank()) 
-  } 
-  
-  return(p)
-}
+# :::   layout recognition     ::: 
 
-
-# data 
-data_gmda_ind <- data_gmda %>% 
-  group_by(ID, group) %>% 
-  select(-c(Type)) %>% 
-  filter(!Measure %in% c("r", "CanOrg")) %>% 
-  rename(id = ID) %>% 
-  summarize(mean_score=mean(Score, na.rm=T)) %>% 
-  mutate(id=as.numeric(id), 
-         condition="pos_recall",
-         group=fct_recode(group, YoungKids = "YK", OldKids = "OK", YoungAdults="YA"))
-
-data_gmda_sum <- data_gmda %>% 
+layout_data <- pt_data %>% 
+  filter(condition=="layout") %>% 
+  filter(!is.na(layout_obj_1)) %>% 
+  select(id, group, layout_obj_1) %>% 
   group_by(group) %>% 
-  select(-c(Type)) %>% 
-  filter(!Measure %in% c("r", "CanOrg")) %>% 
-  summarize(mean_score=mean(Score, na.rm=T)) %>% 
-  mutate(condition="pos_recall",
-         group=fct_recode(group, YoungKids = "YK", OldKids = "OK", YoungAdults="YA"))
-
-pt_data_ind <- pt_trial_data %>% 
-  filter(condition != "pos_recall") %>% 
-  group_by(id, group, condition) %>% 
-  summarize(mean_score=mean(score, na.rm=T)) %>% 
-  bind_rows(data_gmda_ind) %>% 
-  group_by(id, group, condition) 
-
-pt_data_sum <- pt_trial_data %>% 
-  filter(condition != "pos_recall") %>% 
-  group_by(group, condition) %>% 
-  summarize(mean_score=mean(score, na.rm=T)) %>% 
-  bind_rows(data_gmda_sum) %>% 
-  group_by(group, condition)
-
-
-# levels & labels
-level_order1 <- c("shape_recog",
-                 "lm_recog",
-                 "obj_recog",
-                 "pos_recall")
-
-post_labels <- as_labeller(c(`shape_recog`="Layout recognition", 
-                             `lm_recog`="Landmark recognition", 
-                             `obj_recog`="Object recognition", 
-                             `pos_recall`="Positioning (GMDA)"))
-
-
-# summary plots
-nonnav <- sum_bars(pt_data_ind, pt_data_sum, "group", "mean_score", "group", NULL, NULL, "mean score", NULL, post_labels, mycolors, mylabels, "none", labelx=FALSE)
-
-layout <- sum_bars(pt_data_ind %>% filter(condition=="shape_recog"),
-                   pt_data_sum %>% filter(condition=="shape_recog"), 
-                   "group", "mean_score", "group", NULL, NULL, "mean score", NULL, post_labels, mycolors, mylabels, "none")
-landmarks <- sum_box(pt_data_ind %>% filter(condition=="lm_recog"),
-                   #pt_data_sum %>% filter(condition=="lm_recog"), 
-                   "group", "mean_score", "group", NULL, NULL, "mean score", NULL, post_labels, mycolors, mylabels, "none")
-mean_gmda <- sum_box(pt_data_ind %>% filter(condition=="pos_recall"),
-                   #pt_data_sum %>% filter(condition=="pos_recall"), 
-                   "group", "mean_score", "group", NULL, NULL, "mean score", NULL, post_labels, mycolors, mylabels, "none")
-ggsave("Post_gmda.jpeg", mean_gmda, width=3, height=3.7, dpi=600)
-
-
-# details: layout recognition 
-layout_data <- pt_trial_data %>% 
-  filter(condition=="shape_recog") %>% 
-  filter(!is.na(obj_1)) %>% 
-  select(id, sex, group, obj_1) %>% 
-  mutate(obj_1 = factor(obj_1, levels = c(1, 2, 3, 4, 5, 6),
-                               labels=c("1-FourSquare", "2-FourFork", "3-FourX", 
-                               "4-FiveStar", "5-SixSquare", "6-SevenStar"))) %>% 
-  group_by(group) %>% 
-  count(obj_1) %>% 
+  count(layout_obj_1) %>% 
   mutate(n_per_group=sum(n),
          perc=n/n_per_group)
 
 layout_details <- ggplot(layout_data, aes(x=group, y=perc, fill=group)) +
   geom_bar(stat="identity", color="black") + 
-  facet_wrap(~ obj_1, drop=F) + 
-  scale_fill_manual(values=mycolors, labels=mylabels) +
+  facet_wrap(~ layout_obj_1, drop=F) + 
+  scale_fill_manual(values=group_colors, labels=mylabels) +
   ylim(0,1) + 
   theme_classic() + 
   theme(legend.position="none", 
@@ -797,177 +684,77 @@ layout_details <- ggplot(layout_data, aes(x=group, y=perc, fill=group)) +
        y="% response (per group)",
        fill=NULL) 
 
-all_layout <- layout + layout_details + plot_layout(widths=c(0.3,0.7))
+# layout_avg <- bar_plot(pt_data %>% filter(condition=="landmarks"))
 
-ggsave("Post_layout.jpeg", all_layout, width=7.7, height=3.7, dpi=600)
+# TBD: Make barplot function with calculation of mean 
+# bar_plot <- function(data, xvar, yvar, fillvar, facetvar, mylabels, title, xlabel, ylabel, legendPos, mycolors, isPalette=F) {
+#   p <- ggplot(data, aes(x=get(xvar), y=get(yvar), fill=get(fillvar))) +
+#     geom_bar(stat="identity", position="stack", color="black") +
+#     scale_x_discrete(labels=mylabels) +
+#     theme_classic() +
+#     theme(legend.position=legendPos,
+#           legend.title=element_blank(),
+#           legend.key.size=unit(0.5, 'cm'),
+#           legend.justification=c(0,0)) +
+#     labs(title=title,
+#          x=xlabel,
+#          y=ylabel)
+#   
+#   if (facetvar!="none") {
+#     p <- p + facet_wrap(facetvar, labeller=mylabels)
+#   }
+#   
+#   if (isPalette) {
+#     p <- p + scale_fill_brewer(palette=mycolors, labels=mylabels)
+#   } 
+#   else {
+#     p <- p + scale_fill_manual(values=mycolors, labels=mylabels)
+#   }
+#   
+#   return(p)
+# }
+
+# layout_all <- layout_avg + layout_details + plot_layout(widths=c(0.3,0.7))
+# ggsave("Post_layout.jpeg", all_layout, width=7.7, height=3.7, dpi=600)
 
 
-# details: landmark recognition 
-lm_data <- pt_trial_data %>% 
-  filter(condition=="lm_recog") %>% 
-  select(id, sex, group, obj_1, obj_2, obj_3, obj_4, obj_5) %>% 
-  mutate(obj_1 = factor(obj_1, levels=c(1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15),
-                        labels=c("01-Forest_corr", "02-Forest-House_corr", "03-Tower_corr", 
-                                 "04-Mountain_corr", "05-Mountain-House_corr", 
-                                 "06-Forest_sim", "07-Forest-House_sim", "08-Tower_sim",
-                                 "09-Mountain_sim", "10-Mountain-House_sim",
-                                 "11-Forest_dsm", "12-Forest-House_dsm", "13-Tower_dsm",
-                                 "14-Mountain_dsm", "15-Mountain-House_dsm")),
-         obj_2 = factor(obj_2, levels=c(1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15),
-                        labels=c("01-Forest_corr", "02-Forest-House_corr", "03-Tower_corr", 
-                                 "04-Mountain_corr", "05-Mountain-House_corr", 
-                                 "06-Forest_sim", "07-Forest-House_sim", "08-Tower_sim",
-                                 "09-Mountain_sim", "10-Mountain-House_sim",
-                                 "11-Forest_dsm", "12-Forest-House_dsm", "13-Tower_dsm",
-                                 "14-Mountain_dsm", "15-Mountain-House_dsm")),
-         obj_3 = factor(obj_3, levels=c(1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15),
-                        labels=c("01-Forest_corr", "02-Forest-House_corr", "03-Tower_corr", 
-                                 "04-Mountain_corr", "05-Mountain-House_corr", 
-                                 "06-Forest_sim", "07-Forest-House_sim", "08-Tower_sim",
-                                 "09-Mountain_sim", "10-Mountain-House_sim",
-                                 "11-Forest_dsm", "12-Forest-House_dsm", "13-Tower_dsm",
-                                 "14-Mountain_dsm", "15-Mountain-House_dsm")),
-         obj_4 = factor(obj_4, levels=c(1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15),
-                        labels=c("01-Forest_corr", "02-Forest-House_corr", "03-Tower_corr", 
-                                 "04-Mountain_corr", "05-Mountain-House_corr", 
-                                 "06-Forest_sim", "07-Forest-House_sim", "08-Tower_sim",
-                                 "09-Mountain_sim", "10-Mountain-House_sim",
-                                 "11-Forest_dsm", "12-Forest-House_dsm", "13-Tower_dsm",
-                                 "14-Mountain_dsm", "15-Mountain-House_dsm")),
-         obj_5 = factor(obj_5, levels=c(1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15),
-                        labels=c("01-Forest_corr", "02-Forest-House_corr", "03-Tower_corr", 
-                                 "04-Mountain_corr", "05-Mountain-House_corr", 
-                                 "06-Forest_sim", "07-Forest-House_sim", "08-Tower_sim",
-                                 "09-Mountain_sim", "10-Mountain-House_sim",
-                                 "11-Forest_dsm", "12-Forest-House_dsm", "13-Tower_dsm",
-                                 "14-Mountain_dsm", "15-Mountain-House_dsm"))) %>% 
-  pivot_longer(cols=c(obj_1, obj_2, obj_3, obj_4, obj_5)) %>% 
-  mutate(lm_group=case_when(str_detect(value, '_corr') ~ "1-correct",
+
+# :::   landmark recognition     :::
+
+landmark_data <- pt_data %>% 
+  filter(condition=="landmarks") %>% 
+  select(id, sex, group, starts_with("landmarks_obj")) %>% 
+  pivot_longer(cols=starts_with("landmarks_obj")) %>% 
+  mutate(category=case_when(str_detect(value, '_corr') ~ "1-correct",
                             str_detect(value, '_sim') ~ "2-lure similar",
                             str_detect(value, '_dsm') ~ "3-lure dissimilar")) %>% 
   group_by(group) %>% 
-  count(lm_group) %>% 
+  count(category) %>% 
   mutate(n_per_group=sum(n),
-         perc=n/n_per_group) %>% 
-  mutate(condition="lm_recog")
+         perc=n/n_per_group,
+         condition="landmarks")
 
-landmarks_details <- ggplot(lm_data, aes(x=group, y=perc, fill=lm_group)) +
-  geom_bar(stat="identity", position=position_stack(reverse=TRUE), color="black") + 
-  ylim(0,1) +  
-  scale_x_discrete(labels=mylabels) + 
-  scale_fill_brewer(palette="Greens", direction=-1) +
-  facet_wrap(~ condition, labeller=post_labels) + 
-  theme_classic() + 
-  theme(legend.position="right", 
-        legend.justification="center", 
-        legend.direction="vertical") + 
-  labs(title=NULL,
-       x=NULL,
-       y="% response (per group)",
-       fill=NULL)
+landmark_details <- stacked_bar_plot(landmark_data, "group", "perc", "category", "condition", mylabels, NULL, NULL, NULL, "bottom", "Greens", paletteDir=-1, stackReverse=T)
+# ggsave("Post_landmark.jpeg", landmarks_details, width=4.5, height=3.7, dpi=600)
 
-ggsave("Post_landmark.jpeg", landmarks_details, width=4.5, height=3.7, dpi=600)
+landmark_avg <- box_plot(pt_data %>% filter(condition=="landmarks"), "group", "score", "group", "condition","none", NULL, NULL, NULL, mylabels, "bottom", group_colors)
+
+landmark_all <- landmark_avg + landmark_details
 
 
-# details: GMDA positioning
-gmda_data <- data_gmda %>%
+
+# :::   GMDA positioning     :::
+
+gmda_data <- gmda_data %>%
   filter(!Measure %in% c("r", "CanOrg")) %>% 
-  mutate(group=fct_recode(group, YoungKids = "YK", OldKids = "OK", YoungAdults="YA"))
+  mutate(group=fct_recode(group, YoungKids = "YK", OldKids = "OK", YoungAdults="YA"),
+         Measure=factor(Measure, levels=c("SQRT(CanOrg)", "CanAcc", "DistAcc", "AngleAcc")))
 
-level_order2 <- c("SQRT(CanOrg)",
-                 "CanAcc",
-                 "DistAcc",
-                 "AngleAcc") 
+gmda_details <- box_plot(gmda_data, "group", "Score", "group", "Measure","none", NULL, NULL, NULL, mylabels, "bottom", group_colors, facetOneLine=T)
 
-gmda <- ggplot(gmda_data, aes(x=group, y=Score, fill=group)) +
-  geom_boxplot(outlier.shape = NA) + 
-  geom_point(size=0.5) + 
-  facet_wrap(~ factor(Measure, level=level_order2), nrow=1) +
-  scale_fill_manual(values=mycolors, labels=mylabels) +
-  ylim(0,1) + 
-  theme_classic() +
-  theme(legend.position="bottom", 
-        axis.text.x = element_blank(),
-        axis.ticks = element_blank()) + 
-  labs(title="Distribution of GMDA Scores",
-       y="Score",
-       x=NULL)
+gmda_avg <- box_plot(pt_data %>% filter(condition=="position"), "group", "score", "group", "condition","none", NULL, NULL, NULL, mylabels, "bottom", group_colors)
 
-all_gmda <- gmda
-## ----
-
-
-## ---- data_plots_chosen_location_starmaze
-
-# prepare data
-sm_support <- sm_trial_data_support %>% 
-  select(id, group, session, block, trial, condition, 
-         start_pos, goal_loc, goal_object, goal_x, goal_y, 
-         chosen_x, chosen_y) %>% 
-  filter(condition %in% c("ego_ret", "allo_ret")) %>% 
-  mutate(goal_loc=factor(goal_loc))
-
-
-# labels 
-mylabels <- labeller(group = c(`YoungKids` = "Y-CH", `OldKids` = "O-CH", `YoungAdults` = "AD"),
-                     session = c(`1`="T1 - Immediate", `2`=" T2 - Delayed"))
-
-
-# function for plotting chosen goal locations as dots
-goal_dots <- function(mydata, mytitle, facetr="session", facetc="group", w=7.5, h=6) {
-  p <- ggplot(mydata, aes(x=chosen_x, y=chosen_y, shape=goal_loc)) + 
-    geom_point(aes(color=goal_loc), size=1.5) +
-    geom_point(data=mydata, aes(x=goal_x, y=goal_y, fill=goal_loc, shape=goal_loc), size=4) +
-    scale_shape_manual(values=c(21, 22, 24)) +
-    scale_fill_brewer(palette="Set2") + 
-    scale_color_brewer(palette="Set2") + 
-    scale_x_continuous(breaks=c(0, 0.5, 1), labels=c(0, 0.5, 1)) + 
-    scale_y_continuous(breaks=c(0, 0.5, 1), labels=c(0, 0.5, 1)) + 
-    coord_fixed(ratio=1, xlim=c(0, 1), ylim=c(0, 1), expand=TRUE, clip="on") +
-    facet_grid(formula(paste(facetr, "~", facetc)), labeller=mylabels) +  
-    theme_bw() +
-    theme(legend.position="top",
-          legend.justification=c(0, 0),
-          legend.title = element_blank()) + 
-    labs(title=mytitle,
-         subtitle="Remembered goal location for goals 1-3",
-         x="x",
-         y="y")
-  
-  ggsave(paste("Goal_locs_", mytitle, ".jpeg", sep=""), width=w, height=h, dpi=600)
-  
-  #return(p)
-  
-}
-
-
-# overall overview 
-goal_dots(sm_support %>% filter(condition=="ego_ret"), "Egocentric")
-
-goal_dots(sm_support %>% filter(condition=="allo_ret"), "Allocentric")
-
-
-# group-wise 
-goal_dots(sm_support %>% filter(group=="YoungKids", condition=="ego_ret"), 
-          "Egocentric - Young Children", facetr="session", facetc="goal_loc")
-
-goal_dots(sm_support %>% filter(group=="OldKids", condition=="ego_ret"), 
-          "Egocentric - Older Children", facetr="session", facetc="goal_loc")
-
-goal_dots(sm_support %>% filter(group=="YoungAdults", condition=="ego_ret"), 
-          "Egocentric - Adults", facetr="session", facetc="goal_loc")
-
-goal_dots(sm_support %>% filter(group=="YoungKids", condition=="allo_ret"), 
-          "Allocentric - Young Children", facetr="session", facetc="goal_loc")
-
-goal_dots(sm_support %>% filter(group=="OldKids", condition=="allo_ret"), 
-          "Allocentric - Older Children", facetr="session", facetc="goal_loc")
-
-goal_dots(sm_support %>% filter(group=="YoungAdults", condition=="allo_ret"), 
-          "Allocentric - Adults", facetr="session", facetc="goal_loc")
-
-
-
+gmda_all <- gmda_avg + gmda_details + plot_layout(widths=c(0.25,0.75), guides="collect") & theme(legend.position="bottom", legend.justification=c(0,0))
 ## ----
 
 
