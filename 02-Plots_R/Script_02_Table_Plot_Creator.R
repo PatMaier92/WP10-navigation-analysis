@@ -8,6 +8,7 @@
 library(tidyverse)
 library(patchwork)
 library(ggrepel)
+library(gghalves)
 library(corrplot)
 # library(wesanderson) # decent options: GrandBudapest1 IsleofDogs2 BottleRocket2 Royal2 Darjeeling2 Chevalier1 GrandBudapest2 
 # source("R_rainclouds.R") # TBD CHANGE 
@@ -181,8 +182,6 @@ sm_trialwise <- sm_data %>%
   group_by(group, trial_num, condition) %>% 
   summarise_at(c("time", "correct_final_alley", "correct_goal", 
                  "path_distance", "zones_entered"), mean, na.rm=T)
-
-
 
 trial_plot <- function(data, xvar, yvar, fillby, facet, title, ylabel, facetlabels, legendPos, ticknum) {
   p <- ggplot(data, aes(x=get(xvar), y=get(yvar), fill=get(fillby))) +
@@ -523,51 +522,45 @@ rm(pch_cfa, pch_cg, pch_ce, pch_pd, pchc_pd, pchc_fd, change_box_plot, ratio)
 
 
 
-# ## ---- data_func_rain 
-# # function for raincloud plots 
-# raincloud <- function(data, x, y, title, xlabel, ylabel, facetlabeller, legendPos){
-#   p1 <- ggplot(data, aes_string(x=x, y=y, fill=x)) + # set up data 
-#     geom_flat_violin(position=position_nudge(x=0.2,y=0)) + # rain cloud: setting "adjust" for smoothness of kernel
-#     geom_point(position=position_jitter(w=.1,h=0.05,seed=999), size=0.75) + # points
-#     geom_boxplot(position=position_dodge(), outlier.shape=NA, alpha=0.3, width=0.1, colour="BLACK") + 
-#     coord_cartesian(clip="off") +
-#     scale_fill_manual(values=mycolors) + # fill colors
-#     scale_x_discrete(labels=facetlabeller) + 
-#     facet_wrap(~session, labeller=facetlabeller) +
-#     theme_classic() + # nicer theme
-#     theme(legend.position=legendPos) + 
-#     labs(title = title,
-#          x = xlabel,
-#          y = ylabel) # labels and title
+# ## ---- data_func_rain
+# raincloud <- function(data, xvar, yvar, xlab, ylab, mylabels, mycolors, ymin="n", ymax="n", mysubtitle=NULL, facetvar="n"){
+#   p1 <- ggplot(data, aes(x=get(xvar), y=get(yvar), fill=get(xvar))) + 
+#     geom_half_violin(aes(color=get(xvar)), position=position_nudge(x=-0.14), side="l",  alpha=0.4) +
+#     geom_half_boxplot(position=position_nudge(x=-0.1), side="l", outlier.shape=NA, 
+#                       center=TRUE, errorbar.draw=FALSE, width=0.15, alpha=1) +
+#     geom_point(aes(color=get(xvar)), position=position_jitter(w=0.08, h=0, seed=100), size=1.75, alpha=0.5) + 
+#     scale_fill_manual(labels=mylabels, values=mycolors) +
+#     scale_color_manual(labels=mylabels, values=mycolors) +
+#     scale_x_discrete(labels=mylabels, expand=c(0, 0)) +
+#     theme_classic() +
+#     theme(legend.position="none") +
+#     labs(subtitle=mysubtitle,
+#          x=xlab,
+#          y=ylab)
+#   
+#   if (ymin == "n" & ymax == "n") {
+#     p1 <- p1 + coord_cartesian(clip="off")
+#   }
+#   else {
+#     p1 <- p1 + coord_cartesian(ylim=c(ymin, ymax), clip="off")
+#   }
+#   
+#   if (facetvar != "n") {
+#     p1 <- p1 + facet_wrap(facetvar)
+#   }
 #   
 #   return(p1)
 # }
 # 
+# sm_s1 <- sm_data %>%
+#   filter(session==1) %>% 
+#   group_by(group, trial_num, condition) %>% 
+#   summarise_at(c("time", "correct_final_alley", "correct_goal", "shortest_path_correct_alley",
+#                  "path_distance", "zones_entered"), mean, na.rm=T)
 # 
-# # function for raincloud plots with allo and ego marked
-# raincloud_sub <- function(data, x, y, title, xlabel, ylabel, facetlabeller, legendPos){
-#   p1 <- ggplot(data, aes_string(x=x, y=y, fill=x)) + # set up data 
-#     geom_flat_violin(position=position_nudge(x=0.2,y=0)) + # rain cloud: setting "adjust" for smoothness of kernel
-#     geom_point(aes(shape=condition), size=1.5, position=position_jitter(w=.1,h=.05,seed=999)) + # points
-#     geom_point(aes(colour=condition, shape=condition), size=0.75, position=position_jitter(w=.1,h=.05,seed=999)) + # point
-#     geom_boxplot(position=position_dodge(), outlier.shape=NA, alpha=0.3, width=0.1, colour="BLACK") + 
-#     coord_cartesian(clip="off") +
-#     scale_shape_manual(values=c(19,17), labels=facetlabeller, name="Type") + 
-#     scale_colour_manual(values=c("allo_ret"="#FFFF00", "ego_ret"="#669900"), labels=facetlabeller, name="Type") + 
-#     scale_fill_manual(values=mycolors) + # fill title, lable and colors
-#     scale_x_discrete(labels=facetlabeller) + 
-#     facet_wrap(~session, labeller=facetlabeller) +
-#     theme_classic() + # nicer theme
-#     theme(legend.position=legendPos) + 
-#     guides(fill=FALSE) + 
-#     labs(title = title,
-#          x = xlabel,
-#          y = ylabel) # labels and title
-#   
-#   return(p1)
-# }
+# raincloud(sm_s1, "group", "path_distance", NULL, "Variable", mylabels, group_colors, ymin="n", ymax="n", mysubtitle=NULL, facetvar="n")
 # ## ----
-# rm(sm_ind_data, raincloud, raincloud_sub)
+# rm(raincloud)
 
 
 
