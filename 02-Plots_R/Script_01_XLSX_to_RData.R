@@ -87,13 +87,15 @@ pt_data <- pt_data %>%
   mutate(sex=factor(sex),
          group=factor(group, levels=c("YoungKids", "OldKids", "YoungAdults")),
          condition=factor(trial_num, levels=c(1, 2, 3, 4), 
-                          labels=c("layout", "landmarks", "goals", "location")),
-         score=case_when(condition=="location" ~ map_dbl(id, get_gmda_score), T ~ score)) %>% 
+                          labels=c("layout", "landmarks", "goals", "position")),
+         score=case_when(condition=="position" ~ map_dbl(id, get_gmda_score), T ~ score)) %>% 
   pivot_wider(names_from="condition",
               names_glue="{condition}_{.value}",
               values_from=matches("obj_[12345]")) %>% 
   discard(~all(is.na(.) | . =="")) %>% 
-  mutate(layout_obj_1=factor(layout_obj_1)) %>% 
+  mutate(condition=factor(trial_num, levels=c(1, 2, 3, 4), 
+                          labels=c("layout", "landmarks", "goals", "position")),
+         layout_obj_1=factor(layout_obj_1)) %>% 
   mutate_at(vars(matches("goals|obj_M")), ~factor(., levels=c("01-Fahrrad", "02-Fussball", "03-Geige", "04-Stuhl"))) %>% 
   mutate_at(vars(matches("landmarks|lm")), ~factor(., levels=c("01-Forest_corr", "02-Forest-House_corr", "03-Tower_corr",
                                                                "04-Mountain_corr", "05-Mountain-House_corr",
@@ -101,6 +103,7 @@ pt_data <- pt_data %>%
                                                                "09-Mountain_sim", "10-Mountain-House_sim",
                                                                "11-Forest_dsm", "12-Forest-House_dsm", "13-Tower_dsm",
                                                                "14-Mountain_dsm", "15-Mountain-House_dsm"))) %>% 
+  relocate("condition", .after=("trial_num")) %>% 
   relocate(starts_with("goals_"), .after=("landmarks_obj_5")) %>% 
   relocate(starts_with("lm"), .after=("landmarks_obj_5")) %>% 
   relocate(starts_with("obj_M"), .after=("goals_obj_3"))
