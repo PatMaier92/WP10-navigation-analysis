@@ -72,7 +72,7 @@ l_final_distance <- "final distance"
 l_shortest_path_alley <- "% shortest path to correct area"
 l_zones_explored <- "n of zones explored"
 l_zones_entered <- "n of zones entered"
-l_editdistance <- "n of path zone deviations" # path zone error
+l_editdistance <- "path zone error"
 l_path_length <- "path length"
 l_path_length_error <- "path length error"
 l_path_distance <- "avg. path distance"
@@ -105,6 +105,28 @@ line_plot <- function(data, xvar, yvar, colorvar, subtitle, ylabel, facetlabels,
           legend.key.size=unit(0.5, 'cm'),
           legend.justification=c(0, 0)) +
     labs(subtitle=subtitle,
+         x="trial",
+         y=ylabel)
+  
+  return(p)
+}
+
+
+# function for trial-wise bar plots 
+trial_plot <- function(data, xvar, yvar, fillby, facetvar, title, ylabel, facetlabels, legendPos, ticknum, mycolors) {
+  p <- ggplot(data, aes(x=get(xvar), y=get(yvar), fill=get(fillby))) +
+    geom_bar(stat="identity",width=.85, colour="black") + 
+    geom_vline(xintercept=c(13.5, 26.5, 39.5), color="red", linetype="dashed") + 
+    scale_x_continuous(breaks=seq(1,max(data[[xvar]]),round(max(data[[xvar]])/ticknum)), expand=c(0.005,0.005)) +
+    scale_fill_manual(labels=facetlabels, values=mycolors) + 
+    coord_cartesian(clip="off") +
+    facet_wrap(facetvar, labeller=facetlabels, nrow=3,strip.position="right") +
+    theme_classic() + 
+    theme(legend.position=legendPos,
+          legend.title=element_blank(),
+          legend.key.size=unit(0.5, 'cm'),
+          legend.justification=c(0, 0)) +
+    labs(title=title,
          x="trial",
          y=ylabel)
   
@@ -183,7 +205,7 @@ change_box_plot <- function(data, xvar, yvar, fillby, facetvar, subtitle, mylabe
 }
 
 
-# function for (stacked) bar plots 
+# function for aggregated (stacked) bar plots 
 bar_plot <- function(data, xvar, yvar, fillvar, facetvar, mylabels, subtitle, xlabel, ylabel, legendPos, mycolors, isPalette=T, paletteDir=1, isStacked=T, stackReverse=F, axisLabels=T) {
   p <- ggplot(data, aes(x=get(xvar), y=get(yvar), fill=get(fillvar))) +
     scale_x_discrete(labels=mylabels) +
@@ -278,6 +300,22 @@ dot_plots <- function(mydata, xvar, yvar, goalvar, goalx, goaly, mytitle, mylabe
   
   return(p)
 }
+
+
+# function for correlation scatter plot
+scatter <- function(data, x, y, xlab, ylab, mylabels){
+  p <- ggplot(data, aes_string(x=x, y=y)) +
+    geom_point(position=position_jitter(width=0.02, height=0.02, seed=999)) + 
+    geom_smooth(method="glm") + 
+    facet_grid(session ~ group, labeller=mylabels) + 
+    scale_x_continuous(labels = scales::percent, breaks=c(0, 0.5, 1)) + 
+    scale_y_continuous(labels = scales::percent, breaks=c(0, 0.5, 1)) + 
+    theme_classic() + 
+    labs(x=xlab,
+         y=ylab)
+  
+  return(p)
+}
 ## ----
 
 
@@ -297,11 +335,9 @@ sm_practise <- sm_data %>%
          out_velocity = ifelse(is_outlier(velocity), id, as.numeric(NA)),
          out_path = ifelse(is_outlier(path_length), id, as.numeric(NA)))
 
-mc1 <-box_plot(sm_practise, "group", "time", "group", "none", "none", NULL, NULL, l_time, mylabels, "top", group_colors, mcVariant=T, mc_outlier="out_time")
-mc2 <-box_plot(sm_practise, "group", "path_length", "group", "none", "none", NULL, NULL, l_path_length, mylabels, "top", group_colors, mcVariant=T, mc_outlier="out_path")
-mc3 <-box_plot(sm_practise, "group", "velocity", "group", "none", "none", NULL, NULL, l_velocity, mylabels, "top", group_colors, mcVariant=T, mc_outlier="out_velocity")
-
-# plot_motor <- mc1 + mc2 + mc3 + plot_annotation(title="Practise: Motor control trial", subtitle="Navigating to 10 red balloons as quickly and efficiently as possible")
+mc_t <- box_plot(sm_practise, "group", "time", "group", "none", "none", NULL, NULL, l_time, mylabels, "top", group_colors, mcVariant=T, mc_outlier="out_time")
+mc_p <- box_plot(sm_practise, "group", "path_length", "group", "none", "none", NULL, NULL, l_path_length, mylabels, "top", group_colors, mcVariant=T, mc_outlier="out_path")
+mc_v <- box_plot(sm_practise, "group", "velocity", "group", "none", "none", NULL, NULL, l_velocity, mylabels, "top", group_colors, mcVariant=T, mc_outlier="out_velocity")
 ## ----
 rm(sm_practise, is_outlier)
 
@@ -326,7 +362,6 @@ ex1 <- ggplot(ex1_data, aes(x=group, y=n, fill=condition)) +
   labs(subtitle="By group and condition",
        x=NULL,
        y="n trials")
-rm(ex1_data)
 
 ex2_data <- sm_orig %>% 
   group_by(id, group) %>% 
@@ -341,62 +376,41 @@ ex2 <- ggplot(ex2_data, aes(x=n, fill=group)) +
   labs(subtitle="By individuals and group",
        x="n trials",
        y="n participants")
-rm(ex2_data)
-
-# plot_excluded <- ex1 + ex2 + plot_annotation(title="Excluded trials")
 ## ---- 
-rm(sm_orig, plot_excluded)
+rm(ex1_data, ex2_data, sm_orig, plot_excluded)
 
 
 ## ---- data_func_measures
 corr1_data <- sm_data %>%
   select(correct_goal, correct_final_alley, final_distance, shortest_path_correct_alley,
          path_length, path_length_error, path_distance, adj_path_distance, 
-         dtw_path_distance, adj_dtw_path_distance, target_distance, target_distance_error, zones_entered) %>% 
+         dtw_path_distance, adj_dtw_path_distance, target_distance, target_distance_error, zones_entered, zone_editdistance) %>% 
   drop_na() %>% 
   cor()
 
-plot_variables <- corrplot(corr1_data, method="number", tl.col="black", tl.srt=45)
+corr_variables <- corrplot(corr1_data, method="number", tl.col="black", tl.srt=45)
 ## ----
-rm(corr1_data, plot_variables)
+rm(corr1_data, corr_variables)
 
 
 # ######################################################### #
 
-# :::   trialwise plots (session 1)   ::: #
+# :::   trial-wise plots (session 1)   ::: #
 
 ## ---- data_func_trialwise
+# all trials
 sm_trialwise <- sm_data %>%
   filter(session==1) %>%
   group_by(group, trial_num, condition) %>% 
-  summarise_at(c("correct_final_alley", "time","path_distance", "zones_entered"), mean, na.rm=T)
+  summarise_at(c("correct_final_alley", "time","path_distance", "zone_editdistance"), mean, na.rm=T)
 
-trial_plot <- function(data, xvar, yvar, fillby, facet, title, ylabel, facetlabels, legendPos, ticknum) {
-  p <- ggplot(data, aes(x=get(xvar), y=get(yvar), fill=get(fillby))) +
-    geom_bar(stat="identity",width=.85, colour="black") + 
-    geom_vline(xintercept=c(13.5, 26.5, 39.5), color="red", linetype="dashed") + 
-    scale_x_continuous(breaks=seq(1,max(data[[xvar]]),round(max(data[[xvar]])/ticknum)), expand=c(0.005,0.005)) +
-    scale_fill_manual(labels=facetlabels, values=type_colors) + 
-    coord_cartesian(clip="off") +
-    facet_grid(facet, labeller=facetlabels) +
-    theme_classic() + 
-    theme(legend.position=legendPos,
-          legend.title=element_blank(),
-          legend.key.size=unit(0.5, 'cm'),
-          legend.justification=c(0, 0)) +
-    labs(title=title,
-         x="trial",
-         y=ylabel)
-
-  return(p)
-}
-
-tr_cfa <- trial_plot(sm_trialwise, "trial_num", "correct_final_alley", "condition", "group", NULL, l_correct_alley, mylabels, "top", 8)
-tr_t <- trial_plot(sm_trialwise, "trial_num", "time", "condition", "group", NULL, l_time, mylabels, "top", 8)
-tr_pd <- trial_plot(sm_trialwise, "trial_num", "path_distance", "condition", "group", NULL, l_path_distance, mylabels, "top", 8)
-tr_ze <- trial_plot(sm_trialwise, "trial_num", "zones_entered", "condition", "group", NULL, l_zones_entered, mylabels, "top", 8)
+trial_cfa <- trial_plot(sm_trialwise, "trial_num", "correct_final_alley", "condition", "group", NULL, l_correct_alley, mylabels, "top", 8, type_colors)
+trial_t <- trial_plot(sm_trialwise, "trial_num", "time", "condition", "group", NULL, l_time, mylabels, "top", 8, type_colors)
+trial_pd <- trial_plot(sm_trialwise, "trial_num", "path_distance", "condition", "group", NULL, l_path_distance, mylabels, "top", 8, type_colors)
+trial_ed <- trial_plot(sm_trialwise, "trial_num", "zone_editdistance", "condition", "group", NULL, l_editdistance, mylabels, "top", 8, type_colors)
 
 
+# learning trials 
 assign_trial <- function(i, s, b, c, t){
     temp <- sm_data %>%
       filter(session==s,  block==b, condition==c, id==i)
@@ -411,9 +425,9 @@ sm_trialwise_learn <- sm_data %>%
   group_by(group, trial_in_cond_in_block) %>% 
   summarise_at(c("time","path_distance", "zones_entered", "zone_editdistance"), mean, na.rm=T)
 
-line_l_t <- line_plot(sm_trialwise_learn, "trial_in_cond_in_block", "time", "group", NULL, l_time, mylabels, "bottom")
-line_l_pd <- line_plot(sm_trialwise_learn, "trial_in_cond_in_block", "path_distance", "group", NULL, l_path_distance, mylabels, "bottom")
-line_l_ed <- line_plot(sm_trialwise_learn, "trial_in_cond_in_block", "zone_editdistance", "group", NULL, l_editdistance, mylabels, "bottom")
+line_t <- line_plot(sm_trialwise_learn, "trial_in_cond_in_block", "time", "group", NULL, l_time, mylabels, "bottom")
+line_pd <- line_plot(sm_trialwise_learn, "trial_in_cond_in_block", "path_distance", "group", NULL, l_path_distance, mylabels, "bottom")
+line_ed <- line_plot(sm_trialwise_learn, "trial_in_cond_in_block", "zone_editdistance", "group", NULL, l_editdistance, mylabels, "bottom")
 ## ----
 rm(sm_trialwise, sm_trialwise_learn, assign_trial)
 
@@ -422,107 +436,47 @@ rm(sm_trialwise, sm_trialwise_learn, assign_trial)
 
 # :::     aggregated box plots        ::: #
 
-## ---- data_s1
-sm_s1 <- sm_data %>%
-  filter(session==1) %>% 
-  group_by(group, trial_num, condition) %>% 
-  summarise_at(c("correct_final_alley", "shortest_path_correct_alley", "time", "path_distance", "zones_entered"), mean, na.rm=T)
+## ---- data_s1_s2
+sm_agg <- sm_data %>%
+  filter(session!=3, condition!="main_ret") %>% 
+  group_by(id, group, session, condition) %>% 
+  summarise_at(c("correct_final_alley", "shortest_path_correct_alley", "time", "path_distance", "zone_editdistance"), mean, na.rm=T)
+
+sm_agg_correct <- sm_data %>%
+  filter(condition %in% c("ego_ret", "allo_ret") & correct_final_alley==1) %>% 
+  group_by(id, group, session, condition) %>% 
+  summarise_at(c("path_distance", "final_distance"), mean, na.rm=T)
+
 
 # learning trials
-l_spca <- box_plot(sm_s1 %>% filter(condition=="main_learn"), "group", "shortest_path_correct_alley", "group", 
-         "condition", "none", NULL, NULL, l_shortest_path_alley, mylabels, "top", group_colors)
-
-l_t <- box_plot(sm_s1 %>% filter(condition=="main_learn"), "group", "time", "group", 
-         "condition", "none", NULL, NULL, l_time, mylabels, "top", group_colors)
-
-l_pd <- box_plot(sm_s1 %>% filter(condition=="main_learn"), "group", "path_distance", "group", 
-         "condition", "none", NULL, NULL, l_path_distance, mylabels, "top", group_colors)
-
-l_ze <- box_plot(sm_s1 %>% filter(condition=="main_learn"), "group", "zones_entered", "group", 
-         "condition", "none", NULL, NULL, l_zones_entered, mylabels, "top", group_colors)
+box_learn_spcs <- box_plot(sm_agg %>% filter(condition=="main_learn"), "group", "shortest_path_correct_alley", "group", "condition", "none", NULL, NULL, l_shortest_path_alley, mylabels, "top", group_colors)
+box_learn_t <- box_plot(sm_agg %>% filter(condition=="main_learn"), "group", "time", "group", "condition", "none", NULL, NULL, l_time, mylabels, "top", group_colors)
+box_learn_pd <- box_plot(sm_agg %>% filter(condition=="main_learn"), "group", "path_distance", "group", "condition", "none", NULL, NULL, l_path_distance, mylabels, "top", group_colors)
+box_learn_ed <- box_plot(sm_agg %>% filter(condition=="main_learn"), "group", "zone_editdistance", "group", "condition", "none", NULL, NULL, l_editdistance, mylabels, "top", group_colors)
 
 
-# learning <- l_spca + l_t + l_pd + l_ze + plot_annotation(title="Performance in learning trials") + 
-#   plot_layout(guides="collect") & theme(legend.position="top", legend.justification=c(0,1))
-# rm(l_spca, l_t, l_pd, l_ze)
+# egocentric probe trials
+box_ego_cfa <- box_plot(sm_agg %>% filter(condition=="ego_ret"), "group", "correct_final_alley", "group", "session", "none", NULL, NULL, l_correct_alley, mylabels, "top", group_colors)
+box_ego_t <- box_plot(sm_agg %>% filter(condition=="ego_ret"), "group", "time", "group", "session", "none", NULL, NULL, l_time, mylabels, "top", group_colors)
+box_ego_pd <- box_plot(sm_agg %>% filter(condition=="ego_ret"), "group", "path_distance", "group", "session", "none", NULL, NULL, l_path_distance, mylabels, "top", group_colors)
+box_ego_ed <- box_plot(sm_agg %>% filter(condition=="ego_ret"), "group", "zone_editdistance", "group", "session", "none", NULL, NULL, l_editdistance, mylabels, "top", group_colors)
+
+# correct egocentric probe trials 
+box_ego_cor_fd <- box_plot(sm_agg_correct %>% filter(condition=="ego_ret"), "group", "final_distance", "group", "session", "none", NULL, NULL, l_final_distance, mylabels, "top", group_colors)
+box_ego_cor_pd <- box_plot(sm_agg_correct %>% filter(condition=="ego_ret"), "group", "path_distance", "group", "session", "none", NULL, NULL, l_path_distance, mylabels, "top", group_colors)
 
 
-# probe trials
-p1_cfa <- box_plot(sm_s1 %>% filter(condition=="ego_ret" | condition=="allo_ret"), "group", "correct_final_alley", "group", 
-        "condition", "none", NULL, NULL, l_correct_alley, mylabels, "top", group_colors)
+# allocentric probe trials
+box_allo_cfa <- box_plot(sm_agg %>% filter(condition=="allo_ret"), "group", "correct_final_alley", "group", "session", "none", NULL, NULL, l_correct_alley, mylabels, "top", group_colors)
+box_allo_t <- box_plot(sm_agg %>% filter(condition=="allo_ret"), "group", "time", "group", "session", "none", NULL, NULL, l_time, mylabels, "top", group_colors)
+box_allo_pd <- box_plot(sm_agg %>% filter(condition=="allo_ret"), "group", "path_distance", "group", "session", "none", NULL, NULL, l_path_distance, mylabels, "top", group_colors)
+box_allo_ed <- box_plot(sm_agg %>% filter(condition=="allo_ret"), "group", "zone_editdistance", "group", "session", "none", NULL, NULL, l_editdistance, mylabels, "top", group_colors)
 
-p1_t <- box_plot(sm_s1 %>% filter(condition=="ego_ret" | condition=="allo_ret"), "group", "time", "group", 
-                   "condition", "none", NULL, NULL, l_time, mylabels, "top", group_colors)
-
-p1_pd <- box_plot(sm_s1 %>% filter(condition=="ego_ret" | condition=="allo_ret"), "group", "path_distance", "group", 
-               "condition", "none", NULL, NULL, l_path_distance, mylabels, "top", group_colors)
-
-p1_ze <- box_plot(sm_s1 %>% filter(condition=="ego_ret" | condition=="allo_ret"), "group", "zones_entered", "group", 
-               "condition", "none", NULL, NULL, l_zones_entered, mylabels, "top", group_colors)
-
-# probe <- p1_cfa + p1_t + p1_pd + p1_ze + plot_annotation(title="Performance in probe trials in session 1") + 
-#   plot_layout(guides="collect") & theme(legend.position="top", legend.justification=c(0,1))
-# rm(p1_cfa, p1_t, p1_pd, p1_ze)
-
-
-# correct probe trials 
-sm_s1_cor <- sm_data %>%
-  filter(session==1 & condition %in% c("ego_ret", "allo_ret") & correct_final_alley==1) %>% 
-  group_by(id, group, condition) %>% 
-  summarise_at(c("path_distance", "final_distance"), mean, na.rm=T)
-  
-p1c_fd <- box_plot(sm_s1_cor,"group", "final_distance", "group", "condition", "none", NULL, NULL, l_final_distance, mylabels, "top", group_colors)
-
-p1c_pd <- box_plot(sm_s1_cor,"group", "path_distance", "group", "condition", "none", NULL, NULL, l_path_distance, mylabels, "top", group_colors)
-
-# probe_cor <- p1c_fd + p1c_pd + plot_annotation(title="Performance in correct probe trials in session 1") + 
-#   plot_layout(guides="collect") & theme(legend.position="top", legend.justification=c(0,1))
-# rm(p1c_fd, p1c_pd)
+# correct allocentric probe trials 
+box_allo_cor_fd <- box_plot(sm_agg_correct %>% filter(condition=="allo_ret"), "group", "final_distance", "group", "session", "none", NULL, NULL, l_final_distance, mylabels, "top", group_colors)
+box_allo_cor_pd <- box_plot(sm_agg_correct %>% filter(condition=="allo_ret"), "group", "path_distance", "group", "session", "none", NULL, NULL, l_path_distance, mylabels, "top", group_colors)
 ## ----
-rm(sm_s1, sm_s1_cor, learning, probe, probe_cor)
-
-
-
-## ---- data_s2
-sm_s2 <- sm_data %>%
-  filter(session==2) %>% 
-  group_by(group, trial_num, condition) %>% 
-  summarise_at(c("correct_final_alley", "time", "path_distance", "zones_entered"), mean, na.rm=T)
-
-# probe trials
-p2_cfa <- box_plot(sm_s2 %>% filter(condition=="ego_ret" | condition=="allo_ret"), "group", "correct_final_alley", "group", 
-                   "condition", "none", NULL, NULL, l_correct_alley, mylabels, "top", group_colors)
-
-p2_t <- box_plot(sm_s2 %>% filter(condition=="ego_ret" | condition=="allo_ret"), "group", "time", "group", 
-                  "condition", "none", NULL, NULL, l_time, mylabels, "top", group_colors)
-
-p2_pd <- box_plot(sm_s2 %>% filter(condition=="ego_ret" | condition=="allo_ret"), "group", "path_distance", "group", 
-                  "condition", "none", NULL, NULL, l_path_distance, mylabels, "top", group_colors)
-
-p2_ze <- box_plot(sm_s2 %>% filter(condition=="ego_ret" | condition=="allo_ret"), "group", "zones_entered", "group", 
-                  "condition", "none", NULL, NULL, l_zones_entered, mylabels, "top", group_colors)
-
-# probe <- p2_cfa + p2_t +  p2_pd + p2_ze + plot_annotation(title="Performance in probe trials in session 2") + 
-#   plot_layout(guides="collect") & theme(legend.position="top", legend.justification=c(0,1))
-# rm(p2_cfa, p2_t, p2_pd, p2_ze)
-
-
-# correct probe trials
-sm_s2_cor <- sm_data %>%
-  filter(session==2 & condition %in% c("ego_ret", "allo_ret") & correct_final_alley==1) %>% 
-  group_by(id, group, condition) %>% 
-  summarise_at(c("path_distance", "final_distance"), mean, na.rm=T)
-
-p2c_fd <- box_plot(sm_s2_cor,"group", "final_distance", "group", "condition", "none", NULL, NULL, l_final_distance, mylabels, "top", group_colors)
-
-p2c_pd <- box_plot(sm_s2_cor,"group", "path_distance", "group", "condition", "none", NULL, NULL, l_path_distance, mylabels, "top", group_colors)
-
-# probe_cor <- p2c_fd + p2c_pd + plot_annotation(title="Performance in correct probe trials in session 2") +
-#   plot_layout(guides="collect") & theme(legend.position="top", legend.justification=c(0,1))
-# rm(p1c_fd, p1c_pd)
-## ----
-rm(sm_s2, sm_s2_cor, learning, probe, probe_cor)
-
+rm(sm_agg, sm_agg_correct)
 
 
 ## ---- data_change
@@ -531,31 +485,20 @@ ratio <- function(d1, d2) {
   return(r)
 }
 
-# probe trials
 sm_change <- sm_data %>%
   filter(condition %in% c("ego_ret", "allo_ret"))  %>%
   group_by(id, group, session, condition) %>% 
-  summarise_at(c("correct_final_alley", "time", "path_distance",  "zones_entered"), mean, na.rm=T) %>% 
+  summarise_at(c("correct_final_alley", "time", "path_distance",  "zone_editdistance"), mean, na.rm=T) %>% 
   pivot_wider(names_from=session,
               values_from=-c(id, group, session, condition)) %>% 
   group_by(id, group, condition) %>%
   mutate(cfa_ratio=ratio(correct_final_alley_1, correct_final_alley_2),
          t_ratio=ratio(time_1, time_2),
          pd_ratio=ratio(path_distance_1, path_distance_2),
-         ze_ratio=ratio(zones_entered_1, zones_entered_2),
+         ed_ratio=ratio(zone_editdistance_1, zone_editdistance_2),
          session="Consolidation")
 
-pch_cfa <- change_box_plot(sm_change, "group", "cfa_ratio", "group", "condition", NULL, mylabels, "none", group_colors, ylabel=l_correct_alley)
-
-pch_t <- change_box_plot(sm_change, "group", "t_ratio", "group", "condition", NULL, mylabels, "none", group_colors, ylabel=l_time)
-
-pch_pd <- change_box_plot(sm_change, "group", "pd_ratio", "group", "condition", NULL, mylabels, "none", group_colors, ylabel=l_path_distance)
-
-pch_ze <- change_box_plot(sm_change, "group", "ze_ratio", "group", "condition", NULL, mylabels, "none", group_colors, ylabel=l_zones_entered)
-
-
-# correct probe trials 
-sm_change_cor <- sm_data %>%
+sm_change_correct <- sm_data %>%
   filter(condition %in% c("ego_ret", "allo_ret") & correct_final_alley==1) %>% 
   group_by(id, group, session, condition) %>% 
   summarise_at(c("final_distance", "path_distance"), mean, na.rm=T) %>% 
@@ -566,14 +509,33 @@ sm_change_cor <- sm_data %>%
          pd_ratio=ratio(path_distance_1, path_distance_2),
          session="Consolidation")
 
-pchc_fd <- change_box_plot(sm_change_cor, "group", "fd_ratio", "group", "condition", NULL, mylabels, "none", group_colors, ylabel=l_final_distance)
 
-pchc_pd <- change_box_plot(sm_change_cor, "group", "pd_ratio", "group", "condition", NULL, mylabels, "none", group_colors, ylabel=l_path_distance)
+# egocentric probe trials
+box_ego_delta_cfa <- change_box_plot(sm_change %>% filter(condition=="ego_ret"), "group", "cfa_ratio", "group", "session", NULL, mylabels, "none", group_colors, ylabel=l_correct_alley)
+allo_ret <- change_box_plot(sm_change %>% filter(condition=="ego_ret"), "group", "t_ratio", "group", "session", NULL, mylabels, "none", group_colors, ylabel=l_time)
+box_ego_delta_pd <- change_box_plot(sm_change %>% filter(condition=="ego_ret"), "group", "pd_ratio", "group", "session", NULL, mylabels, "none", group_colors, ylabel=l_path_distance)
+box_ego_delta_ed <- change_box_plot(sm_change %>% filter(condition=="ego_ret"), "group", "ed_ratio", "group", "session", NULL, mylabels, "none", group_colors, ylabel=l_editdistance)
+
+# correct egocentric probe trials
+box_ego_delta_cor_fd <- change_box_plot(sm_change_correct  %>% filter(condition=="ego_ret"), "group", "fd_ratio", "group", "session", NULL, mylabels, "none", group_colors, ylabel=l_final_distance)
+box_ego_delta_cor_pd <- change_box_plot(sm_change_correct %>% filter(condition=="ego_ret"), "group", "pd_ratio", "group", "session", NULL, mylabels, "none", group_colors, ylabel=l_path_distance)
+
+
+# allocentric probe trials
+box_allo_delta_cfa <- change_box_plot(sm_change %>% filter(condition=="allo_ret"), "group", "cfa_ratio", "group", "session", NULL, mylabels, "none", group_colors, ylabel=l_correct_alley)
+box_allo_delta_t <- change_box_plot(sm_change %>% filter(condition=="allo_ret"), "group", "t_ratio", "group", "session", NULL, mylabels, "none", group_colors, ylabel=l_time)
+box_allo_delta_pd <- change_box_plot(sm_change %>% filter(condition=="allo_ret"), "group", "pd_ratio", "group", "session", NULL, mylabels, "none", group_colors, ylabel=l_path_distance)
+box_allo_delta_ed <- change_box_plot(sm_change %>% filter(condition=="allo_ret"), "group", "ed_ratio", "group", "session", NULL, mylabels, "none", group_colors, ylabel=l_editdistance)
+
+# correct allocentric probe trials
+box_allo_delta_cor_fd <- change_box_plot(sm_change_correct  %>% filter(condition=="allo_ret"), "group", "fd_ratio", "group", "session", NULL, mylabels, "none", group_colors, ylabel=l_final_distance)
+box_allo_delta_cor_pd <- change_box_plot(sm_change_correct %>% filter(condition=="allo_ret"), "group", "pd_ratio", "group", "session", NULL, mylabels, "none", group_colors, ylabel=l_path_distance)
 ## ----
-rm(sm_change, sm_change_cor, ratio)
+rm(sm_change, sm_change_correct, ratio)
 
 
 # ## ---- data_rotation ### TBD: explore this further
+#
 # sm_s12 <- sm_data %>%
 #   filter(condition %in% c("ego_ret", "allo_ret"))  %>%
 #   group_by(id, group, session, condition) %>% 
@@ -592,8 +554,7 @@ rm(sm_change, sm_change_cor, ratio)
 # sm_s1 <- sm_data %>%
 #   filter(session==1) %>% 
 #   group_by(group, trial_num, condition) %>% 
-#   summarise_at(c("time", "correct_final_alley", "correct_goal", "shortest_path_correct_alley",
-#                  "path_distance", "zones_entered"), mean, na.rm=T)
+#   summarise_at(c("time", "correct_final_alley", "correct_goal", "shortest_path_correct_alley", "path_distance", "zone_editdistance"), mean, na.rm=T)
 # 
 # raincloud_plot(sm_s1, "group", "path_distance", NULL, "Variable", mylabels, group_colors, ymin="n", ymax="n", mysubtitle=NULL, facetvar="n")
 # ## ----
@@ -611,14 +572,6 @@ sm_locations <- sm_data %>%
 dots_ego <- dot_plots(sm_locations %>% filter(condition=="ego_ret"), "x_n", "y_n", "goal_i", "goal_x", "goal_y", "Egocentric trials", mylabels)
 
 dots_allo <- dot_plots(sm_locations %>% filter(condition=="allo_ret"), "x_n", "y_n", "goal_i", "goal_x", "goal_y", "Allocentric trials", mylabels)
-
-dots_s1_ego <- dot_plots(sm_locations %>% filter(condition=="ego_ret", session==1), "x_n", "y_n", "goal_i", "goal_x", "goal_y", "Egocentric trials", mylabels)
-
-dots_s1_allo <- dot_plots(sm_locations %>% filter(condition=="allo_ret", session==1), "x_n", "y_n", "goal_i", "goal_x", "goal_y", "Allocentric trials", mylabels)
-
-dots_s2_ego <- dot_plots(sm_locations %>% filter(condition=="ego_ret", session==2), "x_n", "y_n", "goal_i", "goal_x", "goal_y", "Egocentric trials", mylabels)
-
-dots_s2_allo <- dot_plots(sm_locations %>% filter(condition=="allo_ret", session==2), "x_n", "y_n", "goal_i", "goal_x", "goal_y", "Allocentric trials", mylabels)
 ## ----
 rm(sm_locations)
 
@@ -635,9 +588,9 @@ sm_strat <- sm_data %>%
   tally() %>%
   mutate(percent=n/sum(n))
 
-stbox_allo <- box_plot(sm_strat %>% filter(condition=="allo_ret"), "search_strategy", "percent", "search_strategy", "session", "group", "Allocentric trials", NULL, l_search_strategy,  mylabels, "bottom", strategy_colors)
+box_ego_strategy <- box_plot(sm_strat %>% filter(condition=="ego_ret"), "search_strategy", "percent", "search_strategy", "session", "group", "Egocentric trials", NULL, l_search_strategy,  mylabels, "bottom", strategy_colors)
 
-stbox_ego <- box_plot(sm_strat %>% filter(condition=="ego_ret"), "search_strategy", "percent", "search_strategy", "session", "group", "Egocentric trials", NULL, l_search_strategy,  mylabels, "bottom", strategy_colors)
+box_allo_strategy <- box_plot(sm_strat %>% filter(condition=="allo_ret"), "search_strategy", "percent", "search_strategy", "session", "group", "Allocentric trials", NULL, l_search_strategy,  mylabels, "bottom", strategy_colors)
 
 
 # strategy stacked bar plots 
@@ -647,9 +600,9 @@ sm_strat2 <- sm_data %>%
   tally() %>%
   mutate(percent=n/sum(n))
 
-stbar_allo <- bar_plot(sm_strat2 %>% filter(condition=="allo_ret"), "group", "percent", "search_strategy", "session", mylabels, "Allocentric trials", NULL, l_search_strategy, "bottom", "Oranges", paletteDir=-1, stackReverse=T)
+bar_ego_strategy <- bar_plot(sm_strat2 %>% filter(condition=="ego_ret"), "group", "percent", "search_strategy", "session", mylabels, "Egocentric trials", NULL, l_search_strategy, "bottom", "Oranges", paletteDir=-1, stackReverse=T)
 
-stbar_ego <- bar_plot(sm_strat2 %>% filter(condition=="ego_ret"), "group", "percent", "search_strategy", "session", mylabels, "Egocentric trials", NULL, l_search_strategy, "bottom", "Oranges", paletteDir=-1, stackReverse=T)
+bar_allo_strategy <- bar_plot(sm_strat2 %>% filter(condition=="allo_ret"), "group", "percent", "search_strategy", "session", mylabels, "Allocentric trials", NULL, l_search_strategy, "bottom", "Oranges", paletteDir=-1, stackReverse=T)
 ## ----
 rm(sm_strat, sm_strat2)
 
@@ -667,9 +620,9 @@ sm_allo <- sm_data %>%
   tally() %>%
   mutate(percent=n/sum(n))
 
-allobar <- bar_plot(sm_allo, "group", "percent", "search_strategy_in_allo", "session", mylabels, "Allocentric trials (excl. trials with inner starts)", NULL, l_search_strategy, "bottom", "Oranges")
+bar_allo_detailed_strategy <- bar_plot(sm_allo, "group", "percent", "search_strategy_in_allo", "session", mylabels, "Allocentric trials (excl. trials with inner starts)", NULL, l_search_strategy, "bottom", "Oranges")
 ## ----
-rm(allobar, sm_allo)
+rm(sm_allo)
 
 
 # ########################################## #
@@ -683,21 +636,7 @@ scatter_data <- sm_data %>%
   summarize(performance=mean(correct_final_alley)) %>% 
   pivot_wider(names_from=condition, values_from=performance)
 
-scatter <- function(data, x, y, xlab, ylab, mylabels){
-  p1 <- ggplot(data, aes_string(x=x, y=y)) +
-    geom_point(position=position_jitter(width=0.02, height=0.02, seed=1111)) + 
-    geom_smooth(method="glm") + 
-    facet_grid(session ~ group, labeller=mylabels) + 
-    scale_x_continuous(labels = scales::percent, breaks=c(0, 0.5, 1)) + 
-    scale_y_continuous(labels = scales::percent, breaks=c(0, 0.5, 1)) + 
-    theme_classic() + 
-    labs(x=xlab,
-         y=ylab)
-  
-  return(p1)
-}
-
-scatter(scat_data, "allo_ret", "ego_ret", "Allocentric", "Egocentric", mylabels)
+corr_ego_allo <- scatter(scat_data, "allo_ret", "ego_ret", "Allocentric", "Egocentric", mylabels)
 ## ----
 rm(scatter, scatter_data)
 
@@ -719,7 +658,7 @@ layout_data <- pt_data %>%
   mutate(n_per_group=sum(n),
          perc=n/n_per_group)
 
-layout_all <- bar_plot(layout_data, "group", "perc", "group", "layout_obj_1", mylabels, NULL, NULL, "% response (per group)", "bottom", group_colors, isPalette=F, isStacked=F, axisLabels=F) 
+layout <- bar_plot(layout_data, "group", "perc", "group", "layout_obj_1", mylabels, NULL, NULL, "% response (per group)", "bottom", group_colors, isPalette=F, isStacked=F, axisLabels=F) 
 
 
 # :::   landmark recognition     ::: #
@@ -764,65 +703,65 @@ ex <- ex1 + ex2 + plot_annotation(title="Number of excluded trials (due to timeo
 ggsave("Data_check_excluded_trials.jpeg", ex, width=5.2, height=4.5, dpi=600)
 rm(ex, ex1, ex2)
 
-mc <- mc1 + mc2 + mc3 + plot_annotation(title="Motor control task", tag_levels="A")
+mc <- mc_t + mc_p + mc_v + plot_annotation(title="Motor control task", tag_levels="A")
 ggsave("Data_check_motor_control.jpeg", mc, width=6.5, height=4, dpi=600)
-rm(mc, mc1, mc2, mc3)
+rm(mc, mc_t, mc_p, mc_v)
 
 
 # learning trials 
-learn <- line_l_t + line_l_pd + line_l_ed + 
+learn <- line_t + line_pd + line_ed + 
   plot_annotation(title="Efficiency in learning trials", tag_levels="A") + 
   plot_layout(guides="collect") & theme(legend.position="bottom", legend.justification=c(0,0))
 ggsave("Nav_learning.jpeg", learn, width=7.5, height=4.5, dpi=600)
 
 
-# performance (memory)
-# Immediate T1
-layout="
-AAAA
-BBBB
-CCDD
-"
-perf1 <- wrap_plots(A=dots_s1_allo + coord_cartesian(xlim=c(0, 1), ylim=c(0, 1), expand=TRUE) + labs(title=NULL, subtitle="Allocentric: Responses for goals locations") + theme(legend.position="none"),
-                    B=dots_s1_ego + coord_cartesian(xlim=c(0, 1), ylim=c(0, 1), expand=TRUE) + labs(title=NULL, subtitle="Egocentric: Responses for goals locations") + theme(legend.position="none"),
-           C=p1_cfa + theme(legend.position="top") + labs(subtitle="Performance in probe trials"),
-           D=p1c_fd + theme(legend.position="none"), design=layout) + labs(subtitle="Precision in correct probe trials") + 
-  plot_annotation(title="Immediate recall (T1)", tag_levels="A")
-ggsave("Nav_performance_1.jpeg", perf1, width=7.2, height=10, dpi=600)
-
-
-# Delayed T2
-layout="
-AAAA
-BBBB
-CCDD
-"
-perf2 <- wrap_plots(A=dots_s2_allo + coord_cartesian(xlim=c(0, 1), ylim=c(0, 1), expand=TRUE) + labs(title=NULL, subtitle="Allocentric: Responses for goals locations") + theme(legend.position="none"),
-                    B=dots_s2_ego + coord_cartesian(xlim=c(0, 1), ylim=c(0, 1), expand=TRUE) + labs(title=NULL, subtitle="Egocentric: Responses for goals locations") + theme(legend.position="none"),
-                    C=pch_cfa + theme(legend.position="top") + labs(subtitle="Change in performance in probe trials"),
-                    D=pchc_fd + theme(legend.position="none"), design=layout) + labs(subtitle="Change in precision in correct probe trials") + 
-  plot_annotation(title="Delayed recall (T2) after 13 days", tag_levels="A")
-ggsave("Nav_performance_2.jpeg", perf2, width=7.2, height=10, dpi=600)
-
-
-# efficiency (strategy)
-# Immediate T1
-layout="
-ABCD
-EEFF
-"
-wrap_plots(A=p1_t, B=pch_t, 
-           C=p1_pd, D=pchc_pd, 
-           E=stbar_allo, F=stbar_ego, 
-           design=layout) +
-  plot_annotation(title="TITEL", tag_levels="A")
-
-# Delayed T2
+# # performance (memory)
+# # Immediate T1
+# layout="
+# AAAA
+# BBBB
+# CCDD
+# "
+# perf1 <- wrap_plots(A=dots_s1_allo + coord_cartesian(xlim=c(0, 1), ylim=c(0, 1), expand=TRUE) + labs(title=NULL, subtitle="Allocentric: Responses for goals locations") + theme(legend.position="none"),
+#                     B=dots_s1_ego + coord_cartesian(xlim=c(0, 1), ylim=c(0, 1), expand=TRUE) + labs(title=NULL, subtitle="Egocentric: Responses for goals locations") + theme(legend.position="none"),
+#            C=p1_cfa + theme(legend.position="top") + labs(subtitle="Performance in probe trials"),
+#            D=p1c_fd + theme(legend.position="none"), design=layout) + labs(subtitle="Precision in correct probe trials") + 
+#   plot_annotation(title="Immediate recall (T1)", tag_levels="A")
+# ggsave("Nav_performance_1.jpeg", perf1, width=7.2, height=10, dpi=600)
+# 
+# 
+# # Delayed T2
+# layout="
+# AAAA
+# BBBB
+# CCDD
+# "
+# perf2 <- wrap_plots(A=dots_s2_allo + coord_cartesian(xlim=c(0, 1), ylim=c(0, 1), expand=TRUE) + labs(title=NULL, subtitle="Allocentric: Responses for goals locations") + theme(legend.position="none"),
+#                     B=dots_s2_ego + coord_cartesian(xlim=c(0, 1), ylim=c(0, 1), expand=TRUE) + labs(title=NULL, subtitle="Egocentric: Responses for goals locations") + theme(legend.position="none"),
+#                     C=pch_cfa + theme(legend.position="top") + labs(subtitle="Change in performance in probe trials"),
+#                     D=pchc_fd + theme(legend.position="none"), design=layout) + labs(subtitle="Change in precision in correct probe trials") + 
+#   plot_annotation(title="Delayed recall (T2) after 13 days", tag_levels="A")
+# ggsave("Nav_performance_2.jpeg", perf2, width=7.2, height=10, dpi=600)
+# 
+# 
+# # efficiency (strategy)
+# # Immediate T1
+# layout="
+# ABCD
+# EEFF
+# "
+# wrap_plots(A=p1_t, B=pch_t, 
+#            C=p1_pd, D=pchc_pd, 
+#            E=stbar_allo, F=stbar_ego, 
+#            design=layout) +
+#   plot_annotation(title="TITEL", tag_levels="A")
+# 
+# # Delayed T2
   
   
   
 # post memory tests 
-pt <- (layout_all + labs(subtitle="Layout recognition")) + landmark_details + (gmda_avg + guides(fill="none")) +
+pt <- (layout + labs(subtitle="Layout recognition")) + landmark_details + (gmda_avg + guides(fill="none")) +
   plot_annotation(title="Post-navigational memory tests", tag_levels="A") + 
   plot_layout(widths=c(0.5, 0.25, 0.25), guides="collect") & 
   theme(legend.direction="horizontal", legend.position="bottom")
