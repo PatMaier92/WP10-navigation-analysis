@@ -195,7 +195,7 @@ change_box_plot <- function(data, xvar, yvar, fillby, facetvar, subtitle, mylabe
     labs(subtitle=subtitle,
          x=xlabel,
          y=ylabel2,
-         caption="change calculated as (T2-T1)/T1")
+         caption="change = (T2-T1)/T1")
   
   if (facetvar != "none"){
     p <- p + facet_wrap(facetvar, labeller=mylabels)
@@ -512,7 +512,7 @@ sm_change_correct <- sm_data %>%
 
 # egocentric probe trials
 box_ego_delta_cfa <- change_box_plot(sm_change %>% filter(condition=="ego_ret"), "group", "cfa_ratio", "group", "session", NULL, mylabels, "none", group_colors, ylabel=l_correct_alley)
-allo_ret <- change_box_plot(sm_change %>% filter(condition=="ego_ret"), "group", "t_ratio", "group", "session", NULL, mylabels, "none", group_colors, ylabel=l_time)
+box_ego_delta_t <- change_box_plot(sm_change %>% filter(condition=="ego_ret"), "group", "t_ratio", "group", "session", NULL, mylabels, "none", group_colors, ylabel=l_time)
 box_ego_delta_pd <- change_box_plot(sm_change %>% filter(condition=="ego_ret"), "group", "pd_ratio", "group", "session", NULL, mylabels, "none", group_colors, ylabel=l_path_distance)
 box_ego_delta_ed <- change_box_plot(sm_change %>% filter(condition=="ego_ret"), "group", "ed_ratio", "group", "session", NULL, mylabels, "none", group_colors, ylabel=l_editdistance)
 
@@ -600,9 +600,9 @@ sm_strat2 <- sm_data %>%
   tally() %>%
   mutate(percent=n/sum(n))
 
-bar_ego_strategy <- bar_plot(sm_strat2 %>% filter(condition=="ego_ret"), "group", "percent", "search_strategy", "session", mylabels, "Egocentric trials", NULL, l_search_strategy, "bottom", "Oranges", paletteDir=-1, stackReverse=T)
+bar_ego_strategy <- bar_plot(sm_strat2 %>% filter(condition=="ego_ret"), "group", "percent", "search_strategy", "session", mylabels, "Egocentric trials", NULL, l_search_strategy, "bottom", "Greens", paletteDir=-1, stackReverse=T)
 
-bar_allo_strategy <- bar_plot(sm_strat2 %>% filter(condition=="allo_ret"), "group", "percent", "search_strategy", "session", mylabels, "Allocentric trials", NULL, l_search_strategy, "bottom", "Oranges", paletteDir=-1, stackReverse=T)
+bar_allo_strategy <- bar_plot(sm_strat2 %>% filter(condition=="allo_ret"), "group", "percent", "search_strategy", "session", mylabels, "Allocentric trials", NULL, l_search_strategy, "bottom", "Greens", paletteDir=-1, stackReverse=T)
 ## ----
 rm(sm_strat, sm_strat2)
 
@@ -620,7 +620,7 @@ sm_allo <- sm_data %>%
   tally() %>%
   mutate(percent=n/sum(n))
 
-bar_allo_detailed_strategy <- bar_plot(sm_allo, "group", "percent", "search_strategy_in_allo", "session", mylabels, "Allocentric trials (excl. trials with inner starts)", NULL, l_search_strategy, "bottom", "Oranges")
+bar_allo_detailed_strategy <- bar_plot(sm_allo, "group", "percent", "search_strategy_in_allo", "session", mylabels, "Allocentric trials (excl. trials with inner starts)", NULL, l_search_strategy, "bottom", "Paired",  paletteDir=-1, stackReverse=T)
 ## ----
 rm(sm_allo)
 
@@ -715,50 +715,93 @@ learn <- line_t + line_pd + line_ed +
 ggsave("Nav_learning.jpeg", learn, width=7.5, height=4.5, dpi=600)
 
 
-# # performance (memory)
-# # Immediate T1
-# layout="
-# AAAA
-# BBBB
-# CCDD
-# "
-# perf1 <- wrap_plots(A=dots_s1_allo + coord_cartesian(xlim=c(0, 1), ylim=c(0, 1), expand=TRUE) + labs(title=NULL, subtitle="Allocentric: Responses for goals locations") + theme(legend.position="none"),
-#                     B=dots_s1_ego + coord_cartesian(xlim=c(0, 1), ylim=c(0, 1), expand=TRUE) + labs(title=NULL, subtitle="Egocentric: Responses for goals locations") + theme(legend.position="none"),
-#            C=p1_cfa + theme(legend.position="top") + labs(subtitle="Performance in probe trials"),
-#            D=p1c_fd + theme(legend.position="none"), design=layout) + labs(subtitle="Precision in correct probe trials") + 
-#   plot_annotation(title="Immediate recall (T1)", tag_levels="A")
-# ggsave("Nav_performance_1.jpeg", perf1, width=7.2, height=10, dpi=600)
-# 
-# 
-# # Delayed T2
-# layout="
-# AAAA
-# BBBB
-# CCDD
-# "
-# perf2 <- wrap_plots(A=dots_s2_allo + coord_cartesian(xlim=c(0, 1), ylim=c(0, 1), expand=TRUE) + labs(title=NULL, subtitle="Allocentric: Responses for goals locations") + theme(legend.position="none"),
-#                     B=dots_s2_ego + coord_cartesian(xlim=c(0, 1), ylim=c(0, 1), expand=TRUE) + labs(title=NULL, subtitle="Egocentric: Responses for goals locations") + theme(legend.position="none"),
-#                     C=pch_cfa + theme(legend.position="top") + labs(subtitle="Change in performance in probe trials"),
-#                     D=pchc_fd + theme(legend.position="none"), design=layout) + labs(subtitle="Change in precision in correct probe trials") + 
-#   plot_annotation(title="Delayed recall (T2) after 13 days", tag_levels="A")
-# ggsave("Nav_performance_2.jpeg", perf2, width=7.2, height=10, dpi=600)
-# 
-# 
-# # efficiency (strategy)
-# # Immediate T1
-# layout="
-# ABCD
-# EEFF
-# "
-# wrap_plots(A=p1_t, B=pch_t, 
-#            C=p1_pd, D=pchc_pd, 
-#            E=stbar_allo, F=stbar_ego, 
-#            design=layout) +
-#   plot_annotation(title="TITEL", tag_levels="A")
-# 
-# # Delayed T2
-  
-  
+# performance (memory)
+layout="
+AAAA
+AAAA
+BBCC
+"
+
+# egocentric
+cfa_ego <- wrap_plots(box_ego_cfa + theme(legend.position="bottom") + labs(subtitle="Performance in probe trials"),
+                      box_ego_delta_cfa + theme(legend.position="none")) + plot_layout(widths=c(0.7,0.3))
+fd_ego <- wrap_plots(box_ego_cor_fd + theme(legend.position="none") + labs(subtitle="Precision in correct probe trials"),
+                     box_ego_delta_cor_fd + theme(legend.position="none")) + plot_layout(widths=c(0.7,0.3))
+perf_ego <- wrap_plots(A=dots_ego + labs(title=NULL, subtitle="Responses for goals locations") + theme(legend.position="none"),
+                       B=cfa_ego,
+                       C=fd_ego,
+                       design=layout) +
+  plot_annotation(title="Egocentric probe trials")
+ggsave("Nav_performance_ego.jpeg", perf_ego, width=9, height=10.6, dpi=600)
+rm(perf_ego, cfa_ego, fd_ego)
+rm(dots_ego, box_ego_cfa, box_ego_delta_cfa, box_ego_cor_fd, box_ego_delta_cor_fd)
+
+
+# allocentric
+cfa_allo <- wrap_plots(box_allo_cfa + theme(legend.position="bottom") + labs(subtitle="Performance in probe trials"),
+                      box_allo_delta_cfa + theme(legend.position="none")) + plot_layout(widths=c(0.7,0.3))
+fd_allo <- wrap_plots(box_allo_cor_fd + theme(legend.position="none") + labs(subtitle="Precision in correct probe trials"),
+                     box_allo_delta_cor_fd + theme(legend.position="none")) + plot_layout(widths=c(0.7,0.3))
+perf_allo <- wrap_plots(A=dots_allo + labs(title=NULL, subtitle="Responses for goals locations") + theme(legend.position="none"),
+                       B=cfa_allo,
+                       C=fd_allo,
+                       design=layout) +
+  plot_annotation(title="Allocentric probe trials")
+ggsave("Nav_performance_allo.jpeg", perf_allo, width=9, height=10.6, dpi=600)
+rm(perf_allo, cfa_allo, fd_allo)
+rm(dots_allo, box_allo_cfa, box_allo_delta_cfa, box_allo_cor_fd, box_allo_delta_cor_fd)
+
+
+# efficiency (strategy)
+layout="
+AAAAA
+BBBBB
+CCCCC
+DDDD#
+"
+
+# egocentric 
+t_ego <- wrap_plots(box_ego_t + theme(legend.position="none"), 
+                    box_ego_delta_t + theme(legend.position="none")) + plot_layout(widths=c(0.7,0.3))
+pd_ego <- wrap_plots(box_ego_pd + theme(legend.position="none"), 
+                     box_ego_delta_pd + theme(legend.position="none")) + plot_layout(widths=c(0.7,0.3))
+ed_ego <- wrap_plots(box_ego_ed + theme(legend.position="bottom"), 
+                     box_ego_delta_ed + theme(legend.position="none")) + plot_layout(widths=c(0.7,0.3))
+strat_ego <- wrap_plots(A=t_ego,
+                        B=pd_ego,
+                        C=ed_ego,
+                        D=bar_ego_strategy + theme(legend.position="right") + labs(subtitle="Search strategies"),
+                        design=layout) +
+  plot_annotation(title="Egocentric probe trials")
+ggsave("Nav_stratety_ego.jpeg", strat_ego, width=6, height=10, dpi=600)
+rm(t_ego, pd_ego, ed_ego, strat_ego)
+rm(box_ego_t, box_ego_delta_t, box_ego_pd, box_ego_delta_pd, box_ego_ed, box_ego_delta_ed, bar_ego_strategy)
+
+
+# allocentric 
+layout="
+AAAAA###
+BBBBB###
+CCCCC###
+DDDDEEEE
+"
+t_allo <- wrap_plots(box_allo_t + theme(legend.position="none"), 
+                    box_allo_delta_t + theme(legend.position="none")) + plot_layout(widths=c(0.7,0.3))
+pd_allo <- wrap_plots(box_allo_pd + theme(legend.position="none"), 
+                     box_allo_delta_pd + theme(legend.position="none")) + plot_layout(widths=c(0.7,0.3))
+ed_allo <- wrap_plots(box_allo_ed + theme(legend.position="bottom"), 
+                     box_allo_delta_ed + theme(legend.position="none")) + plot_layout(widths=c(0.7,0.3))
+strat_allo <- wrap_plots(A=t_allo,
+                        B=pd_allo,
+                        C=ed_allo,
+                        D=bar_allo_strategy + theme(legend.position="right") + labs(subtitle="Search strategies"),
+                        E=bar_allo_detailed_strategy + theme(legend.position="right") + labs(subtitle="Detailed search strategies"),
+                        design=layout) +
+  plot_annotation(title="Allocentric probe trials")
+ggsave("Nav_stratety_allo.jpeg", strat_allo, width=10, height=10, dpi=600)
+rm(t_allo, pd_allo, ed_allo, strat_allo)
+rm(box_allo_t, box_allo_delta_t, box_allo_pd, box_allo_delta_pd, box_allo_ed, box_allo_delta_ed, bar_allo_strategy, bar_allo_detailed_strategy)
+
   
 # post memory tests 
 pt <- (layout + labs(subtitle="Layout recognition")) + landmark_details + (gmda_avg + guides(fill="none")) +
