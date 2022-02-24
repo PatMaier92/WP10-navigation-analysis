@@ -56,26 +56,26 @@ mylabels <- as_labeller(c(`YoungKids` = "6-7yo", `OldKids` = "9-10yo", `YoungAdu
                           `SQRT(CanOrg)`="SQRT(CanOrg)", `CanAcc`="CanAcc", `DistAcc`="DistAcc", `AngleAcc`="AngleAcc"))
 
 # colors
-group_colors <- c("YoungKids"="#F1BB7B", "OldKids"="#FD6467", "YoungAdults"="#8A928B")
-type_colors <- c("main_learn" = "#6699CC", "main_ret" = "#99CCFF", "allo_ret" = "#FFCC33", "ego_ret" = "#669933")
-session_colors <- c("1" = "#FFCCCC", "2" ="#999999", "3" = "#333333")
-strategy_colors <- c("direct" = "#FFCCCC", "detour" ="#999999", "reoriented" = "#888888")
+# scales::show_col()
+group_colors <- c("YoungKids"="#FFE476", "OldKids"="#B2DF8A", "YoungAdults"="#C4CAC9")
+group_colors_o <-  c("YoungKids"="#CC6600", "OldKids"="#33A02C", "YoungAdults"="#667270")
+type_colors <- c("main_learn"="#667270", "main_ret"="#C4CAC9", "allo_ret"="#FDBF6F", "ego_ret"="#A6CEE3")
+type_colors_o <- c("main_learn"="#667270", "main_ret"="#667270", "allo_ret"="#FF7F00", "ego_ret"="#1F78B4")
+strategy_colors <- c("direct"="#E4534D", "detour"="#ED8E8A", "reoriented"="#F9DAD9")
+strategy_colors_allo <- c("direct_allo"="#FDBF6F", "detour_allo"="#FEE8CA", "direct_ego"="#A6CEE3", "detour_ego"="#DBEBF4", "back_to_start"="#B2DF8A", "unclassified"="#FEFAAE")
 
-# variable labels 
+# variable labels
 l_time <- "time in seconds"
 l_velocity <- "velocity"
-l_correct_goal <- "% correct goal"
-l_ego_goal <- "% egocentric goal"
 l_correct_alley <- "% in correct area" 
-l_ego_alley <- "% in egocentric area" 
 l_final_distance <- "final distance"
 l_shortest_path_alley <- "% shortest path to correct area"
-l_zones_explored <- "n of zones explored"
-l_zones_entered <- "n of zones entered"
 l_editdistance <- "path zone error"
+l_editdistance_chosen <- "path zone error (chosen)"
 l_path_length <- "path length"
 l_path_length_error <- "path length error"
 l_path_distance <- "avg. path distance"
+l_path_distance_chosen <- "avg. path distance (chosen)"
 l_adj_path_distance <- "adj. avg. path distance"
 l_dtw_path_distance <- "DTW path distance"
 l_adj_dtw_path_distance <- "adj. DTW path distance"
@@ -96,6 +96,7 @@ l_search_strategy <- "% of use"
 line_plot <- function(data, xvar, yvar, colorvar, subtitle, ylabel, facetlabels, legendPos, mycolors) {
   p <- ggplot(data, aes(x=get(xvar), y=get(yvar), colour=get(colorvar))) +
     geom_line(size=1) + 
+    geom_point(color="black", size=0.75) +
     scale_x_continuous(breaks=c(1,2,3,4,5,6,7,8), labels=c(1,2,3,5,7,9,11,13)) + 
     scale_colour_manual(labels=facetlabels, values=mycolors) + 
     coord_cartesian(clip="off", ylim=c(0, NA)) +
@@ -135,11 +136,12 @@ trial_plot <- function(data, xvar, yvar, fillby, facetvar, title, ylabel, facetl
 
 
 # function for aggregated box plots with individual values 
-box_plot <- function(data, xvar, yvar, fillby, facetr, facetc, subtitle, xlabel, ylabel, mylabels, legendPos, mycolors, facetOneLine=F, mcVariant=F, mc_outlier="none"){
-  p <- ggplot(data, aes(x=get(xvar), y=get(yvar), fill=get(fillby))) + 
+box_plot <- function(data, xvar, yvar, fillby, facetr, facetc, subtitle, xlabel, ylabel, mylabels, legendPos, mycolors, mycolors2, facetOneLine=F, mcVariant=F, mc_outlier="none"){
+  p <- ggplot(data, aes(x=get(xvar), y=get(yvar), fill=get(fillby), colour=get(fillby))) + 
     geom_boxplot(outlier.shape=NA) +
     geom_point(position=position_jitterdodge(seed=999), size=0.5) + 
     scale_fill_manual(labels=mylabels, values=mycolors) + 
+    scale_color_manual(labels=mylabels, values=mycolors2) + 
     coord_cartesian(clip="off", ylim=c(0, NA)) +
     theme_classic() + 
     labs(subtitle=subtitle, 
@@ -176,15 +178,16 @@ box_plot <- function(data, xvar, yvar, fillby, facetr, facetc, subtitle, xlabel,
 
 
 # function for aggregated box change plots
-change_box_plot <- function(data, xvar, yvar, fillby, facetvar, subtitle, mylabels, legendPos, mycolors, xlabel=NULL, ylabel) {
+change_box_plot <- function(data, xvar, yvar, fillby, facetvar, subtitle, mylabels, legendPos, mycolors, mycolors2, xlabel=NULL, ylabel) {
   ylabel2 <- paste0("rel. change ", ylabel)
-  p <- ggplot(data, aes(x=get(xvar), y=get(yvar), fill=get(fillby))) +
+  p <- ggplot(data, aes(x=get(xvar), y=get(yvar), fill=get(fillby), color=get(fillby))) +
     geom_boxplot(outlier.shape=NA) +
     geom_point(position=position_jitterdodge(seed=999), size=0.5) + 
     geom_hline(yintercept=0, linetype="dashed", color="red") +
     coord_cartesian(clip="off") +
     scale_x_discrete(labels=mylabels) + 
     scale_fill_manual(labels=mylabels, values=mycolors) +
+    scale_color_manual(labels=mylabels, values=mycolors2) + 
     theme_classic() + 
     theme(legend.position=legendPos,
           legend.title=element_blank(), 
@@ -206,8 +209,8 @@ change_box_plot <- function(data, xvar, yvar, fillby, facetvar, subtitle, mylabe
 
 
 # function for aggregated (stacked) bar plots 
-bar_plot <- function(data, xvar, yvar, fillvar, facetvar, mylabels, subtitle, xlabel, ylabel, legendPos, mycolors, isPalette=T, paletteDir=1, isStacked=T, stackReverse=F, axisLabels=T) {
-  p <- ggplot(data, aes(x=get(xvar), y=get(yvar), fill=get(fillvar))) +
+bar_plot <- function(data, xvar, yvar, fillvar, facetvar, mylabels, subtitle, xlabel, ylabel, legendPos, mycolors, mycolors2, isPalette=T, paletteDir=1, isStacked=T, stackReverse=F, axisLabels=T) {
+  p <- ggplot(data, aes(x=get(xvar), y=get(yvar), fill=get(fillvar), color=get(fillvar))) +
     scale_x_discrete(labels=mylabels) +
     theme_classic() +
     theme(legend.position=legendPos,
@@ -219,10 +222,10 @@ bar_plot <- function(data, xvar, yvar, fillvar, facetvar, mylabels, subtitle, xl
          y=ylabel)
   
   if (isStacked) {
-    p <- p + geom_bar(stat="identity", position=position_stack(reverse=stackReverse), color="black")
+    p <- p + geom_bar(stat="identity", position=position_stack(reverse=stackReverse))
     
   } else {
-    p <- p + geom_bar(stat="identity", color="black")
+    p <- p + geom_bar(stat="identity")
   }
   
   if (facetvar!="none") {
@@ -230,10 +233,12 @@ bar_plot <- function(data, xvar, yvar, fillvar, facetvar, mylabels, subtitle, xl
   }
   
   if (isPalette) {
-    p <- p + scale_fill_brewer(palette=mycolors, labels=mylabels, direction=paletteDir)
+    p <- p + scale_fill_brewer(palette=mycolors, labels=mylabels, direction=paletteDir) +
+      scale_color_brewer(palette=mycolors, labels=mylabels, direction=paletteDir) 
     
   } else {
-    p <- p + scale_fill_manual(values=mycolors, labels=mylabels) + ylim(0, 1) 
+    p <- p + scale_fill_manual(labels=mylabels, values=mycolors) +
+      scale_color_manual(labels=mylabels, values=mycolors2) + ylim(0, 1) 
   }
   
   if (axisLabels==F) {
@@ -246,14 +251,14 @@ bar_plot <- function(data, xvar, yvar, fillvar, facetvar, mylabels, subtitle, xl
 
 
 # function for raincloud plots
-raincloud_plot <- function(data, xvar, yvar, xlab, ylab, mylabels, mycolors, ymin="n", ymax="n", mysubtitle=NULL, facetvar="n"){
+raincloud_plot <- function(data, xvar, yvar, xlab, ylab, mylabels, mycolors, mycolors2, ymin="n", ymax="n", mysubtitle=NULL, facetvar="n"){
   p1 <- ggplot(data, aes(x=get(xvar), y=get(yvar), fill=get(xvar))) +
     geom_half_violin(aes(color=get(xvar)), position=position_nudge(x=-0.14), side="l",  alpha=0.4) +
     geom_half_boxplot(position=position_nudge(x=-0.1), side="l", outlier.shape=NA,
                       center=TRUE, errorbar.draw=FALSE, width=0.15, alpha=1) +
     geom_point(aes(color=get(xvar)), position=position_jitter(w=0.08, h=0, seed=100), size=1.75, alpha=0.5) +
     scale_fill_manual(labels=mylabels, values=mycolors) +
-    scale_color_manual(labels=mylabels, values=mycolors) +
+    scale_color_manual(labels=mylabels, values=mycolors2) +
     scale_x_discrete(labels=mylabels, expand=c(0, 0)) +
     theme_classic() +
     theme(legend.position="none") +
@@ -335,9 +340,9 @@ sm_practise <- sm_data %>%
          out_velocity = ifelse(is_outlier(velocity), id, as.numeric(NA)),
          out_path = ifelse(is_outlier(path_length), id, as.numeric(NA)))
 
-mc_t <- box_plot(sm_practise, "group", "time", "group", "none", "none", NULL, NULL, l_time, mylabels, "top", group_colors, mcVariant=T, mc_outlier="out_time")
-mc_p <- box_plot(sm_practise, "group", "path_length", "group", "none", "none", NULL, NULL, l_path_length, mylabels, "top", group_colors, mcVariant=T, mc_outlier="out_path")
-mc_v <- box_plot(sm_practise, "group", "velocity", "group", "none", "none", NULL, NULL, l_velocity, mylabels, "top", group_colors, mcVariant=T, mc_outlier="out_velocity")
+mc_t <- box_plot(sm_practise, "group", "time", "group", "none", "none", NULL, NULL, l_time, mylabels, "top", group_colors, group_colors_o, mcVariant=T, mc_outlier="out_time")
+mc_p <- box_plot(sm_practise, "group", "path_length", "group", "none", "none", NULL, NULL, l_path_length, mylabels, "top", group_colors, group_colors_o, mcVariant=T, mc_outlier="out_path")
+mc_v <- box_plot(sm_practise, "group", "velocity", "group", "none", "none", NULL, NULL, l_velocity, mylabels, "top", group_colors, group_colors_o, mcVariant=T, mc_outlier="out_velocity")
 ## ----
 rm(sm_practise, is_outlier)
 
@@ -353,8 +358,9 @@ ex1_data <- sm_orig %>%
   tally(exclude_trial_matlab)
 
 ex1 <- ggplot(ex1_data, aes(x=group, y=n, fill=condition)) +
-  geom_col(color="black") +
+  geom_col(aes(color=condition)) +
   scale_fill_manual(labels=mylabels, values=type_colors) + 
+  scale_color_manual(labels=mylabels, values=type_colors_o) + 
   scale_x_discrete(labels=mylabels) + 
   theme_classic() + 
   theme(legend.position=c(0.8,0.8),
@@ -367,9 +373,10 @@ ex2_data <- sm_orig %>%
   group_by(id, group) %>% 
   tally(exclude_trial_matlab)
 
-ex2 <- ggplot(ex2_data, aes(x=n, fill=group)) + 
-  geom_histogram(binwidth=1, color="black") + 
+ex2 <- ggplot(ex2_data, aes(x=n, fill=group, color=group)) + 
+  geom_histogram(binwidth=1) + 
   scale_fill_manual(labels=mylabels, values=group_colors) + 
+  scale_color_manual(labels=mylabels, values=group_colors_o) + 
   theme_classic() + 
   theme(legend.position=c(0.8,0.8),
         legend.key.size = unit(0.5, 'cm')) + 
@@ -431,41 +438,43 @@ rm(sm_trialwise, sm_trialwise_learn)
 sm_agg <- sm_data %>%
   filter(session!=3, condition!="main_ret") %>% 
   group_by(id, group, session, condition) %>% 
-  summarise_at(c("correct_final_alley", "shortest_path_correct_alley", "time", "path_distance", "zone_editdistance"), mean, na.rm=T)
+  summarise_at(c("correct_final_alley", "shortest_path_correct_alley", "time", "path_distance", "chosen_path_distance", "zone_editdistance"), mean, na.rm=T)
 
 sm_agg_correct <- sm_data %>%
   filter(condition %in% c("ego_ret", "allo_ret") & correct_final_alley==1) %>% 
   group_by(id, group, session, condition) %>% 
-  summarise_at(c("path_distance", "final_distance"), mean, na.rm=T)
+  summarise_at(c("time", "path_distance", "final_distance"), mean, na.rm=T)
 
 
 # learning trials
-box_learn_spcs <- box_plot(sm_agg %>% filter(condition=="main_learn"), "group", "shortest_path_correct_alley", "group", "condition", "none", NULL, NULL, l_shortest_path_alley, mylabels, "top", group_colors)
-box_learn_t <- box_plot(sm_agg %>% filter(condition=="main_learn"), "group", "time", "group", "condition", "none", NULL, NULL, l_time, mylabels, "top", group_colors)
-box_learn_pd <- box_plot(sm_agg %>% filter(condition=="main_learn"), "group", "path_distance", "group", "condition", "none", NULL, NULL, l_path_distance, mylabels, "top", group_colors)
-box_learn_ed <- box_plot(sm_agg %>% filter(condition=="main_learn"), "group", "zone_editdistance", "group", "condition", "none", NULL, NULL, l_editdistance, mylabels, "top", group_colors)
+box_learn_spcs <- box_plot(sm_agg %>% filter(condition=="main_learn"), "group", "shortest_path_correct_alley", "group", "condition", "none", NULL, NULL, l_shortest_path_alley, mylabels, "top", group_colors, group_colors_o)
+box_learn_t <- box_plot(sm_agg %>% filter(condition=="main_learn"), "group", "time", "group", "condition", "none", NULL, NULL, l_time, mylabels, "top", group_colors, group_colors_o)
+box_learn_pd <- box_plot(sm_agg %>% filter(condition=="main_learn"), "group", "path_distance", "group", "condition", "none", NULL, NULL, l_path_distance, mylabels, "top", group_colors, group_colors_o)
+box_learn_ed <- box_plot(sm_agg %>% filter(condition=="main_learn"), "group", "zone_editdistance", "group", "condition", "none", NULL, NULL, l_editdistance, mylabels, "top", group_colors, group_colors_o)
 
 
 # egocentric probe trials
-box_ego_cfa <- box_plot(sm_agg %>% filter(condition=="ego_ret"), "group", "correct_final_alley", "group", "session", "none", NULL, NULL, l_correct_alley, mylabels, "top", group_colors)
-box_ego_t <- box_plot(sm_agg %>% filter(condition=="ego_ret"), "group", "time", "group", "session", "none", NULL, NULL, l_time, mylabels, "top", group_colors)
-box_ego_pd <- box_plot(sm_agg %>% filter(condition=="ego_ret"), "group", "path_distance", "group", "session", "none", NULL, NULL, l_path_distance, mylabels, "top", group_colors)
-box_ego_ed <- box_plot(sm_agg %>% filter(condition=="ego_ret"), "group", "zone_editdistance", "group", "session", "none", NULL, NULL, l_editdistance, mylabels, "top", group_colors)
+box_ego_cfa <- box_plot(sm_agg %>% filter(condition=="ego_ret"), "group", "correct_final_alley", "group", "session", "none", NULL, NULL, l_correct_alley, mylabels, "top", group_colors, group_colors_o)
+box_ego_t <- box_plot(sm_agg %>% filter(condition=="ego_ret"), "group", "time", "group", "session", "none", NULL, NULL, l_time, mylabels, "top", group_colors, group_colors_o)
+box_ego_pdch <- box_plot(sm_agg %>% filter(condition=="ego_ret"), "group", "chosen_path_distance", "group", "session", "none", NULL, NULL, l_path_distance_chosen, mylabels, "top", group_colors, group_colors_o)
+# box_ego_ed <- box_plot(sm_agg %>% filter(condition=="ego_ret"), "group", "zone_editdistance", "group", "session", "none", NULL, NULL, l_editdistance, mylabels, "top", group_colors, group_colors_o)
 
 # correct egocentric probe trials 
-box_ego_cor_fd <- box_plot(sm_agg_correct %>% filter(condition=="ego_ret"), "group", "final_distance", "group", "session", "none", NULL, NULL, l_final_distance, mylabels, "top", group_colors)
-box_ego_cor_pd <- box_plot(sm_agg_correct %>% filter(condition=="ego_ret"), "group", "path_distance", "group", "session", "none", NULL, NULL, l_path_distance, mylabels, "top", group_colors)
+box_ego_cor_t <- box_plot(sm_agg_correct %>% filter(condition=="ego_ret"), "group", "time", "group", "session", "none", NULL, NULL, l_time, mylabels, "top", group_colors, group_colors_o)
+box_ego_cor_fd <- box_plot(sm_agg_correct %>% filter(condition=="ego_ret"), "group", "final_distance", "group", "session", "none", NULL, NULL, l_final_distance, mylabels, "top", group_colors, group_colors_o)
+box_ego_cor_pd <- box_plot(sm_agg_correct %>% filter(condition=="ego_ret"), "group", "path_distance", "group", "session", "none", NULL, NULL, l_path_distance, mylabels, "top", group_colors, group_colors_o)
 
 
 # allocentric probe trials
-box_allo_cfa <- box_plot(sm_agg %>% filter(condition=="allo_ret"), "group", "correct_final_alley", "group", "session", "none", NULL, NULL, l_correct_alley, mylabels, "top", group_colors)
-box_allo_t <- box_plot(sm_agg %>% filter(condition=="allo_ret"), "group", "time", "group", "session", "none", NULL, NULL, l_time, mylabels, "top", group_colors)
-box_allo_pd <- box_plot(sm_agg %>% filter(condition=="allo_ret"), "group", "path_distance", "group", "session", "none", NULL, NULL, l_path_distance, mylabels, "top", group_colors)
-box_allo_ed <- box_plot(sm_agg %>% filter(condition=="allo_ret"), "group", "zone_editdistance", "group", "session", "none", NULL, NULL, l_editdistance, mylabels, "top", group_colors)
+box_allo_cfa <- box_plot(sm_agg %>% filter(condition=="allo_ret"), "group", "correct_final_alley", "group", "session", "none", NULL, NULL, l_correct_alley, mylabels, "top", group_colors, group_colors_o)
+box_allo_t <- box_plot(sm_agg %>% filter(condition=="allo_ret"), "group", "time", "group", "session", "none", NULL, NULL, l_time, mylabels, "top", group_colors, group_colors_o)
+box_allo_pdch <- box_plot(sm_agg %>% filter(condition=="allo_ret"), "group", "chosen_path_distance", "group", "session", "none", NULL, NULL, l_path_distance_chosen, mylabels, "top", group_colors, group_colors_o)
+#box_allo_ed <- box_plot(sm_agg %>% filter(condition=="allo_ret"), "group", "zone_editdistance", "group", "session", "none", NULL, NULL, l_editdistance, mylabels, "top", group_colors, group_colors_o)
 
 # correct allocentric probe trials 
-box_allo_cor_fd <- box_plot(sm_agg_correct %>% filter(condition=="allo_ret"), "group", "final_distance", "group", "session", "none", NULL, NULL, l_final_distance, mylabels, "top", group_colors)
-box_allo_cor_pd <- box_plot(sm_agg_correct %>% filter(condition=="allo_ret"), "group", "path_distance", "group", "session", "none", NULL, NULL, l_path_distance, mylabels, "top", group_colors)
+box_allo_cor_t <- box_plot(sm_agg_correct %>% filter(condition=="allo_ret"), "group", "time", "group", "session", "none", NULL, NULL, l_time, mylabels, "top", group_colors, group_colors_o)
+box_allo_cor_fd <- box_plot(sm_agg_correct %>% filter(condition=="allo_ret"), "group", "final_distance", "group", "session", "none", NULL, NULL, l_final_distance, mylabels, "top", group_colors, group_colors_o)
+box_allo_cor_pd <- box_plot(sm_agg_correct %>% filter(condition=="allo_ret"), "group", "path_distance", "group", "session", "none", NULL, NULL, l_path_distance, mylabels, "top", group_colors, group_colors_o)
 ## ----
 rm(sm_agg, sm_agg_correct)
 
@@ -479,48 +488,52 @@ ratio <- function(d1, d2) {
 sm_change <- sm_data %>%
   filter(condition %in% c("ego_ret", "allo_ret"))  %>%
   group_by(id, group, session, condition) %>% 
-  summarise_at(c("correct_final_alley", "time", "path_distance",  "zone_editdistance"), mean, na.rm=T) %>% 
+  summarise_at(c("correct_final_alley", "time", "path_distance", "chosen_path_distance"), mean, na.rm=T) %>% 
   pivot_wider(names_from=session,
               values_from=-c(id, group, session, condition)) %>% 
   group_by(id, group, condition) %>%
   mutate(cfa_ratio=ratio(correct_final_alley_1, correct_final_alley_2),
          t_ratio=ratio(time_1, time_2),
          pd_ratio=ratio(path_distance_1, path_distance_2),
-         ed_ratio=ratio(zone_editdistance_1, zone_editdistance_2),
+         pdch_ratio=ratio(chosen_path_distance_1, chosen_path_distance_2),
+         #ed_ratio=ratio(zone_editdistance_1, zone_editdistance_2),
          session="Consolidation")
 
 sm_change_correct <- sm_data %>%
   filter(condition %in% c("ego_ret", "allo_ret") & correct_final_alley==1) %>% 
   group_by(id, group, session, condition) %>% 
-  summarise_at(c("final_distance", "path_distance"), mean, na.rm=T) %>% 
+  summarise_at(c("time", "final_distance", "path_distance"), mean, na.rm=T) %>% 
   pivot_wider(names_from=session,
               values_from=-c(id, group, session, condition)) %>% 
   group_by(id, group, condition) %>%
-  mutate(fd_ratio=ratio(final_distance_1, final_distance_2),
+  mutate(t_ratio=ratio(time_1, time_2),
+         fd_ratio=ratio(final_distance_1, final_distance_2),
          pd_ratio=ratio(path_distance_1, path_distance_2),
          session="Consolidation")
 
 
 # egocentric probe trials
-box_ego_delta_cfa <- change_box_plot(sm_change %>% filter(condition=="ego_ret"), "group", "cfa_ratio", "group", "session", NULL, mylabels, "none", group_colors, ylabel=l_correct_alley)
-box_ego_delta_t <- change_box_plot(sm_change %>% filter(condition=="ego_ret"), "group", "t_ratio", "group", "session", NULL, mylabels, "none", group_colors, ylabel=l_time)
-box_ego_delta_pd <- change_box_plot(sm_change %>% filter(condition=="ego_ret"), "group", "pd_ratio", "group", "session", NULL, mylabels, "none", group_colors, ylabel=l_path_distance)
-box_ego_delta_ed <- change_box_plot(sm_change %>% filter(condition=="ego_ret"), "group", "ed_ratio", "group", "session", NULL, mylabels, "none", group_colors, ylabel=l_editdistance)
+box_ego_delta_cfa <- change_box_plot(sm_change %>% filter(condition=="ego_ret"), "group", "cfa_ratio", "group", "session", NULL, mylabels, "none", group_colors, group_colors_o, ylabel=l_correct_alley)
+box_ego_delta_t <- change_box_plot(sm_change %>% filter(condition=="ego_ret"), "group", "t_ratio", "group", "session", NULL, mylabels, "none", group_colors, group_colors_o, ylabel=l_time)
+box_ego_delta_pdch <- change_box_plot(sm_change %>% filter(condition=="ego_ret"), "group", "pdch_ratio", "group", "session", NULL, mylabels, "none", group_colors, group_colors_o, ylabel=l_path_distance_chosen)
+#box_ego_delta_ed <- change_box_plot(sm_change %>% filter(condition=="ego_ret"), "group", "ed_ratio", "group", "session", NULL, mylabels, "none", group_colors, group_colors_o, ylabel=l_editdistance)
 
 # correct egocentric probe trials
-box_ego_delta_cor_fd <- change_box_plot(sm_change_correct  %>% filter(condition=="ego_ret"), "group", "fd_ratio", "group", "session", NULL, mylabels, "none", group_colors, ylabel=l_final_distance)
-box_ego_delta_cor_pd <- change_box_plot(sm_change_correct %>% filter(condition=="ego_ret"), "group", "pd_ratio", "group", "session", NULL, mylabels, "none", group_colors, ylabel=l_path_distance)
+box_ego_delta_cor_t <- change_box_plot(sm_change_correct  %>% filter(condition=="ego_ret"), "group", "t_ratio", "group", "session", NULL, mylabels, "none", group_colors, group_colors_o, ylabel=l_time)
+box_ego_delta_cor_fd <- change_box_plot(sm_change_correct  %>% filter(condition=="ego_ret"), "group", "fd_ratio", "group", "session", NULL, mylabels, "none", group_colors, group_colors_o, ylabel=l_final_distance)
+box_ego_delta_cor_pd <- change_box_plot(sm_change_correct %>% filter(condition=="ego_ret"), "group", "pd_ratio", "group", "session", NULL, mylabels, "none", group_colors, group_colors_o, ylabel=l_path_distance)
 
 
 # allocentric probe trials
-box_allo_delta_cfa <- change_box_plot(sm_change %>% filter(condition=="allo_ret"), "group", "cfa_ratio", "group", "session", NULL, mylabels, "none", group_colors, ylabel=l_correct_alley)
-box_allo_delta_t <- change_box_plot(sm_change %>% filter(condition=="allo_ret"), "group", "t_ratio", "group", "session", NULL, mylabels, "none", group_colors, ylabel=l_time)
-box_allo_delta_pd <- change_box_plot(sm_change %>% filter(condition=="allo_ret"), "group", "pd_ratio", "group", "session", NULL, mylabels, "none", group_colors, ylabel=l_path_distance)
-box_allo_delta_ed <- change_box_plot(sm_change %>% filter(condition=="allo_ret"), "group", "ed_ratio", "group", "session", NULL, mylabels, "none", group_colors, ylabel=l_editdistance)
+box_allo_delta_cfa <- change_box_plot(sm_change %>% filter(condition=="allo_ret"), "group", "cfa_ratio", "group", "session", NULL, mylabels, "none", group_colors, group_colors_o, ylabel=l_correct_alley)
+box_allo_delta_t <- change_box_plot(sm_change %>% filter(condition=="allo_ret"), "group", "t_ratio", "group", "session", NULL, mylabels, "none", group_colors, group_colors_o, ylabel=l_time)
+box_allo_delta_pdch <- change_box_plot(sm_change %>% filter(condition=="allo_ret"), "group", "pdch_ratio", "group", "session", NULL, mylabels, "none", group_colors, group_colors_o, ylabel=l_path_distance_chosen)
+#box_allo_delta_ed <- change_box_plot(sm_change %>% filter(condition=="allo_ret"), "group", "ed_ratio", "group", "session", NULL, mylabels, "none", group_colors, group_colors_o, ylabel=l_editdistance)
 
 # correct allocentric probe trials
-box_allo_delta_cor_fd <- change_box_plot(sm_change_correct  %>% filter(condition=="allo_ret"), "group", "fd_ratio", "group", "session", NULL, mylabels, "none", group_colors, ylabel=l_final_distance)
-box_allo_delta_cor_pd <- change_box_plot(sm_change_correct %>% filter(condition=="allo_ret"), "group", "pd_ratio", "group", "session", NULL, mylabels, "none", group_colors, ylabel=l_path_distance)
+box_allo_delta_cor_t <- change_box_plot(sm_change_correct  %>% filter(condition=="allo_ret"), "group", "t_ratio", "group", "session", NULL, mylabels, "none", group_colors, group_colors_o, ylabel=l_time)
+box_allo_delta_cor_fd <- change_box_plot(sm_change_correct  %>% filter(condition=="allo_ret"), "group", "fd_ratio", "group", "session", NULL, mylabels, "none", group_colors, group_colors_o, ylabel=l_final_distance)
+box_allo_delta_cor_pd <- change_box_plot(sm_change_correct %>% filter(condition=="allo_ret"), "group", "pd_ratio", "group", "session", NULL, mylabels, "none", group_colors, group_colors_o, ylabel=l_path_distance)
 ## ----
 rm(sm_change, sm_change_correct, ratio)
 
@@ -547,7 +560,7 @@ rm(sm_change, sm_change_correct, ratio)
 #   group_by(group, trial_num, condition) %>% 
 #   summarise_at(c("time", "correct_final_alley", "correct_goal", "shortest_path_correct_alley", "path_distance", "zone_editdistance"), mean, na.rm=T)
 # 
-# raincloud_plot(sm_s1, "group", "path_distance", NULL, "Variable", mylabels, group_colors, ymin="n", ymax="n", mysubtitle=NULL, facetvar="n")
+# raincloud_plot(sm_s1, "group", "path_distance", NULL, "Variable", mylabels, group_colors, group_colors_o, ymin="n", ymax="n", mysubtitle=NULL, facetvar="n")
 # ## ----
 
 
@@ -579,9 +592,9 @@ sm_strat <- sm_data %>%
   tally() %>%
   mutate(percent=n/sum(n))
 
-box_ego_strategy <- box_plot(sm_strat %>% filter(condition=="ego_ret"), "search_strategy", "percent", "search_strategy", "session", "group", "Egocentric trials", NULL, l_search_strategy,  mylabels, "bottom", strategy_colors)
+box_ego_strategy <- box_plot(sm_strat %>% filter(condition=="ego_ret"), "search_strategy", "percent", "search_strategy", "session", "group", "Egocentric trials", NULL, l_search_strategy,  mylabels, "bottom", strategy_colors, c("black", "black", "black"))
 
-box_allo_strategy <- box_plot(sm_strat %>% filter(condition=="allo_ret"), "search_strategy", "percent", "search_strategy", "session", "group", "Allocentric trials", NULL, l_search_strategy,  mylabels, "bottom", strategy_colors)
+box_allo_strategy <- box_plot(sm_strat %>% filter(condition=="allo_ret"), "search_strategy", "percent", "search_strategy", "session", "group", "Allocentric trials", NULL, l_search_strategy,  mylabels, "bottom", strategy_colors, c("black", "black", "black"))
 
 
 # strategy stacked bar plots 
@@ -591,9 +604,9 @@ sm_strat2 <- sm_data %>%
   tally() %>%
   mutate(percent=n/sum(n))
 
-bar_ego_strategy <- bar_plot(sm_strat2 %>% filter(condition=="ego_ret"), "group", "percent", "search_strategy", "session", mylabels, "Egocentric trials", NULL, l_search_strategy, "bottom", "Greens", paletteDir=-1, stackReverse=T)
+bar_ego_strategy <- bar_plot(sm_strat2 %>% filter(condition=="ego_ret"), "group", "percent", "search_strategy", "session", mylabels, "Egocentric trials", NULL, l_search_strategy, "bottom", strategy_colors, c("black", "black", "black"), isPalette=F, stackReverse=T)
 
-bar_allo_strategy <- bar_plot(sm_strat2 %>% filter(condition=="allo_ret"), "group", "percent", "search_strategy", "session", mylabels, "Allocentric trials", NULL, l_search_strategy, "bottom", "Greens", paletteDir=-1, stackReverse=T)
+bar_allo_strategy <- bar_plot(sm_strat2 %>% filter(condition=="allo_ret"), "group", "percent", "search_strategy", "session", mylabels, "Allocentric trials", NULL, l_search_strategy, "bottom", strategy_colors, c("black", "black", "black"), isPalette=F, stackReverse=T)
 ## ----
 rm(sm_strat, sm_strat2)
 
@@ -611,7 +624,7 @@ sm_allo <- sm_data %>%
   tally() %>%
   mutate(percent=n/sum(n))
 
-bar_allo_detailed_strategy <- bar_plot(sm_allo, "group", "percent", "search_strategy_in_allo", "session", mylabels, "Allocentric trials (excl. trials with inner starts)", NULL, l_search_strategy, "bottom", "Paired",  paletteDir=-1, stackReverse=T)
+bar_allo_detailed_strategy <- bar_plot(sm_allo, "group", "percent", "search_strategy_in_allo", "session", mylabels, "Allocentric trials (excl. trials with inner starts)", NULL, l_search_strategy, "bottom", strategy_colors_allo, c("black", "black", "black", "black", "black", "black"), isPalette=F, stackReverse=T)
 ## ----
 rm(sm_allo)
 
@@ -649,7 +662,7 @@ layout_data <- pt_data %>%
   mutate(n_per_group=sum(n),
          perc=n/n_per_group)
 
-layout <- bar_plot(layout_data, "group", "perc", "group", "layout_obj_1", mylabels, NULL, NULL, "% response (per group)", "bottom", group_colors, isPalette=F, isStacked=F, axisLabels=F) 
+layout <- bar_plot(layout_data, "group", "perc", "group", "layout_obj_1", mylabels, NULL, NULL, "% response (per group)", "bottom", group_colors, group_colors_o, isPalette=F, isStacked=F, axisLabels=F) 
 
 
 # :::   landmark recognition     ::: #
@@ -669,7 +682,7 @@ landmark_data <- pt_data %>%
 
 landmark_details <- bar_plot(landmark_data, "group", "perc", "category", "condition", mylabels, NULL, NULL, "% response (per group)", "bottom", "Blues", paletteDir=-1, stackReverse=T)
 
-landmark_avg <- box_plot(pt_data %>% filter(condition=="landmarks"), "group", "score", "group", "condition","none", NULL, NULL, NULL, mylabels, "bottom", group_colors)
+landmark_avg <- box_plot(pt_data %>% filter(condition=="landmarks"), "group", "score", "group", "condition","none", NULL, NULL, NULL, mylabels, "bottom", group_colors, group_colors_o)
 
 
 # :::   GMDA positioning     ::: #
@@ -679,9 +692,9 @@ gmda_data <- gmda_data %>%
   mutate(group=fct_recode(group, YoungKids = "YK", OldKids = "OK", YoungAdults="YA"),
          Measure=factor(Measure, levels=c("SQRT(CanOrg)", "CanAcc", "DistAcc", "AngleAcc")))
 
-gmda_details <- box_plot(gmda_data, "group", "Score", "group", "Measure","none", NULL, NULL, "GMDA score", mylabels, "bottom", group_colors, facetOneLine=T)
+gmda_details <- box_plot(gmda_data, "group", "Score", "group", "Measure","none", NULL, NULL, "GMDA score", mylabels, "bottom", group_colors, group_colors_o, facetOneLine=T)
 
-gmda_avg <- box_plot(pt_data %>% filter(condition=="position"), "group", "score", "group", "condition","none", NULL, NULL, "GMDA score", mylabels, "bottom", group_colors)
+gmda_avg <- box_plot(pt_data %>% filter(condition=="position"), "group", "score", "group", "condition","none", NULL, NULL, "GMDA score", mylabels, "bottom", group_colors, group_colors_o)
 ## ----
 
 
@@ -689,113 +702,130 @@ gmda_avg <- box_plot(pt_data %>% filter(condition=="position"), "group", "score"
 
 # :::   COMBINE PLOTS     :::
 
-# data check
-ex <- ex1 + ex2 + plot_annotation(title="Number of excluded trials (due to timeout or no movement)", tag_levels="A")
+### data check
+ex <- ex1 + ex2 + plot_layout(width=c(0.5,0.5)) + plot_annotation(title="Excluded trials (due to timeout or lack of movement)", tag_levels="A")
 ggsave("Data_check_excluded_trials.jpeg", ex, width=5.2, height=4.5, dpi=600)
 rm(ex, ex1, ex2)
 
+
+### motor control
 mc <- mc_t + mc_p + mc_v + plot_annotation(title="Motor control task", tag_levels="A")
 ggsave("Data_check_motor_control.jpeg", mc, width=6.5, height=4, dpi=600)
 rm(mc, mc_t, mc_p, mc_v)
 
 
-# learning trials 
+### learning trials 
 learn <- line_t + line_pd + line_ed + 
-  plot_annotation(title="Efficiency in learning trials", tag_levels="A") + 
+  plot_annotation(title="Behavior in learning trials", tag_levels="A") + 
   plot_layout(guides="collect") & theme(legend.position="bottom", legend.justification=c(0,0))
 ggsave("Nav_learning.jpeg", learn, width=7.5, height=4.5, dpi=600)
 
 
-# performance (memory)
+### performance (memory)
+## egocentric
 layout="
 AAAA
 AAAA
 BBCC
 "
 
-# egocentric
-cfa_ego <- wrap_plots(box_ego_cfa + theme(legend.position="bottom") + labs(subtitle="Performance in probe trials"),
-                      box_ego_delta_cfa + theme(legend.position="none")) + plot_layout(widths=c(0.7,0.3))
-fd_ego <- wrap_plots(box_ego_cor_fd + theme(legend.position="none") + labs(subtitle="Precision in correct probe trials"),
-                     box_ego_delta_cor_fd + theme(legend.position="none")) + plot_layout(widths=c(0.7,0.3))
+cfa_ego <- wrap_plots(box_ego_cfa + theme(legend.position="bottom") + labs(subtitle="Performance in probe trials") + coord_cartesian(ylim=c(0,1)),
+                      box_ego_delta_cfa + theme(legend.position="none") + coord_cartesian(ylim=c(-1.5,1.5))) + plot_layout(widths=c(0.7,0.3))
+fd_ego <- wrap_plots(box_ego_cor_fd + theme(legend.position="none") + labs(subtitle="Precision in correct probe trials") + coord_cartesian(ylim=c(0,0.25)),
+                     box_ego_delta_cor_fd + theme(legend.position="none") + coord_cartesian(ylim=c(-3,3))) + plot_layout(widths=c(0.7,0.3))
 perf_ego <- wrap_plots(A=dots_ego + labs(title=NULL, subtitle="Responses for goals locations") + theme(legend.position="none"),
                        B=cfa_ego,
                        C=fd_ego,
                        design=layout) +
   plot_annotation(title="Egocentric probe trials")
 ggsave("Nav_performance_ego.jpeg", perf_ego, width=9, height=10.6, dpi=600)
-rm(perf_ego, cfa_ego, fd_ego)
+
+perf_ego_1 <- (dots_ego + labs(title=NULL, subtitle="Responses for goals locations") + theme(legend.position="none")) + plot_annotation(title="Egocentric probe trials")
+ggsave("Nav_performance_ego_1.jpeg", perf_ego_1, width=7.5, height=6, dpi=600)
+
+perf_ego_2 <- wrap_plots(cfa_ego, fd_ego) + plot_layout(nrow=2) + plot_annotation(title="Egocentric probe trials")
+ggsave("Nav_performance_ego_2.jpeg", perf_ego_2, width=4.5, height=6, dpi=600)
+
+rm(perf_ego, perf_ego_1, perf_ego_2, cfa_ego, fd_ego)
 rm(dots_ego, box_ego_cfa, box_ego_delta_cfa, box_ego_cor_fd, box_ego_delta_cor_fd)
 
 
-# allocentric
-cfa_allo <- wrap_plots(box_allo_cfa + theme(legend.position="bottom") + labs(subtitle="Performance in probe trials"),
-                      box_allo_delta_cfa + theme(legend.position="none")) + plot_layout(widths=c(0.7,0.3))
-fd_allo <- wrap_plots(box_allo_cor_fd + theme(legend.position="none") + labs(subtitle="Precision in correct probe trials"),
-                     box_allo_delta_cor_fd + theme(legend.position="none")) + plot_layout(widths=c(0.7,0.3))
+## allocentric
+cfa_allo <- wrap_plots(box_allo_cfa + theme(legend.position="bottom") + labs(subtitle="Performance in probe trials") + coord_cartesian(ylim=c(0,1)),
+                      box_allo_delta_cfa + theme(legend.position="none") + coord_cartesian(ylim=c(-1.5,1.5))) + plot_layout(widths=c(0.7,0.3))
+fd_allo <- wrap_plots(box_allo_cor_fd + theme(legend.position="none") + labs(subtitle="Precision in correct probe trials") + coord_cartesian(ylim=c(0,0.25)),
+                     box_allo_delta_cor_fd + theme(legend.position="none") + coord_cartesian(ylim=c(-3,3))) + plot_layout(widths=c(0.7,0.3))
 perf_allo <- wrap_plots(A=dots_allo + labs(title=NULL, subtitle="Responses for goals locations") + theme(legend.position="none"),
                        B=cfa_allo,
                        C=fd_allo,
                        design=layout) +
   plot_annotation(title="Allocentric probe trials")
 ggsave("Nav_performance_allo.jpeg", perf_allo, width=9, height=10.6, dpi=600)
-rm(perf_allo, cfa_allo, fd_allo)
+
+perf_allo_1 <- dots_allo + labs(title=NULL, subtitle="Responses for goals locations") + theme(legend.position="none") + plot_annotation(title="Allocentric probe trials")
+ggsave("Nav_performance_allo_1.jpeg", perf_allo_1, width=7.5, height=6, dpi=600)
+
+perf_allo_2 <- wrap_plots(cfa_allo, fd_allo) + plot_layout(nrow=2) + plot_annotation(title="Allocentric probe trials")
+ggsave("Nav_performance_allo_2.jpeg", perf_allo_2, width=4.5, height=6, dpi=600)
+
+rm(perf_allo, perf_allo_1, perf_allo_2, cfa_allo, fd_allo)
 rm(dots_allo, box_allo_cfa, box_allo_delta_cfa, box_allo_cor_fd, box_allo_delta_cor_fd)
 
 
-# efficiency (strategy)
-layout="
-AAAAA
-BBBBB
-CCCCC
-DDDD#
-"
+### behavior (strategy)
+## egocentric 
+# all probe
+t_ego <- wrap_plots(box_ego_t + theme(legend.position="none") + coord_cartesian(ylim=c(0,90)), 
+                   box_ego_delta_t + theme(legend.position="none") + coord_cartesian(ylim=c(-1,1))) + plot_layout(widths=c(0.7,0.3))
+pd_ego <- wrap_plots(box_ego_pdch + theme(legend.position="none") + coord_cartesian(ylim=c(0,0.2)), 
+                     box_ego_delta_pdch + theme(legend.position="none") + coord_cartesian(ylim=c(-3,3))) + plot_layout(widths=c(0.7,0.3))
+strat_ego <- wrap_plots(t_ego, pd_ego) + plot_layout(nrow=2) + plot_annotation(title="Egocentric probe trials")
+ggsave("Nav_stratety_ego.jpeg", strat_ego, width=6, height=5, dpi=600)
 
-# egocentric 
-t_ego <- wrap_plots(box_ego_t + theme(legend.position="none"), 
-                    box_ego_delta_t + theme(legend.position="none")) + plot_layout(widths=c(0.7,0.3))
-pd_ego <- wrap_plots(box_ego_pd + theme(legend.position="none"), 
-                     box_ego_delta_pd + theme(legend.position="none")) + plot_layout(widths=c(0.7,0.3))
-ed_ego <- wrap_plots(box_ego_ed + theme(legend.position="bottom"), 
-                     box_ego_delta_ed + theme(legend.position="none")) + plot_layout(widths=c(0.7,0.3))
-strat_ego <- wrap_plots(A=t_ego,
-                        B=pd_ego,
-                        C=ed_ego,
-                        D=bar_ego_strategy + theme(legend.position="right") + labs(subtitle="Search strategies"),
-                        design=layout) +
-  plot_annotation(title="Egocentric probe trials")
-ggsave("Nav_stratety_ego.jpeg", strat_ego, width=6, height=10, dpi=600)
+strat_ego_cat <- bar_ego_strategy + theme(legend.position="right") + labs(subtitle="Search strategies") + plot_annotation(title="Egocentric probe trials")
+ggsave("Nav_stratety_ego_cat.jpeg", strat_ego_cat, width=5, height=3.8, dpi=600)
+
+
+# correct probe
+t_ego_cor <- wrap_plots(box_ego_cor_t + theme(legend.position="none") + coord_cartesian(ylim=c(0,90)), 
+                    box_ego_delta_cor_t + theme(legend.position="none") + coord_cartesian(ylim=c(-1,1))) + plot_layout(widths=c(0.7,0.3))
+pd_ego_cor <- wrap_plots(box_ego_cor_pd + theme(legend.position="none") + coord_cartesian(ylim=c(0,0.2)), 
+                     box_ego_delta_cor_pd + theme(legend.position="none") + coord_cartesian(ylim=c(-3,3))) + plot_layout(widths=c(0.7,0.3))
+strat_ego_cor <- wrap_plots(t_ego_cor, pd_ego_cor) + plot_layout(nrow=2) + plot_annotation(title="Correct egocentric probe trials")
+ggsave("Nav_stratety_ego_cor.jpeg", strat_ego_cor, width=6, height=5, dpi=600)
+
 rm(t_ego, pd_ego, ed_ego, strat_ego)
 rm(box_ego_t, box_ego_delta_t, box_ego_pd, box_ego_delta_pd, box_ego_ed, box_ego_delta_ed, bar_ego_strategy)
 
 
-# allocentric 
-layout="
-AAAAA###
-BBBBB###
-CCCCC###
-DDDDEEEE
-"
-t_allo <- wrap_plots(box_allo_t + theme(legend.position="none"), 
-                    box_allo_delta_t + theme(legend.position="none")) + plot_layout(widths=c(0.7,0.3))
-pd_allo <- wrap_plots(box_allo_pd + theme(legend.position="none"), 
-                     box_allo_delta_pd + theme(legend.position="none")) + plot_layout(widths=c(0.7,0.3))
-ed_allo <- wrap_plots(box_allo_ed + theme(legend.position="bottom"), 
-                     box_allo_delta_ed + theme(legend.position="none")) + plot_layout(widths=c(0.7,0.3))
-strat_allo <- wrap_plots(A=t_allo,
-                        B=pd_allo,
-                        C=ed_allo,
-                        D=bar_allo_strategy + theme(legend.position="right") + labs(subtitle="Search strategies"),
-                        E=bar_allo_detailed_strategy + theme(legend.position="right") + labs(subtitle="Detailed search strategies"),
-                        design=layout) +
-  plot_annotation(title="Allocentric probe trials")
-ggsave("Nav_stratety_allo.jpeg", strat_allo, width=10, height=10, dpi=600)
+## allocentric 
+# allo probe
+t_allo <- wrap_plots(box_allo_t + theme(legend.position="none") + coord_cartesian(ylim=c(0,90)), 
+                    box_allo_delta_t + theme(legend.position="none") + coord_cartesian(ylim=c(-1,1))) + plot_layout(widths=c(0.7,0.3))
+pd_allo <- wrap_plots(box_allo_pdch + theme(legend.position="none") + coord_cartesian(ylim=c(0,0.2)), 
+                     box_allo_delta_pdch + theme(legend.position="none") + coord_cartesian(ylim=c(-3,3))) + plot_layout(widths=c(0.7,0.3))
+strat_allo <- wrap_plots(t_allo, pd_allo) + plot_layout(nrow=2) + plot_annotation(title="Allocentric probe trials")
+ggsave("Nav_stratety_allo.jpeg", strat_allo, width=6, height=5, dpi=600)
+
+strat_allo_cat <- wrap_plots(bar_allo_strategy + theme(legend.position="right") + labs(subtitle="Search strategies"),
+                             bar_allo_detailed_strategy + theme(legend.position="right") + labs(subtitle="Detailed search strategies")) + plot_annotation(title="Allocentric probe trials")
+ggsave("Nav_stratety_allo_cat.jpeg", strat_allo_cat, width=10, height=3.8, dpi=600)
+
+
+# correct probe
+t_allo_cor <- wrap_plots(box_allo_cor_t + theme(legend.position="none") + coord_cartesian(ylim=c(0,90)), 
+                        box_allo_delta_cor_t + theme(legend.position="none") + coord_cartesian(ylim=c(-1,1))) + plot_layout(widths=c(0.7,0.3))
+pd_allo_cor <- wrap_plots(box_allo_cor_pd + theme(legend.position="none") + coord_cartesian(ylim=c(0,0.2)), 
+                         box_allo_delta_cor_pd + theme(legend.position="none") + coord_cartesian(ylim=c(-3,3))) + plot_layout(widths=c(0.7,0.3))
+strat_allo_cor <- wrap_plots(t_allo_cor, pd_allo_cor) + plot_layout(nrow=2) + plot_annotation(title="Correct allocentric probe trials")
+ggsave("Nav_stratety_allo_cor.jpeg", strat_allo_cor, width=6, height=5, dpi=600)
+
 rm(t_allo, pd_allo, ed_allo, strat_allo)
 rm(box_allo_t, box_allo_delta_t, box_allo_pd, box_allo_delta_pd, box_allo_ed, box_allo_delta_ed, bar_allo_strategy, bar_allo_detailed_strategy)
 
   
-# post memory tests 
-pt <- (layout + labs(subtitle="Layout recognition")) + landmark_details + (gmda_avg + guides(fill="none")) +
+### post memory tests 
+pt <- (layout + labs(subtitle="Layout recognition")) + landmark_details + (gmda_avg + guides(fill="none", color="none")) +
   plot_annotation(title="Post-navigational memory tests", tag_levels="A") + 
   plot_layout(widths=c(0.5, 0.25, 0.25), guides="collect") & 
   theme(legend.direction="horizontal", legend.position="bottom")
