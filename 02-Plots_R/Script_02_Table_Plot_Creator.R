@@ -93,11 +93,11 @@ l_search_strategy <- "% of use"
 
 ## ---- plot_functions
 # function for line plots
-line_plot <- function(data, xvar, yvar, colorvar, subtitle, ylabel, facetlabels, legendPos) {
+line_plot <- function(data, xvar, yvar, colorvar, subtitle, ylabel, facetlabels, legendPos, mycolors) {
   p <- ggplot(data, aes(x=get(xvar), y=get(yvar), colour=get(colorvar))) +
     geom_line(size=1) + 
     scale_x_continuous(breaks=c(1,2,3,4,5,6,7,8), labels=c(1,2,3,5,7,9,11,13)) + 
-    scale_colour_manual(labels=facetlabels, values=group_colors) + 
+    scale_colour_manual(labels=facetlabels, values=mycolors) + 
     coord_cartesian(clip="off", ylim=c(0, NA)) +
     theme_classic() + 
     theme(legend.position=legendPos,
@@ -410,26 +410,17 @@ trial_pd <- trial_plot(sm_trialwise, "trial_num", "path_distance", "condition", 
 trial_ed <- trial_plot(sm_trialwise, "trial_num", "zone_editdistance", "condition", "group", NULL, l_editdistance, mylabels, "top", 8, type_colors)
 
 
-# learning trials 
-assign_trial <- function(i, s, b, c, t){
-    temp <- sm_data %>%
-      filter(session==s,  block==b, condition==c, id==i)
-    orig_trial <- sort(unique(temp %>% pull(trial_num)))
-    index <- which(orig_trial==t)
-    return (index)
-  }
-
+# learning trials
 sm_trialwise_learn <- sm_data %>%
   filter(session==1, condition=="main_learn") %>%
-  mutate(trial_in_cond_in_block=pmap_dbl(list(id, session, block, condition, trial_num), assign_trial)) %>% 
-  group_by(group, trial_in_cond_in_block) %>% 
+  group_by(group, trial_in_cond) %>% 
   summarise_at(c("time","path_distance", "zones_entered", "zone_editdistance"), mean, na.rm=T)
 
-line_t <- line_plot(sm_trialwise_learn, "trial_in_cond_in_block", "time", "group", NULL, l_time, mylabels, "bottom")
-line_pd <- line_plot(sm_trialwise_learn, "trial_in_cond_in_block", "path_distance", "group", NULL, l_path_distance, mylabels, "bottom")
-line_ed <- line_plot(sm_trialwise_learn, "trial_in_cond_in_block", "zone_editdistance", "group", NULL, l_editdistance, mylabels, "bottom")
+line_t <- line_plot(sm_trialwise_learn, "trial_in_cond", "time", "group", NULL, l_time, mylabels, "bottom", group_colors)
+line_pd <- line_plot(sm_trialwise_learn, "trial_in_cond", "path_distance", "group", NULL, l_path_distance, mylabels, "bottom", group_colors)
+line_ed <- line_plot(sm_trialwise_learn, "trial_in_cond", "zone_editdistance", "group", NULL, l_editdistance, mylabels, "bottom", group_colors)
 ## ----
-rm(sm_trialwise, sm_trialwise_learn, assign_trial)
+rm(sm_trialwise, sm_trialwise_learn)
 
 
 # ########################################## #

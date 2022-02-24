@@ -32,42 +32,34 @@ rm(file_name)
 
 # ::: analyze learning trials ::: #
 
-assign_trial <- function(i, s, b, c, t){
-  temp <- sm_data %>%
-    filter(session==s,  block==b, condition==c, id==i)
-  orig_trial <- sort(unique(temp %>% pull(trial_num)))
-  index <- which(orig_trial==t)
-  return (index)
-}
 learn_data <- sm_data %>%
   filter(condition=="main_learn") %>%
-  mutate(trial_in_cond_in_block=pmap_dbl(list(id, session, block, condition, trial_num), assign_trial)) %>% 
   droplevels()
 
 ## means 
 learn_data %>% 
-  group_by(group, trial_in_cond_in_block) %>%
+  group_by(group, trial_in_cond) %>%
   get_summary_stats(c(time, path_distance), type = "mean_sd")
 
 
 ### assumptions
 ## outlier: yes
-learn_data %>% group_by(group, trial_in_cond_in_block) %>% identify_outliers(time)
-# ggboxplot(learn_data, x="trial_in_cond_in_block", y="time", color="group", palette="jco")
+learn_data %>% group_by(group, trial_in_cond) %>% identify_outliers(time)
+# ggboxplot(learn_data, x="trial_in_cond", y="time", color="group", palette="jco")
 
-learn_data %>% group_by(group, trial_in_cond_in_block) %>% identify_outliers(path_distance)
-# ggboxplot(learn_data, x="trial_in_cond_in_block", y="path_distance", color="group", palette="jco")
+learn_data %>% group_by(group, trial_in_cond) %>% identify_outliers(path_distance)
+# ggboxplot(learn_data, x="trial_in_cond", y="path_distance", color="group", palette="jco")
 
 ## normality: not given
-learn_data %>% group_by(group, trial_in_cond_in_block) %>% shapiro_test(time)
-ggqqplot(learn_data, "time", ggtheme = theme_bw()) + facet_grid(group ~ trial_in_cond_in_block)
+learn_data %>% group_by(group, trial_in_cond) %>% shapiro_test(time)
+ggqqplot(learn_data, "time", ggtheme = theme_bw()) + facet_grid(group ~ trial_in_cond)
 
-learn_data %>% group_by(group, trial_in_cond_in_block) %>% shapiro_test(path_distance)
-ggqqplot(learn_data, "path_distance", ggtheme = theme_bw()) + facet_grid(group ~ trial_in_cond_in_block)
+learn_data %>% group_by(group, trial_in_cond) %>% shapiro_test(path_distance)
+ggqqplot(learn_data, "path_distance", ggtheme = theme_bw()) + facet_grid(group ~ trial_in_cond)
 
 # homoscedasticity: not given
-learn_data %>% group_by(trial_in_cond_in_block) %>% levene_test(time ~ group)
-learn_data %>% group_by(trial_in_cond_in_block) %>% levene_test(path_distance ~ group)
+learn_data %>% group_by(trial_in_cond) %>% levene_test(time ~ group)
+learn_data %>% group_by(trial_in_cond) %>% levene_test(path_distance ~ group)
 
 # homogenity of covariances: not given 
 box_m(learn_data[, "time", drop = FALSE], learn_data$group)
@@ -77,23 +69,23 @@ box_m(learn_data[, "path_distance", drop = FALSE], learn_data$group)
 ### calculate test statistics 
 ## robust anova from WRS2
 # time 
-bwtrim(time ~ group*trial_in_cond_in_block, id, learn_data) # main effects, no interaction
+bwtrim(time ~ group*trial_in_cond, id, learn_data) # main effects, no interaction
 
 # path distance 
-bwtrim(path_distance ~ group*trial_in_cond_in_block, id, learn_data) # main effects, no interaction 
+bwtrim(path_distance ~ group*trial_in_cond, id, learn_data) # main effects, no interaction 
 
 ## non-parametric test
 # time
 learn_data %>% kruskal_test(time ~ group) 
 learn_data %>% dunn_test(time ~ group, p.adjust.method="bonferroni")
 
-learn_data %>% friedman_test(time ~ trial_in_cond_in_block | id) # error if missing combinations
+learn_data %>% friedman_test(time ~ trial_in_cond | id) # error if missing combinations
 
 # path distance
 learn_data %>% kruskal_test(path_distance ~ group)
 learn_data %>% dunn_test(path_distance ~ group, p.adjust.method="bonferroni") # error if missing combinations
 
-learn_data %>% friedman_test(path_distance ~ trial_in_cond_in_block | id)
+learn_data %>% friedman_test(path_distance ~ trial_in_cond | id)
 
 
 # ######################################################### #

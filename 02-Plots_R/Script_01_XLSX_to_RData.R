@@ -42,6 +42,16 @@ sm_data <- sm_data %>%
   select(-sex_s, -group_s, -feedback_s, -condition_s, -goal_identity_s, -goal_s, -start_s, -chosen_alley_s)
 # if no renaming of variables: use mutate_at(cols, factor)
 
+assign_trial <- function(i, s, b, c, t){
+  temp <- sm_data %>%
+    filter(session==s,  block==b, condition==c, id==i)
+  orig_trial <- sort(unique(temp %>% pull(trial_num)))
+  index <- which(orig_trial==t)
+  return (index)
+}
+sm_data <- sm_data %>% 
+  mutate(trial_in_cond=pmap_dbl(list(id, session, block, condition, trial_num), assign_trial))
+
 
 # save as RData
 file_name <- "../WP10_data/WP10_results/wp10_navigation_data.RData"
