@@ -63,6 +63,7 @@ type_colors <- c("main_learn"="#667270", "main_ret"="#C4CAC9", "allo_ret"="#FDBF
 type_colors_o <- c("main_learn"="#667270", "main_ret"="#667270", "allo_ret"="#FF7F00", "ego_ret"="#1F78B4")
 strategy_colors <- c("direct"="#E4534D", "detour"="#ED8E8A", "reoriented"="#F9DAD9")
 strategy_colors_allo <- c("direct_allo"="#FDBF6F", "detour_allo"="#FEE8CA", "direct_ego"="#A6CEE3", "detour_ego"="#DBEBF4", "back_to_start"="#B2DF8A", "unclassified"="#FEFAAE")
+landmark_colors <- rev(RColorBrewer::brewer.pal(3,"Blues"))
 
 # variable labels
 l_time <- "time in seconds"
@@ -234,7 +235,7 @@ bar_plot <- function(data, xvar, yvar, fillvar, facetvar, mylabels, subtitle, xl
   
   if (isPalette) {
     p <- p + scale_fill_brewer(palette=mycolors, labels=mylabels, direction=paletteDir) +
-      scale_color_brewer(palette=mycolors, labels=mylabels, direction=paletteDir) 
+      scale_color_brewer(palette="blac", labels=mylabels, direction=paletteDir) 
     
   } else {
     p <- p + scale_fill_manual(labels=mylabels, values=mycolors) +
@@ -680,7 +681,7 @@ landmark_data <- pt_data %>%
          perc=n/n_per_group,
          condition="landmarks")
 
-landmark_details <- bar_plot(landmark_data, "group", "perc", "category", "condition", mylabels, NULL, NULL, "% response (per group)", "bottom", "Blues", paletteDir=-1, stackReverse=T)
+landmark_details <- bar_plot(landmark_data, "group", "perc", "category", "condition", mylabels, NULL, NULL, "% response (per group)", "bottom", landmark_colors, c("black", "black", "black"), isPalette=F, stackReverse=T)
 
 landmark_avg <- box_plot(pt_data %>% filter(condition=="landmarks"), "group", "score", "group", "condition","none", NULL, NULL, NULL, mylabels, "bottom", group_colors, group_colors_o)
 
