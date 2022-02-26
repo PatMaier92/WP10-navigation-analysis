@@ -408,6 +408,27 @@ ego_allo_data_delta %>% filter(condition=="ego_ret") %>% dunn_test(pdch_ratio ~ 
 
 # ######################################################### #
 
+# ::: strategy categorization ::: #
+
+strategy_data <- ego_allo_data %>% 
+  mutate(search_strategy=fct_collapse(search_strategy, direct="direct", indirect=c("detour", "reoriented")),
+         search_strategy_in_allo=fct_collapse(search_strategy_in_allo, ego=c("direct_ego", "detour_ego"), 
+                                              allo=c("direct_allo", "detour_allo"), back_to_start="back_to_start", unclassified="unclassified"))
+
+# general search strategy 
+table(strategy_data$search_strategy, strategy_data$group)
+m <- glm(search_strategy ~ group*condition*session, data=strategy_data, family=binomial())
+summary(m)
+performance::r2(m)
+
+# search strategy in allocentric probe trials 
+table(strategy_data$search_strategy_in_allo, strategy_data$group)
+fisher.test(table(strategy_data$search_strategy_in_allo, strategy_data$group), simulate.p.value=T)
+chisq.test(table(strategy_data$search_strategy_in_allo, strategy_data$group))
+
+
+# ######################################################### #
+
 # ::: analyze post memory tests ::: #
 
 ### assumptions
