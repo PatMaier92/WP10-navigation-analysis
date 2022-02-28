@@ -49,7 +49,7 @@ mylabels <- as_labeller(c(`YoungKids` = "6-7yo", `OldKids` = "9-10yo", `YoungAdu
                           `direct_ego` = "direct ego", `detour_ego` = "detour ego",   
                           `back_to_start` ="back to start", `unclassified` = "unclassified",
                           `layout`="Layout recognition", `landmarks`="Landmark recognition", 
-                          `goals`="Goal recognition", `position`="Landmark & goal positioning",
+                          `goals`="Goal recognition", `position`="Landmark & goal position",
                           `1-FourSquare`="FourSquare", `2-FourFork`="FourFork", `3-FourX`="FourX", 
                           `4-FiveStar`="FiveStar (correct)", `5-SixSquare`="SixSquare", `6-SevenStar`="SevenStar",
                           `1-correct`="correct", `2-lure similar`="lure similar", `3-lure dissimilar`="lure dissimilar",
@@ -180,7 +180,7 @@ box_plot <- function(data, xvar, yvar, fillby, facetr, facetc, subtitle, xlabel,
 
 # function for aggregated box change plots
 change_box_plot <- function(data, xvar, yvar, fillby, facetvar, subtitle, mylabels, legendPos, mycolors, mycolors2, xlabel=NULL, ylabel) {
-  ylabel2 <- paste0("rel. change ", ylabel)
+  ylabel2 <- paste0("% change ", ylabel)
   p <- ggplot(data, aes(x=get(xvar), y=get(yvar), fill=get(fillby), color=get(fillby))) +
     geom_boxplot(outlier.shape=NA) +
     geom_point(position=position_jitterdodge(seed=999), size=0.5) + 
@@ -663,7 +663,13 @@ layout_data <- pt_data %>%
   mutate(n_per_group=sum(n),
          perc=n/n_per_group)
 
+layout_data_avg <- layout_data %>% 
+  filter(layout_obj_1=="4-FiveStar") %>% 
+  mutate(layout_obj_1="layout")
+  
 layout <- bar_plot(layout_data, "group", "perc", "group", "layout_obj_1", mylabels, NULL, NULL, "% response (per group)", "bottom", group_colors, group_colors_o, isPalette=F, isStacked=F, axisLabels=F) 
+
+layout_avg <- bar_plot(layout_data_avg, "group", "perc", "group", "layout_obj_1", mylabels, NULL, NULL, "% response (per group)", "bottom", group_colors, group_colors_o, isPalette=F, isStacked=F, axisLabels=F) 
 
 
 # :::   landmark recognition     ::: #
@@ -683,7 +689,7 @@ landmark_data <- pt_data %>%
 
 landmark_details <- bar_plot(landmark_data, "group", "perc", "category", "condition", mylabels, NULL, NULL, "% response (per group)", "bottom", landmark_colors, c("black", "black", "black"), isPalette=F, stackReverse=T)
 
-landmark_avg <- box_plot(pt_data %>% filter(condition=="landmarks"), "group", "score", "group", "condition","none", NULL, NULL, NULL, mylabels, "bottom", group_colors, group_colors_o)
+landmark_avg <- box_plot(pt_data %>% filter(condition=="landmarks"), "group", "score", "group", "condition","none", NULL, NULL, "score", mylabels, "bottom", group_colors, group_colors_o)
 
 
 # :::   GMDA positioning     ::: #
@@ -695,7 +701,7 @@ gmda_data <- gmda_data %>%
 
 gmda_details <- box_plot(gmda_data, "group", "Score", "group", "Measure","none", NULL, NULL, "GMDA score", mylabels, "bottom", group_colors, group_colors_o, facetOneLine=T)
 
-gmda_avg <- box_plot(pt_data %>% filter(condition=="position"), "group", "score", "group", "condition","none", NULL, NULL, "GMDA score", mylabels, "bottom", group_colors, group_colors_o)
+gmda_avg <- box_plot(pt_data %>% filter(condition=="position"), "group", "score", "group", "condition","none", NULL, NULL, "score", mylabels, "bottom", group_colors, group_colors_o)
 ## ----
 
 
@@ -835,6 +841,32 @@ ggsave("Post_tests.jpeg", pt, width=9.5, height=5.5, dpi=600)
 
 ###############################################################################################################
 
+# :::   COMBINE POSTER PLOT     :::
+
+box_ego_cfa_1 <- box_plot(sm_agg %>% filter(condition=="ego_ret") %>% filter(session==1), "group", "correct_final_alley", "group", "session", "none", "Egocentric probe", NULL, "% correct goal area", mylabels, "none", group_colors, group_colors_o)
+box_ego_delta_cfa_n <- change_box_plot(sm_change %>% filter(condition=="ego_ret"), "group", "cfa_ratio", "group", "session", NULL, mylabels, "none", group_colors, group_colors_o, ylabel="(T2-T1)/T1")
+box_allo_cfa_1 <- box_plot(sm_agg %>% filter(condition=="allo_ret") %>% filter(session==1), "group", "correct_final_alley", "group", "session", "none", "\nAllocentric probe", NULL, "% correct goal area", mylabels, "none", group_colors, group_colors_o)
+box_allo_delta_cfa_n <- change_box_plot(sm_change %>% filter(condition=="allo_ret"), "group", "cfa_ratio", "group", "session", NULL, mylabels, "none", group_colors, group_colors_o, ylabel="(T2-T1)/T1")
+#bar_allo_strategy_n <- bar_plot(sm_strat2 %>% filter(condition=="allo_ret"), "group", "percent", "search_strategy", "session", mylabels, "\nStrategy in allocentric probe", NULL, l_search_strategy, "bottom", landmark_colors, c("black", "black", "black"), isPalette=F, stackReverse=T)
+bar_allo_detailed_n <- bar_plot(sm_allo %>% filter(session==1), "group", "percent", "search_strategy_in_allo", "session", mylabels, "Strategy in allocentric probe", NULL, l_search_strategy, "bottom", strategy_colors_allo, c("black", "black", "black", "black", "black", "black"), isPalette=F, stackReverse=T) & theme(legend.key.size=unit(0.5, 'cm'))
+
+
+row1a <- wrap_plots(line_t + guides(color="none") + labs(subtitle="Learning"), line_pd + guides(color="none")) + plot_layout(nrow=1)
+row1b <- wrap_plots(box_ego_cfa_1, box_ego_delta_cfa_n + labs(caption=NULL)) + plot_layout(nrow=1)
+row2 <- wrap_plots(box_allo_cfa_1, box_allo_delta_cfa_n + labs(caption=NULL), bar_allo_detailed_n, plot_spacer()) + plot_layout(nrow=1, widths=c(1,1,0.8,1.2))
+row3 <- wrap_plots(layout_avg + guides(fill="none", color="none") + labs(subtitle="Post-navigational tests"), landmark_avg, gmda_avg, guide_area()) + plot_layout(nrow=1, widths=c(1,1,1,1), guides="collect") & theme(legend.position="right", legend.key.size=unit(1, 'cm'))
+
+layout <- "
+AABB
+CCCC
+DDDD
+"
+figure <- wrap_plots(A=row1a, B=row1b, C=row2, D=row3, design=layout)
+
+ggsave("Poster_figure.jpeg", figure, width=8.2, height=10.5, dpi=600)
+
+
+###############################################################################################################
 
 ## clear workspace
 rm(list = ls())
