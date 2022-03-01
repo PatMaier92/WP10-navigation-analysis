@@ -95,13 +95,14 @@ l_search_strategy <- "% of use"
 ## ---- plot_functions
 # function for line plots
 line_plot <- function(data, xvar, yvar, colorvar, subtitle, ylabel, facetlabels, legendPos, mycolors) {
-  p <- ggplot(data, aes(x=get(xvar), y=get(yvar), colour=get(colorvar))) +
-    geom_line(size=1) + 
-    geom_point(color="black", size=0.75) +
-    scale_x_continuous(breaks=c(1,2,3,4,5,6,7,8), labels=c(1,2,3,5,7,9,11,13)) + 
-    scale_colour_manual(labels=facetlabels, values=mycolors) + 
+  p <- ggplot(data, aes(x=get(xvar), y=get(yvar), group=get(colorvar), colour=get(colorvar))) +
+    stat_summary(fun="mean", geom="line", size=1) +
+    stat_summary(fun.data="mean_se", geom="errorbar", width=0.2) +
+    stat_summary(fun="mean", geom="point", colour="black", size=0.75) +
+    scale_x_continuous(breaks=c(1,2,3,4,5,6,7,8), labels=c(1,2,3,5,7,9,11,13)) +
+    scale_colour_manual(labels=facetlabels, values=mycolors) +
     coord_cartesian(clip="off", ylim=c(0, NA)) +
-    theme_classic() + 
+    theme_classic() +
     theme(legend.position=legendPos,
           legend.title=element_blank(),
           legend.key.size=unit(0.5, 'cm'),
@@ -180,7 +181,7 @@ box_plot <- function(data, xvar, yvar, fillby, facetr, facetc, subtitle, xlabel,
 
 # function for aggregated box change plots
 change_box_plot <- function(data, xvar, yvar, fillby, facetvar, subtitle, mylabels, legendPos, mycolors, mycolors2, xlabel=NULL, ylabel) {
-  ylabel2 <- paste0("% change ", ylabel)
+  ylabel2 <- paste0("change ", ylabel)
   p <- ggplot(data, aes(x=get(xvar), y=get(yvar), fill=get(fillby), color=get(fillby))) +
     geom_boxplot(outlier.shape=NA) +
     geom_point(position=position_jitterdodge(seed=999), size=0.5) + 
@@ -421,7 +422,7 @@ trial_ed <- trial_plot(sm_trialwise, "trial_num", "zone_editdistance", "conditio
 # learning trials
 sm_trialwise_learn <- sm_data %>%
   filter(session==1, condition=="main_learn") %>%
-  group_by(group, trial_in_cond) %>% 
+  group_by(id, group, trial_in_cond) %>% 
   summarise_at(c("time","path_distance", "zones_entered", "zone_editdistance"), mean, na.rm=T)
 
 line_t <- line_plot(sm_trialwise_learn, "trial_in_cond", "time", "group", NULL, l_time, mylabels, "bottom", group_colors)
@@ -854,7 +855,8 @@ bar_allo_detailed_n <- bar_plot(sm_allo %>% filter(session==1), "group", "percen
 row1a <- wrap_plots(line_t + guides(color="none") + labs(subtitle="Learning"), line_pd + guides(color="none")) + plot_layout(nrow=1)
 row1b <- wrap_plots(box_ego_cfa_1, box_ego_delta_cfa_n + labs(caption=NULL)) + plot_layout(nrow=1)
 row2 <- wrap_plots(box_allo_cfa_1, box_allo_delta_cfa_n + labs(caption=NULL), bar_allo_detailed_n, plot_spacer()) + plot_layout(nrow=1, widths=c(1,1,0.8,1.2))
-row3 <- wrap_plots(layout_avg + guides(fill="none", color="none") + labs(subtitle="Post-navigational tests"), landmark_avg, gmda_avg, guide_area()) + plot_layout(nrow=1, widths=c(1,1,1,1), guides="collect") & theme(legend.position="right", legend.key.size=unit(1, 'cm'))
+#row3 <- wrap_plots(layout_avg + guides(fill="none", color="none") + labs(subtitle="Post-navigational tests"), landmark_avg, gmda_avg, guide_area()) + plot_layout(nrow=1, widths=c(1,1,1,1), guides="collect") & theme(legend.position="right", legend.key.size=unit(1, 'cm'))
+row3 <- wrap_plots(layout_avg + guides(fill="none", color="none") + labs(subtitle="Post-navigational tests"), landmark_avg + guides(fill="none", color="none"), gmda_avg + guides(fill="none", color="none"), plot_spacer()) + plot_layout(nrow=1, widths=c(1,1,1,1)) 
 
 layout <- "
 AABB
