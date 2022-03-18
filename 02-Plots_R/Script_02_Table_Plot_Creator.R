@@ -896,10 +896,10 @@ dots_allo_1 <- dot_plots(sm_locations %>% filter(condition=="allo_ret", session=
 ggsave("Allocentric_dot_1.jpeg", dots_allo_1, width=8, height=4.5, dpi=600)
 
 
-box_ego_delta_cfa_n <- change_box_plot(sm_change %>% filter(condition=="ego_ret"), "group", "cfa_ratio", "group", "session", "Egocentric trials", mylabels, "none", group_colors, group_colors_o, ylabel="(T2-T1)/T1") + labs(caption=NULL)
-box_allo_delta_cfa_n <- change_box_plot(sm_change %>% filter(condition=="allo_ret"), "group", "cfa_ratio", "group", "session", "Allocentric trials", mylabels, "none", group_colors, group_colors_o, ylabel="(T2-T1)/T1") + labs(caption=NULL)
+box_ego_delta_cfa_n <- change_box_plot(sm_change %>% filter(condition=="ego_ret"), "group", "cfa_ratio", "group", "session", "Egocentric trials", mylabels, "none", group_colors, group_colors_o, ylabel="(T2-T1)/T1") + labs(caption=NULL) + coord_cartesian(ylim=c(-1,1))
+box_allo_delta_cfa_n <- change_box_plot(sm_change %>% filter(condition=="allo_ret"), "group", "cfa_ratio", "group", "session", "Allocentric trials", mylabels, "none", group_colors, group_colors_o, ylabel="(T2-T1)/T1") + labs(caption=NULL) + coord_cartesian(ylim=c(-1,1))
 
-ean <- wrap_plots(box_ego_delta_cfa_n, box_allo_delta_cfa_n) + plot_layout(nrow=1, guides="collect") & theme(legend.position="right", legend.direction="vertical", legend.key.size=unit(1, 'cm'))
+ean <- wrap_plots(box_allo_delta_cfa_n, box_ego_delta_cfa_n) + plot_layout(nrow=1, guides="collect") & theme(legend.position="left", legend.direction="vertical", legend.key.size=unit(1, 'cm'))
 ggsave("Ego_allo_12.jpeg", ean, width=6, height=4, dpi=600)
 
 bar_allo_detailed_n <- bar_plot(sm_allo %>% filter(session==1), "group", "percent", "search_strategy_in_allo", "session", mylabels, "Strategy in allocentric probe", NULL, l_search_strategy, "right", strategy_colors_allo, c("black", "black", "black", "black", "black", "black"), isPalette=F, stackReverse=T) & theme(legend.key.size=unit(0.75, 'cm'))
