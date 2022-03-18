@@ -57,12 +57,12 @@ mylabels <- as_labeller(c(`YoungKids` = "6-7yo", `OldKids` = "9-10yo", `YoungAdu
 
 # colors
 # scales::show_col()
-group_colors <- c("YoungKids"="#FFE476", "OldKids"="#B2DF8A", "YoungAdults"="#C4CAC9")
-group_colors_o <-  c("YoungKids"="#CC6600", "OldKids"="#33A02C", "YoungAdults"="#667270")
+group_colors <- c("YoungKids"="#FFE476", "OldKids"="#6699FF", "YoungAdults"="#C4CAC9")
+group_colors_o <-  c("YoungKids"="#CC6600", "OldKids"="#003399", "YoungAdults"="#667270")
 type_colors <- c("main_learn"="#667270", "main_ret"="#C4CAC9", "allo_ret"="#FDBF6F", "ego_ret"="#A6CEE3")
 type_colors_o <- c("main_learn"="#667270", "main_ret"="#667270", "allo_ret"="#FF7F00", "ego_ret"="#1F78B4")
 strategy_colors <- c("direct"="#E4534D", "detour"="#ED8E8A", "reoriented"="#F9DAD9")
-strategy_colors_allo <- c("direct_allo"="#FDBF6F", "detour_allo"="#FEE8CA", "direct_ego"="#A6CEE3", "detour_ego"="#DBEBF4", "back_to_start"="#B2DF8A", "unclassified"="#FEFAAE")
+strategy_colors_allo <- c("direct_allo"="#FDBF6F", "detour_allo"="#FEE8CA", "direct_ego"="#B2DF8A", "detour_ego"="#E3F3D4", "back_to_start"="#DBEBF4", "unclassified"="#FEFAAE")
 landmark_colors <- rev(RColorBrewer::brewer.pal(3,"Blues"))
 
 # variable labels
@@ -310,15 +310,16 @@ dot_plots <- function(mydata, xvar, yvar, goalvar, goalx, goaly, mytitle, mylabe
 
 
 # function for correlation scatter plot
-scatter <- function(data, x, y, xlab, ylab, mylabels){
-  p <- ggplot(data, aes_string(x=x, y=y)) +
+scatter <- function(data, x, y, facetvar, xlab, ylab, mylabels, subtitle){
+  p <- ggplot(data, aes(x=get(x), y=get(y))) +
     geom_point(position=position_jitter(width=0.02, height=0.02, seed=999)) + 
     geom_smooth(method="glm") + 
-    facet_grid(session ~ group, labeller=mylabels) + 
-    scale_x_continuous(labels = scales::percent, breaks=c(0, 0.5, 1)) + 
-    scale_y_continuous(labels = scales::percent, breaks=c(0, 0.5, 1)) + 
+    facet_wrap(facetvar, labeller=mylabels) + 
+    # scale_x_continuous(labels=scales::percent, breaks=c(0, 0.5, 1)) + 
+    # scale_y_continuous(labels=scales::percent, breaks=c(0, 0.5, 1)) + 
     theme_classic() + 
-    labs(x=xlab,
+    labs(subtitle=subtitle, 
+         x=xlab,
          y=ylab)
   
   return(p)
@@ -640,9 +641,15 @@ scatter_data <- sm_data %>%
   filter(condition=="ego_ret" | condition=="allo_ret") %>%   
   group_by(id, group, session, condition) %>% 
   summarize(performance=mean(correct_final_alley)) %>% 
-  pivot_wider(names_from=condition, values_from=performance)
+  pivot_wider(names_from=c(condition, session), values_from=performance) %>% 
+  mutate(allo_ret_d=(allo_ret_2-allo_ret_1)/allo_ret_1,
+         ego_ret_d=(ego_ret_2-ego_ret_1)/ego_ret_1)
 
-corr_ego_allo <- scatter(scat_data, "allo_ret", "ego_ret", "Allocentric", "Egocentric", mylabels)
+scatter(scatter_data, "allo_ret_1", "allo_ret_2", "group",  "T1", "T2", mylabels, "Allocentric")
+scatter(scatter_data, "ego_ret_1", "ego_ret_2", "group",  "T1", "T2", mylabels, "Egocentric")
+
+scatter(scatter_data, "allo_ret_1", "ego_ret_1", "group",  "Allo", "Ego", mylabels, "Session 1")
+scatter(scatter_data, "allo_ret_2", "ego_ret_2", "group",  "Allo", "Ego", mylabels, "Session 2")
 ## ----
 rm(scatter, scatter_data)
 
@@ -833,18 +840,18 @@ rm(box_allo_t, box_allo_delta_t, box_allo_pd, box_allo_delta_pd, box_allo_ed, bo
 
   
 ### post memory tests 
-pt <- (layout + labs(subtitle="Layout recognition")) + landmark_details + (gmda_avg + guides(fill="none", color="none")) +
+pt <- (layout + labs(subtitle="Layout recognition")) + (landmark_avg + guides(fill="none", color="none")) + (gmda_avg + guides(fill="none", color="none")) +
   plot_annotation(title="Post-navigational memory tests", tag_levels="A") + 
   plot_layout(widths=c(0.5, 0.25, 0.25), guides="collect") & 
-  theme(legend.direction="horizontal", legend.position="bottom")
-ggsave("Post_tests.jpeg", pt, width=9.5, height=5.5, dpi=600)
-
+  theme(legend.direction="vertical", legend.position="right", legend.key.size=unit(1, 'cm'))
+ggsave("Post_tests.jpeg", pt, width=10, height=5.5, dpi=600)
+ggsave("Post_tests_l.jpeg", pt, width=10, height=4, dpi=600)
 
 ###############################################################################################################
 
 # :::   COMBINE POSTER PLOT     :::
 
-box_ego_cfa_1 <- box_plot(sm_agg %>% filter(condition=="ego_ret") %>% filter(session==1), "group", "correct_final_alley", "group", "session", "none", "Egocentric probe", NULL, "% correct goal area", mylabels, "none", group_colors, group_colors_o)
+box_ego_cfa_1 <- box_plot(sm_agg %>% filter(condition=="ego_ret") %>% filter(session==1), "group", "correct_final_alley", "group", "session", "none", "Egocentric probe", NULL, "% correct goal area", mylabels, "top", group_colors, group_colors_o)
 box_ego_delta_cfa_n <- change_box_plot(sm_change %>% filter(condition=="ego_ret"), "group", "cfa_ratio", "group", "session", NULL, mylabels, "none", group_colors, group_colors_o, ylabel="(T2-T1)/T1")
 box_allo_cfa_1 <- box_plot(sm_agg %>% filter(condition=="allo_ret") %>% filter(session==1), "group", "correct_final_alley", "group", "session", "none", "\nAllocentric probe", NULL, "% correct goal area", mylabels, "none", group_colors, group_colors_o)
 box_allo_delta_cfa_n <- change_box_plot(sm_change %>% filter(condition=="allo_ret"), "group", "cfa_ratio", "group", "session", NULL, mylabels, "none", group_colors, group_colors_o, ylabel="(T2-T1)/T1")
@@ -855,7 +862,6 @@ bar_allo_detailed_n <- bar_plot(sm_allo %>% filter(session==1), "group", "percen
 row1a <- wrap_plots(line_t + guides(color="none") + labs(subtitle="Learning"), line_pd + guides(color="none")) + plot_layout(nrow=1)
 row1b <- wrap_plots(box_ego_cfa_1, box_ego_delta_cfa_n + labs(caption=NULL)) + plot_layout(nrow=1)
 row2 <- wrap_plots(box_allo_cfa_1, box_allo_delta_cfa_n + labs(caption=NULL), bar_allo_detailed_n, plot_spacer()) + plot_layout(nrow=1, widths=c(1,1,0.8,1.2))
-#row3 <- wrap_plots(layout_avg + guides(fill="none", color="none") + labs(subtitle="Post-navigational tests"), landmark_avg, gmda_avg, guide_area()) + plot_layout(nrow=1, widths=c(1,1,1,1), guides="collect") & theme(legend.position="right", legend.key.size=unit(1, 'cm'))
 row3 <- wrap_plots(layout_avg + guides(fill="none", color="none") + labs(subtitle="Post-navigational tests"), landmark_avg + guides(fill="none", color="none"), gmda_avg + guides(fill="none", color="none"), plot_spacer()) + plot_layout(nrow=1, widths=c(1,1,1,1)) 
 
 layout <- "
@@ -866,6 +872,47 @@ DDDD
 figure <- wrap_plots(A=row1a, B=row1b, C=row2, D=row3, design=layout)
 
 ggsave("Poster_figure.jpeg", figure, width=8.2, height=10.5, dpi=600)
+
+
+###############################################################################################################
+
+# :::   COMBINE TEAP TALK PLOT     :::
+
+box_ego_cfa_1 <- box_plot(sm_agg %>% filter(condition=="ego_ret") %>% filter(session==1), "group", "correct_final_alley", "group", "session", "none", "Egocentric probe", NULL, "% correct goal area", mylabels, "top", group_colors, group_colors_o)
+box_allo_cfa_1 <- box_plot(sm_agg %>% filter(condition=="allo_ret") %>% filter(session==1), "group", "correct_final_alley", "group", "session", "none", "Allocentric probe", NULL, "% correct goal area", mylabels, "none", group_colors, group_colors_o)
+box_ego_cor_fd_1 <- box_plot(sm_agg_correct %>% filter(condition=="ego_ret") %>% filter(session==1), "group", "final_distance", "group", "session", "none", "Egocentric probe", NULL, "final error in correct trials", mylabels, "top", group_colors, group_colors_o) + coord_cartesian(ylim=c(0,0.15))
+box_allo_cor_fd_1 <- box_plot(sm_agg_correct %>% filter(condition=="allo_ret") %>% filter(session==1), "group", "final_distance", "group", "session", "none", "Allocentric probe", NULL, "final error in correct trials", mylabels, "top", group_colors, group_colors_o) + coord_cartesian(ylim=c(0,0.15))
+
+e1 <- wrap_plots(box_ego_cfa_1, box_ego_cor_fd_1 + labs(subtitle=NULL) + guides(fill="none", color="none")) + plot_layout(nrow=1, guides="collect") & theme(legend.position="bottom")
+ggsave("Egocentric_1.jpeg", e1, width=4, height=4, dpi=600)
+
+a1 <- wrap_plots(box_allo_cfa_1, box_allo_cor_fd_1 + labs(subtitle=NULL) + guides(fill="none", color="none")) + plot_layout(nrow=1, guides="collect") & theme(legend.position="bottom")
+ggsave("Allocentric_1.jpeg", a1, width=4, height=4, dpi=600)
+
+dots_ego_1 <- dot_plots(sm_locations %>% filter(condition=="ego_ret", session==1), "x_n", "y_n", "goal_i", "goal_x", "goal_y", "Egocentric trials", mylabels)
+ggsave("Egocentric_dot_1.jpeg", dots_ego_1, width=8, height=4.5, dpi=600)
+
+dots_allo_1 <- dot_plots(sm_locations %>% filter(condition=="allo_ret", session==1), "x_n", "y_n", "goal_i", "goal_x", "goal_y", "Allocentric trials", mylabels)
+ggsave("Allocentric_dot_1.jpeg", dots_allo_1, width=8, height=4.5, dpi=600)
+
+
+box_ego_delta_cfa_n <- change_box_plot(sm_change %>% filter(condition=="ego_ret"), "group", "cfa_ratio", "group", "session", "Egocentric trials", mylabels, "none", group_colors, group_colors_o, ylabel="(T2-T1)/T1") + labs(caption=NULL)
+box_allo_delta_cfa_n <- change_box_plot(sm_change %>% filter(condition=="allo_ret"), "group", "cfa_ratio", "group", "session", "Allocentric trials", mylabels, "none", group_colors, group_colors_o, ylabel="(T2-T1)/T1") + labs(caption=NULL)
+
+ean <- wrap_plots(box_ego_delta_cfa_n, box_allo_delta_cfa_n) + plot_layout(nrow=1, guides="collect") & theme(legend.position="right", legend.direction="vertical", legend.key.size=unit(1, 'cm'))
+ggsave("Ego_allo_12.jpeg", ean, width=6, height=4, dpi=600)
+
+bar_allo_detailed_n <- bar_plot(sm_allo %>% filter(session==1), "group", "percent", "search_strategy_in_allo", "session", mylabels, "Strategy in allocentric probe", NULL, l_search_strategy, "right", strategy_colors_allo, c("black", "black", "black", "black", "black", "black"), isPalette=F, stackReverse=T) & theme(legend.key.size=unit(0.75, 'cm'))
+ggsave("Allocentric_1_zoom.jpeg", bar_allo_detailed_n, width=4.2, height=4.5, dpi=600)
+
+sm_agg_ego <- sm_data %>%
+  filter(condition=="ego_ret", session==1) %>% 
+  group_by(group, goal_i) %>% 
+  summarise_at(c("correct_final_alley", "time", "path_distance", "chosen_path_distance", "zone_editdistance"), mean, na.rm=T)
+mylabels_ego <- as_labeller(c(`YoungKids` = "6-7yo", `OldKids` = "9-10yo", `YoungAdults` = "adults", 
+                          `1`="Goal 1", `2`="Goal 2", `3` = "Goal 3"))
+bar_ego_detailed <- bar_plot(sm_agg_ego, "group", "correct_final_alley", "group", "goal_i", mylabels_ego, NULL, NULL, l_correct_alley, "bottom", group_colors, group_colors_o, isPalette=F, isStacked=F, axisLabels=F) 
+ggsave("Egocentric_1_zoom.jpeg", bar_ego_detailed, width=4, height=4, dpi=600)
 
 
 ###############################################################################################################
