@@ -627,6 +627,15 @@ sm_allo <- sm_data %>%
   tally() %>%
   mutate(percent=n/sum(n))
 
+sm_allo_2 <- sm_data %>%
+  filter(condition %in% c("allo_ret")) %>%
+  filter(!is.na(search_strategy_in_allo)) %>%
+  mutate(search_strategy_in_allo=fct_recode(search_strategy_in_allo, allo="direct_allo", allo="detour_allo",
+                                            ego="direct_ego", allo="detour_ego")) %>% 
+  group_by(group, session, search_strategy_in_allo) %>%
+  tally() %>%
+  mutate(percent=n/sum(n))
+
 bar_allo_detailed_strategy <- bar_plot(sm_allo, "group", "percent", "search_strategy_in_allo", "session", mylabels, "Allocentric trials (excl. trials with inner starts)", NULL, l_search_strategy, "bottom", strategy_colors_allo, c("black", "black", "black", "black", "black", "black"), isPalette=F, stackReverse=T)
 ## ----
 rm(sm_allo)
@@ -902,7 +911,10 @@ box_allo_delta_cfa_n <- change_box_plot(sm_change %>% filter(condition=="allo_re
 ean <- wrap_plots(box_allo_delta_cfa_n, box_ego_delta_cfa_n) + plot_layout(nrow=1, guides="collect") & theme(legend.position="left", legend.direction="vertical", legend.key.size=unit(1, 'cm'))
 ggsave("Ego_allo_12.jpeg", ean, width=6, height=4, dpi=600)
 
-bar_allo_detailed_n <- bar_plot(sm_allo %>% filter(session==1), "group", "percent", "search_strategy_in_allo", "session", mylabels, "Strategy in allocentric probe", NULL, l_search_strategy, "right", strategy_colors_allo, c("black", "black", "black", "black", "black", "black"), isPalette=F, stackReverse=T) & theme(legend.key.size=unit(0.75, 'cm'))
+mylabels_2 <- as_labeller(c(`YoungKids`="6-7yo", `OldKids`="9-10yo", `YoungAdults`="adults", `1`="T1 - Immediate", 
+                            `allo`="allocentric", `ego`="egocentric", `back_to_start`="back to start", `unclassified`="unclassified"))
+strategy_colors_allo_2 <- c("allo"="#FDBF6F", "ego"="#B2DF8A", "back_to_start"="#DBEBF4", "unclassified"="#FEFAAE")
+bar_allo_detailed_n <- bar_plot(sm_allo_2 %>% filter(session==1), "group", "percent", "search_strategy_in_allo", "session", mylabels_2, "Strategy in allocentric probe", NULL, l_search_strategy, "right", strategy_colors_allo_2, c("black", "black", "black", "black"), isPalette=F, stackReverse=T) & theme(legend.key.size=unit(0.75, 'cm'))
 ggsave("Allocentric_1_zoom.jpeg", bar_allo_detailed_n, width=4.2, height=4.5, dpi=600)
 
 sm_agg_ego <- sm_data %>%
