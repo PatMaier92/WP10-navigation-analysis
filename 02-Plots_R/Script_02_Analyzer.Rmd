@@ -1,0 +1,265 @@
+---
+title: "Data analysis for WP10"
+author: "Patrizia Maier"
+date: "`r format(Sys.time(), '%d %B, %Y')`"
+output: html_document
+---
+
+```{r setup, include=F, cache=F}
+
+library(tidyverse)
+library(janitor)
+library(gtsummary)
+library(rstatix)
+library(ggpubr)
+library(lme4)
+# install.packages('tinytex')
+# tinytex::install_tinytex() # latex for pdf file creation
+
+```
+
+
+```{r load_data, include=F}
+file_name <- "../WP10_data/WP10_results/wp10_navigation_data.RData"
+load(file_name)
+sm_orig <- sm_data 
+rm(file_name)
+
+file_name <- "../WP10_data/WP10_results/wp10_post_nav_data.RData"
+load(file_name)
+rm(file_name)
+```
+
+
+## Demographics 
+
+Available navigation data 
+
+```{r demo_1, echo=F, message=F, warning=F}
+t1 <- sm_data %>% 
+  filter(trial_num==1, session==1) %>% 
+  select(group, sex) %>%
+  tbl_summary(by=group,
+              label=list(sex ~ "Gender"),
+              statistic=list(all_categorical() ~ "{n}")) %>% 
+  modify_header(label="Starmaze data",
+                stat_by="**{level}** N = {n}") %>% 
+  modify_footnote(everything() ~ NA)
+t1
+rm(t1)
+
+# t1 %>%
+#   as_flex_table() %>%
+#   flextable::save_as_docx(path="TEST.docx")
+```
+ 
+Available post-navigation data 
+ 
+```{r demo_2, echo=F, message=F, warning=F}
+t2 <- pt_data %>% 
+  filter(trial_num==1) %>% 
+  select(group, sex) %>%
+  tbl_summary(by=group,
+              label=list(sex ~ "Gender"),
+              statistic=list(all_categorical() ~ "{n}")) %>% 
+  modify_header(label="Post-navigation data",
+                stat_by="**{level}** N = {n}") %>% 
+  modify_footnote(everything() ~ NA)
+t2
+rm(t2)
+```
+
+```{r assumptions_correct, include=F}
+
+### transformation (optional)
+data_agg <- sm_data %>%
+  filter(exclude_trial_matlab==0) %>% 
+  filter(condition %in% c("allo_ret", "ego_ret")) %>% 
+  group_by(id, group, session, condition) %>% 
+  summarise(correct_final_alley=mean(correct_final_alley, na.rm=T))
+
+### histogramm
+ggplot(data_agg, aes(x=correct_final_alley)) +
+  geom_histogram(binwidth=0.2) +
+  facet_wrap(~group)
+ 
+### normality
+data_agg %>% group_by(group, session) %>% shapiro_test(correct_final_alley)
+ggqqplot(data_agg, "correct_final_alley", ggtheme = theme_bw()) + facet_grid(group ~ session)
+ 
+### homoscedasticity
+data_agg %>% group_by(session) %>% levene_test(correct_final_alley ~ group)
+
+```
+
+```{r lmer_correct, include=F}
+model_correct <- lmer(correct_final_alley ~ group + session + condition + (1|id),  data=data_agg)
+summary(model_correct)
+
+plot(residuals(model_correct), data_agg$correct_final_alley)
+
+plot(model_correct)
+
+lattice::qqmath(model_correct, id=0.05)
+```
+
+```{r assumptions_time, include=F}
+
+### data selection 
+data <- sm_data %>% 
+  filter(exclude_trial_matlab==0) %>% 
+  filter(condition %in% c("main_learn", "allo_ret", "ego_ret")) %>% 
+  mutate(time_t=1/time)
+
+### histogramm
+ggplot(data, aes(x=time_t)) +
+  geom_histogram() + 
+  facet_wrap(~group)
+
+### outlier
+# ggboxplot(data, x="condition", y="time_t", color="group", palette="jco")
+# ggboxplot(data, x="session", y="time_t", color="group", palette="jco")
+
+### normality
+data %>% group_by(group, session) %>% shapiro_test(time_t)
+ggqqplot(data, "time_t", ggtheme = theme_bw()) + facet_grid(group ~ session)
+
+### homoscedasticity
+data %>% group_by(session) %>% levene_test(time_t ~ group)
+
+### homogenity of covariances 
+box_m(data[, "time_t", drop=FALSE], data$group)
+```
+
+
+```{r assumptions_path, include=F}
+
+### transformation (optional)
+data <- data %>%
+  mutate(path_distance_t=log(path_distance))
+
+### histogramm
+ggplot(data, aes(x=path_distance_t)) +
+  geom_histogram() + 
+  facet_wrap(~group)
+
+### outlier
+# ggboxplot(data, x="condition", y="path_distance_t", color="group", palette="jco")
+# ggboxplot(data, x="session", y="path_distance_t", color="group", palette="jco")
+
+### normality
+data %>% group_by(group, session) %>% shapiro_test(path_distance_t)
+ggqqplot(data, "path_distance_t", ggtheme = theme_bw()) + facet_grid(group ~ session)
+
+### homoscedasticity
+data %>% group_by(session) %>% levene_test(path_distance_t ~ group)
+
+### homogenity of covariances 
+box_m(data[, "path_distance_t", drop=FALSE], data$group)
+```
+
+
+```{r assumptions_final, include=F}
+
+### transformation (optional)
+data <- data %>%
+  filter(condition %in% c("ego_ret", "allo_ret")) %>% 
+  mutate(final_distance_t=log(final_distance))
+
+### histogramm
+ggplot(data, aes(x=final_distance_t)) +
+  geom_histogram() + 
+  facet_wrap(~group)
+  
+### outlier
+# ggboxplot(data, x="condition", y="final_distance_t", color="group", palette="jco")
+# ggboxplot(data, x="session", y="final_distance_t", color="group", palette="jco")
+
+### normality
+data %>% group_by(group, session) %>% shapiro_test(final_distance_t)
+ggqqplot(data, "final_distance_t", ggtheme = theme_bw()) + facet_grid(group ~ session)
+
+### homoscedasticity
+data %>% group_by(session) %>% levene_test(final_distance_t ~ group)
+
+### homogenity of covariances 
+box_m(data[, "final_distance_t", drop=FALSE], data$group)
+```
+
+```{r stats_layout, include=F}
+
+data <- pt_data %>% 
+  filter(condition=="layout")
+
+fisher.test(table(data$score, data$group))
+pairwise_fisher_test(table(data$score, data$group), p.adjust.method="bonferroni")
+
+```
+
+```{r stats_gmda, include=F}
+
+data <- pt_data %>% 
+  filter(condition=="position")
+
+### histogramm
+ggplot(data, aes(x=score)) +
+  geom_histogram(binwidth=0.1) + 
+  facet_wrap(~group)
+  
+### normality
+data %>% group_by(group, session) %>% shapiro_test(score)
+ggqqplot(data, "score", ggtheme = theme_bw()) + facet_grid(~group)
+
+### homoscedasticity
+data %>% levene_test(score ~ group)
+
+### KW test 
+kruskal.test(score ~ group, data=data)
+dunn_test(score ~ group, p.adjust.method="bonferroni", data=data)
+
+```
+
+```{r stats_lm, include=F}
+data <- pt_data %>% 
+  filter(condition=="landmarks")
+
+### histogramm
+ggplot(data, aes(x=score)) +
+  geom_histogram(binwidth=0.1) + 
+  facet_wrap(~group)
+  
+### normality
+data %>% group_by(group, session) %>% shapiro_test(score)
+ggqqplot(data, "score", ggtheme = theme_bw()) + facet_grid(~group)
+
+### homoscedasticity
+data %>% levene_test(score ~ group)
+
+### KW test
+kruskal.test(score ~ group, data=data)
+dunn_test(score ~ group, p.adjust.method="bonferroni", data=data)
+
+```
+
+```{r stats_go, include=F}
+
+data <- pt_data %>% 
+  filter(condition=="goals")
+
+### histogramm
+ggplot(data, aes(x=score)) +
+  geom_histogram(binwidth=0.1) + 
+  facet_wrap(~group)
+  
+### normality
+data %>% group_by(group, session) %>% shapiro_test(score)
+ggqqplot(data, "score", ggtheme = theme_bw()) + facet_grid(~group)
+
+### homoscedasticity
+data %>% levene_test(score ~ group)
+
+### KW test
+kruskal.test(score ~ group, data=data)
+dunn_test(score ~ group, p.adjust.method="bonferroni", data=data)
+
+```
