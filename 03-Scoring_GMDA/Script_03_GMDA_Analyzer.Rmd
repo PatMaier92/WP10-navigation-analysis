@@ -1,5 +1,5 @@
 ---
-title: "GMDA data analysis for WP10"
+title: "GMDA data analyzer for WP10"
 author: "Patrizia Maier"
 date: "`r format(Sys.time(), '%d %B, %Y')`"
 output: pdf_document

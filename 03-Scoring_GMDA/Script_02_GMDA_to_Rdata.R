@@ -1,5 +1,5 @@
-### ----------------------- GMDA Helper Script ----------------------- ###
-### Author: Patrizia Maier                                             ###
+### ----------------------- 02 GMDA to Rdata ----------------------- ###
+### Author: Patrizia Maier                                           ###
 
 
 # ::: get packages ::: #
