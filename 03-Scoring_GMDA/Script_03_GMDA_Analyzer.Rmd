@@ -1,0 +1,124 @@
+---
+title: "GMDA data analysis for WP10"
+author: "Patrizia Maier"
+date: "`r format(Sys.time(), '%d %B, %Y')`"
+output: pdf_document
+---
+
+
+```{r setup, include=F, cache=F, warning=F, message=F}
+
+library(tidyverse)
+library(corrplot)
+library(patchwork)
+# install.packages('tinytex')
+# tinytex::install_tinytex() # latex for pdf file creation
+
+```
+
+
+```{r load_data, include=F}
+
+date <- "all_220330"
+my_path <- "GMDA/Data/"
+load(paste(my_path, "wp10_GMDA_data_", date, ".Rdata", sep=""))
+
+data_gmda <- data_gmda %>% 
+  filter(!gmda_measure %in% c("r", "theta"))
+
+level_order <- c("SQRT(CanOrg)",
+                 "CanAcc",
+                 "DistAcc",
+                 "AngleAcc",
+                 "r",
+                 "theta") 
+
+```
+
+
+```{r plot_measures, echo=F, message=F, warning=F}
+
+ggplot(data_gmda, aes(x=group, y=score, fill=group)) +
+  geom_boxplot() + 
+  geom_point() + 
+  facet_wrap(~ factor(gmda_measure, level=level_order), nrow=1) +
+  scale_fill_manual(values=c("red", "blue", "yellow")) + 
+  ylim(0,1) + 
+  theme_classic() +
+  theme(legend.position="bottom", 
+        axis.text.x = element_blank(),
+        axis.ticks = element_blank()) + 
+  labs(title="GMDA scores",
+       subtitle=paste("scoring template ", date, sep=""),
+       y="Score",
+       x="")
+
+```
+
+```{r load_protocols, include=F}
+
+date <- "220330"
+my_path <- "GMDA/Data/"
+
+protocol <- "all"
+load(paste(my_path, "wp10_GMDA_data_", protocol, "_", date, ".Rdata", sep=""))
+protocol_all <- data_gmda %>% mutate(protocol="all")
+
+protocol <- "landmark"
+load(paste(my_path, "wp10_GMDA_data_", protocol, "_", date, ".Rdata", sep=""))
+protocol_lm <- data_gmda %>% mutate(protocol="landmark")
+
+protocol <- "goals"
+load(paste(my_path, "wp10_GMDA_data_", protocol, "_", date, ".Rdata", sep=""))
+protocol_go <- data_gmda %>% mutate(protocol="goals")
+
+data <- bind_rows(protocol_all, protocol_lm, protocol_go)
+rm(data_gmda, protocol_all, protocol_lm, protocol_go)
+
+```
+
+```{r plot_protocols1, echo=F, message=F, warning=F}
+
+d1 <- data %>%
+  pivot_wider(id_cols=c(id, gmda_measure, group),
+              names_prefix="score_",
+              names_from=protocol,
+              values_from=score)
+
+M <- d1 %>% ungroup() %>% filter(gmda_measure=="SQRT(CanOrg)") %>% 
+  select(score_all, score_landmark, score_goals) %>% cor()
+corrplot(M, method="number", title="SQRT(CanOrg)")
+
+M <- d1 %>% ungroup() %>% filter(gmda_measure=="CanAcc") %>% 
+  select(score_all, score_landmark, score_goals) %>% cor()
+corrplot(M, method="number", title="CanAcc")
+
+M <- d1 %>% ungroup() %>% filter(gmda_measure=="DistAcc") %>% 
+  select(score_all, score_landmark, score_goals) %>% cor()
+corrplot(M, method="number", title="DistAcc")
+
+M <- d1 %>% ungroup() %>% filter(gmda_measure=="AngleAcc") %>% 
+  select(score_all, score_landmark, score_goals) %>% cor()
+corrplot(M, method="number", title="AngleAcc")
+```
+
+```{r plot_protocols2, echo=F, message=F, warning=F}
+
+d2 <- data %>%
+  pivot_wider(id_cols=c(id, protocol, group),
+              names_from=gmda_measure,
+              values_from=c(score))
+
+M <- d2 %>% ungroup() %>% filter(protocol=="all") %>% 
+  select(-c(id, group, protocol)) %>% cor()
+corrplot(M, method="number", title="Protocol all")
+
+M <- d2 %>% ungroup() %>% filter(protocol=="landmark") %>% 
+  select(-c(id, group, protocol)) %>% cor()
+corrplot(M, method="number", title="Protocol landmarks")
+
+M <- d2 %>% ungroup() %>% filter(protocol=="goals") %>% 
+  select(-c(id, group, protocol)) %>% cor()
+corrplot(M, method="number", title="Protocol goals")
+
+```
