@@ -69,7 +69,7 @@ rm(list = ls())
 # read-in recognition data 
 date = readline(prompt = "Please enter the date string of the result file ")
 file_path <- paste("../WP10_data/WP10_results/wp10_post_nav_data_", date, ".xlsx", sep="")
-pt_data <- read_xlsx(file_path, col_names = T, na = "999")
+pt_data <- read_xlsx(file_path, col_names=T, na="999")
 rm(date, file_path)
 
 
@@ -79,12 +79,11 @@ file_path <- paste("../WP10_data/WP10_results/WP10_GMDA_data_", date, ".Rdata", 
 load(file_path)
 rm(date, file_path)
 
+# calculate gmda average (currently: "SQRT(CanOrg)", "CanAcc", "DistAcc", "AngleAcc")
 gmda_data <- data_gmda %>% 
-  mutate(id=as.numeric(ID)) %>% 
+  filter(!gmda_measure %in% c("r", "theta")) %>%   
   group_by(id) %>% 
-  select(-Type, -group, -ID) %>% 
-  filter(!Measure %in% c("r", "CanOrg")) %>% 
-  summarize(score=mean(Score, na.rm=T))
+  summarize(score=mean(score, na.rm=T))
 rm(data_gmda)
 
 
@@ -127,6 +126,3 @@ save(pt_data, file=file_name)
 
 # clear workspace
 rm(list = ls())
-
-
-# ######################################################### #
