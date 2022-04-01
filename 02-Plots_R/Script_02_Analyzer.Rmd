@@ -13,6 +13,11 @@ library(gtsummary)
 library(rstatix)
 library(ggpubr)
 library(lme4)
+library(nlme)
+library(Rcpp)
+library(robustlmm)
+library(afex)
+library(WRS2)
 # install.packages('tinytex')
 # tinytex::install_tinytex() # latex for pdf file creation
 
@@ -69,124 +74,129 @@ t2
 rm(t2)
 ```
 
-```{r assumptions_correct, include=F}
-
-### transformation (optional)
-data_agg <- sm_data %>%
+```{r stats_correct1}
+data <- sm_data %>%
   filter(exclude_trial_matlab==0) %>% 
-  filter(condition %in% c("allo_ret", "ego_ret")) %>% 
-  group_by(id, group, session, condition) %>% 
-  summarise(correct_final_alley=mean(correct_final_alley, na.rm=T))
+  filter(condition %in% c("allo_ret", "ego_ret"))
 
-### histogramm
-ggplot(data_agg, aes(x=correct_final_alley)) +
-  geom_histogram(binwidth=0.2) +
-  facet_wrap(~group)
- 
-### normality
-data_agg %>% group_by(group, session) %>% shapiro_test(correct_final_alley)
-ggqqplot(data_agg, "correct_final_alley", ggtheme = theme_bw()) + facet_grid(group ~ session)
- 
-### homoscedasticity
-data_agg %>% group_by(session) %>% levene_test(correct_final_alley ~ group)
+
+# mglmer.gsci <- glmer(correct_final_alley ~ 1 + group*session*condition +
+#                   (1 + session|id) + (1 + condition|id), data=data, family=binomial)
+# all_fit(mglmer.gsci)
+# # chose bobyqa as optimizer
+
+
+mglmer.red <- glmer(correct_final_alley ~ 1 + (1 + session|id) + (1 + condition|id),
+                   data=data, family=binomial, control=glmerControl(optimizer="bobyqa"))
+
+mglmer.g <- glmer(correct_final_alley ~ 1 + group +
+                  (1 + session|id) + (1 + condition|id),
+                data=data, family=binomial, control=glmerControl(optimizer="bobyqa"))
+
+mglmer.gs <- glmer(correct_final_alley ~ 1 + group + session +
+                  (1 + session|id) + (1 + condition|id),
+                data=data, family=binomial, control=glmerControl(optimizer="bobyqa"))
+
+mglmer.gsi <- glmer(correct_final_alley ~ 1 + group*session +
+                  (1 + session|id) + (1 + condition|id),
+                data=data, family=binomial, control=glmerControl(optimizer="bobyqa"))
+
+mglmer.gc <- glmer(correct_final_alley ~ 1 + group + condition +
+                  (1 + session|id) + (1 + condition|id),
+                data=data, family=binomial, control=glmerControl(optimizer="bobyqa"))
+
+mglmer.gci <- glmer(correct_final_alley ~ 1 + group*condition +
+                  (1 + session|id) + (1 + condition|id),
+                data=data, family=binomial, control=glmerControl(optimizer="bobyqa"))
+
+mglmer.gsc <- glmer(correct_final_alley ~ 1 + group + session + condition +
+                  (1 + session|id) + (1 + condition|id),
+                data=data, family=binomial, control=glmerControl(optimizer="bobyqa"))
+
+mglmer.gsci <- glmer(correct_final_alley ~ 1 + group*session*condition +
+                  (1 + session|id) + (1 + condition|id), data=data, family=binomial,
+                  control=glmerControl(optimizer="bobyqa"))
+```
+
+```{r stats_correct2}
+# likelihood ratio comparison for model selection
+
+# anova(mglmer.red, mglmer.g, mglmer.gs, mglmer.gsi) # best model: gs
+# 
+# anova(mglmer.red, mglmer.g, mglmer.gc, mglmer.gci) # best model: g
+# 
+# anova(mglmer.gs, mglmer.gsc, mglmer.gsi) # best model: gs
+
+# best model: group and session, no interaction
+summary(mglmer.gs)
+
+# question: do we need to remove (1 + condition|id)?
+```
+
+```{r stats_correct3}
+# alternative approach: mixed() from afex()
+mixed(correct_final_alley ~ 1 + group*session*condition +
+                  (1 + session|id) + (1 + condition|id),
+                data=data, family=binomial, control=glmerControl(optimizer="bobyqa"),
+      method="LRT")
+
+# model: group and session are significant 
+```
+
+```{r stats_path1}
+
+# normal lmer model selection
+mlmer.red <- lmer(path_distance ~ 1 + (1|id), data=data, REML=F)
+
+mlmer.s <- lmer(path_distance ~ 1 + session + (1|id), data=data, REML=F)
+
+mlmer.srs <- lmer(path_distance ~ 1 + session + (session|id), data=data, REML=F)
+
+anova(mlmer.red, mlmer.s, mlmer.srs)
+
+
+mlmer.c <- lmer(path_distance ~ 1 + condition + (1|id), data=data, REML=F)
+
+mlmer.crs <- lmer(path_distance ~ 1 + condition + (condition|id), data=data, REML=F)
+
+anova(mlmer.red, mlmer.c, mlmer.crs)
+
+
+mlmer.g <- lmer(path_distance ~ 1 + group + (1|id), data=data, REML=F)
+
+anova(mlmer.red, mlmer.g)
+
+
+mlmer.gcs <- lmer(path_distance ~ 1 + group + session + condition + 
+                    (1 + session + condition|id), data=data, REML=F)
+
+mlmer.gcsi <- lmer(path_distance ~ 1 + group*session*condition + 
+                    (1 + session + condition|id), data=data, REML=F)
+
+anova(mlmer.red, mlmer.gcs, mlmer.gcsi)
 
 ```
 
-```{r lmer_correct, include=F}
-model_correct <- lmer(correct_final_alley ~ group + session + condition + (1|id),  data=data_agg)
-summary(model_correct)
+```{r stats_path2}
+# alternative approach: mixed() from afex
+mixed(path_distance ~ 1 + group*session*condition + 
+                    (1 + session + condition|id), data=data, method="LRT")
 
-plot(residuals(model_correct), data_agg$correct_final_alley)
-
-plot(model_correct)
-
-lattice::qqmath(model_correct, id=0.05)
+# compare 
+summary(mlmer.gcsi)
 ```
 
-```{r assumptions_time, include=F}
+```{r stats_path2}
 
-### data selection 
-data <- sm_data %>% 
-  filter(exclude_trial_matlab==0) %>% 
-  filter(condition %in% c("main_learn", "allo_ret", "ego_ret")) %>% 
-  mutate(time_t=1/time)
+# check robustness with rlmer() # TBD check this
+mrlmer.gcsi <- rlmer(path_distance ~ 1 + group*session*condition + 
+                       (1 + session|id) + (1 + condition|id), data=data, REML=F)
 
-### histogramm
-ggplot(data, aes(x=time_t)) +
-  geom_histogram() + 
-  facet_wrap(~group)
-
-### outlier
-# ggboxplot(data, x="condition", y="time_t", color="group", palette="jco")
-# ggboxplot(data, x="session", y="time_t", color="group", palette="jco")
-
-### normality
-data %>% group_by(group, session) %>% shapiro_test(time_t)
-ggqqplot(data, "time_t", ggtheme = theme_bw()) + facet_grid(group ~ session)
-
-### homoscedasticity
-data %>% group_by(session) %>% levene_test(time_t ~ group)
-
-### homogenity of covariances 
-box_m(data[, "time_t", drop=FALSE], data$group)
+summary(mrlmer.gcsi)
 ```
 
 
-```{r assumptions_path, include=F}
-
-### transformation (optional)
-data <- data %>%
-  mutate(path_distance_t=log(path_distance))
-
-### histogramm
-ggplot(data, aes(x=path_distance_t)) +
-  geom_histogram() + 
-  facet_wrap(~group)
-
-### outlier
-# ggboxplot(data, x="condition", y="path_distance_t", color="group", palette="jco")
-# ggboxplot(data, x="session", y="path_distance_t", color="group", palette="jco")
-
-### normality
-data %>% group_by(group, session) %>% shapiro_test(path_distance_t)
-ggqqplot(data, "path_distance_t", ggtheme = theme_bw()) + facet_grid(group ~ session)
-
-### homoscedasticity
-data %>% group_by(session) %>% levene_test(path_distance_t ~ group)
-
-### homogenity of covariances 
-box_m(data[, "path_distance_t", drop=FALSE], data$group)
-```
-
-
-```{r assumptions_final, include=F}
-
-### transformation (optional)
-data <- data %>%
-  filter(condition %in% c("ego_ret", "allo_ret")) %>% 
-  mutate(final_distance_t=log(final_distance))
-
-### histogramm
-ggplot(data, aes(x=final_distance_t)) +
-  geom_histogram() + 
-  facet_wrap(~group)
-  
-### outlier
-# ggboxplot(data, x="condition", y="final_distance_t", color="group", palette="jco")
-# ggboxplot(data, x="session", y="final_distance_t", color="group", palette="jco")
-
-### normality
-data %>% group_by(group, session) %>% shapiro_test(final_distance_t)
-ggqqplot(data, "final_distance_t", ggtheme = theme_bw()) + facet_grid(group ~ session)
-
-### homoscedasticity
-data %>% group_by(session) %>% levene_test(final_distance_t ~ group)
-
-### homogenity of covariances 
-box_m(data[, "final_distance_t", drop=FALSE], data$group)
-```
-
-```{r stats_layout, include=F}
+```{r stats_layout}
 
 data <- pt_data %>% 
   filter(condition=="layout")
@@ -196,70 +206,94 @@ pairwise_fisher_test(table(data$score, data$group), p.adjust.method="bonferroni"
 
 ```
 
-```{r stats_gmda, include=F}
+```{r stats_gmda}
 
 data <- pt_data %>% 
   filter(condition=="position")
 
-### histogramm
-ggplot(data, aes(x=score)) +
-  geom_histogram(binwidth=0.1) + 
-  facet_wrap(~group)
-  
-### normality
-data %>% group_by(group, session) %>% shapiro_test(score)
-ggqqplot(data, "score", ggtheme = theme_bw()) + facet_grid(~group)
+# ### histogramm
+# ggplot(data, aes(x=score)) +
+#   geom_histogram(binwidth=0.1) + 
+#   facet_wrap(~group)
+#   
+# ### normality
+# data %>% group_by(group, session) %>% shapiro_test(score)
+# ggqqplot(data, "score", ggtheme = theme_bw()) + facet_grid(~group)
+# 
+# ### homoscedasticity
+# data %>% levene_test(score ~ group)
 
-### homoscedasticity
-data %>% levene_test(score ~ group)
+### ANOVA
+summary(aov(score ~ group, data=data))
+pairwise.t.test(data$score, data$group, p.adjust.method="bonferroni")
+performance::r2(aov(score ~ group, data=data))
 
-### KW test 
+### robust ANOVA (WSR2)
+t1waybt(score ~ group, data=data, tr=0.2, nboot=2000)
+mcppb20(score ~ group, data=data, tr=0.2, nboot=2000)
+
+### Kruskal-Wallis test 
 kruskal.test(score ~ group, data=data)
-dunn_test(score ~ group, p.adjust.method="bonferroni", data=data)
+dunn_test(score ~ group, data=data, p.adjust.method="bonferroni")
 
 ```
 
-```{r stats_lm, include=F}
+```{r stats_lm}
 data <- pt_data %>% 
   filter(condition=="landmarks")
 
-### histogramm
-ggplot(data, aes(x=score)) +
-  geom_histogram(binwidth=0.1) + 
-  facet_wrap(~group)
-  
-### normality
-data %>% group_by(group, session) %>% shapiro_test(score)
-ggqqplot(data, "score", ggtheme = theme_bw()) + facet_grid(~group)
+# ### histogramm
+# ggplot(data, aes(x=score)) +
+#   geom_histogram(binwidth=0.1) +
+#   facet_wrap(~group)
+# 
+# ### normality
+# data %>% group_by(group, session) %>% shapiro_test(score)
+# ggqqplot(data, "score", ggtheme = theme_bw()) + facet_grid(~group)
+# 
+# ### homoscedasticity
+# data %>% levene_test(score ~ group)
 
-### homoscedasticity
-data %>% levene_test(score ~ group)
+### ANOVA
+summary(aov(score ~ group, data=data))
+pairwise.t.test(data$score, data$group, p.adjust.method="bonferroni")
+performance::r2(aov(score ~ group, data=data))
 
-### KW test
+### robust ANOVA (WSR2)
+t1waybt(score ~ group, data=data, tr=0.2, nboot=2000)
+#mcppb20(score ~ group, data=data, tr=0.2, nboot=2000)
+
+### Kruskal-Wallis test
 kruskal.test(score ~ group, data=data)
-dunn_test(score ~ group, p.adjust.method="bonferroni", data=data)
+dunn_test(score ~ group, data=data, p.adjust.method="bonferroni")
 
 ```
 
-```{r stats_go, include=F}
+```{r stats_go}
 
 data <- pt_data %>% 
   filter(condition=="goals")
 
-### histogramm
-ggplot(data, aes(x=score)) +
-  geom_histogram(binwidth=0.1) + 
-  facet_wrap(~group)
-  
-### normality
-data %>% group_by(group, session) %>% shapiro_test(score)
-ggqqplot(data, "score", ggtheme = theme_bw()) + facet_grid(~group)
+# ### histogramm
+# ggplot(data, aes(x=score)) +
+#   geom_histogram(binwidth=0.1) + 
+#   facet_wrap(~group)
+#   
+# ### normality
+# data %>% group_by(group, session) %>% shapiro_test(score)
+# ggqqplot(data, "score", ggtheme = theme_bw()) + facet_grid(~group)
+# 
+# ### homoscedasticity
+# data %>% levene_test(score ~ group)
 
-### homoscedasticity
-data %>% levene_test(score ~ group)
+### ANOVA
+summary(aov(score ~ group, data=data))
+performance::r2(aov(score ~ group, data=data))
 
-### KW test
+### robust ANOVA (WSR2)
+t1waybt(score ~ group, data=data, tr=0.2, nboot=2000)
+
+### Kruskal-Wallis test
 kruskal.test(score ~ group, data=data)
-dunn_test(score ~ group, p.adjust.method="bonferroni", data=data)
 
 ```
