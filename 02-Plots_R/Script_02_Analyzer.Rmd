@@ -13,9 +13,9 @@ library(gtsummary)
 library(rstatix)
 library(ggpubr)
 library(lme4)
-library(nlme)
-library(Rcpp)
-library(robustlmm)
+# library(nlme)
+# library(Rcpp)
+# library(robustlmm)
 library(afex)
 library(WRS2)
 # install.packages('tinytex')
@@ -79,121 +79,87 @@ data <- sm_data %>%
   filter(exclude_trial_matlab==0) %>% 
   filter(condition %in% c("allo_ret", "ego_ret"))
 
-
-# mglmer.gsci <- glmer(correct_final_alley ~ 1 + group*session*condition +
-#                   (1 + session|id) + (1 + condition|id), data=data, family=binomial)
-# all_fit(mglmer.gsci)
-# # chose bobyqa as optimizer
-
-
-mglmer.red <- glmer(correct_final_alley ~ 1 + (1 + session|id) + (1 + condition|id),
-                   data=data, family=binomial, control=glmerControl(optimizer="bobyqa"))
-
-mglmer.g <- glmer(correct_final_alley ~ 1 + group +
-                  (1 + session|id) + (1 + condition|id),
-                data=data, family=binomial, control=glmerControl(optimizer="bobyqa"))
-
-mglmer.gs <- glmer(correct_final_alley ~ 1 + group + session +
-                  (1 + session|id) + (1 + condition|id),
-                data=data, family=binomial, control=glmerControl(optimizer="bobyqa"))
-
-mglmer.gsi <- glmer(correct_final_alley ~ 1 + group*session +
-                  (1 + session|id) + (1 + condition|id),
-                data=data, family=binomial, control=glmerControl(optimizer="bobyqa"))
-
-mglmer.gc <- glmer(correct_final_alley ~ 1 + group + condition +
-                  (1 + session|id) + (1 + condition|id),
-                data=data, family=binomial, control=glmerControl(optimizer="bobyqa"))
-
-mglmer.gci <- glmer(correct_final_alley ~ 1 + group*condition +
-                  (1 + session|id) + (1 + condition|id),
-                data=data, family=binomial, control=glmerControl(optimizer="bobyqa"))
-
-mglmer.gsc <- glmer(correct_final_alley ~ 1 + group + session + condition +
-                  (1 + session|id) + (1 + condition|id),
-                data=data, family=binomial, control=glmerControl(optimizer="bobyqa"))
-
-mglmer.gsci <- glmer(correct_final_alley ~ 1 + group*session*condition +
-                  (1 + session|id) + (1 + condition|id), data=data, family=binomial,
-                  control=glmerControl(optimizer="bobyqa"))
 ```
 
 ```{r stats_correct2}
-# likelihood ratio comparison for model selection
 
-# anova(mglmer.red, mglmer.g, mglmer.gs, mglmer.gsi) # best model: gs
-# 
-# anova(mglmer.red, mglmer.g, mglmer.gc, mglmer.gci) # best model: g
-# 
-# anova(mglmer.gs, mglmer.gsc, mglmer.gsi) # best model: gs
+# glmer.full <- glmer(correct_final_alley ~ group*session*condition + 
+#                       (session*condition|id), data=data, 
+#                     family=binomial(link="logit"))
 
-# best model: group and session, no interaction
-summary(mglmer.gs)
+# all_fit(glmer.full) # bobyqa ok 
 
-# question: do we need to remove (1 + condition|id)?
-```
+# glmer.full_opt <- glmer(correct_final_alley ~ group*session*condition +
+#                           (session*condition|id), data=data,
+#                         family=binomial(link="logit"),
+#                         control=glmerControl(optimizer="bobyqa"))
 
-```{r stats_correct3}
+# summary(glmer.full_opt)
+# summary(mixed.full_opt_lrt_2)
+
 # alternative approach: mixed() from afex()
-mixed(correct_final_alley ~ 1 + group*session*condition +
-                  (1 + session|id) + (1 + condition|id),
-                data=data, family=binomial, control=glmerControl(optimizer="bobyqa"),
-      method="LRT")
+# 1) with LRT
+# mixed.full_opt_lrt <- mixed(correct_final_alley ~ group*session*condition +
+#                               (session*condition||id), data=data, family=binomial,
+#                             method="LRT", control=glmerControl(optimizer="bobyqa"))
 
-# model: group and session are significant 
+# mixed.full_opt_lrt_2 <- mixed(correct_final_alley ~ group*session*condition +
+#                               (session*condition|id), data=data, family=binomial,
+#                             method="LRT", control=glmerControl(optimizer="bobyqa"))
+
+#mixed.full_opt_lrt$anova_table
+#mixed.full_opt_lrt_2$anova_table
+
+#anova(mixed.full_opt_lrt, mixed.full_opt_lrt_2)
+
+# library("lattice")
+# dotplot(ranef(mixed.full_opt_lrt_2$full_model, condV=TRUE))
+
 ```
 
 ```{r stats_path1}
 
-# normal lmer model selection
-mlmer.red <- lmer(path_distance ~ 1 + (1|id), data=data, REML=F)
-
-mlmer.s <- lmer(path_distance ~ 1 + session + (1|id), data=data, REML=F)
-
-mlmer.srs <- lmer(path_distance ~ 1 + session + (session|id), data=data, REML=F)
-
-anova(mlmer.red, mlmer.s, mlmer.srs)
-
-
-mlmer.c <- lmer(path_distance ~ 1 + condition + (1|id), data=data, REML=F)
-
-mlmer.crs <- lmer(path_distance ~ 1 + condition + (condition|id), data=data, REML=F)
-
-anova(mlmer.red, mlmer.c, mlmer.crs)
-
-
-mlmer.g <- lmer(path_distance ~ 1 + group + (1|id), data=data, REML=F)
-
-anova(mlmer.red, mlmer.g)
-
-
-mlmer.gcs <- lmer(path_distance ~ 1 + group + session + condition + 
-                    (1 + session + condition|id), data=data, REML=F)
-
-mlmer.gcsi <- lmer(path_distance ~ 1 + group*session*condition + 
-                    (1 + session + condition|id), data=data, REML=F)
-
-anova(mlmer.red, mlmer.gcs, mlmer.gcsi)
+# # normal lmer model selection
+# mlmer.red <- lmer(path_distance ~ 1 + (1|id), data=data, REML=F)
+# 
+# mlmer.s <- lmer(path_distance ~ 1 + session + (1|id), data=data, REML=F)
+# 
+# mlmer.srs <- lmer(path_distance ~ 1 + session + (session|id), data=data, REML=F)
+# 
+# anova(mlmer.red, mlmer.s, mlmer.srs)
+# 
+# 
+# mlmer.c <- lmer(path_distance ~ 1 + condition + (1|id), data=data, REML=F)
+# 
+# mlmer.crs <- lmer(path_distance ~ 1 + condition + (condition|id), data=data, REML=F)
+# 
+# anova(mlmer.red, mlmer.c, mlmer.crs)
+# 
+# 
+# mlmer.g <- lmer(path_distance ~ 1 + group + (1|id), data=data, REML=F)
+# 
+# anova(mlmer.red, mlmer.g)
+# 
+# 
+# mlmer.gcs <- lmer(path_distance ~ 1 + group + session + condition + 
+#                     (1 + session + condition|id), data=data, REML=F)
+# 
+# mlmer.gcsi <- lmer(path_distance ~ 1 + group*session*condition + 
+#                     (1 + session + condition|id), data=data, REML=F)
+# 
+# anova(mlmer.red, mlmer.gcs, mlmer.gcsi)
 
 ```
 
 ```{r stats_path2}
-# alternative approach: mixed() from afex
-mixed(path_distance ~ 1 + group*session*condition + 
-                    (1 + session + condition|id), data=data, method="LRT")
-
-# compare 
-summary(mlmer.gcsi)
+# # alternative approach: mixed() from afex
+# mixed(path_distance ~ 1 + group*session*condition + 
+#                     (1 + session + condition|id), data=data, method="LRT")
+# 
+# # compare 
+# summary(mlmer.gcsi)
 ```
 
-```{r stats_path2}
-
-# check robustness with rlmer() # TBD check this
-mrlmer.gcsi <- rlmer(path_distance ~ 1 + group*session*condition + 
-                       (1 + session|id) + (1 + condition|id), data=data, REML=F)
-
-summary(mrlmer.gcsi)
-```
 
 
 ```{r stats_layout}
