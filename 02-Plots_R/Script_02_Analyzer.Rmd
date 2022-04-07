@@ -10,14 +10,19 @@ output: html_document
 library(tidyverse)
 library(janitor)
 library(gtsummary)
+library(performance)
+library(afex)
+library(WRS2)
+library(lme4)
+library(emmeans)
+library(car)
+library(MASS)
 library(rstatix)
 library(ggpubr)
-library(lme4)
+# library(multcomp)
 # library(nlme)
 # library(Rcpp)
 # library(robustlmm)
-library(afex)
-library(WRS2)
 # install.packages('tinytex')
 # tinytex::install_tinytex() # latex for pdf file creation
 
@@ -79,61 +84,179 @@ data <- sm_data %>%
   filter(exclude_trial_matlab==0) %>% 
   filter(condition %in% c("allo_ret", "ego_ret"))
 
+data_c <- data %>% 
+  filter(correct_final_alley==1) %>% 
+  mutate(log_fd=log(final_distance))
+
 ```
 
 ```{r stats_correct2}
 
+# test full modell with glmer()
 # glmer.full <- glmer(correct_final_alley ~ group*session*condition + 
 #                       (session*condition|id), data=data, 
 #                     family=binomial(link="logit"))
-# all_fit(glmer.full) # bobyqa ok 
+# all_fit(glmer.full) # optimizer bobyqa ok 
 
 
 # alternative approach: mixed() from afex() with LRT
-
+# full model with random intercept, slope and correlations
 # mixed.full_opt_lrt_1 <- mixed(correct_final_alley ~ group*session*condition +
 #                                 (session*condition|id), data=data, family=binomial,
 #                               method="LRT", 
 #                               control=glmerControl(optimizer="bobyqa", 
 #                                                    optCtrl=list(maxfun=1e6)))
+# does not fully converge
 
+# full model with random intercept and slope, no correlations
 # mixed.full_opt_lrt_2 <- mixed(correct_final_alley ~ group*session*condition +
 #                               (session*condition||id), data=data, family=binomial,
 #                             method="LRT", expand_re=T,
-#                             control=glmerControl(optimizer="bobyqa", 
+#                             control=glmerControl(optimizer="bobyqa",
 #                                                  optCtrl=list(maxfun=1e6)))
+# does converge
 
+# compare models 
 # mixed.full_opt_lrt_1$anova_table
 # mixed.full_opt_lrt_2$anova_table
 # anova(mixed.full_opt_lrt_2, mixed.full_opt_lrt_1)
 
+# plots for random effects
 # lattice::dotplot(ranef(mixed.full_opt_lrt_2$full_model, condV=TRUE))
 
-# emmeans::emmeans(mixed.full_opt_lrt_2, pairwise ~ group, 
-#                  type="response", adjust="bonferroni")
-# emmeans::emmeans(mixed.full_opt_lrt_2, pairwise ~ session, 
-#                  type="response")
-
-# summary(glht(mixed.full_opt_lrt_2$full_model, linfct=mcp(group='Tukey')))
+# post-test with fixed effects
+# emmeans(mixed.full_opt_lrt_2, pairwise ~ group, type="response", adjust="bonferroni")
+# emmeans(mixed.full_opt_lrt_2, pairwise ~ session, type="response")
 
 ```
 
-```{r stats_path1}
+```{r stats_finaldistance}
 
-# performance::check_model(mixed.full_opt_lrt_2$full_model)
+ggplot(data_c, aes(x=final_distance)) +
+  geom_histogram() +
+  facet_wrap(~group)
 
-# emmeans::emmeans(mixed.full_opt_lrt_2, "group")
-# emmeans::contrast(mixed.full_opt_lrt_2, "group")
+ggplot(data_c, aes(x=log_fd)) +
+  geom_histogram() +
+  facet_wrap(~group)
 
-```
+# # find distribution
+# qqp(data_c$final_distance, "norm") # normal 
+# qqp(data_c$final_distance, "lnorm")
+# gamma <- fitdistr(data_c$final_distance, "gamma")
+# qqp(data_c$final_distance, "gamma", shape=gamma$estimate[[1]], rate=gamma$estimate[[2]])
 
-```{r stats_path2}
-# # alternative approach: mixed() from afex
-# mixed(path_distance ~ 1 + group*session*condition + 
-#                     (1 + session + condition|id), data=data, method="LRT")
+
+## basic model
+# 1a) full model  
+lmer.full <- mixed(final_distance ~ group*session*condition + 
+                     (session*condition|id), data=data_c,
+                   control=lmerControl(optimizer="bobyqa",
+                                       optCtrl=list(maxfun=1e6)))
+summary(lmer.full)$varcor
+# model does not converge
+
+# 1b) reduced model 
+lmer.red <- mixed(final_distance ~ group*session*condition + 
+                        (session|id), data=data_c,
+                      control=lmerControl(optimizer="bobyqa", 
+                                          optCtrl=list(maxfun=1e6)))
+summary(lmer.red)$varcor
+check_model(lmer.red$full_model, panel=F)
+# model does converge but diagnostics are bad 
+
+
+## log-transformed outcome 
+# 2a) full model  
+lmer.full_log <- mixed(log_fd ~ group*session*condition + 
+                         (session*condition|id), data=data_c, 
+                       control=lmerControl(optimizer="bobyqa",
+                                           optCtrl=list(maxfun=1e6)))
+summary(lmer.full_log)$varcor
+# model does not converge
+
+# 2b) reduced model
+lmer.red_log <- mixed(log_fd ~ group*session*condition + 
+                        (session|id), data=data_c,
+                      control=lmerControl(optimizer="bobyqa", 
+                                          optCtrl=list(maxfun=1e6)))
+summary(lmer.red_log)$varcor
+check_model(lmer.red_log$full_model, panel=F)
+# model does converge and diagnostics good (top homoskedasticity, ok normality residuals)
+
+
+## gaussian with log/inverse link
+# 3a) full model  
+glmer.full_link <- mixed(final_distance ~ group*session*condition + 
+                          (session*condition|id), data=data_c, 
+                        family=gaussian(link="log"), method="LRT",
+                        control=glmerControl(optimizer="bobyqa",
+                                             optCtrl=list(maxfun=1e6)))
+summary(glmer.full_link)$varcor
+# model does not converge
+
+# 3b) reduced model
+glmer.red_link <- mixed(final_distance ~ group*session*condition + 
+                          (session|id), data=data_c,
+                        family=gaussian(link="log"), method="LRT",
+                        control=glmerControl(optimizer="bobyqa", 
+                                             optCtrl=list(maxfun=1e6)))
+summary(glmer.red_link)$varcor
+check_model(glmer.red_link$full_model, panel=F)
 # 
-# # compare 
-# summary(mlmer.gcsi)
+
+
+## gamma distribution with inverse link (default)
+# 4a) full model
+glmer.full_gamma <- mixed(final_distance ~ group*session*condition + 
+                            (session*condition|id), data=data_c,
+                          family=Gamma(link="inverse"), method="LRT",
+                          control=glmerControl(optimizer="bobyqa", 
+                                               optCtrl=list(maxfun=1e6)))
+summary(glmer.full_gamma)$varcor
+# model does not converge 
+
+# 4b) reduced model
+glmer.red_gamma <- mixed(final_distance ~ group*session*condition + 
+                           (session|id), data=data_c,
+                         family=Gamma(link="inverse"), method="LRT",
+                         control=glmerControl(optCtrl=list(maxfun=1e6),
+                                              optimizer="bobyqa"))
+summary(glmer.red_gamma)$varcor
+check_model(glmer.red_gamma$full_model, panel=F)
+# model does converge and diagnostics ok (bad heteroskedasticity, good normality residuals)
+
+
+## inverse gaussian distribution: does not converge & also no reduced model 
+
+## what about gamma with identity link? error message
+
+
+# lmer.red_log$anova_table
+# emmeans(lmer.red_log, pairwise ~ group, adjust="bonferroni")
+# emmeans(lmer.red_log, pairwise ~ session)
+# afex_plot(lmer.red_log,  "session", "group", id = "id",
+#           data_geom = ggbeeswarm::geom_quasirandom)
+
+# glmer.red_gamma$anova_table
+# emmeans(glmer.red_gamma, pairwise ~ group, adjust="bonferroni")
+# emmeans(glmer.red_gamma, pairwise ~ session)
+# emm1 <- emmeans(glmer.red_gamma, "group", by="session")
+# pairs(emm1, by = NULL, adjust = "holm")
+# afex_plot(glmer.red_gamma,  "session", "group", id = "id",
+#           data_geom = ggbeeswarm::geom_quasirandom)
+
+# coef <- coef(lmer.red_log$full_model)$id %>% select(`(Intercept)`,session1)
+
+
+```
+
+```{r stats_path}
+
+ggplot(data, aes(x=path_distance)) +
+  geom_histogram() +
+  facet_wrap(~group)
+
 ```
 
 
@@ -180,7 +303,7 @@ dunn_test(score ~ group, data=data, p.adjust.method="bonferroni")
 
 ```
 
-```{r stats_lm}
+```{r stats_landmark}
 data <- pt_data %>% 
   filter(condition=="landmarks")
 
@@ -211,7 +334,7 @@ dunn_test(score ~ group, data=data, p.adjust.method="bonferroni")
 
 ```
 
-```{r stats_go}
+```{r stats_goal}
 
 data <- pt_data %>% 
   filter(condition=="goals")
