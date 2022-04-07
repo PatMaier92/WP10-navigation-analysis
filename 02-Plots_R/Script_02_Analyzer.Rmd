@@ -86,68 +86,44 @@ data <- sm_data %>%
 # glmer.full <- glmer(correct_final_alley ~ group*session*condition + 
 #                       (session*condition|id), data=data, 
 #                     family=binomial(link="logit"))
-
 # all_fit(glmer.full) # bobyqa ok 
 
-# glmer.full_opt <- glmer(correct_final_alley ~ group*session*condition +
-#                           (session*condition|id), data=data,
-#                         family=binomial(link="logit"),
-#                         control=glmerControl(optimizer="bobyqa"))
 
-# summary(glmer.full_opt)
-# summary(mixed.full_opt_lrt_2)
+# alternative approach: mixed() from afex() with LRT
 
-# alternative approach: mixed() from afex()
-# 1) with LRT
-# mixed.full_opt_lrt <- mixed(correct_final_alley ~ group*session*condition +
-#                               (session*condition||id), data=data, family=binomial,
-#                             method="LRT", control=glmerControl(optimizer="bobyqa"))
+# mixed.full_opt_lrt_1 <- mixed(correct_final_alley ~ group*session*condition +
+#                                 (session*condition|id), data=data, family=binomial,
+#                               method="LRT", 
+#                               control=glmerControl(optimizer="bobyqa", 
+#                                                    optCtrl=list(maxfun=1e6)))
 
 # mixed.full_opt_lrt_2 <- mixed(correct_final_alley ~ group*session*condition +
-#                               (session*condition|id), data=data, family=binomial,
-#                             method="LRT", control=glmerControl(optimizer="bobyqa"))
+#                               (session*condition||id), data=data, family=binomial,
+#                             method="LRT", expand_re=T,
+#                             control=glmerControl(optimizer="bobyqa", 
+#                                                  optCtrl=list(maxfun=1e6)))
 
-#mixed.full_opt_lrt$anova_table
-#mixed.full_opt_lrt_2$anova_table
+# mixed.full_opt_lrt_1$anova_table
+# mixed.full_opt_lrt_2$anova_table
+# anova(mixed.full_opt_lrt_2, mixed.full_opt_lrt_1)
 
-#anova(mixed.full_opt_lrt, mixed.full_opt_lrt_2)
+# lattice::dotplot(ranef(mixed.full_opt_lrt_2$full_model, condV=TRUE))
 
-# library("lattice")
-# dotplot(ranef(mixed.full_opt_lrt_2$full_model, condV=TRUE))
+# emmeans::emmeans(mixed.full_opt_lrt_2, pairwise ~ group, 
+#                  type="response", adjust="bonferroni")
+# emmeans::emmeans(mixed.full_opt_lrt_2, pairwise ~ session, 
+#                  type="response")
+
+# summary(glht(mixed.full_opt_lrt_2$full_model, linfct=mcp(group='Tukey')))
 
 ```
 
 ```{r stats_path1}
 
-# # normal lmer model selection
-# mlmer.red <- lmer(path_distance ~ 1 + (1|id), data=data, REML=F)
-# 
-# mlmer.s <- lmer(path_distance ~ 1 + session + (1|id), data=data, REML=F)
-# 
-# mlmer.srs <- lmer(path_distance ~ 1 + session + (session|id), data=data, REML=F)
-# 
-# anova(mlmer.red, mlmer.s, mlmer.srs)
-# 
-# 
-# mlmer.c <- lmer(path_distance ~ 1 + condition + (1|id), data=data, REML=F)
-# 
-# mlmer.crs <- lmer(path_distance ~ 1 + condition + (condition|id), data=data, REML=F)
-# 
-# anova(mlmer.red, mlmer.c, mlmer.crs)
-# 
-# 
-# mlmer.g <- lmer(path_distance ~ 1 + group + (1|id), data=data, REML=F)
-# 
-# anova(mlmer.red, mlmer.g)
-# 
-# 
-# mlmer.gcs <- lmer(path_distance ~ 1 + group + session + condition + 
-#                     (1 + session + condition|id), data=data, REML=F)
-# 
-# mlmer.gcsi <- lmer(path_distance ~ 1 + group*session*condition + 
-#                     (1 + session + condition|id), data=data, REML=F)
-# 
-# anova(mlmer.red, mlmer.gcs, mlmer.gcsi)
+# performance::check_model(mixed.full_opt_lrt_2$full_model)
+
+# emmeans::emmeans(mixed.full_opt_lrt_2, "group")
+# emmeans::contrast(mixed.full_opt_lrt_2, "group")
 
 ```
 
