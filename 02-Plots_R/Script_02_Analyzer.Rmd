@@ -79,52 +79,205 @@ t2
 rm(t2)
 ```
 
-```{r stats_correct1}
+```{r stats_data}
+
+data_l <- sm_data %>%
+  filter(exclude_trial_matlab==0) %>% 
+  filter(condition %in% c("main_learn")) %>% 
+  mutate(trial_in_block=factor(trial_in_block),
+         log_time=log(time),
+         log_pd=log(path_distance),
+         log_ed=log(zone_editdistance)) %>% 
+  droplevels()
+  
 data <- sm_data %>%
   filter(exclude_trial_matlab==0) %>% 
-  filter(condition %in% c("allo_ret", "ego_ret"))
+  filter(condition %in% c("allo_ret", "ego_ret")) %>% 
+  droplevels()
 
 data_c <- data %>% 
   filter(correct_final_alley==1) %>% 
-  mutate(log_fd=log(final_distance))
+  mutate(log_fd=log(final_distance)) %>% 
+  droplevels()
+
+```
+
+```{r stats_learning_time}
+
+ggplot(data_l, aes(x=time)) +
+  geom_histogram() +
+  facet_wrap(~group)
+
+# # # check distribution
+# qqp(data_l$time, "norm")
+# qqp(data_l$time, "lnorm")
+# gamma <- fitdistr(data_l$time, "gamma")
+# qqp(data_l$time, "gamma", shape=gamma$estimate[[1]], rate=gamma$estimate[[2]])
+
+## basic gaussian 
+# 1a) full model  
+lmer.full <- mixed(time ~ group*trial_in_block + 
+                     (trial_in_block|id), data=data_l, 
+                   control=lmerControl(optCtrl=list(maxfun=1e6)))
+summary(lmer.full)$varcor
+# model does not converge
+
+# 1b) reduced model 
+lmer.red <- mixed(time ~ group*trial_in_block + 
+                     (1|id), data=data_l, 
+                   control=lmerControl(optCtrl=list(maxfun=1e6)))
+summary(lmer.red)$varcor
+check_model(lmer.red$full_model, panel=F)
+# model does converge but diagnostics are bad 
+
+
+## gaussian with log-transformed outcome 
+# 2b) reduced model
+lmer.red_log <- mixed(log_time ~ group*trial_in_block + 
+                         (1|id), data=data_l,
+                       control=lmerControl(optCtrl=list(maxfun=1e6)))
+check_model(lmer.red_log$full_model, panel=F)
+# model does converge but diagnostics are bad 
+
+## 3) gaussian with log link: does not converge
+
+## 4) gamma with identity link
+# 4b) reduced model
+glmer.red_gamma <- mixed(time ~ group*trial_in_block + 
+                         (1|id), data=data_l,
+                          family=Gamma(link="identity"), method="LRT",
+                       control=glmerControl(optCtrl=list(maxfun=1e6)))
+check_model(glmer.red_gamma$full_model, panel=F)
+# model does converge but diagnostics are bad 
+
+
+## 5) gamma with log-transformed outcome
+# 5b) reduced model
+glmer.red_gamma_log <- mixed(log_time ~ group*trial_in_block + 
+                         (1|id), data=data_l,
+                          family=Gamma(link="identity"), method="LRT",
+                       control=glmerControl(optCtrl=list(maxfun=1e6)))
+check_model(glmer.red_gamma_log$full_model, panel=F)
+# model does converge but diagnostics are bad 
+
+## 6) gamma with log link: does not converge
+
+## 7) inverse gaussian with identity link: does not converge
+
+## 8) inverse gaussian with log-transformed outcome: does not converge
+
+## 9) inverse gaussian with log link
+# 9b) reduced model
+glmer.red_invgauss <- mixed(time ~ group*trial_in_block + 
+                              (1|id), data=data_l,
+                            family=inverse.gaussian(link="log"), method="LRT",
+                            control=glmerControl(optCtrl=list(maxfun=1e6)))
+check_model(glmer.red_invgauss$full_model, panel=F)
+# model does converge but diagnostics are bad 
+
+library(robustlmm)
+rlmer <- rlmer(time ~ group*trial_in_block + (1|id), data=data_l)
+plot(rlmer)
+# model does converge but diagnostics are bad 
+
+
+# only compare inital and final values 
+data_l2 <- data_l %>% 
+  filter(trial_in_block %in% c(1, 13)) %>% 
+  droplevels()
+
+# check out other transformations with boxcox
+t <- boxcox(lm(data_l$time ~ 1))
+lambda <- t$x[which.max(t$y)]
+data_l2$l_time <- (data_l2$time ^ lambda - 1) / lambda
+data_l2$l2_time <- 1/sqrt(data_l2$time)
+
+# main effect, no interaction
+lmer1.full <- mixed(time ~ group*trial_in_block + 
+                     (1|id), data=data_l2,
+                     control=lmerControl(optCtrl=list(maxfun=1e6)))
+summary(lmer1.full)$varcor
+check_model(lmer1.full$full_model, panel=F)
+
+# main effect, interaction
+lmer2.full <- mixed(l2_time ~ group*trial_in_block + 
+                     (1|id), data=data_l2, 
+                     control=lmerControl(optCtrl=list(maxfun=1e6)))
+summary(lmer2.full)$varcor
+check_model(lmer2.full$full_model, panel=F)
+
+# main effect, interaction
+lmer3.full <- mixed(l_time ~ group*trial_in_block + 
+                     (1|id), data=data_l2,
+                     control=lmerControl(optCtrl=list(maxfun=1e6)))
+summary(lmer3.full)$varcor
+check_model(lmer3.full$full_model, panel=F)
+
+
+# in comparison to standard tests: only main effects, no interaction 
+summary(aov(time ~ group*trial_in_block, data=data_l2))
+pairwise.t.test(data_l2$time, data_l2$group, p.adjust.method="bonferroni")
+pairwise.t.test(data_l2$time, data_l2$trial_in_block)
+
+bwtrim(time ~ group*trial_in_block, id=id, data=data_l, tr=0.2, nboot=2000)
+sppba(time ~ group*trial_in_block, id, data_l, nboot=2000) # only works with equal group size :/
+sppbb(time ~ group*trial_in_block, id, data_l, nboot=2000)
+sppbi(time ~ group*trial_in_block, id, data_l, nboot=2000)
+
+```
+
+```{r stats_learning_time}
+
+ggplot(data_l, aes(x=path_distance)) +
+  geom_histogram() +
+  facet_wrap(~group)
+
+ggplot(data_l, aes(x=zone_editdistance)) +
+  geom_histogram() +
+  facet_wrap(~group)
 
 ```
 
 ```{r stats_correct2}
 
-# test full modell with glmer()
+# # test full modell with glmer()
 # glmer.full <- glmer(correct_final_alley ~ group*session*condition + 
 #                       (session*condition|id), data=data, 
 #                     family=binomial(link="logit"))
 # all_fit(glmer.full) # optimizer bobyqa ok 
 
 
-# alternative approach: mixed() from afex() with LRT
-# full model with random intercept, slope and correlations
+# # alternative approach: mixed() from afex() with LRT
+# # full model with random intercept, slope and correlations
 # mixed.full_opt_lrt_1 <- mixed(correct_final_alley ~ group*session*condition +
 #                                 (session*condition|id), data=data, family=binomial,
-#                               method="LRT", 
-#                               control=glmerControl(optimizer="bobyqa", 
+#                               method="LRT",
+#                               control=glmerControl(optimizer="bobyqa",
 #                                                    optCtrl=list(maxfun=1e6)))
-# does not fully converge
+# # does not fully converge
 
-# full model with random intercept and slope, no correlations
+# # full model with random intercept and slope, no correlations
 # mixed.full_opt_lrt_2 <- mixed(correct_final_alley ~ group*session*condition +
 #                               (session*condition||id), data=data, family=binomial,
 #                             method="LRT", expand_re=T,
 #                             control=glmerControl(optimizer="bobyqa",
 #                                                  optCtrl=list(maxfun=1e6)))
-# does converge
+# # does converge
 
-# compare models 
+# # compare models 
 # mixed.full_opt_lrt_1$anova_table
 # mixed.full_opt_lrt_2$anova_table
 # anova(mixed.full_opt_lrt_2, mixed.full_opt_lrt_1)
 
-# plots for random effects
+# # plots for random effects
 # lattice::dotplot(ranef(mixed.full_opt_lrt_2$full_model, condV=TRUE))
 
-# post-test with fixed effects
+# # post-test with fixed effects
+# afex_plot(mixed.full_opt_lrt_2,  "session", "group", "sex", id = "id",
+#           data_geom = ggbeeswarm::geom_quasirandom)
+# afex_plot(mixed.full_opt_lrt_2,  "session", "group", "condition", id = "id",
+#           data_geom = ggbeeswarm::geom_quasirandom)
+
 # emmeans(mixed.full_opt_lrt_2, pairwise ~ group, type="response", adjust="bonferroni")
 # emmeans(mixed.full_opt_lrt_2, pairwise ~ session, type="response")
 
@@ -248,12 +401,23 @@ check_model(glmer.red_gamma$full_model, panel=F)
 
 # coef <- coef(lmer.red_log$full_model)$id %>% select(`(Intercept)`,session1)
 
-
 ```
 
 ```{r stats_path}
 
 ggplot(data, aes(x=path_distance)) +
+  geom_histogram() +
+  facet_wrap(~group)
+
+ggplot(data, aes(x=log(path_distance))) +
+  geom_histogram() +
+  facet_wrap(~group)
+
+ggplot(data, aes(x=chosen_path_distance)) +
+  geom_histogram() +
+  facet_wrap(~group)
+
+ggplot(data, aes(x=log(chosen_path_distance))) +
   geom_histogram() +
   facet_wrap(~group)
 
