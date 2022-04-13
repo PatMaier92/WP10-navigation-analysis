@@ -19,10 +19,10 @@ library(car)
 library(MASS)
 library(rstatix)
 library(ggpubr)
-# library(multcomp)
-# library(nlme)
+library(nlme)
 # library(Rcpp)
 # library(robustlmm)
+# library(multcomp)
 # install.packages('tinytex')
 # tinytex::install_tinytex() # latex for pdf file creation
 
@@ -79,154 +79,46 @@ t2
 rm(t2)
 ```
 
+
 ```{r stats_data}
 
 data_l <- sm_data %>%
   filter(exclude_trial_matlab==0) %>% 
   filter(condition %in% c("main_learn")) %>% 
-  mutate(trial_in_block=factor(trial_in_block),
+  mutate(trial_in_cond_0=trial_in_cond-1,
+         block_0=block-1,
          log_time=log(time),
          log_pd=log(path_distance),
-         log_ed=log(zone_editdistance)) %>% 
+         log_ed=log(zone_editdistance),
+         log_rot=log(rotation_xyz)) %>% 
   droplevels()
-  
+
 data <- sm_data %>%
   filter(exclude_trial_matlab==0) %>% 
   filter(condition %in% c("allo_ret", "ego_ret")) %>% 
+  mutate(session_0=as.integer(session)-1,
+         log_time=log(time),
+         log_pd=log(path_distance),
+         log_ed=log(zone_editdistance),
+         log_pd_ch=log(chosen_path_distance)) %>% 
   droplevels()
 
 data_c <- data %>% 
   filter(correct_final_alley==1) %>% 
-  mutate(log_fd=log(final_distance)) %>% 
+  mutate(session_0=as.integer(session)-1,
+         log_fd=log(final_distance)) %>% 
   droplevels()
 
 ```
 
-```{r stats_learning_time}
+
+### Navigation: Learning trials 
+
+```{r stats_hist}
 
 ggplot(data_l, aes(x=time)) +
   geom_histogram() +
   facet_wrap(~group)
-
-# # # check distribution
-# qqp(data_l$time, "norm")
-# qqp(data_l$time, "lnorm")
-# gamma <- fitdistr(data_l$time, "gamma")
-# qqp(data_l$time, "gamma", shape=gamma$estimate[[1]], rate=gamma$estimate[[2]])
-
-## basic gaussian 
-# 1a) full model  
-lmer.full <- mixed(time ~ group*trial_in_block + 
-                     (trial_in_block|id), data=data_l, 
-                   control=lmerControl(optCtrl=list(maxfun=1e6)))
-summary(lmer.full)$varcor
-# model does not converge
-
-# 1b) reduced model 
-lmer.red <- mixed(time ~ group*trial_in_block + 
-                     (1|id), data=data_l, 
-                   control=lmerControl(optCtrl=list(maxfun=1e6)))
-summary(lmer.red)$varcor
-check_model(lmer.red$full_model, panel=F)
-# model does converge but diagnostics are bad 
-
-
-## gaussian with log-transformed outcome 
-# 2b) reduced model
-lmer.red_log <- mixed(log_time ~ group*trial_in_block + 
-                         (1|id), data=data_l,
-                       control=lmerControl(optCtrl=list(maxfun=1e6)))
-check_model(lmer.red_log$full_model, panel=F)
-# model does converge but diagnostics are bad 
-
-## 3) gaussian with log link: does not converge
-
-## 4) gamma with identity link
-# 4b) reduced model
-glmer.red_gamma <- mixed(time ~ group*trial_in_block + 
-                         (1|id), data=data_l,
-                          family=Gamma(link="identity"), method="LRT",
-                       control=glmerControl(optCtrl=list(maxfun=1e6)))
-check_model(glmer.red_gamma$full_model, panel=F)
-# model does converge but diagnostics are bad 
-
-
-## 5) gamma with log-transformed outcome
-# 5b) reduced model
-glmer.red_gamma_log <- mixed(log_time ~ group*trial_in_block + 
-                         (1|id), data=data_l,
-                          family=Gamma(link="identity"), method="LRT",
-                       control=glmerControl(optCtrl=list(maxfun=1e6)))
-check_model(glmer.red_gamma_log$full_model, panel=F)
-# model does converge but diagnostics are bad 
-
-## 6) gamma with log link: does not converge
-
-## 7) inverse gaussian with identity link: does not converge
-
-## 8) inverse gaussian with log-transformed outcome: does not converge
-
-## 9) inverse gaussian with log link
-# 9b) reduced model
-glmer.red_invgauss <- mixed(time ~ group*trial_in_block + 
-                              (1|id), data=data_l,
-                            family=inverse.gaussian(link="log"), method="LRT",
-                            control=glmerControl(optCtrl=list(maxfun=1e6)))
-check_model(glmer.red_invgauss$full_model, panel=F)
-# model does converge but diagnostics are bad 
-
-library(robustlmm)
-rlmer <- rlmer(time ~ group*trial_in_block + (1|id), data=data_l)
-plot(rlmer)
-# model does converge but diagnostics are bad 
-
-
-# only compare inital and final values 
-data_l2 <- data_l %>% 
-  filter(trial_in_block %in% c(1, 13)) %>% 
-  droplevels()
-
-# check out other transformations with boxcox
-t <- boxcox(lm(data_l$time ~ 1))
-lambda <- t$x[which.max(t$y)]
-data_l2$l_time <- (data_l2$time ^ lambda - 1) / lambda
-data_l2$l2_time <- 1/sqrt(data_l2$time)
-
-# main effect, no interaction
-lmer1.full <- mixed(time ~ group*trial_in_block + 
-                     (1|id), data=data_l2,
-                     control=lmerControl(optCtrl=list(maxfun=1e6)))
-summary(lmer1.full)$varcor
-check_model(lmer1.full$full_model, panel=F)
-
-# main effect, interaction
-lmer2.full <- mixed(l2_time ~ group*trial_in_block + 
-                     (1|id), data=data_l2, 
-                     control=lmerControl(optCtrl=list(maxfun=1e6)))
-summary(lmer2.full)$varcor
-check_model(lmer2.full$full_model, panel=F)
-
-# main effect, interaction
-lmer3.full <- mixed(l_time ~ group*trial_in_block + 
-                     (1|id), data=data_l2,
-                     control=lmerControl(optCtrl=list(maxfun=1e6)))
-summary(lmer3.full)$varcor
-check_model(lmer3.full$full_model, panel=F)
-
-
-# in comparison to standard tests: only main effects, no interaction 
-summary(aov(time ~ group*trial_in_block, data=data_l2))
-pairwise.t.test(data_l2$time, data_l2$group, p.adjust.method="bonferroni")
-pairwise.t.test(data_l2$time, data_l2$trial_in_block)
-
-bwtrim(time ~ group*trial_in_block, id=id, data=data_l, tr=0.2, nboot=2000)
-sppba(time ~ group*trial_in_block, id, data_l, nboot=2000) # only works with equal group size :/
-sppbb(time ~ group*trial_in_block, id, data_l, nboot=2000)
-sppbi(time ~ group*trial_in_block, id, data_l, nboot=2000)
-
-```
-
-```{r stats_learning_time}
 
 ggplot(data_l, aes(x=path_distance)) +
   geom_histogram() +
@@ -236,194 +128,233 @@ ggplot(data_l, aes(x=zone_editdistance)) +
   geom_histogram() +
   facet_wrap(~group)
 
+ggplot(data_l, aes(x=rotation_xyz)) +
+  geom_histogram() +
+  facet_wrap(~group)
+
+
+# # check distribution
+# qqp(data_l$time, "norm")
+# qqp(data_l$time, "lnorm")
+# gamma <- fitdistr(data_l$time, "gamma")
+# qqp(data_l$time, "gamma", shape=gamma$estimate[[1]], rate=gamma$estimate[[2]])
+
+ggplot(data_l %>% filter(id < 12000), aes(x=trial_in_cond, y=time)) +
+  geom_point() +
+  scale_x_continuous(breaks=1:8) +
+  facet_wrap(~id)
+
 ```
 
-```{r stats_correct2}
+```{r stats_learning_time}
 
-# # test full modell with glmer()
-# glmer.full <- glmer(correct_final_alley ~ group*session*condition + 
-#                       (session*condition|id), data=data, 
-#                     family=binomial(link="logit"))
-# all_fit(glmer.full) # optimizer bobyqa ok 
+## 1) gaussian 
+lmer.full <- mixed(time ~ (group+block_0+trial_in_cond_0)^2 + 
+                     (trial_in_cond_0*block_0|id), data=data_l, 
+                   # (trial_in_cond_0|id/block_0), data=data_l,
+                   control=lmerControl(optimizer="bobyqa",
+                                       optCtrl=list(maxfun=1e6)))
+check_model(lmer.full$full_model, panel=F)
+# model does converge but diagnostics bad
+
+## 2) gaussian with log-transformed outcome 
+lmer.full_log <- mixed(log_time ~ (group+block_0+trial_in_cond_0)^2 + 
+                         (trial_in_cond_0*block_0|id), data=data_l, 
+                         #(trial_in_cond_0|id/block_0), data=data_l, 
+                       control=lmerControl(optimizer="bobyqa",
+                                           optCtrl=list(maxfun=1e6)))
+check_model(lmer.full_log$full_model, panel=F)
+# model does converge but diagnostics only ok (some heteroscedasticity)
+
+## 3) gaussian with log link: does not converge
+
+## 4) gamma with identity link: does not converge
+
+## 6) inverse gaussian with identity link: does not converge
+
+## 7) robustlmm: not applicable
+# rlmer.full <- robustlmm::rlmer(time ~ (group+block_0+trial_in_cond_0)^2 + 
+#                             (trial_in_cond_0*block_0|id), data=data_l)
+# plot(rlmer.full)
+
+## 8) model heteroscedasticity with nlme
+nlme.full <- lme(time ~ (group+block_0+trial_in_cond_0)^2,
+                  random=~trial_in_cond_0|id/block_0,
+                  correlation=corCAR1(0.5, form=~trial_in_cond_0|id/block_0),
+                  data=data_l, method="ML")
+check_model(nlme.full, panel=F)
+
+nlme.full_log <- lme(log_time ~ (group+block_0+trial_in_cond_0)^2,
+                 random=~trial_in_cond_0|id/block_0,
+                  correlation=corCAR1(0.5, form=~trial_in_cond_0|id/block_0),
+                 data=data_l, method="ML")
+check_model(nlme.full_log, panel=F)
+
+## 9) comparison to standard tests: same effect 
+summary(aov(time ~ (group+block_0+trial_in_cond_0)^2, data=data_l))
+bwtrim(time ~ group*trial_in_cond_0, id=id, data=data_l, tr=0.2, nboot=2000)
+bwtrim(time ~ group*block_0, id=id, data=data_l, tr=0.2, nboot=2000)
+bwtrim(time ~ trial_in_cond_0*block_0, id=id, data=data_l, tr=0.2, nboot=2000)
+
+```
+
+```{r stats_learning_others}
+
+### path distance
+## 1) gaussian 
+lmer.full <- mixed(path_distance ~ (group+block_0+trial_in_cond_0)^2 + 
+                     (trial_in_cond_0*block_0|id), data=data_l, 
+                   # (trial_in_cond_0|id/block_0), data=data_l,
+                   control=lmerControl(optimizer="bobyqa",
+                                       optCtrl=list(maxfun=1e6)))
+check_model(lmer.full$full_model, panel=F)
+# model does converge but diagnostics bad
+
+## 2) gaussian with log-transformed outcome 
+lmer.full_log <- mixed(log_pd ~ (group+block_0+trial_in_cond_0)^2 + 
+                         (trial_in_cond_0*block_0|id), data=data_l, 
+                         #(trial_in_cond_0|id/block_0), data=data_l, 
+                       control=lmerControl(optimizer="bobyqa",
+                                           optCtrl=list(maxfun=1e6)))
+check_model(lmer.full_log$full_model, panel=F)
+# model does converge but diagnostics only ok (some heteroscedasticity)
+
+## 8) model heteroscedasticity with nlme
+nlme.full <- lme(path_distance ~ (group+block_0+trial_in_cond_0)^2,
+                  random=~trial_in_cond_0|id/block_0,
+                  correlation=corCAR1(0.5, form=~trial_in_cond_0|id/block_0),
+                  data=data_l, method="ML")
+check_model(nlme.full, panel=F)
+
+nlme.full_log <- lme(log_pd ~ (group+block_0+trial_in_cond_0)^2,
+                 random=~trial_in_cond_0|id/block_0,
+                 correlation=corCAR1(0.5, form=~trial_in_cond_0|id/block_0),
+                 data=data_l, method="ML")
+check_model(nlme.full_log, panel=F)
 
 
-# # alternative approach: mixed() from afex() with LRT
-# # full model with random intercept, slope and correlations
-# mixed.full_opt_lrt_1 <- mixed(correct_final_alley ~ group*session*condition +
-#                                 (session*condition|id), data=data, family=binomial,
-#                               method="LRT",
-#                               control=glmerControl(optimizer="bobyqa",
-#                                                    optCtrl=list(maxfun=1e6)))
-# # does not fully converge
+### path edit distance 
+## 2) gaussian with log-transformed outcome 
+lmer.full_log <- mixed(log_ed ~ (group+block_0+trial_in_cond_0)^2 + 
+                         (trial_in_cond_0*block_0|id), data=data_l, 
+                         #(trial_in_cond_0|id/block_0), data=data_l, 
+                       control=lmerControl(optimizer="bobyqa",
+                                           optCtrl=list(maxfun=1e6)))
+check_model(lmer.full_log$full_model, panel=F)
+# model does converge but diagnostics bad (heteroscedasticity)
 
-# # full model with random intercept and slope, no correlations
-# mixed.full_opt_lrt_2 <- mixed(correct_final_alley ~ group*session*condition +
-#                               (session*condition||id), data=data, family=binomial,
-#                             method="LRT", expand_re=T,
-#                             control=glmerControl(optimizer="bobyqa",
-#                                                  optCtrl=list(maxfun=1e6)))
-# # does converge
+## 8) model heteroscedasticity with nlme
+nlme.full_log <- lme(log_ed ~ (group+block_0+trial_in_cond_0)^2,
+                 random=~trial_in_cond_0|id/block_0,
+                 correlation=corCAR1(0.5, form=~trial_in_cond_0|id/block_0),
+                 data=data_l, method="ML")
+check_model(nlme.full_log, panel=F)
 
-# # compare models 
-# mixed.full_opt_lrt_1$anova_table
-# mixed.full_opt_lrt_2$anova_table
-# anova(mixed.full_opt_lrt_2, mixed.full_opt_lrt_1)
+
+## rotation 
+## 1) gaussian 
+lmer.full <- mixed(rotation_xyz ~ (group+block_0+trial_in_cond_0)^2 + 
+                     (trial_in_cond_0*block_0|id), data=data_l, 
+                   # (trial_in_cond_0|id/block_0), data=data_l,
+                   control=lmerControl(optimizer="bobyqa",
+                                       optCtrl=list(maxfun=1e6)))
+check_model(lmer.full$full_model, panel=F)
+# model does converge but diagnostics bad
+
+## 8) model heteroscedasticity with nlme
+nlme.full_log <- lme(rotation_xyz ~ (group+block_0+trial_in_cond_0)^2,
+                 random=~trial_in_cond_0|id/block_0,
+                 correlation=corCAR1(0.5, form=~trial_in_cond_0|id/block_0),
+                 data=data_l, method="ML")
+check_model(nlme.full_log, panel=F)
+
+```
+
+
+### Navigation: Probe trials 
+
+```{r stats_correct}
+
+### correct final alley (binomial): results currently not stable ! 
+
+# full model with random intercept, slope and correlations: does not converge 
+mixed.full <- mixed(correct_final_alley ~ group*session*condition +
+                      (session*condition|id), data=data, 
+                    family=binomial(link="logit"), method="LRT",
+                    control=glmerControl(optimizer="bobyqa",
+                                         optCtrl=list(maxfun=1e6)))
+
+# full model with random intercept and slope, no correlations: does converge
+mixed.red_0 <- mixed(correct_final_alley ~ group*session_0*condition +
+                     (session_0*condition||id), data=data, expand_re=T,
+                   family=binomial(link="logit"), method="LRT",
+                   control=glmerControl(optimizer="bobyqa",
+                                        optCtrl=list(maxfun=1e6)))
+
+mixed.red <- mixed(correct_final_alley ~ group*session*condition +
+                     (session*condition||id), data=data, expand_re=T,
+                   family=binomial(link="logit"), method="LRT",
+                   control=glmerControl(optimizer="bobyqa",
+                                        optCtrl=list(maxfun=1e6)))
 
 # # plots for random effects
-# lattice::dotplot(ranef(mixed.full_opt_lrt_2$full_model, condV=TRUE))
+# lattice::dotplot(ranef(mixed.red$full_model, condV=TRUE))
 
 # # post-test with fixed effects
-# afex_plot(mixed.full_opt_lrt_2,  "session", "group", "sex", id = "id",
+# afex_plot(mixed.red, "session", "group", "sex", id = "id",
 #           data_geom = ggbeeswarm::geom_quasirandom)
-# afex_plot(mixed.full_opt_lrt_2,  "session", "group", "condition", id = "id",
+# afex_plot(mixed.red, "session", "group", "condition", id = "id",
 #           data_geom = ggbeeswarm::geom_quasirandom)
 
-# emmeans(mixed.full_opt_lrt_2, pairwise ~ group, type="response", adjust="bonferroni")
-# emmeans(mixed.full_opt_lrt_2, pairwise ~ session, type="response")
+# emmeans(mixed.red, pairwise ~ group, type="response", adjust="bonferroni")
+# emmeans(mixed.red, pairwise ~ session, type="response")
 
 ```
 
 ```{r stats_finaldistance}
 
-ggplot(data_c, aes(x=final_distance)) +
-  geom_histogram() +
-  facet_wrap(~group)
-
-ggplot(data_c, aes(x=log_fd)) +
-  geom_histogram() +
-  facet_wrap(~group)
-
-# # find distribution
-# qqp(data_c$final_distance, "norm") # normal 
-# qqp(data_c$final_distance, "lnorm")
-# gamma <- fitdistr(data_c$final_distance, "gamma")
-# qqp(data_c$final_distance, "gamma", shape=gamma$estimate[[1]], rate=gamma$estimate[[2]])
-
-
-## basic model
-# 1a) full model  
+### path distance
+## 1) gaussian
+# full model: does not converge 
 lmer.full <- mixed(final_distance ~ group*session*condition + 
-                     (session*condition|id), data=data_c,
+                     (session*condition|id), data=data_c, 
                    control=lmerControl(optimizer="bobyqa",
                                        optCtrl=list(maxfun=1e6)))
-summary(lmer.full)$varcor
-# model does not converge
+check_model(lmer.full$full_model, panel=F)
 
-# 1b) reduced model 
+# reduced model:
 lmer.red <- mixed(final_distance ~ group*session*condition + 
-                        (session|id), data=data_c,
-                      control=lmerControl(optimizer="bobyqa", 
-                                          optCtrl=list(maxfun=1e6)))
-summary(lmer.red)$varcor
+                    (session|id), data=data_c, expand_re=T,
+                  control=lmerControl(optimizer="bobyqa",
+                                      optCtrl=list(maxfun=1e6)))
 check_model(lmer.red$full_model, panel=F)
-# model does converge but diagnostics are bad 
+# model does converge but diagnostics bad
 
-
-## log-transformed outcome 
-# 2a) full model  
-lmer.full_log <- mixed(log_fd ~ group*session*condition + 
-                         (session*condition|id), data=data_c, 
-                       control=lmerControl(optimizer="bobyqa",
-                                           optCtrl=list(maxfun=1e6)))
-summary(lmer.full_log)$varcor
-# model does not converge
-
-# 2b) reduced model
+## 2) gaussian with log-transformed outcome 
 lmer.red_log <- mixed(log_fd ~ group*session*condition + 
-                        (session|id), data=data_c,
-                      control=lmerControl(optimizer="bobyqa", 
+                        (session|id), data=data_c, 
+                      control=lmerControl(optimizer="bobyqa",
                                           optCtrl=list(maxfun=1e6)))
-summary(lmer.red_log)$varcor
 check_model(lmer.red_log$full_model, panel=F)
-# model does converge and diagnostics good (top homoskedasticity, ok normality residuals)
+# model does converge and diagnostics good :-)
 
+lmer.red_log$anova_table
+emmeans(lmer.red_log, pairwise ~ group, adjust="bonferroni")
+emmeans(lmer.red_log, pairwise ~ session)
+afex_plot(lmer.red_log,  "session", "group", "condition", id = "id",
+          data_geom = ggbeeswarm::geom_quasirandom)
 
-## gaussian with log/inverse link
-# 3a) full model  
-glmer.full_link <- mixed(final_distance ~ group*session*condition + 
-                          (session*condition|id), data=data_c, 
-                        family=gaussian(link="log"), method="LRT",
-                        control=glmerControl(optimizer="bobyqa",
-                                             optCtrl=list(maxfun=1e6)))
-summary(glmer.full_link)$varcor
-# model does not converge
-
-# 3b) reduced model
-glmer.red_link <- mixed(final_distance ~ group*session*condition + 
-                          (session|id), data=data_c,
-                        family=gaussian(link="log"), method="LRT",
-                        control=glmerControl(optimizer="bobyqa", 
-                                             optCtrl=list(maxfun=1e6)))
-summary(glmer.red_link)$varcor
-check_model(glmer.red_link$full_model, panel=F)
-# 
-
-
-## gamma distribution with inverse link (default)
-# 4a) full model
-glmer.full_gamma <- mixed(final_distance ~ group*session*condition + 
-                            (session*condition|id), data=data_c,
-                          family=Gamma(link="inverse"), method="LRT",
-                          control=glmerControl(optimizer="bobyqa", 
-                                               optCtrl=list(maxfun=1e6)))
-summary(glmer.full_gamma)$varcor
-# model does not converge 
-
-# 4b) reduced model
-glmer.red_gamma <- mixed(final_distance ~ group*session*condition + 
-                           (session|id), data=data_c,
-                         family=Gamma(link="inverse"), method="LRT",
-                         control=glmerControl(optCtrl=list(maxfun=1e6),
-                                              optimizer="bobyqa"))
-summary(glmer.red_gamma)$varcor
-check_model(glmer.red_gamma$full_model, panel=F)
-# model does converge and diagnostics ok (bad heteroskedasticity, good normality residuals)
-
-
-## inverse gaussian distribution: does not converge & also no reduced model 
-
-## what about gamma with identity link? error message
-
-
-# lmer.red_log$anova_table
-# emmeans(lmer.red_log, pairwise ~ group, adjust="bonferroni")
-# emmeans(lmer.red_log, pairwise ~ session)
-# afex_plot(lmer.red_log,  "session", "group", id = "id",
-#           data_geom = ggbeeswarm::geom_quasirandom)
-
-# glmer.red_gamma$anova_table
-# emmeans(glmer.red_gamma, pairwise ~ group, adjust="bonferroni")
-# emmeans(glmer.red_gamma, pairwise ~ session)
-# emm1 <- emmeans(glmer.red_gamma, "group", by="session")
-# pairs(emm1, by = NULL, adjust = "holm")
-# afex_plot(glmer.red_gamma,  "session", "group", id = "id",
-#           data_geom = ggbeeswarm::geom_quasirandom)
-
-# coef <- coef(lmer.red_log$full_model)$id %>% select(`(Intercept)`,session1)
-
-```
-
-```{r stats_path}
-
-ggplot(data, aes(x=path_distance)) +
-  geom_histogram() +
-  facet_wrap(~group)
-
-ggplot(data, aes(x=log(path_distance))) +
-  geom_histogram() +
-  facet_wrap(~group)
-
-ggplot(data, aes(x=chosen_path_distance)) +
-  geom_histogram() +
-  facet_wrap(~group)
-
-ggplot(data, aes(x=log(chosen_path_distance))) +
-  geom_histogram() +
-  facet_wrap(~group)
+# ## 8) model heteroscedasticity with nlme
+# nlme.full_log <- lme(log_fd ~ group*session*condition,  
+#                      random=~1|id, data=data_c, 
+#                      correlation=corAR1(0, form=~session|id),
+#                      method="ML")
+# check_model(nlme.full_log, panel=F)
 
 ```
 
 
+### Post-navigation memory test
 
 ```{r stats_layout}
 
