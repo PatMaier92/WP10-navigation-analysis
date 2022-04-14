@@ -26,6 +26,9 @@ library(nlme)
 # install.packages('tinytex')
 # tinytex::install_tinytex() # latex for pdf file creation
 
+# set contrast coding
+options(contrasts=c(unordered ="contr.sum", ordered ="contr.poly"))
+
 ```
 
 
@@ -85,8 +88,12 @@ rm(t2)
 data_l <- sm_data %>%
   filter(exclude_trial_matlab==0) %>% 
   filter(condition %in% c("main_learn")) %>% 
-  mutate(trial_in_cond_0=trial_in_cond-1,
+  mutate(trial_in_cond_f=factor(trial_in_cond),
+         trial_in_cond_0=trial_in_cond-1,
+         block_f=factor(block),
          block_0=block-1,
+         goal_f=factor(goal_i),
+         goal_identity_f=factor(goal_identity),
          log_time=log(time),
          log_pd=log(path_distance),
          log_ed=log(zone_editdistance),
@@ -158,13 +165,20 @@ check_model(lmer.full$full_model, panel=F)
 # model does converge but diagnostics bad
 
 ## 2) gaussian with log-transformed outcome 
-lmer.full_log <- mixed(log_time ~ (group+block_0+trial_in_cond_0)^2 + 
-                         (trial_in_cond_0*block_0|id), data=data_l, 
-                         #(trial_in_cond_0|id/block_0), data=data_l, 
+lmer.full_log <- mixed(log_time ~ group*block_f*trial_in_cond_f + 
+                         (block_f|id), data=data_l, 
                        control=lmerControl(optimizer="bobyqa",
                                            optCtrl=list(maxfun=1e6)))
 check_model(lmer.full_log$full_model, panel=F)
 # model does converge but diagnostics only ok (some heteroscedasticity)
+
+afex_plot(lmer.full_log, "trial_in_cond_f",  "group", "block_f", id="id",
+          data_geom=ggbeeswarm::geom_quasirandom)
+
+# rg=ref_grid(lmer.full_log)
+# emmeans(rg, pairwise ~ group, adjust="bonferroni")
+# emmeans(rg, pairwise ~ trial_in_cond_f | block_f, adjust="bonferroni")
+# emmeans(rg, pairwise ~ c(trial_in_cond_f, group), adjust="bonferroni")
 
 ## 3) gaussian with log link: does not converge
 
