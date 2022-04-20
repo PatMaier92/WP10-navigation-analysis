@@ -11,18 +11,16 @@ library(tidyverse)
 library(janitor)
 library(gtsummary)
 library(performance)
-library(afex)
-library(WRS2)
-library(lme4)
-library(emmeans)
-library(car)
-library(MASS)
 library(rstatix)
 library(ggpubr)
+library(WRS2)
+library(afex)
+library(lme4)
 library(nlme)
-# library(Rcpp)
-# library(robustlmm)
-# library(multcomp)
+library(glmmTMB)
+library(emmeans)
+library(car)
+library(DHARMa)
 # install.packages('tinytex')
 # tinytex::install_tinytex() # latex for pdf file creation
 
@@ -172,6 +170,17 @@ lmer.full_log <- mixed(log_time ~ group*block_f*trial_in_cond_f +
 check_model(lmer.full_log$full_model, panel=F)
 # model does converge but diagnostics only ok (some heteroscedasticity)
 
+simulationOutput <- simulateResiduals(fittedModel=lmer.full_log$full_model, 
+                                      plot=F)
+plot(simulationOutput)
+testResiduals(simulationOutput)
+# testOutliers(simulationOutput)
+# testUniformity(simulationOutput)
+testCategorical(simulationOutput, catPred=data_l$group)
+testCategorical(simulationOutput, catPred=data_l$block_f)
+testCategorical(simulationOutput, catPred=data_l$trial_in_cond_f)
+# not a good fit: outliers and heteroscedasticity 
+
 afex_plot(lmer.full_log, "trial_in_cond_f",  "group", "block_f", id="id",
           data_geom=ggbeeswarm::geom_quasirandom)
 
@@ -192,17 +201,57 @@ afex_plot(lmer.full_log, "trial_in_cond_f",  "group", "block_f", id="id",
 # plot(rlmer.full)
 
 ## 8) model heteroscedasticity with nlme
-nlme.full <- lme(time ~ (group+block_0+trial_in_cond_0)^2,
-                  random=~trial_in_cond_0|id/block_0,
-                  correlation=corCAR1(0.5, form=~trial_in_cond_0|id/block_0),
-                  data=data_l, method="ML")
-check_model(nlme.full, panel=F)
-
-nlme.full_log <- lme(log_time ~ (group+block_0+trial_in_cond_0)^2,
-                 random=~trial_in_cond_0|id/block_0,
-                  correlation=corCAR1(0.5, form=~trial_in_cond_0|id/block_0),
+nlme.full1 <- lme(time ~ group*trial_in_cond_f,
+                 random=~ 1 | id,
                  data=data_l, method="ML")
-check_model(nlme.full_log, panel=F)
+
+nlme.full2 <- lme(time ~ group*trial_in_cond_f,
+                 random=~ 1 | id, 
+                 weights=varIdent(form= ~ 1 | group),
+                 data=data_l)
+
+anova(nlme.full1, nlme.full2)
+
+nlme.full2.VC <- nlme.full2$modelStruct$varStruct %>%
+  coef(unconstrained = FALSE, allCoef = TRUE) %>%
+  enframe(name = "grp", value = "varStruct") %>%
+  mutate(sigma         = nlme.full2$sigma) %>%
+  mutate(StandardError = sigma * varStruct) %>%
+  mutate(Variance      = StandardError ^ 2)
+
+
+# model heteroscedasticity with glmmTMB
+data_l <- data_l %>%
+  mutate(unit=as.factor(1:n()))
+
+
+glmmtmb.full1 <- glmmTMB(time ~ group*trial_in_cond_f + 
+                          (1 | id),
+                        REML=T,
+                        data = data_l)
+
+simulationOutput1 <- simulateResiduals(fittedModel=glmmtmb.full1, plot=F)
+plotResiduals(simulationOutput1)
+testResiduals(simulationOutput1)
+testCategorical(simulationOutput1, catPred=data_l$group)
+testCategorical(simulationOutput1, catPred=data_l$trial_in_cond_f)
+
+glmmtmb.full2 <- glmmTMB(log_time ~ group*trial_in_cond_f + 
+                          (1 | id) +
+                          diag(group + 0 | unit),
+                        dispformula = ~ 0, 
+                        REML=T,
+                        data = data_l)
+
+VarCorr(glmmtmb.full2) # same as nlme
+
+simulationOutput2 <- simulateResiduals(fittedModel=glmmtmb.full2, plot=F)
+plotResiduals(simulationOutput2)
+testResiduals(simulationOutput2)
+testCategorical(simulationOutput2, catPred=data_l$group)
+testCategorical(simulationOutput2, catPred=data_l$trial_in_cond_f)
+
+
 
 ## 9) comparison to standard tests: same effect 
 summary(aov(time ~ (group+block_0+trial_in_cond_0)^2, data=data_l))
@@ -289,81 +338,82 @@ check_model(nlme.full_log, panel=F)
 
 ```{r stats_correct}
 
-### correct final alley (binomial): results currently not stable ! 
-
-# full model with random intercept, slope and correlations: does not converge 
-mixed.full <- mixed(correct_final_alley ~ group*session*condition +
+### correct final alley (binomial)
+# 1) full binomial model with random intercept, slope and correlations: does not converge 
+mixed.full <- mixed(correct_final_alley ~ group*session*condition + sex + 
                       (session*condition|id), data=data, 
                     family=binomial(link="logit"), method="LRT",
                     control=glmerControl(optimizer="bobyqa",
                                          optCtrl=list(maxfun=1e6)))
 
-# full model with random intercept and slope, no correlations: does converge
-mixed.red_0 <- mixed(correct_final_alley ~ group*session_0*condition +
-                     (session_0*condition||id), data=data, expand_re=T,
-                   family=binomial(link="logit"), method="LRT",
-                   control=glmerControl(optimizer="bobyqa",
-                                        optCtrl=list(maxfun=1e6)))
-
-mixed.red <- mixed(correct_final_alley ~ group*session*condition +
+# 2) full binomial model with random intercept and slope, no correlations: does converge
+mixed.red <- mixed(correct_final_alley ~ group*session*condition + sex +
                      (session*condition||id), data=data, expand_re=T,
                    family=binomial(link="logit"), method="LRT",
                    control=glmerControl(optimizer="bobyqa",
                                         optCtrl=list(maxfun=1e6)))
 
-# # plots for random effects
-# lattice::dotplot(ranef(mixed.red$full_model, condV=TRUE))
+# model check with DHARMa
+simulationOutput <- simulateResiduals(fittedModel=mixed.red$full_model, plot=F)
+testResiduals(simulationOutput) 
+plotResiduals(simulationOutput) 
+testCategorical(simulationOutput, catPred=data$group)
+testCategorical(simulationOutput, catPred=data$session)
+testCategorical(simulationOutput, catPred=data$condition)
+# diagnostics: ok 
 
-# # post-test with fixed effects
-# afex_plot(mixed.red, "session", "group", "sex", id = "id",
-#           data_geom = ggbeeswarm::geom_quasirandom)
-# afex_plot(mixed.red, "session", "group", "condition", id = "id",
-#           data_geom = ggbeeswarm::geom_quasirandom)
+# post-test for fixed effects
+afex_plot(mixed.red, "session", "group", "condition", id = "id",
+          data_geom = ggbeeswarm::geom_quasirandom)
 
-# emmeans(mixed.red, pairwise ~ group, type="response", adjust="bonferroni")
-# emmeans(mixed.red, pairwise ~ session, type="response")
+emmeans(mixed.red, pairwise ~ group, type="response", adjust="bonferroni")
+emmeans(mixed.red, pairwise ~ session, type="response")
+emmeans(mixed.red, pairwise ~ condition, type="response")
 
 ```
 
 ```{r stats_finaldistance}
 
-### path distance
-## 1) gaussian
-# full model: does not converge 
-lmer.full <- mixed(final_distance ~ group*session*condition + 
+### final distance
+# 1) full gaussian model: does not converge 
+lmer.full <- mixed(final_distance ~ group*session*condition + sex + 
                      (session*condition|id), data=data_c, 
                    control=lmerControl(optimizer="bobyqa",
                                        optCtrl=list(maxfun=1e6)))
-check_model(lmer.full$full_model, panel=F)
 
-# reduced model:
-lmer.red <- mixed(final_distance ~ group*session*condition + 
-                    (session|id), data=data_c, expand_re=T,
+# 2) full gaussian model with reduced random effects: does converge
+lmer.red <- mixed(final_distance ~ group*session*condition + sex + 
+                    (session|id), data=data_c, 
                   control=lmerControl(optimizer="bobyqa",
                                       optCtrl=list(maxfun=1e6)))
 check_model(lmer.red$full_model, panel=F)
-# model does converge but diagnostics bad
+# diagnostics: bad
 
-## 2) gaussian with log-transformed outcome 
-lmer.red_log <- mixed(log_fd ~ group*session*condition + 
+## 3) full gaussian model with log-transformed outcome and reduced random effects: does converge 
+lmer.red_log <- mixed(log_fd ~ group*session*condition + sex + 
                         (session|id), data=data_c, 
                       control=lmerControl(optimizer="bobyqa",
                                           optCtrl=list(maxfun=1e6)))
-check_model(lmer.red_log$full_model, panel=F)
-# model does converge and diagnostics good :-)
 
+check_model(lmer.red_log$full_model, panel=F)
+# diagnostics 1: ok
+
+simulationOutput <- simulateResiduals(fittedModel=lmer.red_log$full_model, plot=F)
+testResiduals(simulationOutput)
+plotResiduals(simulationOutput)
+testCategorical(simulationOutput, catPred=data_c$group)
+testCategorical(simulationOutput, catPred=data_c$session)
+testCategorical(simulationOutput, catPred=data_c$condition)
+# diagnostics 2: flags outlier and non-normality, but not heteroskedasticity: ok
+
+# post-test for fixed effects
 lmer.red_log$anova_table
-emmeans(lmer.red_log, pairwise ~ group, adjust="bonferroni")
-emmeans(lmer.red_log, pairwise ~ session)
+
 afex_plot(lmer.red_log,  "session", "group", "condition", id = "id",
           data_geom = ggbeeswarm::geom_quasirandom)
 
-# ## 8) model heteroscedasticity with nlme
-# nlme.full_log <- lme(log_fd ~ group*session*condition,  
-#                      random=~1|id, data=data_c, 
-#                      correlation=corAR1(0, form=~session|id),
-#                      method="ML")
-# check_model(nlme.full_log, panel=F)
+emmeans(lmer.red_log, pairwise ~ group, adjust="bonferroni")
+emmeans(lmer.red_log, pairwise ~ session)
 
 ```
 
@@ -385,28 +435,25 @@ pairwise_fisher_test(table(data$score, data$group), p.adjust.method="bonferroni"
 data <- pt_data %>% 
   filter(condition=="position")
 
-# ### histogramm
-# ggplot(data, aes(x=score)) +
-#   geom_histogram(binwidth=0.1) + 
-#   facet_wrap(~group)
-#   
-# ### normality
-# data %>% group_by(group, session) %>% shapiro_test(score)
-# ggqqplot(data, "score", ggtheme = theme_bw()) + facet_grid(~group)
-# 
-# ### homoscedasticity
-# data %>% levene_test(score ~ group)
+### 1) ANOVA
+anova_gmda <- aov(score ~ group*sex, data=data)
+check_model(anova_gmda, panel=F) # diagnostics: not great
+data %>% shapiro_test(score) # potentially non-normality
+data %>% levene_test(score ~ group) # potentially heteroscedasticity 
 
-### ANOVA
-summary(aov(score ~ group, data=data))
+summary(anova_gmda)
 pairwise.t.test(data$score, data$group, p.adjust.method="bonferroni")
 performance::r2(aov(score ~ group, data=data))
 
-### robust ANOVA (WSR2)
+
+### 2) robust ANOVA (WSR2)
 t1waybt(score ~ group, data=data, tr=0.2, nboot=2000)
 mcppb20(score ~ group, data=data, tr=0.2, nboot=2000)
+t2way(score ~ group + sex, data=data, tr=0.2)
+mcp2atm(score ~ group + sex, data=data, tr=0.2)
 
-### Kruskal-Wallis test 
+
+### 3) Kruskal-Wallis test 
 kruskal.test(score ~ group, data=data)
 dunn_test(score ~ group, data=data, p.adjust.method="bonferroni")
 
@@ -416,28 +463,25 @@ dunn_test(score ~ group, data=data, p.adjust.method="bonferroni")
 data <- pt_data %>% 
   filter(condition=="landmarks")
 
-# ### histogramm
-# ggplot(data, aes(x=score)) +
-#   geom_histogram(binwidth=0.1) +
-#   facet_wrap(~group)
-# 
-# ### normality
-# data %>% group_by(group, session) %>% shapiro_test(score)
-# ggqqplot(data, "score", ggtheme = theme_bw()) + facet_grid(~group)
-# 
-# ### homoscedasticity
-# data %>% levene_test(score ~ group)
+### 1) ANOVA
+anova_lm <- aov(score ~ group*sex, data=data)
+check_model(anova_gmda, panel=F) # diagnostics: not great
+data %>% shapiro_test(score) # potentially non-normality
+data %>% levene_test(score ~ group) # potentially heteroscedasticity 
 
-### ANOVA
-summary(aov(score ~ group, data=data))
+summary(anova_lm)
 pairwise.t.test(data$score, data$group, p.adjust.method="bonferroni")
 performance::r2(aov(score ~ group, data=data))
 
-### robust ANOVA (WSR2)
-t1waybt(score ~ group, data=data, tr=0.2, nboot=2000)
-#mcppb20(score ~ group, data=data, tr=0.2, nboot=2000)
 
-### Kruskal-Wallis test
+### 2) robust ANOVA (WSR2)
+t1waybt(score ~ group, data=data, tr=0.2, nboot=2000)
+mcppb20(score ~ group, data=data, tr=0.2, nboot=2000)
+t2way(score ~ group + sex, data=data, tr=0.2)
+mcp2atm(score ~ group + sex, data=data, tr=0.2)
+
+
+### 3) Kruskal-Wallis test 
 kruskal.test(score ~ group, data=data)
 dunn_test(score ~ group, data=data, p.adjust.method="bonferroni")
 
@@ -448,26 +492,26 @@ dunn_test(score ~ group, data=data, p.adjust.method="bonferroni")
 data <- pt_data %>% 
   filter(condition=="goals")
 
-# ### histogramm
-# ggplot(data, aes(x=score)) +
-#   geom_histogram(binwidth=0.1) + 
-#   facet_wrap(~group)
-#   
-# ### normality
-# data %>% group_by(group, session) %>% shapiro_test(score)
-# ggqqplot(data, "score", ggtheme = theme_bw()) + facet_grid(~group)
-# 
-# ### homoscedasticity
-# data %>% levene_test(score ~ group)
+### 1) ANOVA
+anova_goal <- aov(score ~ group*sex, data=data)
+check_model(anova_gmda, panel=F) # diagnostics: not great
+data %>% shapiro_test(score) # potentially non-normality
+data %>% levene_test(score ~ group) # potentially heteroscedasticity 
 
-### ANOVA
-summary(aov(score ~ group, data=data))
+summary(anova_goal)
+pairwise.t.test(data$score, data$group, p.adjust.method="bonferroni")
 performance::r2(aov(score ~ group, data=data))
 
-### robust ANOVA (WSR2)
-t1waybt(score ~ group, data=data, tr=0.2, nboot=2000)
 
-### Kruskal-Wallis test
+### 2) robust ANOVA (WSR2)
+t1waybt(score ~ group, data=data, tr=0.2, nboot=2000)
+mcppb20(score ~ group, data=data, tr=0.2, nboot=2000)
+t2way(score ~ group + sex, data=data, tr=0.2)
+mcp2atm(score ~ group + sex, data=data, tr=0.2)
+
+
+### 3) Kruskal-Wallis test 
 kruskal.test(score ~ group, data=data)
+dunn_test(score ~ group, data=data, p.adjust.method="bonferroni")
 
 ```
