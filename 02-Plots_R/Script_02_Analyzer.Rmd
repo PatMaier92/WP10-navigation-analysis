@@ -14,7 +14,7 @@ library(performance)
 library(rstatix)
 library(ggpubr)
 library(WRS2)
-library(WRS) # alternative: # source("Rallfun-v40.txt") # for WRS
+# library(WRS) # alternative: # source("Rallfun-v40.txt") # for WRS
 library(afex)
 library(lme4)
 library(nlme)
@@ -84,6 +84,7 @@ rm(t2)
 
 ```{r stats_data}
 
+## learning
 data_l <- sm_data %>%
   filter(exclude_trial_matlab==0) %>% 
   filter(condition %in% c("main_learn")) %>% 
@@ -92,28 +93,47 @@ data_l <- sm_data %>%
          block_f=factor(block),
          block_0=block-1,
          goal_f=factor(goal_i),
-         goal_identity_f=factor(goal_identity),
-         log_time=log(time),
-         log_pd=log(path_distance),
-         log_ed=log(zone_editdistance),
-         log_rot=log(rotation_xyz)) %>% 
+         goal_identity_f=factor(goal_identity)) %>% 
   droplevels()
 
+# box-cox transformation
+bc_t <- MASS::boxcox(time ~ group, data=data_l)
+lambda_t <- bc_t$x[which.max(bc_t$y)]
+bc_p <- MASS::boxcox(path_distance ~ group, data=data_l)
+lambda_p <- bc_p$x[which.max(bc_p$y)]
+data_l <- data_l %>% 
+  mutate(boxcox_time=((time^lambda_t-1)/lambda_t),
+         boxcox_path=((path_distance^lambda_p-1)/lambda_p))
+rm(bc_t, bc_p, lambda_t, lambda_p)
+
+## probe 
 data <- sm_data %>%
   filter(exclude_trial_matlab==0) %>% 
   filter(condition %in% c("allo_ret", "ego_ret")) %>% 
-  mutate(session_0=as.integer(session)-1,
-         log_time=log(time),
-         log_pd=log(path_distance),
-         log_ed=log(zone_editdistance),
-         log_pd_ch=log(chosen_path_distance)) %>% 
   droplevels()
 
+# box-cox transformation
+bc_t <- MASS::boxcox(time ~ group, data=data)
+lambda_t <- bc_t$x[which.max(bc_t$y)]
+bc_p <- MASS::boxcox(path_distance ~ group, data=data)
+lambda_p <- bc_p$x[which.max(bc_p$y)]
+data <- data %>% 
+  mutate(boxcox_time=((time^lambda_t-1)/lambda_t),
+         boxcox_path=((path_distance^lambda_p-1)/lambda_p))
+rm(bc_t, bc_p, lambda_t, lambda_p)
+
+
+## probe correct trials 
 data_c <- data %>% 
   filter(correct_final_alley==1) %>% 
-  mutate(session_0=as.integer(session)-1,
-         log_fd=log(final_distance)) %>% 
   droplevels()
+
+# box-cox transformation
+bc_f <- MASS::boxcox(final_distance ~ group, data=data_c)
+lambda_f <- bc_f$x[which.max(bc_f$y)]
+data <- data %>% 
+  mutate(boxcox_fd=((final_distance^lambda_f-1)/lambda_f))
+rm(bc_f, lambda_f)
 
 ```
 
@@ -145,192 +165,119 @@ ggplot(data_l, aes(x=rotation_xyz)) +
 # gamma <- fitdistr(data_l$time, "gamma")
 # qqp(data_l$time, "gamma", shape=gamma$estimate[[1]], rate=gamma$estimate[[2]])
 
-ggplot(data_l %>% filter(id < 12000), aes(x=trial_in_cond, y=time)) +
-  geom_point() +
-  scale_x_continuous(breaks=1:8) +
-  facet_wrap(~id)
+
+# ggplot(data_l %>% filter(id < 12000), aes(x=trial_in_cond, y=time)) +
+#   geom_point() +
+#   scale_x_continuous(breaks=1:8) +
+#   facet_wrap(~id)
 
 ```
 
 ```{r stats_learning_time}
 
 ## 1) gaussian 
-lmer.full <- mixed(time ~ (group+block_0+trial_in_cond_0)^2 + 
-                     (trial_in_cond_0*block_0|id), data=data_l, 
-                   # (trial_in_cond_0|id/block_0), data=data_l,
+lmer.red <- mixed(time ~ group*block_f*trial_in_cond_0 + 
+                     (block_f|id), data=data_l, expand_re=T,
+# lmer.red <- mixed(time ~ group*block_f*trial_in_cond_f + 
+#                      (block_f|id), data=data_l, expand_re=T,
                    control=lmerControl(optimizer="bobyqa",
                                        optCtrl=list(maxfun=1e6)))
-check_model(lmer.full$full_model, panel=F)
+check_model(lmer.red$full_model, panel=F)
 # model does converge but diagnostics bad
 
-## 2) gaussian with log-transformed outcome 
-lmer.full_log <- mixed(log_time ~ group*block_f*trial_in_cond_f + 
-                         (block_f|id), data=data_l, 
-                       control=lmerControl(optimizer="bobyqa",
-                                           optCtrl=list(maxfun=1e6)))
-check_model(lmer.full_log$full_model, panel=F)
-# model does converge but diagnostics only ok (some heteroscedasticity)
 
-simulationOutput <- simulateResiduals(fittedModel=lmer.full_log$full_model, 
+## 2) gaussian with log-transformed outcome: removed for clarity 
+
+
+## 3) gaussian with boxcox-transformed outcome 
+lmer.red_boxcox <- mixed(boxcox_time ~ group*block_f*trial_in_cond_0+ 
+                            (block_f|id), data=data_l, expand_re=T,
+                          control=lmerControl(optimizer="bobyqa",
+                                              optCtrl=list(maxfun=1e6)))
+check_model(lmer.red_boxcox$full_model, panel=F)
+simulationOutput <- simulateResiduals(fittedModel=lmer.red_boxcox$full_model, 
                                       plot=F)
-plot(simulationOutput)
 testResiduals(simulationOutput)
-# testOutliers(simulationOutput)
-# testUniformity(simulationOutput)
+plotResiduals(simulationOutput)
 testCategorical(simulationOutput, catPred=data_l$group)
 testCategorical(simulationOutput, catPred=data_l$block_f)
 testCategorical(simulationOutput, catPred=data_l$trial_in_cond_f)
-# not a good fit: outliers and heteroscedasticity 
+# not a good fit: heteroscedasticity 
 
-afex_plot(lmer.full_log, "trial_in_cond_f",  "group", "block_f", id="id",
-          data_geom=ggbeeswarm::geom_quasirandom)
+# trial as continuous for slopes
+emtrends(lmer.red_boxcox, pairwise ~ group, var="trial_in_cond_0")
+emtrends(lmer.red_boxcox, pairwise ~ block_f, var="trial_in_cond_0")
+# # trial as factor for polynomial contrasts 
+# emmeans(lmer.red_boxcox, pairwise ~ trial_in_cond_f | block_f, adjust="bonferroni")
+# t <- emmeans(lmer.red_boxcox, "trial_in_cond_f"
+# contrast(t, "poly")
+# main effects
+emmeans(lmer.red_boxcox, pairwise ~ group, adjust="bonferroni")
 
-# rg=ref_grid(lmer.full_log)
-# emmeans(rg, pairwise ~ group, adjust="bonferroni")
-# emmeans(rg, pairwise ~ trial_in_cond_f | block_f, adjust="bonferroni")
-# emmeans(rg, pairwise ~ c(trial_in_cond_f, group), adjust="bonferroni")
 
-## 3) gaussian with log link: does not converge
+## 4) gaussian with log link: does not converge
 
-## 4) gamma with identity link: does not converge
+## 5) gamma with identity link: does not converge
 
 ## 6) inverse gaussian with identity link: does not converge
 
-## 7) robustlmm: not applicable
-# rlmer.full <- robustlmm::rlmer(time ~ (group+block_0+trial_in_cond_0)^2 + 
-#                             (trial_in_cond_0*block_0|id), data=data_l)
-# plot(rlmer.full)
+## 7) robustlmm: does not work 
 
-## 8) model heteroscedasticity with nlme
-nlme.full1 <- lme(time ~ group*trial_in_cond_f,
-                 random=~ 1 | id,
-                 data=data_l, method="ML")
 
-nlme.full2 <- lme(time ~ group*trial_in_cond_f,
-                 random=~ 1 | id, 
-                 weights=varIdent(form= ~ 1 | group),
-                 data=data_l)
+## 8) model non-homogenous variances with nlme
+# set contrasts ?
+lme.red <- lme(time ~ group*block_f*trial_in_cond_0,
+                 random=~1+block_f  | id, 
+                 data=data_l, method="REML")
+plot(lme.red, resid(., type="p") ~ fitted(.) | group)
+plot(lme.red, group ~ resid(., type="p"))
+Anova(lme.red, type="III")
+anova.lme(lme.red)
 
-anova(nlme.full1, nlme.full2)
+lme.red_hetvar1 <- lme(time ~ group*block_f*trial_in_cond_0,
+                 random=~1+block_f | id,
+                 weights=varIdent(form=~1 | group),
+                 data=data_l, method="REML")
+plot(lme.red_hetvar1, resid(., type="p") ~ fitted(.) | group)
+plot(lme.red_hetvar1, group ~ resid(., type="p"))
+Anova(lme.red_hetvar1, type="III") # which type???
+anova.lme(lme.red_hetvar1)
 
-nlme.full2.VC <- nlme.full2$modelStruct$varStruct %>%
+# models get considerably better with boxcox + variance, effects seem the same 
+
+# model comparison
+anova(lme.red, lme.red_hetvar1)
+
+
+# extract estimated variance 
+lme.red_hetvar1.VC <- lme.red_hetvar1$modelStruct$varStruct %>%
   coef(unconstrained = FALSE, allCoef = TRUE) %>%
   enframe(name = "grp", value = "varStruct") %>%
-  mutate(sigma         = nlme.full2$sigma) %>%
+  mutate(sigma         = lme.red_hetvar1$sigma) %>%
   mutate(StandardError = sigma * varStruct) %>%
   mutate(Variance      = StandardError ^ 2)
 
 
-# model heteroscedasticity with glmmTMB
-data_l <- data_l %>%
-  mutate(unit=as.factor(1:n()))
+# post-test
+emtrends(lme.red_hetvar1, pairwise ~ group, var="trial_in_cond_0", adjust="bonferroni")
+emtrends(lme.red_hetvar1, pairwise ~ block_f, var="trial_in_cond_0", adjust="bonferroni")
+emmeans(lme.red_hetvar1, pairwise ~ group | block_f, adjust="bonferroni", mode="satterthwaite")
 
-
-glmmtmb.full1 <- glmmTMB(time ~ group*trial_in_cond_f + 
-                          (1 | id),
-                        REML=T,
-                        data = data_l)
-
-simulationOutput1 <- simulateResiduals(fittedModel=glmmtmb.full1, plot=F)
-plotResiduals(simulationOutput1)
-testResiduals(simulationOutput1)
-testCategorical(simulationOutput1, catPred=data_l$group)
-testCategorical(simulationOutput1, catPred=data_l$trial_in_cond_f)
-
-glmmtmb.full2 <- glmmTMB(log_time ~ group*trial_in_cond_f + 
-                          (1 | id) +
-                          diag(group + 0 | unit),
-                        dispformula = ~ 0, 
-                        REML=T,
-                        data = data_l)
-
-VarCorr(glmmtmb.full2) # same as nlme
-
-simulationOutput2 <- simulateResiduals(fittedModel=glmmtmb.full2, plot=F)
-plotResiduals(simulationOutput2)
-testResiduals(simulationOutput2)
-testCategorical(simulationOutput2, catPred=data_l$group)
-testCategorical(simulationOutput2, catPred=data_l$trial_in_cond_f)
-
-
-
-## 9) comparison to standard tests: same effect 
-summary(aov(time ~ (group+block_0+trial_in_cond_0)^2, data=data_l))
-bwtrim(time ~ group*trial_in_cond_0, id=id, data=data_l, tr=0.2, nboot=2000)
-bwtrim(time ~ group*block_0, id=id, data=data_l, tr=0.2, nboot=2000)
-bwtrim(time ~ trial_in_cond_0*block_0, id=id, data=data_l, tr=0.2, nboot=2000)
+# ## 9) comparison to standard tests: same effect 
+# summary(aov(time ~ (group+block_0+trial_in_cond_0)^2, data=data_l))
+# bwtrim(time ~ group*trial_in_cond_0, id=id, data=data_l, tr=0.2, nboot=2000)
+# bwtrim(time ~ group*block_0, id=id, data=data_l, tr=0.2, nboot=2000)
+# bwtrim(time ~ trial_in_cond_0*block_0, id=id, data=data_l, tr=0.2, nboot=2000)
 
 ```
 
 ```{r stats_learning_others}
 
 ### path distance
-## 1) gaussian 
-lmer.full <- mixed(path_distance ~ (group+block_0+trial_in_cond_0)^2 + 
-                     (trial_in_cond_0*block_0|id), data=data_l, 
-                   # (trial_in_cond_0|id/block_0), data=data_l,
-                   control=lmerControl(optimizer="bobyqa",
-                                       optCtrl=list(maxfun=1e6)))
-check_model(lmer.full$full_model, panel=F)
-# model does converge but diagnostics bad
-
-## 2) gaussian with log-transformed outcome 
-lmer.full_log <- mixed(log_pd ~ (group+block_0+trial_in_cond_0)^2 + 
-                         (trial_in_cond_0*block_0|id), data=data_l, 
-                         #(trial_in_cond_0|id/block_0), data=data_l, 
-                       control=lmerControl(optimizer="bobyqa",
-                                           optCtrl=list(maxfun=1e6)))
-check_model(lmer.full_log$full_model, panel=F)
-# model does converge but diagnostics only ok (some heteroscedasticity)
-
-## 8) model heteroscedasticity with nlme
-nlme.full <- lme(path_distance ~ (group+block_0+trial_in_cond_0)^2,
-                  random=~trial_in_cond_0|id/block_0,
-                  correlation=corCAR1(0.5, form=~trial_in_cond_0|id/block_0),
-                  data=data_l, method="ML")
-check_model(nlme.full, panel=F)
-
-nlme.full_log <- lme(log_pd ~ (group+block_0+trial_in_cond_0)^2,
-                 random=~trial_in_cond_0|id/block_0,
-                 correlation=corCAR1(0.5, form=~trial_in_cond_0|id/block_0),
-                 data=data_l, method="ML")
-check_model(nlme.full_log, panel=F)
-
 
 ### path edit distance 
-## 2) gaussian with log-transformed outcome 
-lmer.full_log <- mixed(log_ed ~ (group+block_0+trial_in_cond_0)^2 + 
-                         (trial_in_cond_0*block_0|id), data=data_l, 
-                         #(trial_in_cond_0|id/block_0), data=data_l, 
-                       control=lmerControl(optimizer="bobyqa",
-                                           optCtrl=list(maxfun=1e6)))
-check_model(lmer.full_log$full_model, panel=F)
-# model does converge but diagnostics bad (heteroscedasticity)
-
-## 8) model heteroscedasticity with nlme
-nlme.full_log <- lme(log_ed ~ (group+block_0+trial_in_cond_0)^2,
-                 random=~trial_in_cond_0|id/block_0,
-                 correlation=corCAR1(0.5, form=~trial_in_cond_0|id/block_0),
-                 data=data_l, method="ML")
-check_model(nlme.full_log, panel=F)
-
 
 ## rotation 
-## 1) gaussian 
-lmer.full <- mixed(rotation_xyz ~ (group+block_0+trial_in_cond_0)^2 + 
-                     (trial_in_cond_0*block_0|id), data=data_l, 
-                   # (trial_in_cond_0|id/block_0), data=data_l,
-                   control=lmerControl(optimizer="bobyqa",
-                                       optCtrl=list(maxfun=1e6)))
-check_model(lmer.full$full_model, panel=F)
-# model does converge but diagnostics bad
-
-## 8) model heteroscedasticity with nlme
-nlme.full_log <- lme(rotation_xyz ~ (group+block_0+trial_in_cond_0)^2,
-                 random=~trial_in_cond_0|id/block_0,
-                 correlation=corCAR1(0.5, form=~trial_in_cond_0|id/block_0),
-                 data=data_l, method="ML")
-check_model(nlme.full_log, panel=F)
 
 ```
 
@@ -488,7 +435,8 @@ dunn_test(change_reldiff ~ group, data=data_prepost, p.adjust.method="bonferroni
 ```{r stats_layout}
 
 data <- pt_data %>% 
-  filter(condition=="layout")
+  filter(condition=="layout") %>% 
+  drop_na(score)
 
 fisher.test(table(data$score, data$group))
 pairwise_fisher_test(table(data$score, data$group), p.adjust.method="bonferroni")
@@ -498,7 +446,8 @@ pairwise_fisher_test(table(data$score, data$group), p.adjust.method="bonferroni"
 ```{r stats_gmda}
 
 data <- pt_data %>% 
-  filter(condition=="position")
+  filter(condition=="position") %>% 
+  drop_na(score)
 
 ### 1) ANOVA
 anova_gmda <- aov(score ~ group*sex, data=data)
@@ -525,7 +474,8 @@ dunn_test(score ~ group, data=data, p.adjust.method="bonferroni")
 
 ```{r stats_landmark}
 data <- pt_data %>% 
-  filter(condition=="landmarks")
+  filter(condition=="landmarks") %>% 
+  drop_na(score)
 
 ### 1) ANOVA
 anova_lm <- aov(score ~ group*sex, data=data)
