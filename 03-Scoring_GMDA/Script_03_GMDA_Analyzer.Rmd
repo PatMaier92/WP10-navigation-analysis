@@ -19,7 +19,7 @@ library(patchwork)
 
 ```{r load_data, include=F}
 
-date <- "all_220330"
+date <- "220421"
 my_path <- "GMDA/Data/"
 load(paste(my_path, "wp10_GMDA_data_", date, ".Rdata", sep=""))
 
@@ -57,19 +57,19 @@ ggplot(data_gmda, aes(x=group, y=score, fill=group)) +
 
 ```{r load_protocols, include=F}
 
-date <- "220330"
+date <- "220421"
 my_path <- "GMDA/Data/"
 
 protocol <- "all"
-load(paste(my_path, "wp10_GMDA_data_", protocol, "_", date, ".Rdata", sep=""))
+load(paste(my_path, "wp10_GMDA_data_", date, "_", protocol, ".Rdata", sep=""))
 protocol_all <- data_gmda %>% mutate(protocol="all")
 
 protocol <- "landmark"
-load(paste(my_path, "wp10_GMDA_data_", protocol, "_", date, ".Rdata", sep=""))
+load(paste(my_path, "wp10_GMDA_data_", date, "_", protocol, ".Rdata", sep=""))
 protocol_lm <- data_gmda %>% mutate(protocol="landmark")
 
 protocol <- "goals"
-load(paste(my_path, "wp10_GMDA_data_", protocol, "_", date, ".Rdata", sep=""))
+load(paste(my_path, "wp10_GMDA_data_", date, "_", protocol, ".Rdata", sep=""))
 protocol_go <- data_gmda %>% mutate(protocol="goals")
 
 data <- bind_rows(protocol_all, protocol_lm, protocol_go)
