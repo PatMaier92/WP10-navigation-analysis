@@ -460,15 +460,21 @@ tic;
                       
                 %% rotation analysis
                 % TOTAL XYZ ROTATION
-                % calculate total rotation as change in yaw rotation (r)
+                % calculate total rotation in degrees as change in yaw rotation (r)
                 % this value includes rotation due to x-/y-trajectory (i.e. left-forward movement)
-                % and additional rotation on the spot (i.e. left movement) 
-                rot=0;
+                rot=zeros(1,length(r)-1); 
                 for j=2:length(r)
-                    rot=rot+abs(r(j)-r(j-1));
+                    temp=abs(r(j)-r(j-1));
+                    if temp > 180 % correct errors due to switch at 0° to 360°
+                        temp=360-temp; 
+                    end 
+                    rot(j-1)=temp;
                 end
-                sm.participant(p).session(s).trial(k).rotation_xyz=rot; clear rot j; 
+                sm.participant(p).session(s).trial(k).rotation_xyz=sum(rot); clear rot j temp; 
                 
+                %%% TBD CHANGE %%% 1) rotation_degrees, 2) rotatio_full_turns, 3) rotation_by_path_length/by_data_points
+                
+                %%% TBD CHECK XY %%% must be on a different scale or erroneous if larger than xyz %%% 
                 % XY ROTATION
                 % calculate rotation due to unqiue x-/y-trajectory (i.e. left-forward movement)
                 sm.participant(p).session(s).trial(k).rotation_xy = computeXYRotation(x_unique, y_unique);
