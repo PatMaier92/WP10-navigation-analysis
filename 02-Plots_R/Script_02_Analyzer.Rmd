@@ -277,7 +277,20 @@ emmeans(lme.red_hetvar1, pairwise ~ group | block_f, adjust="bonferroni", mode="
 
 ### path edit distance 
 
-## rotation 
+### rotation 
+
+t <- data_l %>% 
+  select(id, group, session, trial_num, goal_i, path_length, rotation_xyz, rotation_xy, rotation_z) %>% 
+  mutate(goal_i=factor(goal_i),
+         rotation_xyz_n=rotation_xyz/360,
+         rotation_xy_n=rotation_xy/360,
+         flag=rotation_xy>rotation_xyz)
+
+ggplot(data=t, aes(x=path_length, y=rotation_xy, color=flag)) + geom_point() + facet_wrap(~goal_i)
+ggplot(data=t, aes(x=path_length, y=rotation_xyz, color=flag)) + geom_point() + facet_wrap(~goal_i)
+ggplot(data=t, aes(x=rotation_xyz, y=rotation_xy, color=flag)) + geom_point() + facet_wrap(~goal_i)
+ggplot(data=t, aes(x=rotation_xyz_n/path_length)) + geom_histogram()
+ggplot(data=t, aes(x=rotation_xy_n/path_length)) + geom_histogram()
 
 ```
 
