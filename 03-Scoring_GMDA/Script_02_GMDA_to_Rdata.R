@@ -64,8 +64,10 @@ bdr_data <- file_list %>%
 #   separate(Filename, sep="_", into=c("id", "Rotation"))
 
 
-# check for "bad" theta values (> 20)
-bad_theta <- bdr_data %>% filter(Measure=="theta") %>% filter(abs(Score) > 20) 
+# check for "bad" theta values (> 10)
+threshold <- 10
+# threshold <- as.numeric(readline("Enter theta threshold: "))
+bad_theta <- bdr_data %>% filter(Measure=="theta") %>% filter(abs(Score) > threshold) 
 bad_theta
 
 
