@@ -331,9 +331,15 @@ emmeans(mixed.red, pairwise ~ group, type="response", adjust="bonferroni")
 emmeans(mixed.red, pairwise ~ session, type="response")
 emmeans(mixed.red, pairwise ~ condition, type="response")
 
+# TBD: add effect size for contrasts 
+# emV <- emmeans(mixed.red, ~ condition)
+# eff_size(emV, sigma=sigma(mixed.red$full_model), edf=df.residual(mixed.red$full_model))
 
-### change in correct final alley (aggregated data) 
-data_prepost <- data %>%
+
+### correct final alley during session 1 (learning only)
+
+### change in correct final alley (aggregated data) over time 
+data_prepost <- sm_data %>%
   filter(exclude_trial_matlab==0) %>%
   filter(condition %in% c("allo_ret", "ego_ret")) %>%
   select(id, group, session, trial_num, condition, correct_final_alley) %>%
@@ -346,7 +352,8 @@ data_prepost <- data %>%
   mutate(change_diff=s_2-s_1,
          change_rel=s_2/s_1,
          change_reldiff=(s_2-s_1)/s_1) %>% 
-  ungroup()
+  ungroup() %>% 
+  droplevels()
 
 # 1) robust ANOVA from WRS/WRS2 
 # a) two-way with factors group and condition (issue: contrasts are weird, therefore one-way post-hoc!)
@@ -439,6 +446,20 @@ dunn_test(change_rel ~ group, data=data_prepost, p.adjust.method="bonferroni")
 
 kruskal.test(change_reldiff ~ group, data=data_prepost)
 dunn_test(change_reldiff ~ group, data=data_prepost, p.adjust.method="bonferroni")
+
+```
+
+
+```{r stats_strategy}
+
+t <- data %>% 
+  filter(condition=="allo_ret", session==1) %>% 
+  drop_na(search_strategy_in_allo) %>% 
+  mutate(search_strategy_2=fct_recode(search_strategy_in_allo, allo="direct_allo", 
+                                      allo="detour_allo", ego="direct_ego", ego="detour_ego"))
+
+table(t$search_strategy_2, t$group)
+fisher.test(table(t$search_strategy_2, t$group), simulate.p.value=T)
 
 ```
 
