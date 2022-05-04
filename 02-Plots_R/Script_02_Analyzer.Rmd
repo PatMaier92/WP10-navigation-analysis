@@ -26,7 +26,7 @@ library(DHARMa)
 # tinytex::install_tinytex() # latex for pdf file creation
 
 # set contrast coding
-options(contrasts=c(unordered ="contr.sum", ordered ="contr.poly"))
+#options(contrasts=c(unordered="contr.sum", ordered="contr.poly"))
 
 ```
 
