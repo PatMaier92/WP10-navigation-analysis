@@ -69,7 +69,7 @@ Available post-navigation data
  
 ```{r demo_2, echo=F, message=F, warning=F}
 t2 <- pt_data %>% 
-  filter(trial_num==1) %>% 
+  filter(trial_num==4) %>% 
   select(group, sex) %>%
   tbl_summary(by=group,
               label=list(sex ~ "Gender"),
@@ -475,6 +475,49 @@ data <- pt_data %>%
 fisher.test(table(data$score, data$group))
 pairwise_fisher_test(table(data$score, data$group), p.adjust.method="bonferroni")
 
+```
+
+```{r stats_gmda_explore}
+
+file_name <- "../WP10_data/WP10_results/wp10_GMDA_data_220505.Rdata"
+load(file_name)
+rm(file_name)
+
+
+# individual scores 
+CanOrg <- data_gmda %>% filter(gmda_measure=="SQRT(CanOrg)")
+CanAcc <- data_gmda %>% filter(gmda_measure=="CanAcc")
+DistAcc <- data_gmda %>% filter(gmda_measure=="DistAcc")
+AngleAcc <- data_gmda %>% filter(gmda_measure=="AngleAcc")
+
+boxplot <- function(d){
+  ggplot(data=d, aes(x=group, y=score, fill=group)) +
+    geom_boxplot(outlier.shape=NA) +
+    geom_point()
+}
+
+boxplot(CanOrg)
+lincon(score ~ group, data=CanOrg, tr=0.2, nboot=2000, method="bonferroni")
+
+boxplot(CanAcc)
+lincon(score ~ group, data=CanAcc, tr=0.2, nboot=2000, method="bonferroni")
+
+boxplot(DistAcc)
+lincon(score ~ group, data=DistAcc, tr=0.2, nboot=2000, method="bonferroni")
+
+boxplot(AngleAcc)
+lincon(score ~ group, data=AngleAcc, tr=0.2, nboot=2000, method="bonferroni")
+
+
+# composite score
+GMDA <- data_gmda %>% filter(gmda_measure %in% c("SQRT(CanOrg)", "CanAcc", "DistAcc", "AngleAcc")) %>%
+  group_by(id, group) %>% summarise(score=mean(score))
+
+boxplot(GMDA)
+lincon(score ~ group, data=GMDA, tr=0.2, nboot=2000, method="bonferroni")
+
+
+rm(data_gmda, GMDA, CanOrg, CanAcc, DistAcc, AngleAcc, boxplot)
 ```
 
 ```{r stats_gmda}
