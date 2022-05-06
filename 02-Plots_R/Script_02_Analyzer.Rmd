@@ -43,9 +43,9 @@ rm(file_name)
 ```
 
 
-## Demographics 
+### Demographics 
 
-Available navigation data 
+##### Available navigation data 
 
 ```{r demo_1, echo=F, message=F, warning=F}
 t1 <- sm_data %>% 
@@ -65,7 +65,7 @@ rm(t1)
 #   flextable::save_as_docx(path="TEST.docx")
 ```
  
-Available post-navigation data 
+##### Available post-navigation data 
  
 ```{r demo_2, echo=F, message=F, warning=F}
 t2 <- pt_data %>% 
@@ -84,27 +84,30 @@ rm(t2)
 
 ```{r stats_data}
 
+## practise motor control
+data_p <- sm_data %>%
+  filter(condition %in% c("practise")) %>%  
+  select(id, group, sex, time, path_length, velocity) %>% 
+  droplevels()
+
 ## learning
 data_l <- sm_data %>%
   filter(exclude_trial_matlab==0) %>% 
   filter(condition %in% c("main_learn")) %>% 
   mutate(trial_in_cond_f=factor(trial_in_cond),
          trial_in_cond_0=trial_in_cond-1,
-         block_f=factor(block),
-         block_0=block-1,
-         goal_f=factor(goal_i),
-         goal_identity_f=factor(goal_identity)) %>% 
+         block_f=factor(block)) %>% 
   droplevels()
 
-# box-cox transformation
-bc_t <- MASS::boxcox(time ~ group, data=data_l)
-lambda_t <- bc_t$x[which.max(bc_t$y)]
-bc_p <- MASS::boxcox(path_distance ~ group, data=data_l)
-lambda_p <- bc_p$x[which.max(bc_p$y)]
-data_l <- data_l %>% 
-  mutate(boxcox_time=((time^lambda_t-1)/lambda_t),
-         boxcox_path=((path_distance^lambda_p-1)/lambda_p))
-rm(bc_t, bc_p, lambda_t, lambda_p)
+# # box-cox transformation
+# bc_t <- MASS::boxcox(time ~ group, data=data_l)
+# lambda_t <- bc_t$x[which.max(bc_t$y)]
+# bc_p <- MASS::boxcox(path_distance ~ group, data=data_l)
+# lambda_p <- bc_p$x[which.max(bc_p$y)]
+# data_l <- data_l %>% 
+#   mutate(boxcox_time=((time^lambda_t-1)/lambda_t),
+#          boxcox_path=((path_distance^lambda_p-1)/lambda_p))
+# rm(bc_t, bc_p, lambda_t, lambda_p)
 
 ## probe 
 data <- sm_data %>%
@@ -112,210 +115,189 @@ data <- sm_data %>%
   filter(condition %in% c("allo_ret", "ego_ret")) %>% 
   droplevels()
 
-# box-cox transformation
-bc_t <- MASS::boxcox(time ~ group, data=data)
-lambda_t <- bc_t$x[which.max(bc_t$y)]
-bc_p <- MASS::boxcox(path_distance ~ group, data=data)
-lambda_p <- bc_p$x[which.max(bc_p$y)]
-data <- data %>% 
-  mutate(boxcox_time=((time^lambda_t-1)/lambda_t),
-         boxcox_path=((path_distance^lambda_p-1)/lambda_p))
-rm(bc_t, bc_p, lambda_t, lambda_p)
-
-
 ## probe correct trials 
-data_c <- data %>% 
+data_c <- sm_data %>% 
+  filter(exclude_trial_matlab==0) %>% 
+  filter(condition %in% c("allo_ret", "ego_ret")) %>% 
   filter(correct_final_alley==1) %>% 
   droplevels()
 
-# box-cox transformation
-bc_f <- MASS::boxcox(final_distance ~ group, data=data_c)
-lambda_f <- bc_f$x[which.max(bc_f$y)]
-data <- data %>% 
-  mutate(boxcox_fd=((final_distance^lambda_f-1)/lambda_f))
-rm(bc_f, lambda_f)
-
 ```
 
 
-### Navigation: Learning trials 
+### Navigation
+#### Motor control trial 
 
-```{r stats_hist}
+```{r stats_motor_control}
 
-ggplot(data_l, aes(x=time)) +
-  geom_histogram() +
-  facet_wrap(~group)
+# ::: METHOD: single value per person, therefore (robust) ANOVA ::: #
 
-ggplot(data_l, aes(x=path_distance)) +
-  geom_histogram() +
-  facet_wrap(~group)
+# time: GROUPS DIFFER SIGNIFICANTLY 
+t1way(time ~ group, data=data_p, tr=0.2, alpha=0.05, nboot=2000)
+lincon(time ~ group, data=data_p, tr=0.2, alpha=0.05,  nboot=2000, method="bonferroni")
 
-ggplot(data_l, aes(x=zone_editdistance)) +
-  geom_histogram() +
-  facet_wrap(~group)
+# path length: GROUPS DIFFER SIGNIFICANTLY
+t1way(path_length ~ group, data=data_p, tr=0.2, alpha=0.05, nboot=2000)
+lincon(path_length ~ group, data=data_p, tr=0.2, alpha=0.05,  nboot=2000, method="bonferroni")
 
-ggplot(data_l, aes(x=rotation_xyz)) +
-  geom_histogram() +
-  facet_wrap(~group)
+# velocity: no differences 
+t1way(velocity ~ group, data=data_p, tr=0.2, alpha=0.05, nboot=2000)
+lincon(velocity ~ group, data=data_p, tr=0.2, alpha=0.05,  nboot=2000, method="bonferroni")
 
-
-# # check distribution
-# qqp(data_l$time, "norm")
-# qqp(data_l$time, "lnorm")
-# gamma <- fitdistr(data_l$time, "gamma")
-# qqp(data_l$time, "gamma", shape=gamma$estimate[[1]], rate=gamma$estimate[[2]])
-
-
-# ggplot(data_l %>% filter(id < 12000), aes(x=trial_in_cond, y=time)) +
-#   geom_point() +
-#   scale_x_continuous(breaks=1:8) +
-#   facet_wrap(~id)
+# ::: MEANING: during practise, the younger the participants, the longer they take to complete the trial and the more they deviate from an ideal path (i.e. difficulties with joystick motor control) --> include time, path length and/or velocity as covariate ::: #
 
 ```
 
-```{r stats_learning_time}
+#### Learning trials 
 
-## 1) gaussian 
-lmer.red <- mixed(time ~ group*block_f*trial_in_cond_0 + 
-                     (block_f|id), data=data_l, expand_re=T,
-# lmer.red <- mixed(time ~ group*block_f*trial_in_cond_f + 
-#                      (block_f|id), data=data_l, expand_re=T,
-                   control=lmerControl(optimizer="bobyqa",
-                                       optCtrl=list(maxfun=1e6)))
-check_model(lmer.red$full_model, panel=F)
-# model does converge but diagnostics bad
+```{r stats_learning}
 
+# ::: METHOD: per person 8 trials á 3 blocks (= 24 trials) with continuous outcome, therefore lmm model ::: #
+# watch out for convergence (stepwise reduction of random effects), normality of residuals, homoscedasticity and outliers # 
 
-## 2) gaussian with log-transformed outcome: removed for clarity 
-
-
-## 3) gaussian with boxcox-transformed outcome 
-lmer.red_boxcox <- mixed(boxcox_time ~ group*block_f*trial_in_cond_0+ 
-                            (block_f|id), data=data_l, expand_re=T,
-                          control=lmerControl(optimizer="bobyqa",
-                                              optCtrl=list(maxfun=1e6)))
-check_model(lmer.red_boxcox$full_model, panel=F)
-simulationOutput <- simulateResiduals(fittedModel=lmer.red_boxcox$full_model, 
-                                      plot=F)
+## -- time -- ##
+# 1) standard lmer model 
+learn.time <- mixed(time ~ group*block_f*trial_in_cond_0 + (block_f|id), 
+                    data=data_l, expand_re=T,
+                    control=lmerControl(optimizer="bobyqa", optCtrl=list(maxfun=1e6)))
+# check model
+simulationOutput <- simulateResiduals(fittedModel=learn.time$full_model, plot=F)
 testResiduals(simulationOutput)
 plotResiduals(simulationOutput)
 testCategorical(simulationOutput, catPred=data_l$group)
-testCategorical(simulationOutput, catPred=data_l$block_f)
-testCategorical(simulationOutput, catPred=data_l$trial_in_cond_f)
-# not a good fit: heteroscedasticity 
-
-# trial as continuous for slopes
-emtrends(lmer.red_boxcox, pairwise ~ group, var="trial_in_cond_0")
-emtrends(lmer.red_boxcox, pairwise ~ block_f, var="trial_in_cond_0")
-# # trial as factor for polynomial contrasts 
-# emmeans(lmer.red_boxcox, pairwise ~ trial_in_cond_f | block_f, adjust="bonferroni")
-# t <- emmeans(lmer.red_boxcox, "trial_in_cond_f"
-# contrast(t, "poly")
-# main effects
-emmeans(lmer.red_boxcox, pairwise ~ group, adjust="bonferroni")
+# model diagnostics are bad
 
 
-## 4) gaussian with log link: does not converge
+# 2) standard lmer model with log-transformed outcome OR boxcox-transformed outcome
+data_l <- data_l %>% 
+  mutate(time_log=log(time))
 
-## 5) gamma with identity link: does not converge
-
-## 6) inverse gaussian with identity link: does not converge
-
-## 7) robustlmm: does not work 
-
-
-## 8) model non-homogenous variances with nlme
-# set contrasts ?
-lme.red <- lme(time ~ group*block_f*trial_in_cond_0,
-                 random=~1+block_f  | id, 
-                 data=data_l, method="REML")
-plot(lme.red, resid(., type="p") ~ fitted(.) | group)
-plot(lme.red, group ~ resid(., type="p"))
-Anova(lme.red, type="III")
-anova.lme(lme.red)
-
-lme.red_hetvar1 <- lme(time ~ group*block_f*trial_in_cond_0,
-                 random=~1+block_f | id,
-                 weights=varIdent(form=~1 | group),
-                 data=data_l, method="REML")
-plot(lme.red_hetvar1, resid(., type="p") ~ fitted(.) | group)
-plot(lme.red_hetvar1, group ~ resid(., type="p"))
-Anova(lme.red_hetvar1, type="III") # which type???
-anova.lme(lme.red_hetvar1)
-
-# models get considerably better with boxcox + variance, effects seem the same 
-
-# model comparison
-anova(lme.red, lme.red_hetvar1)
+learn.time_log <- mixed(time_log ~ group*block_f*trial_in_cond_0 + (block_f|id), 
+                    data=data_l, expand_re=T,
+                    control=lmerControl(optimizer="bobyqa", optCtrl=list(maxfun=1e6)))
+# check model
+simulationOutput <- simulateResiduals(fittedModel=learn.time_log$full_model, plot=F)
+testResiduals(simulationOutput)
+plotResiduals(simulationOutput)
+testCategorical(simulationOutput, catPred=data_l$group)
+# model diagnostics are bad
 
 
-# extract estimated variance 
-lme.red_hetvar1.VC <- lme.red_hetvar1$modelStruct$varStruct %>%
-  coef(unconstrained = FALSE, allCoef = TRUE) %>%
-  enframe(name = "grp", value = "varStruct") %>%
-  mutate(sigma         = lme.red_hetvar1$sigma) %>%
-  mutate(StandardError = sigma * varStruct) %>%
-  mutate(Variance      = StandardError ^ 2)
+## 3) advanced lme model with variance estimation 
+# TBD: HOW TO SET CONTRASTS RIGHT?  
+learn.time_hetvar <- lme(time ~ group*block_f*trial_in_cond_0,
+                        # random=~1 | id, 
+                         random=~1+block_f | id, # did not converge
+                         weights=varIdent(form=~1 | group),
+                         data=data_l, method="REML")
+plot(learn.time_hetvar, resid(., type="p") ~ fitted(.) | group)
+plot(learn.time_hetvar, group ~ resid(., type="p"))
+
+# # extract estimated variance 
+# learn.time_hetvar <- learn.time_hetvar$modelStruct$varStruct %>%
+#   coef(unconstrained = FALSE, allCoef = TRUE) %>%
+#   enframe(name = "grp", value = "varStruct") %>%
+#   mutate(sigma         = learn.time_hetvar$sigma) %>%
+#   mutate(StandardError = sigma * varStruct) %>%
+#   mutate(Variance      = StandardError ^ 2)
 
 
-# post-test
-emtrends(lme.red_hetvar1, pairwise ~ group, var="trial_in_cond_0", adjust="bonferroni")
-emtrends(lme.red_hetvar1, pairwise ~ block_f, var="trial_in_cond_0", adjust="bonferroni")
-emmeans(lme.red_hetvar1, pairwise ~ group | block_f, adjust="bonferroni", mode="satterthwaite")
+## 4) advanced lme model with variance estimation and log-transformed outcome OR boxcox-transformed outcome
+# TBD: HOW TO SET CONTRASTS RIGHT?  
+learn.time_hetvar_log <- lme(time_log ~ group*block_f*trial_in_cond_0,
+                         random=~1+block_f | id, 
+                         weights=varIdent(form=~1 | group),
+                         data=data_l, method="REML")
+plot(learn.time_hetvar_log, resid(., type="p") ~ fitted(.) | group)
+plot(learn.time_hetvar_log, group ~ resid(., type="p"))
 
-# ## 9) comparison to standard tests: same effect 
-# summary(aov(time ~ (group+block_0+trial_in_cond_0)^2, data=data_l))
-# bwtrim(time ~ group*trial_in_cond_0, id=id, data=data_l, tr=0.2, nboot=2000)
-# bwtrim(time ~ group*block_0, id=id, data=data_l, tr=0.2, nboot=2000)
-# bwtrim(time ~ trial_in_cond_0*block_0, id=id, data=data_l, tr=0.2, nboot=2000)
+# # post-test
+# emtrends(learn.time_hetvar_log, pairwise ~ group, var="trial_in_cond_0", adjust="bonferroni")
+# emtrends(learn.time_hetvar_log, pairwise ~ block_f, var="trial_in_cond_0", adjust="bonferroni")
+# emmeans(learn.time_hetvar_log, pairwise ~ group | block_f, adjust="bonferroni", mode="satterthwaite")
+
+
+## -- path metric distance -- ##
+
+## 1) standard lme model without variance estimation 
+# TBD: HOW TO SET CONTRASTS RIGHT?  
+learn.path <- lme(path_distance ~ group*block_f*trial_in_cond_0,
+                  random=~1+block_f | id, 
+                  data=data_l, method="REML")
+plot(learn.path, resid(., type="p") ~ fitted(.) | group)
+plot(learn.path, group ~ resid(., type="p"))
+
+
+## 2) advanced lme model wit variance estimation 
+# TBD: HOW TO SET CONTRASTS RIGHT?  
+learn.path_hetvar <- lme(path_distance ~ group*block_f*trial_in_cond_0,
+                  random=~1+block_f | id, 
+                  weights=varIdent(form=~1 | group),
+                  data=data_l, method="REML")
+plot(learn.path_hetvar, resid(., type="p") ~ fitted(.) | group)
+plot(learn.path_hetvar, group ~ resid(., type="p"))
+
+anova(learn.path, learn.path_hetvar) # variance estimation improves model 
+
+
+## 3) lme model wit variance estimation and log-transformed outcome OR boxcox-transformed outcome  
+# TBD: HOW TO SET CONTRASTS RIGHT? 
+data_l <- data_l %>% 
+  mutate(path_log=log(path_distance))
+
+learn.path_hetvar_log <- lme(path_log ~ group*block_f*trial_in_cond_0,
+                  random=~1+block_f | id, 
+                  weights=varIdent(form=~1 | group),
+                  data=data_l, method="REML")
+plot(learn.path_hetvar_log, resid(., type="p") ~ fitted(.) | group)
+plot(learn.path_hetvar_log, group ~ resid(., type="p"))
+
+
+## -- path edit distance -- ##
+## 1) standard lme model without variance estimation 
+# TBD: HOW TO SET CONTRASTS RIGHT? 
+learn.path_ed <- lme(zone_editdistance ~ group*block_f*trial_in_cond_0,
+                  random=~1+block_f | id, 
+                  data=data_l, method="REML")
+plot(learn.path_ed, resid(., type="p") ~ fitted(.) | group)
+plot(learn.path_ed, group ~ resid(., type="p"))
+
+
+## 2) advanced lme model wit variance estimation
+# TBD: HOW TO SET CONTRASTS RIGHT? 
+learn.path_ed_hetvar <- lme(zone_editdistance ~ group*block_f*trial_in_cond_0,
+                  random=~1+block_f | id, 
+                  weights=varIdent(form=~1 | group),
+                  data=data_l, method="REML")
+plot(learn.path_ed_hetvar, resid(., type="p") ~ fitted(.) | group)
+plot(learn.path_ed_hetvar, group ~ resid(., type="p"))
+
+anova(learn.path_ed, learn.path_ed_hetvar) # variance estimation improves model 
+
+
+## -- target metric distance -- ##
+
+## -- (initial) rotation  -- ##
+
 
 ```
 
-```{r stats_learning_others}
+#### Probe trials 
 
-### path distance
+```{r stats_probe_gl_accuracy}
 
-### path edit distance 
+# ::: METHOD: per person several trials (session, condition) with binomial outcome, therefore glmm model ::: #
+# watch out for convergence (stepwise reduction of random effects) # 
 
-### rotation 
-
-t <- data_l %>% 
-  select(id, group, session, trial_num, goal_i, path_length, rotation_xyz, rotation_xy, rotation_z) %>% 
-  mutate(goal_i=factor(goal_i),
-         rotation_xyz_n=rotation_xyz/360,
-         rotation_xy_n=rotation_xy/360,
-         flag=rotation_xy>rotation_xyz)
-
-ggplot(data=t, aes(x=path_length, y=rotation_xy, color=flag)) + geom_point() + facet_wrap(~goal_i)
-ggplot(data=t, aes(x=path_length, y=rotation_xyz, color=flag)) + geom_point() + facet_wrap(~goal_i)
-ggplot(data=t, aes(x=rotation_xyz, y=rotation_xy, color=flag)) + geom_point() + facet_wrap(~goal_i)
-ggplot(data=t, aes(x=rotation_xyz_n/path_length)) + geom_histogram()
-ggplot(data=t, aes(x=rotation_xy_n/path_length)) + geom_histogram()
-
-```
-
-
-### Navigation: Probe trials 
-
-```{r stats_correct}
-
-### correct final alley
-# 1) full binomial model with random intercept, slope and correlations: does not converge 
-mixed.full <- mixed(correct_final_alley ~ group*session*condition + sex + 
-                      (session*condition|id), data=data, 
-                    family=binomial(link="logit"), method="LRT",
-                    control=glmerControl(optimizer="bobyqa",
-                                         optCtrl=list(maxfun=1e6)))
-
-# 2) full binomial model with random intercept and slope, no correlations: does converge
-mixed.red <- mixed(correct_final_alley ~ group*session*condition + sex +
+# -- correct final alley -- ##
+# 1) full binomial model (with reduced random effects due to failed convergence)
+probe.acc <- mixed(correct_final_alley ~ group*session*condition + sex + 
                      (session*condition||id), data=data, expand_re=T,
                    family=binomial(link="logit"), method="LRT",
-                   control=glmerControl(optimizer="bobyqa",
-                                        optCtrl=list(maxfun=1e6)))
+                   control=glmerControl(optimizer="bobyqa", optCtrl=list(maxfun=1e6)))
 
-# model check with DHARMa
-simulationOutput <- simulateResiduals(fittedModel=mixed.red$full_model, plot=F)
+# check model
+simulationOutput <- simulateResiduals(fittedModel=probe.acc$full_model, plot=F)
 testResiduals(simulationOutput) 
 plotResiduals(simulationOutput) 
 testCategorical(simulationOutput, catPred=data$group)
@@ -324,21 +306,23 @@ testCategorical(simulationOutput, catPred=data$condition)
 # diagnostics: ok 
 
 # post-test for fixed effects
-afex_plot(mixed.red, "session", "group", "condition", id = "id",
+# TBD: add effect size for contrasts 
+afex_plot(probe.acc, "session", "group", "condition", id = "id",
           data_geom = ggbeeswarm::geom_quasirandom)
 
-emmeans(mixed.red, pairwise ~ group, type="response", adjust="bonferroni")
-emmeans(mixed.red, pairwise ~ session, type="response")
-emmeans(mixed.red, pairwise ~ condition, type="response")
+emmeans(probe.acc, pairwise ~ group, type="response", adjust="bonferroni")
+emmeans(probe.acc, pairwise ~ session, type="response")
+emmeans(probe.acc, pairwise ~ condition, type="response")
 
-# TBD: add effect size for contrasts 
-# emV <- emmeans(mixed.red, ~ condition)
-# eff_size(emV, sigma=sigma(mixed.red$full_model), edf=df.residual(mixed.red$full_model))
+# ::: MEANING: Significant differences between age groups (the older, the better), sessions (s1 better than s2) and slight difference between conditions (ego slightly better than allo) ::: # 
 
+```
 
-### correct final alley during session 1 (learning only)
+```{r stats_probe_gl_accuracy_change}
 
-### change in correct final alley (aggregated data) over time 
+# ::: METHOD: one aggregated value per person, therefore (robust) ANOVA ::: #  
+
+# --- change calculation --- #
 data_prepost <- sm_data %>%
   filter(exclude_trial_matlab==0) %>%
   filter(condition %in% c("allo_ret", "ego_ret")) %>%
@@ -351,120 +335,96 @@ data_prepost <- sm_data %>%
   summarise_at(vars(s_1, s_2), mean, na.rm=T) %>% 
   mutate(change_diff=s_2-s_1,
          change_rel=s_2/s_1,
-         change_reldiff=(s_2-s_1)/s_1) %>% 
+         change_reldiff=(s_2-s_1)/s_1,
+         change_reldiff_log=log(change_reldiff+10)) %>% 
   ungroup() %>% 
   droplevels()
 
-# 1) robust ANOVA from WRS/WRS2 
-# a) two-way with factors group and condition (issue: contrasts are weird, therefore one-way post-hoc!)
-t2way(change_rel ~ group*condition, data=data_prepost, tr=0.2, nboot=2000)
-t2way(change_reldiff ~ group*condition, data=data_prepost, tr=0.2, nboot=2000)
 
-# b) one way with factor group for post-hoc evaluation of factor group
-#t1way(change_rel ~ group, data=data_prepost, tr=0.2, alpha=0.05, nboot=2000, method="bonferroni")
-lincon(change_rel ~ group, data=data_prepost, tr=0.2, alpha=0.05, nboot=2000, method="bonferroni")
+# --- change relative difference --- # 
 
-#t1way(change_reldiff ~ group, data=data_prepost, tr=0.2, alpha=0.05, nboot=2000, method="bonferroni")
-lincon(change_reldiff ~ group, data=data_prepost, tr=0.2, alpha=0.05, nboot=2000, method="bonferroni")
-
-# 2) robust Kruskal-Wallis
-kruskal.test(change_rel ~ group, data=data_prepost)
-dunn_test(change_rel ~ group, data=data_prepost, p.adjust.method="bonferroni")
-
-kruskal.test(change_reldiff ~ group, data=data_prepost)
-dunn_test(change_reldiff ~ group, data=data_prepost, p.adjust.method="bonferroni")
-
-```
-
-```{r stats_finaldistance}
-
-### final distance (TBD: drop na)
-# 1) full gaussian model: does not converge 
-lmer.full <- mixed(final_distance ~ group*session*condition + sex + 
-                     (session*condition|id), data=data_c, 
-                   control=lmerControl(optimizer="bobyqa",
-                                       optCtrl=list(maxfun=1e6)))
-
-# 2) full gaussian model with reduced random effects: does converge
-lmer.red <- mixed(final_distance ~ group*session*condition + sex + 
-                    (session|id), data=data_c, 
-                  control=lmerControl(optimizer="bobyqa",
-                                      optCtrl=list(maxfun=1e6)))
-check_model(lmer.red$full_model, panel=F)
-# diagnostics: bad
-
-## 3) full gaussian model with log-transformed outcome and reduced random effects: does converge 
-lmer.red_log <- mixed(log_fd ~ group*session*condition + sex + 
-                        (session|id), data=data_c, 
-                      control=lmerControl(optimizer="bobyqa",
-                                          optCtrl=list(maxfun=1e6)))
-
-check_model(lmer.red_log$full_model, panel=F)
-# diagnostics 1: ok
-
-simulationOutput <- simulateResiduals(fittedModel=lmer.red_log$full_model, plot=F)
-testResiduals(simulationOutput)
-plotResiduals(simulationOutput)
-testCategorical(simulationOutput, catPred=data_c$group)
-testCategorical(simulationOutput, catPred=data_c$session)
-testCategorical(simulationOutput, catPred=data_c$condition)
-# diagnostics 2: flags outlier and non-normality, but not heteroskedasticity: ok
-
-# post-test for fixed effects
-lmer.red_log$anova_table
-
-afex_plot(lmer.red_log,  "session", "group", "condition", id = "id",
-          data_geom = ggbeeswarm::geom_quasirandom)
-
-emmeans(lmer.red_log, pairwise ~ group, adjust="bonferroni")
-emmeans(lmer.red_log, pairwise ~ session)
+# 1) ANOVA
+# TBD: contrasts?
+aov.change <- aov(change_reldiff ~ group*condition, data=data_prepost)
+check_model(aov.change, panel=F) # some heteroscedasticity ? 
+data_prepost %>% shapiro_test(change_reldiff) # potentially non-normality
+data_prepost %>% levene_test(change_reldiff ~ group) # potentially heteroscedasticity 
+emmeans(aov.change, pairwise ~ group | condition, adjust="bonferroni")
 
 
-### change in correct final alley (aggregated data) 
-data_prepost <- data_c %>%
-  select(id, group, session, trial_num, condition, final_distance) %>%
-  pivot_wider(id_cols=c(id, trial_num, group, condition),
-              names_from=session,
-              names_prefix="s_",
-              values_from=final_distance) %>%
-  group_by(id, group, condition) %>%
-  summarise_at(vars(s_1, s_2), mean, na.rm=T) %>% 
-  mutate(change_diff=s_2-s_1,
-         change_rel=s_2/s_1,
-         change_reldiff=(s_2-s_1)/s_1) %>% 
-  ungroup() %>% 
-  drop_na()
+# 2) robust ANOVA from WRS/WRS2 
+# TBD: contrasts ? 
+# TBD: which type of analysis (t2way trim OR MOM-estimator)
+raov.change <- t2way(change_reldiff ~ group*condition, data=data_prepost, tr=0.2, nboot=2000)
+# TBD: no model evaluation possible ? 
+# TBD: post-tests -> weird contrasts 
+mcp2atm(change_reldiff ~ group*condition, data=data_prepost, tr=0.2, nboot=2000, method="bonferroni")
+a <- data_prepost %>% filter(condition=="allo_ret")
+lincon(change_reldiff ~ group, data=a, tr=0.2, alpha=0.05, nboot=2000, method="bonferroni")
+e <- data_prepost %>% filter(condition=="ego_ret")
+lincon(change_reldiff ~ group, data=e, tr=0.2, alpha=0.05, nboot=2000, method="bonferroni")
 
-# 1) robust ANOVA from WRS/WRS2 
-# a) two-way with factors group and condition (issue: contrasts are weird, therefore one-way post-hoc!)
-t2way(change_rel ~ group*condition, data=data_prepost, tr=0.2, nboot=2000)
-t2way(change_reldiff ~ group*condition, data=data_prepost, tr=0.2, nboot=2000)
 
-# 2) robust Kruskal-Wallis
-kruskal.test(change_rel ~ group, data=data_prepost)
-dunn_test(change_rel ~ group, data=data_prepost, p.adjust.method="bonferroni")
-
-kruskal.test(change_reldiff ~ group, data=data_prepost)
-dunn_test(change_reldiff ~ group, data=data_prepost, p.adjust.method="bonferroni")
+# ::: MEANING: Slight consolidation differences between children and adults. However, effect only in robust and not in normal ANOVA. Which one is correct? Furthermore no significant group*session interaction in previous analysis. Does this make sense? ::: #
 
 ```
 
+```{r stats_probe_loc_accuracy}
 
-```{r stats_strategy}
+### A) final distance in correct trials 
 
-t <- data %>% 
+### B) final distance in relation to local (alley) environment for all trials 
+
+### change value? 
+
+```
+
+```{r stats_probe_metric}
+
+## -- time -- ##
+
+## -- path metric distance  -- ##
+
+## -- path edit distance  -- ##
+
+## -- target metric distance -- ##
+
+## -- (initial) rotation  -- ##
+
+
+### change ? 
+
+
+```
+
+```{r stats_proble_strategy}
+
+```
+
+```{r stats_probe_allo_strategy}
+
+data_allo_strategy <- data %>% 
   filter(condition=="allo_ret", session==1) %>% 
   drop_na(search_strategy_in_allo) %>% 
   mutate(search_strategy_2=fct_recode(search_strategy_in_allo, allo="direct_allo", 
                                       allo="detour_allo", ego="direct_ego", ego="detour_ego"))
 
-table(t$search_strategy_2, t$group)
-fisher.test(table(t$search_strategy_2, t$group), simulate.p.value=T)
+table(data_allo_strategy$search_strategy_2, data_allo_strategy$group)
+fisher.test(table(data_allo_strategy$search_strategy_2, data_allo_strategy$group), simulate.p.value=T)
+
+# TBD: post tests? 
+
+# TBD check alternative: multinomial linear regression?  
+
+```
+
+```{r stats_probe_ego_strategy}
 
 ```
 
 
 ### Post-navigation memory test
+#### Identifying the maze layout 
 
 ```{r stats_layout}
 
@@ -477,48 +437,31 @@ pairwise_fisher_test(table(data$score, data$group), p.adjust.method="bonferroni"
 
 ```
 
-```{r stats_gmda_explore}
+#### Identifying the landmarks 
 
-file_name <- "../WP10_data/WP10_results/wp10_GMDA_data_220505.Rdata"
-load(file_name)
-rm(file_name)
+```{r stats_landmark}
+data <- pt_data %>% 
+  filter(condition=="landmarks") %>% 
+  drop_na(score)
 
-
-# individual scores 
-CanOrg <- data_gmda %>% filter(gmda_measure=="SQRT(CanOrg)")
-CanAcc <- data_gmda %>% filter(gmda_measure=="CanAcc")
-DistAcc <- data_gmda %>% filter(gmda_measure=="DistAcc")
-AngleAcc <- data_gmda %>% filter(gmda_measure=="AngleAcc")
-
-boxplot <- function(d){
-  ggplot(data=d, aes(x=group, y=score, fill=group)) +
-    geom_boxplot(outlier.shape=NA) +
-    geom_point()
-}
-
-boxplot(CanOrg)
-lincon(score ~ group, data=CanOrg, tr=0.2, nboot=2000, method="bonferroni")
-
-boxplot(CanAcc)
-lincon(score ~ group, data=CanAcc, tr=0.2, nboot=2000, method="bonferroni")
-
-boxplot(DistAcc)
-lincon(score ~ group, data=DistAcc, tr=0.2, nboot=2000, method="bonferroni")
-
-boxplot(AngleAcc)
-lincon(score ~ group, data=AngleAcc, tr=0.2, nboot=2000, method="bonferroni")
+### 1) ANOVA
+aov.lm <- aov(score ~ group*sex, data=data)
+check_model(aov.lm, panel=F) # diagnostics: not great
+data %>% shapiro_test(score) # potentially non-normality
+data %>% levene_test(score ~ group) # potentially heteroscedasticity 
+summary(aov.lm)
+pairwise.t.test(data$score, data$group, p.adjust.method="bonferroni")
 
 
-# composite score
-GMDA <- data_gmda %>% filter(gmda_measure %in% c("SQRT(CanOrg)", "CanAcc", "DistAcc", "AngleAcc")) %>%
-  group_by(id, group) %>% summarise(score=mean(score))
+### 2) robust ANOVA (WSR2)
+# TBD: contrasts for two-way 
+# t2way(score ~ group + sex, data=data, tr=0.2, nboot=2000)
+t1way(score ~ group, data=data, tr=0.2, nboot=2000)
+lincon(score ~ group, data=data, tr=0.2, nboot=2000, method="bonferroni")
 
-boxplot(GMDA)
-lincon(score ~ group, data=GMDA, tr=0.2, nboot=2000, method="bonferroni")
-
-
-rm(data_gmda, GMDA, CanOrg, CanAcc, DistAcc, AngleAcc, boxplot)
 ```
+
+#### Identifying the relationships between landmarks and goals 
 
 ```{r stats_gmda}
 
@@ -527,80 +470,59 @@ data <- pt_data %>%
   drop_na(score)
 
 ### 1) ANOVA
-anova_gmda <- aov(score ~ group*sex, data=data)
-check_model(anova_gmda, panel=F) # diagnostics: not great
+aov.gmda <- aov(score ~ group*sex, data=data)
+check_model(aov.gmda, panel=F) # diagnostics: not great
 data %>% shapiro_test(score) # potentially non-normality
 data %>% levene_test(score ~ group) # potentially heteroscedasticity 
 
-summary(anova_gmda)
+summary(aov.gmda)
 pairwise.t.test(data$score, data$group, p.adjust.method="bonferroni")
-performance::r2(aov(score ~ group, data=data))
 
 
 ### 2) robust ANOVA (WSR2)
+# TBD: contrasts for two-way 
+# t2way(score ~ group + sex, data=data, tr=0.2, nboot=2000)
 t1way(score ~ group, data=data, tr=0.2, nboot=2000)
 lincon(score ~ group, data=data, tr=0.2, nboot=2000, method="bonferroni")
-t2way(score ~ group + sex, data=data, tr=0.2, nboot=2000)
-
-
-### 3) Kruskal-Wallis test 
-kruskal.test(score ~ group, data=data)
-dunn_test(score ~ group, data=data, p.adjust.method="bonferroni")
 
 ```
 
-```{r stats_landmark}
-data <- pt_data %>% 
-  filter(condition=="landmarks") %>% 
-  drop_na(score)
+```{r stats_gmda_explore}
 
-### 1) ANOVA
-anova_lm <- aov(score ~ group*sex, data=data)
-check_model(anova_gmda, panel=F) # diagnostics: not great
-data %>% shapiro_test(score) # potentially non-normality
-data %>% levene_test(score ~ group) # potentially heteroscedasticity 
+# file_name <- "../WP10_data/WP10_results/wp10_GMDA_data_220505.Rdata"
+# load(file_name)
+# rm(file_name)
 
-summary(anova_lm)
-pairwise.t.test(data$score, data$group, p.adjust.method="bonferroni")
-performance::r2(aov(score ~ group, data=data))
+# # individual scores
+# CanOrg <- data_gmda %>% filter(gmda_measure=="SQRT(CanOrg)")
+# CanAcc <- data_gmda %>% filter(gmda_measure=="CanAcc")
+# DistAcc <- data_gmda %>% filter(gmda_measure=="DistAcc")
+# AngleAcc <- data_gmda %>% filter(gmda_measure=="AngleAcc")
 
+# boxplot <- function(d){
+#   ggplot(data=d, aes(x=group, y=score, fill=group)) +
+#     geom_boxplot(outlier.shape=NA) +
+#     geom_point()
+# }
 
-### 2) robust ANOVA (WSR2)
-t1way(score ~ group, data=data, tr=0.2, nboot=2000)
-lincon(score ~ group, data=data, tr=0.2, nboot=2000, method="bonferroni")
-t2way(score ~ group + sex, data=data, tr=0.2, nboot=2000)
+# boxplot(CanOrg)
+# lincon(score ~ group, data=CanOrg, tr=0.2, nboot=2000, method="bonferroni")
 
+# boxplot(CanAcc)
+# lincon(score ~ group, data=CanAcc, tr=0.2, nboot=2000, method="bonferroni")
 
-### 3) Kruskal-Wallis test 
-kruskal.test(score ~ group, data=data)
-dunn_test(score ~ group, data=data, p.adjust.method="bonferroni")
+# boxplot(DistAcc)
+# lincon(score ~ group, data=DistAcc, tr=0.2, nboot=2000, method="bonferroni")
 
-```
+# boxplot(AngleAcc)
+# lincon(score ~ group, data=AngleAcc, tr=0.2, nboot=2000, method="bonferroni")
 
-```{r stats_goal}
+# # composite score
+# GMDA <- data_gmda %>% filter(gmda_measure %in% c("SQRT(CanOrg)", "CanAcc", "DistAcc", "AngleAcc")) %>%
+#   group_by(id, group) %>% summarise(score=mean(score))
 
-data <- pt_data %>% 
-  filter(condition=="goals")
+# boxplot(GMDA)
+# lincon(score ~ group, data=GMDA, tr=0.2, nboot=2000, method="bonferroni")
 
-### 1) ANOVA
-anova_goal <- aov(score ~ group*sex, data=data)
-check_model(anova_gmda, panel=F) # diagnostics: not great
-data %>% shapiro_test(score) # potentially non-normality
-data %>% levene_test(score ~ group) # potentially heteroscedasticity 
-
-summary(anova_goal)
-pairwise.t.test(data$score, data$group, p.adjust.method="bonferroni")
-performance::r2(aov(score ~ group, data=data))
-
-
-### 2) robust ANOVA (WSR2)
-t1way(score ~ group, data=data, tr=0.2, nboot=2000)
-lincon(score ~ group, data=data, tr=0.2, nboot=2000, method="bonferroni")
-t2way(score ~ group + sex, data=data, tr=0.2, nboot=2000)
-
-
-### 3) Kruskal-Wallis test 
-kruskal.test(score ~ group, data=data)
-dunn_test(score ~ group, data=data, p.adjust.method="bonferroni")
-
+# rm(data_gmda, GMDA, CanOrg, CanAcc, DistAcc, AngleAcc, boxplot)
 ```
