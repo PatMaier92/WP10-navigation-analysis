@@ -26,7 +26,9 @@ library(DHARMa)
 # tinytex::install_tinytex() # latex for pdf file creation
 
 # set contrast coding
-#options(contrasts=c(unordered="contr.sum", ordered="contr.poly"))
+options(contrasts=c(unordered="contr.sum", ordered="contr.poly"))
+# options("contrasts")
+# options(contrasts=c(unordered="contr.treatment", ordered="contr.poly"))
 
 ```
 
@@ -134,7 +136,7 @@ data_c <- sm_data %>%
 
 # time: GROUPS DIFFER SIGNIFICANTLY 
 t1way(time ~ group, data=data_p, tr=0.2, alpha=0.05, nboot=2000)
-lincon(time ~ group, data=data_p, tr=0.2, alpha=0.05,  nboot=2000, method="bonferroni")
+lincon(time ~ group, data=data_p, tr=0.2, alpha=0.05,  nboot=2000, method="bonferroni") # default: hochberg
 
 # path length: GROUPS DIFFER SIGNIFICANTLY
 t1way(path_length ~ group, data=data_p, tr=0.2, alpha=0.05, nboot=2000)
@@ -284,7 +286,7 @@ anova(learn.path_ed, learn.path_ed_hetvar) # variance estimation improves model
 
 #### Probe trials 
 
-```{r stats_probe_gl_accuracy}
+```{r stats_probe_global_accuracy}
 
 # ::: METHOD: per person several trials (session, condition) with binomial outcome, therefore glmm model ::: #
 # watch out for convergence (stepwise reduction of random effects) # 
@@ -318,7 +320,7 @@ emmeans(probe.acc, pairwise ~ condition, type="response")
 
 ```
 
-```{r stats_probe_gl_accuracy_change}
+```{r stats_probe_global_accuracy_change}
 
 # ::: METHOD: one aggregated value per person, therefore (robust) ANOVA ::: #  
 
@@ -335,37 +337,37 @@ data_prepost <- sm_data %>%
   summarise_at(vars(s_1, s_2), mean, na.rm=T) %>% 
   mutate(change_diff=s_2-s_1,
          change_rel=s_2/s_1,
-         change_reldiff=(s_2-s_1)/s_1,
-         change_reldiff_log=log(change_reldiff+10)) %>% 
+         change_reldiff=(s_2-s_1)/s_1) %>% 
   ungroup() %>% 
   droplevels()
 
 
 # --- change relative difference --- # 
-
-# 1) ANOVA
-# TBD: contrasts?
-aov.change <- aov(change_reldiff ~ group*condition, data=data_prepost)
-check_model(aov.change, panel=F) # some heteroscedasticity ? 
-data_prepost %>% shapiro_test(change_reldiff) # potentially non-normality
-data_prepost %>% levene_test(change_reldiff ~ group) # potentially heteroscedasticity 
+# 1) standard ANOVA
+# contrasts are set to sum by default
+aov.change <- aov_car(change_reldiff ~ group*condition + Error(id/condition), data=data_prepost)
+qqPlot(data_prepost$change_reldiff) # non-normality
+data_prepost %>% shapiro_test(change_reldiff) 
+plot(predict(aov.change), residuals(aov.change), main="Residuals vs. Predicted") # homoscedasticity ok
+data_prepost %>% levene_test(change_reldiff ~ group) 
+summary(aov.change)
 emmeans(aov.change, pairwise ~ group | condition, adjust="bonferroni")
 
 
 # 2) robust ANOVA from WRS/WRS2 
-# TBD: contrasts ? 
-# TBD: which type of analysis (t2way trim OR MOM-estimator)
-raov.change <- t2way(change_reldiff ~ group*condition, data=data_prepost, tr=0.2, nboot=2000)
-# TBD: no model evaluation possible ? 
-# TBD: post-tests -> weird contrasts 
-mcp2atm(change_reldiff ~ group*condition, data=data_prepost, tr=0.2, nboot=2000, method="bonferroni")
-a <- data_prepost %>% filter(condition=="allo_ret")
-lincon(change_reldiff ~ group, data=a, tr=0.2, alpha=0.05, nboot=2000, method="bonferroni")
-e <- data_prepost %>% filter(condition=="ego_ret")
-lincon(change_reldiff ~ group, data=e, tr=0.2, alpha=0.05, nboot=2000, method="bonferroni")
+# contrasts are set to sum by default (I think)
+# # robust mixed anova 
+raov.change <- bwtrim(change_reldiff ~ group*condition, id=id, data=data_prepost, tr=0.2)
+# # alternative to trim: mom-esitmator
+# sppba(change_reldiff ~ group*condition, id=id, data=data_prepost, est="mom", avg=TRUE, nboot=500, MDIS=FALSE)
+# sppbb(change_reldiff ~ group*condition, id=id, data=data_prepost, est="mom", avg=TRUE, nboot=500)
+# sppbi(change_reldiff ~ group*condition, id=id, data=data_prepost, est="mom", avg=TRUE, nboot=500)
+raov.change
+# using one-way post-test lincon() because no dedicated post-test for bwtrim() 
+lincon(change_reldiff ~ group, data=data_prepost, tr=0.2, alpha=0.05, method="bonferroni")
 
 
-# ::: MEANING: Slight consolidation differences between children and adults. However, effect only in robust and not in normal ANOVA. Which one is correct? Furthermore no significant group*session interaction in previous analysis. Does this make sense? ::: #
+# ::: MEANING: Some evidence in favor of consolidation differences between children and adults. However, effect was found only in robust and not in standard ANOVA. There was also no significant group*session interaction in the previous analysis. Does this make sense? ::: #
 
 ```
 
