@@ -135,16 +135,16 @@ data_c <- sm_data %>%
 # ::: METHOD: single value per person, therefore (robust) ANOVA ::: #
 
 # time: GROUPS DIFFER SIGNIFICANTLY 
-t1way(time ~ group, data=data_p, tr=0.2, alpha=0.05, nboot=2000)
-lincon(time ~ group, data=data_p, tr=0.2, alpha=0.05,  nboot=2000, method="bonferroni") # default: hochberg
+t1way(time ~ group, data=data_p, tr=0.2, alpha=0.05, nboot=1000)
+lincon(time ~ group, data=data_p, tr=0.2, alpha=0.05,  nboot=1000, method="bonferroni") # default: hochberg
 
 # path length: GROUPS DIFFER SIGNIFICANTLY
-t1way(path_length ~ group, data=data_p, tr=0.2, alpha=0.05, nboot=2000)
-lincon(path_length ~ group, data=data_p, tr=0.2, alpha=0.05,  nboot=2000, method="bonferroni")
+t1way(path_length ~ group, data=data_p, tr=0.2, alpha=0.05, nboot=1000)
+lincon(path_length ~ group, data=data_p, tr=0.2, alpha=0.05,  nboot=1000, method="bonferroni")
 
 # velocity: no differences 
-t1way(velocity ~ group, data=data_p, tr=0.2, alpha=0.05, nboot=2000)
-lincon(velocity ~ group, data=data_p, tr=0.2, alpha=0.05,  nboot=2000, method="bonferroni")
+t1way(velocity ~ group, data=data_p, tr=0.2, alpha=0.05, nboot=1000)
+lincon(velocity ~ group, data=data_p, tr=0.2, alpha=0.05,  nboot=1000, method="bonferroni")
 
 # ::: MEANING: during practise, the younger the participants, the longer they take to complete the trial and the more they deviate from an ideal path (i.e. difficulties with joystick motor control) --> include time, path length and/or velocity as covariate ::: #
 
@@ -308,7 +308,7 @@ testCategorical(simulationOutput, catPred=data$condition)
 # diagnostics: ok 
 
 # post-test for fixed effects
-# TBD: add effect size for contrasts 
+# TBD: add effect size calculation
 afex_plot(probe.acc, "session", "group", "condition", id = "id",
           data_geom = ggbeeswarm::geom_quasirandom)
 
@@ -316,7 +316,7 @@ emmeans(probe.acc, pairwise ~ group, type="response", adjust="bonferroni")
 emmeans(probe.acc, pairwise ~ session, type="response")
 emmeans(probe.acc, pairwise ~ condition, type="response")
 
-# ::: MEANING: Significant differences between age groups (the older, the better), sessions (s1 better than s2) and slight difference between conditions (ego slightly better than allo) ::: # 
+# ::: MEANING: Significant differences between age groups (the older, the better), sessions (s1 better than s2) and slight difference between conditions (ego slightly better than allo), no interactions. ::: # 
 
 ```
 
@@ -371,13 +371,13 @@ lincon(change_reldiff ~ group, data=data_prepost, tr=0.2, alpha=0.05, method="bo
 
 ```
 
-```{r stats_probe_loc_accuracy}
+```{r stats_probe_local_accuracy}
 
 ### A) final distance in correct trials 
 
-### B) final distance in relation to local (alley) environment for all trials 
+### B) TBD Matlab: final distance in relation to local (alley) environment for all trials 
 
-### change value? 
+### change value or rather not? 
 
 ```
 
@@ -394,16 +394,18 @@ lincon(change_reldiff ~ group, data=data_prepost, tr=0.2, alpha=0.05, method="bo
 ## -- (initial) rotation  -- ##
 
 
-### change ? 
+### change values or rather not? 
 
 
 ```
 
-```{r stats_proble_strategy}
+```{r stats_probe_strategy}
 
 ```
 
 ```{r stats_probe_allo_strategy}
+
+# TBD: change preprocessing in Matlab to make more inclusive 
 
 data_allo_strategy <- data %>% 
   filter(condition=="allo_ret", session==1) %>% 
@@ -412,11 +414,18 @@ data_allo_strategy <- data %>%
                                       allo="detour_allo", ego="direct_ego", ego="detour_ego"))
 
 table(data_allo_strategy$search_strategy_2, data_allo_strategy$group)
+
+# option 1) fisher test: tests independence of rows and columns in a contingency table with fixed marginals.
 fisher.test(table(data_allo_strategy$search_strategy_2, data_allo_strategy$group), simulate.p.value=T)
 
-# TBD: post tests? 
+# option 2) discANOVA from WRS2: tests hypothesis that independent groups have identical multinomial distributions. 
+discANOVA(search_strategy_2 ~ group, data=data_allo_strategy, nboot=500) 
+discmcp(search_strategy_2 ~ group, data=data_allo_strategy, alpha=0.05, nboot=500)
 
-# TBD check alternative: multinomial linear regression?  
+# option 3) multinomial linear regression 
+
+
+# ::: MEANING: xxx ::: #
 
 ```
 
@@ -434,8 +443,15 @@ data <- pt_data %>%
   filter(condition=="layout") %>% 
   drop_na(score)
 
+# option 1) fisher test: tests independence of rows and columns in a contingency table with fixed marginals.
 fisher.test(table(data$score, data$group))
 pairwise_fisher_test(table(data$score, data$group), p.adjust.method="bonferroni")
+
+# option 2) discANOVA from WRS2: tests hypothesis that independent groups have identical multinomial distributions. 
+discANOVA(score ~ group, data=data, nboot=500)
+discmcp(score ~ group, data=data, alpha=0.05, nboot=500) 
+
+# ::: MEANING: significant differences between age groups in performance ::: #
 
 ```
 
@@ -446,20 +462,20 @@ data <- pt_data %>%
   filter(condition=="landmarks") %>% 
   drop_na(score)
 
-### 1) ANOVA
-aov.lm <- aov(score ~ group*sex, data=data)
-check_model(aov.lm, panel=F) # diagnostics: not great
-data %>% shapiro_test(score) # potentially non-normality
-data %>% levene_test(score ~ group) # potentially heteroscedasticity 
+# option 1) standard ANOVA
+aov.lm <- aov_car(score ~ group + Error(id), data=data)
+qqPlot(data$score) # non-normality
+data %>% shapiro_test(score) 
+plot(predict(aov.lm), residuals(aov.lm), main="Residuals vs. Predicted") # homoscedasticity ok
+data %>% levene_test(score ~ group) 
 summary(aov.lm)
-pairwise.t.test(data$score, data$group, p.adjust.method="bonferroni")
+emmeans(aov.lm, pairwise ~ group, adjust="bonferroni")
 
+# option 2) robust ANOVA (WSR2)
+t1way(score ~ group, data=data, tr=0.2, nboot=1000)
+lincon(score ~ group, data=data, tr=0.2, nboot=1000, method="bonferroni")
 
-### 2) robust ANOVA (WSR2)
-# TBD: contrasts for two-way 
-# t2way(score ~ group + sex, data=data, tr=0.2, nboot=2000)
-t1way(score ~ group, data=data, tr=0.2, nboot=2000)
-lincon(score ~ group, data=data, tr=0.2, nboot=2000, method="bonferroni")
+# ::: MEANING: no reliable, significant differences between age groups in performance ::: #
 
 ```
 
@@ -471,21 +487,20 @@ data <- pt_data %>%
   filter(condition=="position") %>% 
   drop_na(score)
 
-### 1) ANOVA
-aov.gmda <- aov(score ~ group*sex, data=data)
-check_model(aov.gmda, panel=F) # diagnostics: not great
-data %>% shapiro_test(score) # potentially non-normality
-data %>% levene_test(score ~ group) # potentially heteroscedasticity 
-
+# option 1) standard ANOVA
+aov.gmda <- aov_car(score ~ group + Error(id), data=data)
+qqPlot(data$score) # non-normality
+data %>% shapiro_test(score) 
+plot(predict(aov.gmda), residuals(aov.gmda), main="Residuals vs. Predicted") # heteroscedasticity
+data %>% levene_test(score ~ group) 
 summary(aov.gmda)
-pairwise.t.test(data$score, data$group, p.adjust.method="bonferroni")
+emmeans(aov.gmda, pairwise ~ group, adjust="bonferroni")
 
+# option 2) robust ANOVA (WSR2)
+t1way(score ~ group, data=data, tr=0.2, nboot=1000)
+lincon(score ~ group, data=data, tr=0.2, nboot=1000, method="bonferroni")
 
-### 2) robust ANOVA (WSR2)
-# TBD: contrasts for two-way 
-# t2way(score ~ group + sex, data=data, tr=0.2, nboot=2000)
-t1way(score ~ group, data=data, tr=0.2, nboot=2000)
-lincon(score ~ group, data=data, tr=0.2, nboot=2000, method="bonferroni")
+# ::: MEANING: significant differences between children and adults in performance ::: #
 
 ```
 
@@ -508,23 +523,24 @@ lincon(score ~ group, data=data, tr=0.2, nboot=2000, method="bonferroni")
 # }
 
 # boxplot(CanOrg)
-# lincon(score ~ group, data=CanOrg, tr=0.2, nboot=2000, method="bonferroni")
+# lincon(score ~ group, data=CanOrg, tr=0.2, nboot=1000, method="bonferroni")
 
 # boxplot(CanAcc)
-# lincon(score ~ group, data=CanAcc, tr=0.2, nboot=2000, method="bonferroni")
+# lincon(score ~ group, data=CanAcc, tr=0.2, nboot=1000, method="bonferroni")
 
 # boxplot(DistAcc)
-# lincon(score ~ group, data=DistAcc, tr=0.2, nboot=2000, method="bonferroni")
+# lincon(score ~ group, data=DistAcc, tr=0.2, nboot=1000, method="bonferroni")
 
 # boxplot(AngleAcc)
-# lincon(score ~ group, data=AngleAcc, tr=0.2, nboot=2000, method="bonferroni")
+# lincon(score ~ group, data=AngleAcc, tr=0.2, nboot=1000, method="bonferroni")
 
 # # composite score
 # GMDA <- data_gmda %>% filter(gmda_measure %in% c("SQRT(CanOrg)", "CanAcc", "DistAcc", "AngleAcc")) %>%
 #   group_by(id, group) %>% summarise(score=mean(score))
 
 # boxplot(GMDA)
-# lincon(score ~ group, data=GMDA, tr=0.2, nboot=2000, method="bonferroni")
+# lincon(score ~ group, data=GMDA, tr=0.2, nboot=1000, method="bonferroni")
 
 # rm(data_gmda, GMDA, CanOrg, CanAcc, DistAcc, AngleAcc, boxplot)
+
 ```
