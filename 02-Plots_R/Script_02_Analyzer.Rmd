@@ -156,7 +156,7 @@ lincon(velocity ~ group, data=data_p, tr=0.2, alpha=0.05,  nboot=1000, method="b
 
 ```{r stats_learning}
 
-# ::: METHOD: per person 8 trials á 3 blocks (= 24 trials) with continuous outcome, therefore lmm model ::: #
+# ::: METHOD: per person 8 trials ? 3 blocks (= 24 trials) with continuous outcome, therefore lmm model ::: #
 # watch out for convergence (stepwise reduction of random effects), normality of residuals, homoscedasticity and outliers # 
 
 ## -- time -- ##
@@ -173,23 +173,7 @@ testCategorical(simulationOutput, catPred=data_l$group)
 # model diagnostics are bad
 
 
-# 2) standard lmer model with log-transformed outcome OR boxcox-transformed outcome
-# contrasts set to sum-coding by mixed
-data_l <- data_l %>% 
-  mutate(time_log=log(time))
-
-learn.time_log <- mixed(time_log ~ group*block_f*trial_in_cond_c + (block_f|id), 
-                    data=data_l, expand_re=T,
-                    control=lmerControl(optimizer="bobyqa", optCtrl=list(maxfun=1e6)))
-# check model
-simulationOutput <- simulateResiduals(fittedModel=learn.time_log$full_model, plot=F)
-testResiduals(simulationOutput)
-plotResiduals(simulationOutput)
-testCategorical(simulationOutput, catPred=data_l$group)
-# model diagnostics are bad
-
-
-## 3) advanced lme model with variance estimation 
+# 2) advanced lme model with variance estimation 
 # contrasts set in beginning, check options("contrasts") if in doubt 
 learn.time_base <- lme(time ~ group*block_f*trial_in_cond_c,
                          random=~1+block_f | id,
@@ -200,7 +184,7 @@ anova.lme(learn.time_base, learn.time_var) # type="marginal" ?
 plot(learn.time_var, resid(., type="p") ~ fitted(.) | group)
 plot(learn.time_var, group ~ resid(., type="p"))
 
-## 4) advanced lme model with variance estimation and log-transformed outcome OR boxcox-transformed outcome
+## 3) advanced lme model with variance estimation and log-transformed outcome OR boxcox-transformed outcome
 # contrasts set in beginning, check options("contrasts") if in doubt 
 learn.time_var_log <- lme(log(time) ~ group*block_f*trial_in_cond_c,
                          random=~1+block_f | id, 
@@ -210,16 +194,18 @@ learn.time_var_log <- lme(log(time) ~ group*block_f*trial_in_cond_c,
 plot(learn.time_var_log, resid(., type="p") ~ fitted(.) | group, abline=0)
 plot(learn.time_var_log, group ~ resid(., type="p"))
 
-# # post-test
-# emtrends(learn.time_var_log, pairwise ~ group, var="trial_in_cond_0", adjust="bonferroni")
-# emtrends(learn.time_var_log, pairwise ~ block_f, var="trial_in_cond_0", adjust="bonferroni")
-# emmeans(learn.time_var_log, pairwise ~ group | block_f, adjust="bonferroni", mode="satterthwaite")
+# main effects & interactions  
+anova.lme(learn.time_var_log, type="marginal", adjustSigma=T)
 
-# # extract estimated variance 
-# learn.time_hetvar <- learn.time_hetvar$modelStruct$varStruct %>%
+# post-hoc comparisons 
+emtrends(learn.time_var_log, pairwise ~ block_f, var="trial_in_cond_c", adjust="bonferroni")
+emmeans(learn.time_var_log, pairwise ~ group, type="response", adjust="bonferroni")
+
+# # extract estimated variance
+# variance <- learn.time_var_log$modelStruct$varStruct %>%
 #   coef(unconstrained = FALSE, allCoef = TRUE) %>%
 #   enframe(name = "grp", value = "varStruct") %>%
-#   mutate(sigma         = learn.time_hetvar$sigma) %>%
+#   mutate(sigma         = learn.time_var_log$sigma) %>%
 #   mutate(StandardError = sigma * varStruct) %>%
 #   mutate(Variance      = StandardError ^ 2)
 
