@@ -104,9 +104,9 @@ data_l <- sm_data %>%
   droplevels()
 
 # # box-cox transformation
-# bc_t <- MASS::boxcox(time ~ group, data=data_l)
+# bc_t <- MASS::boxcox(time ~ group*block_f*trial_in_cond_c, data=data_l)
 # lambda_t <- bc_t$x[which.max(bc_t$y)]
-# bc_p <- MASS::boxcox(path_distance ~ group, data=data_l)
+# bc_p <- MASS::boxcox(path_distance ~ group*block_f*trial_in_cond_c, data=data_l)
 # lambda_p <- bc_p$x[which.max(bc_p$y)]
 # data_l <- data_l %>% 
 #   mutate(boxcox_time=((time^lambda_t-1)/lambda_t),
@@ -176,7 +176,7 @@ testCategorical(simulationOutput, catPred=data_l$group)
 # 2) advanced lme model with variance estimation 
 # contrasts set in beginning, check options("contrasts") if in doubt 
 learn.time_base <- lme(time ~ group*block_f*trial_in_cond_c,
-                         random=~1+block_f | id,
+                         random=~1+block_f| id,
                          data=data_l, method="ML")
 learn.time_var <- update(learn.time_base, weights=varIdent(form=~1 | group))
 anova.lme(learn.time_base, learn.time_var) # type="marginal" ?
@@ -185,32 +185,47 @@ plot(learn.time_var, resid(., type="p") ~ fitted(.) | group)
 plot(learn.time_var, group ~ resid(., type="p"))
 plot(learn.time_var, block_f ~ resid(., type="p"))
 
-## 3) advanced lme model with variance estimation and log-transformed outcome OR boxcox-transformed outcome
-# contrasts set in beginning, check options("contrasts") if in doubt 
-learn.time_var_log <- lme(log(time) ~ group*block_f*trial_in_cond_c,
-                         random=~1+block_f | id, 
+## 3) advanced lme model with variance estimation and transformed outcome
+# contrasts set in beginning, check options("contrasts") if in doubt
+learn.time_var_t <- lme(1/time ~ group*block_f*trial_in_cond_c,
+                         random=~1+block_f | id,
                          weights=varIdent(form=~1 | group),
                          data=data_l, method="ML")
 
-plot(learn.time_var_log, resid(., type="p") ~ fitted(.) | group, abline=0)
-plot(learn.time_var_log, group ~ resid(., type="p"))
+plot(learn.time_var_t, resid(., type="p") ~ fitted(.) | group, abline=0)
+plot(learn.time_var_t, group ~ resid(., type="p"))
 
 # main effects & interactions  
-anova.lme(learn.time_var_log, type="marginal", adjustSigma=T)
+anova.lme(learn.time_var_t, type="marginal", adjustSigma=T)
 
 # post-hoc comparisons 
-emtrends(learn.time_var_log, pairwise ~ block_f, var="trial_in_cond_c", adjust="bonferroni")
-emmeans(learn.time_var_log, pairwise ~ group, type="response", adjust="bonferroni")
+emtrends(learn.time_var_t, pairwise ~ block_f, var="trial_in_cond_c", adjust="bonferroni")
+emtrends(learn.time_var_t, pairwise ~ group, var="trial_in_cond_c", adjust="bonferroni")
+emmeans(learn.time_var_t, pairwise ~ group, type="response", adjust="bonferroni")
+
 
 ## work in progress: check other variances 
+## 4) advanced lme model withother types of variance estimation
+learn.time_var2 <- update(learn.time_base, weights=varPower(form=~time)) # does not converge
+learn.time_var3 <- update(learn.time_base, weights=varConstPower(form=~time)) # does not converge
+learn.time_var4 <- update(learn.time_base, weights=varExp(form=~time))
+learn.time_var5 <- update(learn.time_base, weights=varPower(form=~time | group))
+learn.time_var6 <- update(learn.time_base, weights=varConstPower(form=~time | group)) # does not converge
+learn.time_var7 <- update(learn.time_base, weights=varComb(varIdent(form=~1 | group), varExp(form=~time)))
 
-learn.time_var_p <- update(learn.time_base, weights=varPower(form=~time | group))
+anova(learn.time_base, learn.time_var, learn.time_var4, learn.time_var5, learn.time_var7)
 
-anova(learn.time_base, learn.time_var, learn.time_var_p)
+plot(learn.time_var5, resid(., type="p") ~ fitted(.) | group, abline=0)
+plot(learn.time_var5, group ~ resid(., type="p"))
+plot(learn.time_var5, block_f ~ resid(., type="p"))
+hist(resid(learn.time_var5, type="p"))
 
-plot(learn.time_var_p, resid(., type="p") ~ fitted(.) | group, abline=0)
-plot(learn.time_var_p, group ~ resid(., type="p"))
-plot(learn.time_var_p, block_f ~ resid(., type="p"))
+anova(learn.time_base, learn.time_var, learn.time_var5)
+
+anova(learn.time_base, type="marginal")
+anova(learn.time_var, type="marginal")
+anova(learn.time_var_t, type="marginal")
+anova(learn.time_var5, type="marginal")
 
 ## 
 
@@ -236,27 +251,24 @@ plot(learn.path, group ~ resid(., type="p"))
 
 ## 2) advanced lme model wit variance estimation 
 # contrasts set in beginning, check options("contrasts") if in doubt 
-learn.path_hetvar <- lme(path_distance ~ group*block_f*trial_in_cond_c,
+learn.path_var <- lme(path_distance ~ group*block_f*trial_in_cond_c,
                   random=~1+block_f | id, 
                   weights=varIdent(form=~1 | group),
                   data=data_l, method="REML")
-plot(learn.path_hetvar, resid(., type="p") ~ fitted(.) | group)
-plot(learn.path_hetvar, group ~ resid(., type="p"))
+plot(learn.path_var, resid(., type="p") ~ fitted(.) | group)
+plot(learn.path_var, group ~ resid(., type="p"))
 
-anova(learn.path, learn.path_hetvar) # variance estimation improves model 
+anova(learn.path, learn.path_var) # variance estimation improves model 
 
 
-## 3) lme model wit variance estimation and log-transformed outcome OR boxcox-transformed outcome  
+## 3) lme model wit variance estimation and transformed outcome
 # contrasts set in beginning, check options("contrasts") if in doubt 
-data_l <- data_l %>% 
-  mutate(path_log=log(path_distance))
-
-learn.path_hetvar_log <- lme(path_log ~ group*block_f*trial_in_cond_c,
+learn.path_var_t <- lme(1/path_distance ~ group*block_f*trial_in_cond_c,
                   random=~1+block_f | id, 
                   weights=varIdent(form=~1 | group),
                   data=data_l, method="REML")
-plot(learn.path_hetvar_log, resid(., type="p") ~ fitted(.) | group)
-plot(learn.path_hetvar_log, group ~ resid(., type="p"))
+plot(learn.path_var_t, resid(., type="p") ~ fitted(.) | group)
+plot(learn.path_var_t, group ~ resid(., type="p"))
 
 
 ## -- path edit distance -- ##
@@ -271,14 +283,14 @@ plot(learn.path_ed, group ~ resid(., type="p"))
 
 ## 2) advanced lme model wit variance estimation
 # contrasts set in beginning, check options("contrasts") if in doubt 
-learn.path_ed_hetvar <- lme(zone_editdistance ~ group*block_f*trial_in_cond_c,
+learn.path_ed_var <- lme(zone_editdistance ~ group*block_f*trial_in_cond_c,
                   random=~1+block_f | id, 
                   weights=varIdent(form=~1 | group),
                   data=data_l, method="REML")
-plot(learn.path_ed_hetvar, resid(., type="p") ~ fitted(.) | group)
-plot(learn.path_ed_hetvar, group ~ resid(., type="p"))
+plot(learn.path_ed_var, resid(., type="p") ~ fitted(.) | group)
+plot(learn.path_ed_var, group ~ resid(., type="p"))
 
-anova(learn.path_ed, learn.path_ed_hetvar) # variance estimation improves model 
+anova(learn.path_ed, learn.path_ed_var) # variance estimation improves model 
 
 
 ## -- target metric distance -- ##
@@ -547,4 +559,6 @@ lincon(score ~ group, data=data, tr=0.2, nboot=1000, method="bonferroni")
 
 # rm(data_gmda, GMDA, CanOrg, CanAcc, DistAcc, AngleAcc, boxplot)
 
+rm(list=ls(pattern="x")
+   
 ```
