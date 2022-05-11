@@ -422,7 +422,6 @@ lincon(change_reldiff ~ group, data=data_prepost, tr=0.2, alpha=0.05, method="bo
 ```{r stats_probe_allo_strategy}
 
 # TBD: change preprocessing in Matlab to make more inclusive 
-
 data_allo_strategy <- data %>% 
   filter(condition=="allo_ret", session==1) %>% 
   drop_na(search_strategy_in_allo) %>% 
@@ -446,6 +445,96 @@ discmcp(search_strategy_2 ~ group, data=data_allo_strategy, alpha=0.05, nboot=50
 ```
 
 ```{r stats_probe_ego_strategy}
+
+### EXPLORATIV 
+
+data_ego <- data %>% 
+  filter(condition=="ego_ret") %>% 
+  select(id, group, session, trial_num, block, condition, goal_i, correct_final_alley) %>% 
+  mutate(goal_f=factor(goal_i))
+
+probe_ego.acc <- mixed(correct_final_alley ~ group*session*goal_f +  
+                         (session*goal_f||id), data=data_ego, expand_re=T,
+                   family=binomial(link="logit"), method="LRT",
+                   control=glmerControl(optimizer="bobyqa", optCtrl=list(maxfun=1e6)))
+
+afex_plot(probe_ego.acc, "session", "group", "goal_f", id = "id",
+          data_geom = ggbeeswarm::geom_quasirandom)
+
+emmeans(probe_ego.acc, pairwise ~ group | session | goal_f, type="response", adjust="bonferroni")
+emmeans(probe_ego.acc, pairwise ~ goal_f, type="response", adjust="bonferroni")
+emmeans(probe_ego.acc, pairwise ~ group, type="response", adjust="bonferroni")
+emmeans(probe_ego.acc, pairwise ~ session, type="response", adjust="bonferroni")
+
+
+# data_allo <- data %>% 
+#   filter(condition=="allo_ret") %>% 
+#   select(id, group, session, trial_num, block, condition, goal_i, correct_final_alley) %>% 
+#   mutate(goal_f=factor(goal_i))
+# 
+# probe_allo.acc <- mixed(correct_final_alley ~ group*session*goal_f +  
+#                          (session+goal_f||id), data=data_allo, expand_re=T,
+#                    family=binomial(link="logit"), method="LRT",
+#                    control=glmerControl(optimizer="bobyqa", optCtrl=list(maxfun=1e6)))
+# 
+# afex_plot(probe_allo.acc, "session", "group", "goal_f", id = "id",
+#           data_geom = ggbeeswarm::geom_quasirandom)
+# 
+# emmeans(probe_allo.acc, pairwise ~ group | session | goal_f, type="response", adjust="bonferroni")
+# emmeans(probe_allo.acc, pairwise ~ goal_f, type="response", adjust="bonferroni")
+# emmeans(probe_allo.acc, pairwise ~ group, type="response", adjust="bonferroni")
+# emmeans(probe_allo.acc, pairwise ~ session, type="response", adjust="bonferroni")
+
+t1 <- data_l %>% 
+  select(id, group, session, trial_num, goal_i, correct_final_alley, time, path_distance) %>% 
+  mutate(goal_f=factor(goal_i)) %>% 
+  group_by(id, group, session, goal_f) %>% 
+  summarize(correct_final_alley=mean(correct_final_alley, na.rm=T),
+            time=mean(time, na.rm=T),
+            path=mean(path_distance, na.rm=T))
+
+ggplot(t1, aes(x=goal_f, y=time)) +
+  geom_boxplot() +
+  facet_wrap(~ group)
+
+ggplot(t1, aes(x=goal_f, y=path)) +
+  geom_boxplot() +
+  facet_wrap(~ group)
+
+
+t2 <- data %>% 
+  select(id, group, session, condition, trial_num, goal_i, correct_final_alley, final_distance, time, path_distance) %>% 
+  mutate(goal_f=factor(goal_i)) %>% 
+  filter(session==1) %>% 
+  group_by(id, group, condition, goal_f) %>% 
+  summarize(correct_final_alley=mean(correct_final_alley, na.rm=T),
+            final_distance=mean(final_distance, na.rm=T),
+            time=mean(time, na.rm=T),
+            path=mean(path_distance, na.rm=T))
+
+ggplot(t2, aes(x=goal_f, y=final_distance)) +
+  geom_boxplot() +
+  facet_grid(condition ~ group)
+
+ggplot(t2, aes(x=goal_f, y=time)) +
+  geom_boxplot() +
+  facet_grid(condition ~ group)
+
+ggplot(t2, aes(x=goal_f, y=path)) +
+  geom_boxplot() +
+  facet_grid(condition ~ group)
+
+ggplot(t2, aes(x=goal_f, y=final_distance)) +
+  geom_boxplot() +
+  facet_wrap(~ condition)
+
+ggplot(t2, aes(x=goal_f, y=time)) +
+  geom_boxplot() +
+  facet_wrap(~ condition)
+
+ggplot(t2, aes(x=goal_f, y=path)) +
+  geom_boxplot() +
+  facet_wrap(~ condition)
 
 ```
 
