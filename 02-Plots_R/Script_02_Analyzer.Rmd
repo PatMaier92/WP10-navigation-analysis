@@ -183,6 +183,7 @@ anova.lme(learn.time_base, learn.time_var) # type="marginal" ?
 
 plot(learn.time_var, resid(., type="p") ~ fitted(.) | group)
 plot(learn.time_var, group ~ resid(., type="p"))
+plot(learn.time_var, block_f ~ resid(., type="p"))
 
 ## 3) advanced lme model with variance estimation and log-transformed outcome OR boxcox-transformed outcome
 # contrasts set in beginning, check options("contrasts") if in doubt 
@@ -200,6 +201,18 @@ anova.lme(learn.time_var_log, type="marginal", adjustSigma=T)
 # post-hoc comparisons 
 emtrends(learn.time_var_log, pairwise ~ block_f, var="trial_in_cond_c", adjust="bonferroni")
 emmeans(learn.time_var_log, pairwise ~ group, type="response", adjust="bonferroni")
+
+## work in progress: check other variances 
+
+learn.time_var_p <- update(learn.time_base, weights=varPower(form=~time | group))
+
+anova(learn.time_base, learn.time_var, learn.time_var_p)
+
+plot(learn.time_var_p, resid(., type="p") ~ fitted(.) | group, abline=0)
+plot(learn.time_var_p, group ~ resid(., type="p"))
+plot(learn.time_var_p, block_f ~ resid(., type="p"))
+
+## 
 
 # # extract estimated variance
 # variance <- learn.time_var_log$modelStruct$varStruct %>%
