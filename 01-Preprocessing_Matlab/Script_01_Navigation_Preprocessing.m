@@ -548,17 +548,16 @@ tic;
                 % fprintf('Exploration analysis done for %d, session %d, file no %d.\n', id, s, k);
                 
                 %% set marker for excluded trials
-                % criteria: timeout, or no movement/very short trial time (i.e. path_length=0, body_rot_abs=0, or time < 3)
+                % criteria: timeout, or no movement/very short trial time (i.e. path_length=0, rotation=0, or time < 3)
                 sm.participant(p).session(s).trial(k).exclude_trial_matlab=0;
                 if sm.participant(p).session(s).trial(k).chosen_alley_i==999
                     sm.participant(p).session(s).trial(k).exclude_trial_matlab=1; 
                     fprintf('Trial %d marked for exclusion due to timeout.\n',k);
-                elseif sm.participant(p).session(s).trial(k).condition~="practise" % not for motor control task
-                    if (sm.participant(p).session(s).trial(k).path_length<=0.1 || sm.participant(p).session(s).trial(k).rotation_xyz==0 ...
-                            || sm.participant(p).session(s).trial(k).time < 3)
+                elseif (sm.participant(p).session(s).trial(k).path_length<=0.1 ...
+                        || sm.participant(p).session(s).trial(k).rotation_xyz==0 ...
+                        || sm.participant(p).session(s).trial(k).time<3)
                         sm.participant(p).session(s).trial(k).exclude_trial_matlab=1;
                         fprintf('Trial %d marked for exclusion due lack of movement or trial time < 3 sec.\n',k);
-                    end
                 end
                 
                 %% create trial plot  
@@ -594,6 +593,9 @@ tic;
                 sm.participant(p).session(s).trial(k).velocity=sm.participant(p).session(s).trial(k).path_length/sm.participant(p).session(s).trial(k).time;
                 
                 % fprintf('Motor control analysis done for %d, session %d, file no %d.\n', id, s, k);
+                
+                %% set marker for excluded trials to zero
+                sm.participant(p).session(s).trial(k).exclude_trial_matlab=0;
                 
                 %% create trial plot  
                 plotMotorControlTrial(sm.participant(p).session(s).trial(k).trial, sm.participant(p).session(s).session_num,...
