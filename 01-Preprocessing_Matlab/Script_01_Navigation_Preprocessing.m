@@ -340,10 +340,21 @@ tic;
                     sm.participant(p).rand_dict, char(trial_data.chosen_goal(k,1)), ...
                     sm.coord.alley_poly, sm.coord.rec_poly, sm.coord.tri_poly, sm.coord.alley_names, sm.coord.goal_names,...
                     sm.participant(p).session(s).trial(k).x_n, sm.participant(p).session(s).trial(k).y_n);
-               
-                % evaluate accuracy of chosen goal location
+                
+                % compute theoretical local goal location in chosen alley 
+                [sm.participant(p).session(s).trial(k).goal_x_local, ...
+                    sm.participant(p).session(s).trial(k).goal_y_local]=computeLocalGoalLocation(...
+                    sm.participant(p).session(s).trial(k).chosen_alley_i,...
+                    sm.participant(p).session(s).trial(k).goal_alley,...
+                    sm.participant(p).session(s).trial(k).goal_x,...
+                    sm.participant(p).session(s).trial(k).goal_y); 
+                
+                % evaluate global accuracy of chosen location
                 sm.participant(p).session(s).trial(k).correct_final_alley=sm.participant(p).session(s).trial(k).goal_alley==sm.participant(p).session(s).trial(k).chosen_alley_i; 
-                sm.participant(p).session(s).trial(k).correct_final_alley_ego=sm.participant(p).session(s).trial(k).ego_alley==sm.participant(p).session(s).trial(k).chosen_alley_i;  
+                sm.participant(p).session(s).trial(k).correct_final_alley_ego=sm.participant(p).session(s).trial(k).ego_alley==sm.participant(p).session(s).trial(k).chosen_alley_i;        
+
+                % evaluate local accuracy of chosen location: see later
+                
                 % fprintf('Accuracy analysis done for %d, session %d, file no %d.\n', id, s, k);   
                 
                 %% time analysis
@@ -364,12 +375,21 @@ tic;
                 sm.participant(p).session(s).trial(k).velocity=sm.participant(p).session(s).trial(k).path_length / ...
                     sm.participant(p).session(s).trial(k).time;
                 
-                % FINAL DISTANCE to CORRECT target
-                sm.participant(p).session(s).trial(k).final_distance=0;
+                % FINAL DISTANCE to GLOBAL target and LOCAL target
+                sm.participant(p).session(s).trial(k).final_distance=999;
+                sm.participant(p).session(s).trial(k).final_local_distance=999;
                 if sm.participant(p).session(s).trial(k).feedback=="false"
+                    % distance to GLOBAL target
                     sm.participant(p).session(s).trial(k).final_distance=computeDistance(...
                         sm.participant(p).session(s).trial(k).goal_x, sm.participant(p).session(s).trial(k).x_n, ...
                         sm.participant(p).session(s).trial(k).goal_y, sm.participant(p).session(s).trial(k).y_n);
+                    
+                    % distance to theroetical LOCAL target
+                    if sm.participant(p).session(s).trial(k).goal_x_local~=999
+                        sm.participant(p).session(s).trial(k).final_local_distance=computeDistance(...
+                            sm.participant(p).session(s).trial(k).goal_x_local, sm.participant(p).session(s).trial(k).x_n, ...
+                            sm.participant(p).session(s).trial(k).goal_y_local, sm.participant(p).session(s).trial(k).y_n);
+                    end
                 end
                 
                 % AVERAGE DISTANCE to PATH

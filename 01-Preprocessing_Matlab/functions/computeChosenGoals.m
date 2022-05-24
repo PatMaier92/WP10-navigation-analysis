@@ -26,7 +26,7 @@ else
             % chosen alley integer
             alley_i = c*2-1;
             break; 
-        elseif inpolygon(xend, yend, rec_poly{c}.Vertices(:,1), rec_poly{c}.Vertices(:,2)) % chosen locaiton in rectangle (inner arm)
+        elseif inpolygon(xend, yend, rec_poly{c}.Vertices(:,1), rec_poly{c}.Vertices(:,2)) % chosen location in rectangle (inner arm)
              % chosen alley integer
             alley_i = c*2;
             break;
