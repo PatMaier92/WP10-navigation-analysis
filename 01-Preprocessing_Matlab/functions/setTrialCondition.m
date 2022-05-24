@@ -1,13 +1,13 @@
 function [TC]=setTrialCondition(condition,feedback)
-% setTrialCondition Assigns trial condition for Starmaze WP10.
+% setTrialCondition Assigns correct trial condition for Starmaze WP10.
 %
 % Input: 
-% condition is trial condition information (string) 
-% feedback indicates whether goal is visible (yes/no) (boolean)
+% condition is trial condition information (string). "main_ret" is missing,
+% therefore this info needs to be corrected. 
+% feedback indicates whether goal is visible (true/false) (string)
 %
-% Returns: TC is trial type (integer)
-% 0 = main_learn, 3 = main_retrieval, 1 = allocentric, 2 = egocentric, 
-% 4 = practise motor control
+% Returns: TC is trial type (string)
+% main_learn, main_ret, allo_ret, ego_ret, practise
 
 training='main_learn';
 % note: main_learn + no feedback (simple retrieval) is not marked as
@@ -22,19 +22,19 @@ TC_ego=contains(condition,ego);
 TC_mc=contains(condition,mc); 
 
 if TC_training==1
-    if feedback==0
-        TC=3;
+    if feedback=="false"
+        TC="main_ret";
     else
-        TC=0;
+        TC="main_learn";
     end
 elseif TC_allo==1
-    TC=1;
+    TC="allo_ret";
 elseif TC_ego==1
-    TC=2;
+    TC="ego_ret";
 elseif TC_mc==1
-    TC=4;
+    TC="practise";
 else
-    TC=999;
+    TC="999";
 end
 
 end

@@ -23,9 +23,9 @@ temp=[];
 for i=1:p
     for j=1:length(data(i).session)
         [r,~]=size(struct2table(data(i).session(j).trial));
-        g_data=table(repmat(data(i).id,r,1), repmat(data(i).group,r,1), string(repmat(data(i).group_s,r,1)), repmat(data(i).sex,r,1),...
-            string(repmat(data(i).sex_s,r,1)), repmat(data(i).session(j).session_num,r,1), repmat(data(i).session(j).session_duration,r,1),...
-            'VariableNames',{'id' 'group' 'group_s' 'sex' 'sex_s' 'session' 'duration'}); 
+        g_data=table(repmat(data(i).id,r,1), string(repmat(data(i).group,r,1)), string(repmat(data(i).sex,r,1)), ...
+            repmat(data(i).session(j).session_num,r,1), repmat(data(i).session(j).session_duration,r,1),...
+            'VariableNames',{'id' 'group' 'sex' 'session' 'duration'}); 
         if j==3
             t_data=struct2table(data(i).session(j).trial(2)); 
             t_data.goal_s=[]; t_data.start_s=[];  g_data(1,:)=[]; 
@@ -41,7 +41,7 @@ for i=1:p
 end
 
 % sort order 
-temp=sortrows(temp,{'id','session','trial_num'});
+temp=sortrows(temp,{'id','session','trial'});
 
 % write data 
 format='yymmdd'; date=datestr(now, format); 

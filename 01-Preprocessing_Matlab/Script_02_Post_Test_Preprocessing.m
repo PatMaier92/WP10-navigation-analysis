@@ -78,7 +78,7 @@ for id=participant_start:participant_end
     for k=1:size(trial_data,1)
         %% general info
         % trial
-        pt(p).trial(k).trial_num=trial_data.trial_num(k,1); 
+        pt(p).trial(k).trial=trial_data.trial_num(k,1); 
         % correct items 
         pt(p).trial(k).lm_MB=trial_data.lm_MB{1,1};
         pt(p).trial(k).lm_MD=trial_data.lm_MD{1,1};

@@ -11,13 +11,13 @@ function [goal_i, alley_s, alley_i, obj_at_location]=computeChosenGoals(rand_dic
 % xend, yend are chosen final x-/y-coordinates
 %
 % Returns: 
-% goal_i (integer), alley_s (string), alley_i (integer), obj_at_location (integer) 
+% goal_i (integer), alley_s (string), alley_i (integer), obj_at_location (string) 
 
 if goal_s == "Timeout"
     alley_i = 999; 
     alley_s = "Timeout"; 
     goal_i = 999; 
-    obj_at_location = 999;  
+    obj_at_location = "999";  
     disp('Timeout in computeChosenGoals.m. Set to 999.\n');
 else 
     for c=1:5
@@ -44,13 +44,12 @@ else
     end 
 
     % correct object at chosen location 
-    obj_at_location=999; 
+    obj_at_location="999"; 
     fields = fieldnames(rand_dict); 
     for i=1:length(fields)
-        if strcat("M",alley_s) == string(fields{i})
+        if strcat("M", alley_s) == string(fields{i})
             key = fields{i};
-            temp = char(rand_dict.(key).object);
-            obj_at_location = double(string(temp(1:2))); 
+            obj_at_location = string(rand_dict.(key).object);
         end
     end 
 end 

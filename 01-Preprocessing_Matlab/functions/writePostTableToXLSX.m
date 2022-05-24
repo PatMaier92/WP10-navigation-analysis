@@ -34,7 +34,7 @@ for i=1:p
 end
 
 % sort order 
-temp=sortrows(temp,{'id','trial_num'});
+temp=sortrows(temp,{'id','trial'});
 
 % write data 
 format='yymmdd'; date=datestr(now, format); 

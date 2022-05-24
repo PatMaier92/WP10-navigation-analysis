@@ -191,8 +191,7 @@ tic;
         
         % store participant information
         sm.participant(p).id=id;
-        [sm.participant(p).group,sm.participant(p).group_s, ...
-            sm.participant(p).sex,sm.participant(p).sex_s]=setGroupSexInfo(sm.participant(p).id);
+        [sm.participant(p).group, sm.participant(p).sex]=setGroupSexInfo(sm.participant(p).id);
         sm.participant(p).session(s).session_num=trial_data.session_num(1,1);
         
         %% read-in log file (only once in session 1)
@@ -265,19 +264,16 @@ tic;
             sm.participant(p).session(s).session_duration=round(minutes(trial_data.timestamp(numel(files),1) - trial_data.timestamp(1,1))); 
             
             sm.participant(p).session(s).trial(k).block=trial_data.block_num(k,1);
-            sm.participant(p).session(s).trial(k).trial_num=trial_data.trial_num(k,1);
+            sm.participant(p).session(s).trial(k).trial=trial_data.trial_num(k,1);
             sm.participant(p).session(s).trial(k).trial_in_block=trial_data.trial_num_in_block(k,1);
             
-            sm.participant(p).session(s).trial(k).feedback_s=string(trial_data.trial_feedback(k,1));
-            sm.participant(p).session(s).trial(k).feedback=int8(strcmp(sm.participant(p).session(s).trial(k).feedback_s,'true'));
+            sm.participant(p).session(s).trial(k).feedback=string(trial_data.trial_feedback(k,1));
+               
+            condition=string(trial_data.trial_type(k,1));
+            sm.participant(p).session(s).trial(k).condition=setTrialCondition(condition,sm.participant(p).session(s).trial(k).feedback);
+            clear condition; 
             
-            sm.participant(p).session(s).trial(k).condition_s=string(trial_data.trial_type(k,1));
-            sm.participant(p).session(s).trial(k).condition=setTrialCondition(sm.participant(p).session(s).trial(k).condition_s,sm.participant(p).session(s).trial(k).feedback);
-            
-            n_goals=4;
-            sm.participant(p).session(s).trial(k).goal_identity_s=string(trial_data.trial_goal_identity(k,1));
-            sm.participant(p).session(s).trial(k).goal_identity=setTrialGoalIdentity(n_goals, char(trial_data.trial_goal_identity(k,1)));
-            clear n_goals; 
+            sm.participant(p).session(s).trial(k).goal_identity=string(trial_data.trial_goal_identity(k,1));
             
             [sm.participant(p).session(s).trial(k).goal_x,sm.participant(p).session(s).trial(k).goal_y,...
                 sm.participant(p).session(s).trial(k).goal_i,sm.participant(p).session(s).trial(k).goal_s,...
@@ -288,7 +284,7 @@ tic;
             [sm.participant(p).session(s).trial(k).start_i]=setTrialStartLocation(sm.participant(p).session(s).trial(k).start_s,sm.coord.start_names);
             
             %% For all normal navigation trials (i.e., not motor control task)
-            if sm.participant(p).session(s).trial(k).condition~=4
+            if sm.participant(p).session(s).trial(k).condition~="practise"
                 %% compute support variables depending on this trial's settings
                 % ideal path coordinates & ideal path length
                 % Caveat: dummy values for egocentric path from inner starts (because no clear ideal egocentric path)
@@ -357,7 +353,7 @@ tic;
                 
                 % FINAL DISTANCE to CORRECT target
                 sm.participant(p).session(s).trial(k).final_distance=0;
-                if sm.participant(p).session(s).trial(k).feedback==0
+                if sm.participant(p).session(s).trial(k).feedback=="false"
                     sm.participant(p).session(s).trial(k).final_distance=computeDistance(...
                         sm.participant(p).session(s).trial(k).goal_x, sm.participant(p).session(s).trial(k).x_n, ...
                         sm.participant(p).session(s).trial(k).goal_y, sm.participant(p).session(s).trial(k).y_n);
@@ -392,7 +388,7 @@ tic;
                 % fprintf('Standard path and distance analysis done for %d, session %d, file no %d.\n', id, s, k);
                 
                 %% additional distance analysis for probe trials  
-                if sm.participant(p).session(s).trial(k).feedback==0   
+                if sm.participant(p).session(s).trial(k).feedback=="false"  
                     % AVERAGE DISTANCE to PATH to CHOSEN target 
                     % with full x-/y-trajectory
                     [sm.participant(p).session(s).trial(k).chosen_path_distance, ~] = computePathDistance(...
@@ -422,7 +418,7 @@ tic;
           
                 %% additional distance analysis for allocentric probe trials with potential egocentric response
                 % excludes allocentric trials with inner starts because no clear egocentric path/goal location from these starts 
-                if sm.participant(p).session(s).trial(k).condition==1 && mod(sm.participant(p).session(s).trial(k).start_i,2)
+                if sm.participant(p).session(s).trial(k).condition=="allo_ret" && mod(sm.participant(p).session(s).trial(k).start_i,2)
                     % FINAL DISTANCE to EGOCENTRIC target
                     sm.participant(p).session(s).trial(k).final_distance_ego=computeDistance(...
                         sm.participant(p).session(s).trial(k).goal_x_ego, sm.participant(p).session(s).trial(k).x_n,...
@@ -541,7 +537,7 @@ tic;
                     sm.participant(p).session(s).trial(k).zones_entered, seq_10, ideal_seq_10_chosen); 
                 
                 % additionally: SEARCH STRATEGY in ALLOCENTRIC probe trials with potential EGOCENTRIC response
-                if sm.participant(p).session(s).trial(k).condition==1 && mod(sm.participant(p).session(s).trial(k).start_i,2)
+                if sm.participant(p).session(s).trial(k).condition=="allo_ret" && mod(sm.participant(p).session(s).trial(k).start_i,2)
                     sm.participant(p).session(s).trial(k).search_strategy_in_allo=computeSearchStrategyAllo(...
                         sm.participant(p).session(s).trial(k).shortest_path_correct_alley, sm.participant(p).session(s).trial(k).correct_goal,...
                         sm.participant(p).session(s).trial(k).correct_goal_ego, sm.participant(p).session(s).trial(k).zones_explored,...
@@ -557,7 +553,7 @@ tic;
                 if sm.participant(p).session(s).trial(k).chosen_alley_i==999
                     sm.participant(p).session(s).trial(k).exclude_trial_matlab=1; 
                     fprintf('Trial %d marked for exclusion due to timeout.\n',k);
-                elseif sm.participant(p).session(s).trial(k).condition ~=4 % not for motor control task
+                elseif sm.participant(p).session(s).trial(k).condition~="practise" % not for motor control task
                     if (sm.participant(p).session(s).trial(k).path_length<=0.1 || sm.participant(p).session(s).trial(k).rotation_xyz==0 ...
                             || sm.participant(p).session(s).trial(k).time < 3)
                         sm.participant(p).session(s).trial(k).exclude_trial_matlab=1;
@@ -566,9 +562,9 @@ tic;
                 end
                 
                 %% create trial plot  
-                plotTrialTrack(sm.participant(p).session(s).trial(k).trial_num, sm.participant(p).session(s).session_num,...
+                plotTrialTrack(sm.participant(p).session(s).trial(k).trial, sm.participant(p).session(s).session_num,...
                     sm.participant(p).session(s).trial(k).condition, sm.participant(p).session(s).trial(k).start_i,...
-                    sm.participant(p).id,sm.participant(p).group_s, sm.participant(p).session(s).trial(k).correct_goal,...
+                    sm.participant(p).id,sm.participant(p).group, sm.participant(p).session(s).trial(k).correct_goal,...
                     sm.participant(p).session(s).trial(k).shortest_path_correct_alley, sm.participant(p).session(s).trial(k).search_strategy,...
                     sm.participant(p).session(s).trial(k).search_strategy_in_allo, sm.coord.full_poly, x, y, x_line, y_line,... 
                     x_line_ego, y_line_ego, x_line_chosen, y_line_chosen, sm.participant(p).session(s).trial(k).goal_x,...
@@ -600,8 +596,8 @@ tic;
                 % fprintf('Motor control analysis done for %d, session %d, file no %d.\n', id, s, k);
                 
                 %% create trial plot  
-                plotMotorControlTrial(sm.participant(p).session(s).trial(k).trial_num, sm.participant(p).session(s).session_num,...
-                    sm.participant(p).id,sm.participant(p).group_s, sm.coord.practise.practise_poly, ...
+                plotMotorControlTrial(sm.participant(p).session(s).trial(k).trial, sm.participant(p).session(s).session_num,...
+                    sm.participant(p).id,sm.participant(p).group, sm.coord.practise.practise_poly, ...
                     sm.coord.practise.goal_x, sm.coord.practise.goal_y, sm.coord.practise.start_x, sm.coord.practise.start_y,...
                     sm.coord.practise.practise_goal_names, x, y , x_line_motor, y_line_motor, output_folder);
                 clear x_line_motor y_line_motor;     
@@ -621,6 +617,6 @@ end
 
 %% Block 4: Write data to xlsx file
 % [data_folder]  = setInputPath();
-% writeTableToXLSX(data_folder); 
+% writeNavTableToXLSX(data_folder); 
 
 clear; 

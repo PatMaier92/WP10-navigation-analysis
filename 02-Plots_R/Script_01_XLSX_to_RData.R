@@ -21,36 +21,34 @@ sm_data <- read_xlsx(file_path, col_names = T, na = "999")
 
 # tidy data 
 sm_data <- sm_data %>% 
-  mutate(sex=factor(sex_s),
-         group=factor(group_s, levels=c("YoungKids", "OldKids", "YoungAdults")),
+  mutate(sex=factor(sex),
+         group=factor(group, levels=c("YoungKids", "OldKids", "YoungAdults")),
          session=factor(session),
-         feedback=factor(feedback_s),
-         condition=factor(condition, levels=c(0, 3, 1, 2, 4), 
-                          labels=c("main_learn", "main_ret", "allo_ret", "ego_ret", "practise")),
-         goal_identity=factor(goal_identity_s),
+         feedback=factor(feedback),
+         condition=factor(condition, levels=c("main_learn", "main_ret", "allo_ret", "ego_ret", "practise")),
+         goal_identity=factor(goal_identity),
          goal=factor(goal_s),
          start=factor(start_s),
          chosen_alley=factor(chosen_alley_s),
-         obj_at_chosen_loc=factor(obj_at_chosen_loc, levels=c(1, 2, 3, 4),
-                                  labels=c("01-Fussball", "02-Globus", "03-Geige", "04-Stuhl")),
+         obj_at_chosen_loc=factor(obj_at_chosen_loc, levels=c("01-Fussball", "02-Globus", "03-Geige", "04-Stuhl")),
          search_strategy=factor(search_strategy, levels=c(1,2,3), 
                                 labels=c("direct","detour","reoriented")),
          search_strategy_in_allo=factor(search_strategy_in_allo, levels=c(1, 2, 3, 4, 5, 0),
                                         labels=c("direct_allo", "detour_allo", 
                                                  "direct_ego", "detour_ego", 
                                                  "back_to_start", "unclassified"))) %>% 
-  select(-sex_s, -group_s, -feedback_s, -condition_s, -goal_identity_s, -goal_s, -start_s, -chosen_alley_s)
+  select(-goal_s, -start_s, -chosen_alley_s)
 # if no renaming of variables: use mutate_at(cols, factor)
 
 assign_trial <- function(i, s, b, c, t){
   temp <- sm_data %>%
     filter(session==s,  block==b, condition==c, id==i)
-  orig_trial <- sort(unique(temp %>% pull(trial_num)))
+  orig_trial <- sort(unique(temp %>% pull(trial)))
   index <- which(orig_trial==t)
   return (index)
 }
 sm_data <- sm_data %>% 
-  mutate(trial_in_cond=pmap_dbl(list(id, session, block, condition, trial_num), assign_trial))
+  mutate(trial_in_cond=pmap_dbl(list(id, session, block, condition, trial), assign_trial))
 
 
 # save as RData
@@ -95,14 +93,14 @@ get_gmda_score <- function(ID){
 pt_data <- pt_data %>% 
   mutate(sex=factor(sex),
          group=factor(group, levels=c("YoungKids", "OldKids", "YoungAdults")),
-         condition=factor(trial_num, levels=c(1, 2, 3, 4), 
+         condition=factor(trial, levels=c(1, 2, 3, 4), 
                           labels=c("layout", "landmarks", "goals", "position")),
          score=case_when(condition=="position" ~ map_dbl(id, get_gmda_score), T ~ score)) %>% 
   pivot_wider(names_from="condition",
               names_glue="{condition}_{.value}",
               values_from=matches("obj_[12345]")) %>% 
   discard(~all(is.na(.) | . =="")) %>% 
-  mutate(condition=factor(trial_num, levels=c(1, 2, 3, 4), 
+  mutate(condition=factor(trial, levels=c(1, 2, 3, 4), 
                           labels=c("layout", "landmarks", "goals", "position")),
          layout_obj_1=factor(layout_obj_1)) %>% 
   mutate_at(vars(matches("goals|obj_M")), ~factor(., levels=c("01-Fahrrad", "02-Fussball", "03-Geige", "04-Stuhl"))) %>% 
@@ -112,7 +110,7 @@ pt_data <- pt_data %>%
                                                                "09-Mountain_sim", "10-Mountain-House_sim",
                                                                "11-Forest_dsm", "12-Forest-House_dsm", "13-Tower_dsm",
                                                                "14-Mountain_dsm", "15-Mountain-House_dsm"))) %>% 
-  relocate("condition", .after=("trial_num")) %>% 
+  relocate("condition", .after=("trial")) %>% 
   relocate(starts_with("goals_"), .after=("landmarks_obj_5")) %>% 
   relocate(starts_with("lm"), .after=("landmarks_obj_5")) %>% 
   relocate(starts_with("obj_M"), .after=("goals_obj_3"))

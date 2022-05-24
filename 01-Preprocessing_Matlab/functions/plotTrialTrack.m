@@ -21,7 +21,7 @@ hold on;
 
 viscircles([goal_x goal_y],0.01); 
 
-if condition==0 || condition==2 || condition==3 ||(condition==1 && ~mod(start,2)) % training, egocentric or allocentric inner starts 
+if condition=="main_learn" || condition=="main_ret" || condition=="ego_ret" ||(condition=="allo_ret" && ~mod(start,2))
     line1=plot(x,y,'k -', 'LineWidth', 1);
     line2=plot(x_line,y_line,'r -.', 'LineWidth', 1);
     line3=plot(x_line_chosen,y_line_chosen,'b .:', 'LineWidth', 1);
@@ -34,13 +34,13 @@ else % allocentric outer starts
     legend([line1 line2 line3 line4],{'actual path','ideal path target','ideal path chosen','ideal path ego'});
 end
 
-if condition==0
+if condition=="main_learn"
     type = ' (Training)'; 
-elseif condition==1
+elseif condition=="allo_ret"
     type = ' (Allocentric Probe)';
-elseif condition==2
+elseif condition=="ego_ret"
     type = ' (Egocentric Probe)';
-elseif condition==3
+elseif condition=="main_ret"
     type = ' (Training Probe)';
 else
     type = ' (XXXXX)'; 
