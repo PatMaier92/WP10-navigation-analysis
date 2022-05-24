@@ -538,11 +538,12 @@ tic;
                 % EDIT DISTANCE 
                 % compute edit distance costs (i.e. deviation between ideal and actual path zone sequence) 
                 % method: Levenshtein - lowest number of insertions, deletions, and substitutions
-                sm.participant(p).session(s).trial(k).zone_editdistance=editDistance(seq_10, ideal_seq_10);
-                
+                sm.participant(p).session(s).trial(k).path_edit_distance=editDistance(seq_10, ideal_seq_10);
+                sm.participant(p).session(s).trial(k).chosen_path_edit_distance=editDistance(seq_10, ideal_seq_10_chosen);
+                                
                 % SHORTEST PATH to TARGET
                 % shortest path to correct target given when edit distance of zero (no deviation)
-                sm.participant(p).session(s).trial(k).shortest_path_correct_alley=sm.participant(p).session(s).trial(k).zone_editdistance==0; 
+                sm.participant(p).session(s).trial(k).shortest_path_correct_alley=sm.participant(p).session(s).trial(k).path_edit_distance==0; 
                         
                 % SEARCH STRATEGY category
                 % 1 = direct; 2 = detour; 3 = reoriented
