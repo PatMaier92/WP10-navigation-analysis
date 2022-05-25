@@ -488,7 +488,7 @@ tic;
                 % fprintf('Additional: Distance analysis to egocentric target done for %d, session %d, file no %d.\n', id, s, k);
                       
                 %% rotation analysis
-                % TOTAL XYZ ROTATION
+                % TOTAL ROTATION
                 % calculate total rotation in degrees as change in yaw rotation (r)
                 % this value includes rotation due to x-/y-trajectory (i.e. left-forward movement)
                 rot=zeros(1,length(r)-1); 
@@ -501,7 +501,7 @@ tic;
                 end
                 sm.participant(p).session(s).trial(k).rotation_degrees=sum(rot);  
                 sm.participant(p).session(s).trial(k).rotation_turns=sum(rot)/360;
-                sm.participant(p).session(s).trial(k).rotation_turns_by_path=sum(rot)/360/sm.participant(p).session(s).trial(k).path_length; 
+                sm.participant(p).session(s).trial(k).rotation_turns_by_path_length=sum(rot)/360/sm.participant(p).session(s).trial(k).path_length; 
                 clear rot j temp;
                      
                 % fprintf('Rotation analysis done for %d, session %d, file no %d.\n', id, s, k);       
@@ -596,6 +596,20 @@ tic;
                  
                 % VELOCITY
                 sm.participant(p).session(s).trial(k).velocity=sm.participant(p).session(s).trial(k).path_length/sm.participant(p).session(s).trial(k).time;
+                
+                % TOTAL ROTATION
+                rot=zeros(1,length(r)-1); 
+                for j=2:length(r)
+                    temp=abs(r(j)-r(j-1));
+                    if temp > 180 % correct errors due to switch at 0° to 360°
+                        temp=360-temp; 
+                    end 
+                    rot(j-1)=temp;
+                end
+                sm.participant(p).session(s).trial(k).rotation_degrees=sum(rot);  
+                sm.participant(p).session(s).trial(k).rotation_turns=sum(rot)/360;
+                sm.participant(p).session(s).trial(k).rotation_turns_by_path_length=sum(rot)/360/sm.participant(p).session(s).trial(k).path_length; 
+                clear rot j temp;
                 
                 % fprintf('Motor control analysis done for %d, session %d, file no %d.\n', id, s, k);
                 
