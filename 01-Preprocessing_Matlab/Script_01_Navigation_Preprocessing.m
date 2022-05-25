@@ -499,21 +499,11 @@ tic;
                     end 
                     rot(j-1)=temp;
                 end
-                sm.participant(p).session(s).trial(k).rotation_xyz=sum(rot); clear rot j temp; 
-                
-                %%% TBD CHANGE %%% 1) rotation_degrees, 2) rotatio_full_turns, 3) rotation_by_path_length/by_data_points
-                
-                %%% TBD CHECK XY %%% must be on a different scale or erroneous if larger than xyz %%% 
-                % XY ROTATION
-                % calculate rotation due to unqiue x-/y-trajectory (i.e. left-forward movement)
-                sm.participant(p).session(s).trial(k).rotation_xy = computeXYRotation(x_unique, y_unique);
-                
-                % Z ROTATION
-                % calculate 'pure' z rotation (i.e. left movement on the spot) 
-                sm.participant(p).session(s).trial(k).rotation_z = sm.participant(p).session(s).trial(k).rotation_xyz - sm.participant(p).session(s).trial(k).rotation_xy;
-                sm.participant(p).session(s).trial(k).rotation_z_by_xy = computeDeviationToIdealValue(...
-                    sm.participant(p).session(s).trial(k).rotation_xyz, sm.participant(p).session(s).trial(k).rotation_xy); 
-                               
+                sm.participant(p).session(s).trial(k).rotation_degrees=sum(rot);  
+                sm.participant(p).session(s).trial(k).rotation_turns=sum(rot)/360;
+                sm.participant(p).session(s).trial(k).rotation_turns_by_path=sum(rot)/360/sm.participant(p).session(s).trial(k).path_length; 
+                clear rot j temp;
+                     
                 % fprintf('Rotation analysis done for %d, session %d, file no %d.\n', id, s, k);       
                 
                 %% zone analysis for exploration behavior             
@@ -569,7 +559,7 @@ tic;
                     sm.participant(p).session(s).trial(k).exclude_trial_matlab=1; 
                     fprintf('Trial %d marked for exclusion due to timeout.\n',k);
                 elseif (sm.participant(p).session(s).trial(k).path_length<=0.1 ...
-                        || sm.participant(p).session(s).trial(k).rotation_xyz==0 ...
+                        || sm.participant(p).session(s).trial(k).rotation_degrees==0 ...
                         || sm.participant(p).session(s).trial(k).time<3)
                         sm.participant(p).session(s).trial(k).exclude_trial_matlab=1;
                         fprintf('Trial %d marked for exclusion due lack of movement or trial time < 3 sec.\n',k);
