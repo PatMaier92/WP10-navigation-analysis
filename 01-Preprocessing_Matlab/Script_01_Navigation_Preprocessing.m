@@ -517,29 +517,22 @@ tic;
                     sm.coord.alley_half_out_x, sm.coord.alley_half_out_y, sm.coord.alley_half_in_x, sm.coord.alley_half_in_y,...
                     sm.coord.rec_x, sm.coord.rec_y, sm.coord.tri_x, sm.coord.tri_y, 20); 
   
-                % SCORE for ZONE EXPLORATION 
                 % number of explored zones (i.e. re-entries not counted)
-                sm.participant(p).session(s).trial(k).zones_explored=length(unique(seq_20));
+                zones_explored=length(unique(seq_20));
                 
-                % SCORE for ZONE ENTRIES 
                 % number of entered zones (i.e. re-entries counted) 
-                sm.participant(p).session(s).trial(k).zones_entered=length(seq_20);
+                zones_entered=length(seq_20);
                 
                 % EDIT DISTANCE 
                 % compute edit distance costs (i.e. deviation between ideal and actual path zone sequence) 
                 % method: Levenshtein - lowest number of insertions, deletions, and substitutions
                 sm.participant(p).session(s).trial(k).path_edit_distance=editDistance(seq_10, ideal_seq_10);
                 sm.participant(p).session(s).trial(k).chosen_path_edit_distance=editDistance(seq_10, ideal_seq_10_chosen);
-                                
-                % SHORTEST PATH to TARGET
-                % shortest path to correct target given when edit distance of zero (no deviation)
-                sm.participant(p).session(s).trial(k).shortest_path_correct_alley=sm.participant(p).session(s).trial(k).path_edit_distance==0; 
-                        
+                                                        
                 % SEARCH STRATEGY category
-                % 1 = direct; 2 = detour; 3 = reoriented
                 [sm.participant(p).session(s).trial(k).search_strategy]=computeSearchStrategy(...
-                    sm.participant(p).session(s).trial(k).shortest_path_correct_alley, sm.participant(p).session(s).trial(k).zones_explored,...
-                    sm.participant(p).session(s).trial(k).zones_entered, seq_10, ideal_seq_10_chosen); 
+                    zones_explored, zones_entered,...
+                    sm.participant(p).session(s).trial(k).chosen_path_edit_distance); 
                 
                 % additionally: SEARCH STRATEGY in ALLOCENTRIC probe trials with potential EGOCENTRIC response
                 if sm.participant(p).session(s).trial(k).condition=="allo_ret" && mod(sm.participant(p).session(s).trial(k).start_i,2)
@@ -550,6 +543,7 @@ tic;
                 else
                     sm.participant(p).session(s).trial(k).search_strategy_in_allo=999;
                 end
+                
                 % fprintf('Exploration analysis done for %d, session %d, file no %d.\n', id, s, k);
                 
                 %% set marker for excluded trials
@@ -569,8 +563,8 @@ tic;
                 plotTrialTrack(sm.participant(p).session(s).trial(k).trial, sm.participant(p).session(s).session_num,...
                     sm.participant(p).session(s).trial(k).condition, sm.participant(p).session(s).trial(k).start_i,...
                     sm.participant(p).id,sm.participant(p).group, sm.participant(p).session(s).trial(k).correct_final_alley,...
-                    sm.participant(p).session(s).trial(k).shortest_path_correct_alley, sm.participant(p).session(s).trial(k).search_strategy,...
-                    sm.participant(p).session(s).trial(k).search_strategy_in_allo, sm.coord.full_poly, x, y, x_line, y_line,... 
+                    sm.participant(p).session(s).trial(k).search_strategy, 'test2',...
+                    sm.coord.full_poly, x, y, x_line, y_line,... 
                     x_line_ego, y_line_ego, x_line_chosen, y_line_chosen, sm.participant(p).session(s).trial(k).goal_x,...
                     sm.participant(p).session(s).trial(k).goal_y, output_folder);
 
@@ -624,7 +618,7 @@ tic;
                 clear x_line_motor y_line_motor;     
             end
             
-            clear x* y* t r *seq* name;             
+            clear x* y* t r *seq* zones* name;             
         end
         
         clear files trial_data input_folder; 

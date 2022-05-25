@@ -1,5 +1,7 @@
-function plotTrialTrack(trial,session,condition,start,id,Group,correct_goal,shortest_path,strategy,strategy_in_allo,...
-    polyshape,x,y,x_line,y_line,x_line_ego,y_line_ego,x_line_chosen,y_line_chosen,goal_x,goal_y,folder)
+function plotTrialTrack(trial,session,condition,start,id,Group,...
+    correct_alley,strategy,strategy_in_allo,...
+    polyshape,x,y,x_line,y_line,x_line_ego,y_line_ego,...
+    x_line_chosen,y_line_chosen,goal_x,goal_y,folder)
 % plotTrialTrack Creates track plots for each individual trial.
 %
 % Input: Information for creating and naming the plot
@@ -9,10 +11,9 @@ function plotTrialTrack(trial,session,condition,start,id,Group,correct_goal,shor
 Trial=int2str(trial);
 Session=num2str(session);
 ID=num2str(id);
-Correct_goal=num2str(correct_goal); 
-Shortest_path=num2str(shortest_path);
-Strategy=num2str(strategy);
-Strategy_in_allo=num2str(strategy_in_allo);
+Accuracy=num2str(correct_alley); 
+Strategy=char(strategy);
+Strategy_in_allo=char(strategy_in_allo); 
 
 wfig=figure('visible','off');
 plot(polyshape,'FaceColor',[0.6 0.6 0.6],'FaceAlpha',0.1);
@@ -46,7 +47,7 @@ else
     type = ' (XXXXX)'; 
 end
 title({[ID ' (' Group ') Session: ' Session ', Trial: ' Trial type]; ...
-    ['Correct goal: ', Correct_goal, ', Shortest path: ' Shortest_path ', Strategy: ' Strategy ' (Strategy in Allo: ' Strategy_in_allo ')']});
+    ['Acc.: ', Accuracy, ', Strategy: ' Strategy ' (in Allo: ' Strategy_in_allo ')']});
 hold off; 
 
 % save plot
