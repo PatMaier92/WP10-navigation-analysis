@@ -31,13 +31,8 @@ sm_data <- sm_data %>%
          start=factor(start_s),
          chosen_alley=factor(chosen_alley_s),
          obj_at_chosen_loc=factor(obj_at_chosen_loc, levels=c("01-Fussball", "02-Globus", "03-Geige", "04-Stuhl")),
-         search_strategy=factor(search_strategy, levels=c(1,2,3), 
-                                labels=c("direct","detour","reoriented")),
-         search_strategy_in_allo=factor(search_strategy_in_allo, levels=c(1, 2, 3, 4, 5, 0),
-                                        labels=c("direct_allo", "detour_allo", 
-                                                 "direct_ego", "detour_ego", 
-                                                 "back_to_start", "unclassified"))) %>% 
-  select(-goal_s, -start_s, -chosen_alley_s)
+         search_strategy=factor(search_strategy, levels=c("direct","detour","reorient"))) %>% 
+  select(-goal_s, -start_s, -chosen_alley_s, -search_strategy_in_allo)
 # if no renaming of variables: use mutate_at(cols, factor)
 
 assign_trial <- function(i, s, b, c, t){

@@ -52,7 +52,7 @@ rm(file_name)
 
 ```{r demo_1, echo=F, message=F, warning=F}
 t1 <- sm_data %>% 
-  filter(trial_num==1, session==1) %>% 
+  filter(trial==1, session==1) %>% 
   select(group, sex) %>%
   tbl_summary(by=group,
               label=list(sex ~ "Gender"),
@@ -72,7 +72,7 @@ rm(t1)
  
 ```{r demo_2, echo=F, message=F, warning=F}
 t2 <- pt_data %>% 
-  filter(trial_num==4) %>% 
+  filter(trial==4) %>% 
   select(group, sex) %>%
   tbl_summary(by=group,
               label=list(sex ~ "Gender"),
@@ -344,8 +344,8 @@ emmeans(probe.acc, pairwise ~ condition, type="response")
 data_prepost <- sm_data %>%
   filter(exclude_trial_matlab==0) %>%
   filter(condition %in% c("allo_ret", "ego_ret")) %>%
-  select(id, group, session, trial_num, condition, correct_final_alley) %>%
-  pivot_wider(id_cols=c(id, trial_num, group, condition),
+  select(id, group, session, trial, condition, correct_final_alley) %>%
+  pivot_wider(id_cols=c(id, trial, group, condition),
               names_from=session,
               names_prefix="s_",
               values_from=correct_final_alley) %>%
@@ -390,10 +390,20 @@ lincon(change_reldiff ~ group, data=data_prepost, tr=0.2, alpha=0.05, method="bo
 ```{r stats_probe_local_accuracy}
 
 ### A) final distance in correct trials 
+ggplot(data_c, aes(x=group, y=final_distance)) +
+  geom_boxplot() + 
+  facet_grid(session ~ condition)
 
-### B) TBD Matlab: final distance in relation to local (alley) environment for all trials 
+### B) final distance in relation to local environment (alley boundary) for all trials 
+ggplot(data, aes(x=group, y=final_local_distance)) +
+  geom_boxplot() + 
+  facet_grid(session ~ condition)
 
-### change value or rather not? 
+
+### for comparison: final distance in all trials 
+ggplot(data, aes(x=group, y=final_distance)) +
+  geom_boxplot() + 
+  facet_grid(session ~ condition)
 
 ```
 
@@ -478,7 +488,49 @@ emmeans(probe.path_var, pairwise ~ group | session | condition, adjust="bonferro
 
 ## -- target metric distance -- ##
 
-## -- (initial) rotation  -- ##
+## -- rotation  -- ##
+ggplot(data, aes(x=group, y=rotation_degrees)) +
+  geom_boxplot() + 
+  facet_grid(session ~ condition)
+
+ggplot(data, aes(x=group, y=rotation_turns)) +
+  geom_boxplot() + 
+  facet_grid(session ~ condition)
+
+ggplot(data, aes(x=group, y=rotation_turns_by_path_length)) +
+  geom_boxplot() + 
+  facet_grid(session ~ condition)
+
+
+probe.rot <- lme(rotation_turns_by_path_length ~ group*session*condition,
+                         random=list(id=pdDiag(~ condition + session)), 
+                         data=data, method="ML")
+probe.rot_var <- update(probe.rot, weights=varIdent(form=~1 | group))
+
+anova.lme(probe.rot, probe.rot_var)
+plot(probe.rot_var, resid(., type="p") ~ fitted(.) | group)
+plot(probe.rot_var, group ~ resid(., type="p"))
+
+anova.lme(probe.rot_var, type="marginal") 
+
+emmeans(probe.rot_var, pairwise ~ group | condition, adjust="bonferroni")
+
+
+# probe.rot <- mixed(rotation_turns_by_path_length ~ group*session*condition + 
+#                      (condition||id), data=data, expand_re=T,
+#                    control=lmerControl(optimizer="bobyqa", optCtrl=list(maxfun=1e6)))
+# 
+# # check model
+# simulationOutput <- simulateResiduals(fittedModel=probe.rot$full_model, plot=F)
+# testResiduals(simulationOutput) 
+# plotResiduals(simulationOutput) 
+# testCategorical(simulationOutput, catPred=data$group)
+# testCategorical(simulationOutput, catPred=data$session)
+# testCategorical(simulationOutput, catPred=data$condition)
+# # diagnostics: not great 
+# 
+# afex_plot(probe.rot, "condition", "group", "session", id = "id",
+#           data_geom = ggbeeswarm::geom_quasirandom)
 
 
 ### change values or rather not? 
@@ -490,12 +542,24 @@ emmeans(probe.path_var, pairwise ~ group | session | condition, adjust="bonferro
 
 table(data$search_strategy, data$group)
 
+da <- data %>% filter(condition=="allo_ret")
+table(da$search_strategy, da$group)
+de <- data %>% filter(condition=="ego_ret")
+table(de$search_strategy, de$group)
+
+
 # option 1) fisher test: tests independence of rows and columns in a contingency table with fixed marginals.
 fisher.test(table(data$search_strategy, data$group), simulate.p.value=T)
 
 # option 2) discANOVA from WRS2: tests hypothesis that independent groups have identical multinomial distributions. 
 discANOVA(search_strategy ~ group, data=data, nboot=500) 
 discmcp(search_strategy ~ group, data=data, alpha=0.05, nboot=500)
+
+discANOVA(search_strategy ~ group, data=data %>% filter(condition=="allo_ret"), nboot=500) 
+discmcp(search_strategy ~ group, data=data %>% filter(condition=="allo_ret"), alpha=0.05, nboot=500)
+
+discANOVA(search_strategy ~ group, data=data %>% filter(condition=="ego_ret"), nboot=500) 
+discmcp(search_strategy ~ group, data=data %>% filter(condition=="ego_ret"), alpha=0.05, nboot=500)
 
 ```
 
@@ -530,7 +594,7 @@ discmcp(search_strategy_2 ~ group, data=data_allo_strategy, alpha=0.05, nboot=50
 
 data_ego <- data %>% 
   filter(condition=="ego_ret") %>% 
-  select(id, group, session, trial_num, block, condition, goal_i, correct_final_alley) %>% 
+  select(id, group, session, trial, block, condition, goal_i, correct_final_alley) %>% 
   mutate(goal_f=factor(goal_i))
 
 probe_ego.acc <- mixed(correct_final_alley ~ group*session*goal_f +  
@@ -549,7 +613,7 @@ emmeans(probe_ego.acc, pairwise ~ session, type="response", adjust="bonferroni")
 
 # data_allo <- data %>% 
 #   filter(condition=="allo_ret") %>% 
-#   select(id, group, session, trial_num, block, condition, goal_i, correct_final_alley) %>% 
+#   select(id, group, session, trial, block, condition, goal_i, correct_final_alley) %>% 
 #   mutate(goal_f=factor(goal_i))
 # 
 # probe_allo.acc <- mixed(correct_final_alley ~ group*session*goal_f +  
@@ -566,7 +630,7 @@ emmeans(probe_ego.acc, pairwise ~ session, type="response", adjust="bonferroni")
 # emmeans(probe_allo.acc, pairwise ~ session, type="response", adjust="bonferroni")
 
 t1 <- data_l %>% 
-  select(id, group, session, trial_num, goal_i, correct_final_alley, time, path_distance) %>% 
+  select(id, group, session, trial, goal_i, correct_final_alley, time, path_distance) %>% 
   mutate(goal_f=factor(goal_i)) %>% 
   group_by(id, group, session, goal_f) %>% 
   summarize(correct_final_alley=mean(correct_final_alley, na.rm=T),
@@ -583,7 +647,7 @@ ggplot(t1, aes(x=goal_f, y=path)) +
 
 
 t2 <- data %>% 
-  select(id, group, session, condition, trial_num, goal_i, correct_final_alley, final_distance, time, path_distance) %>% 
+  select(id, group, session, condition, trial, goal_i, correct_final_alley, final_distance, time, path_distance) %>% 
   mutate(goal_f=factor(goal_i)) %>% 
   filter(session==1) %>% 
   group_by(id, group, condition, goal_f) %>% 
