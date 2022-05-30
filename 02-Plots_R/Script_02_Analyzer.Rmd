@@ -18,6 +18,7 @@ library(WRS2)
 library(afex)
 library(lme4)
 library(nlme)
+library(lmeresampler)
 # library(parameters)
 # library(lavaSearch2)
 library(emmeans)
@@ -114,15 +115,22 @@ data_l <- sm_data %>%
 # rm(bc_t, bc_p, lambda_t, lambda_p)
 
 ## probe 
-data <- sm_data %>%
-  filter(exclude_trial_matlab==0) %>% 
+data <- sm_data %>% 
   filter(condition %in% c("allo_ret", "ego_ret")) %>% 
+  select(id, group, sex, session, block, trial, condition, trial_in_cond, goal, 
+         correct_final_alley, final_distance, final_local_distance,
+         time, path_length_error, 
+         path_distance, dtw_path_distance, chosen_path_distance,
+         path_edit_distance, chosen_path_edit_distance,
+         target_distance_error, chosen_target_distance, 
+         rotation_degrees, rotation_turns, rotation_turns_by_path_length,
+         exclude_trial_matlab) %>% 
+  mutate(across(correct_final_alley:rotation_turns_by_path_length, 
+                ~ case_when(exclude_trial_matlab==1 ~ NaN, T ~ .))) %>% 
   droplevels()
 
 ## probe correct trials 
-data_c <- sm_data %>% 
-  filter(exclude_trial_matlab==0) %>% 
-  filter(condition %in% c("allo_ret", "ego_ret")) %>% 
+data_c <- data %>% 
   filter(correct_final_alley==1) %>% 
   droplevels()
 
@@ -309,8 +317,8 @@ anova(learn.path_ed, learn.path_ed_var) # variance estimation improves model
 
 # -- correct final alley -- ##
 # 1) full binomial model (with reduced random effects due to failed convergence)
-probe.acc <- mixed(correct_final_alley ~ group*session*condition + sex + 
-                     (session*condition||id), data=data, expand_re=T,
+probe.acc <- mixed(correct_final_alley ~ group*session*condition + 
+                     (session*condition||id), data=data, na.action=na.omit, expand_re=T,
                    family=binomial(link="logit"), method="LRT",
                    control=glmerControl(optimizer="bobyqa", optCtrl=list(maxfun=1e6)))
 
@@ -318,9 +326,9 @@ probe.acc <- mixed(correct_final_alley ~ group*session*condition + sex +
 simulationOutput <- simulateResiduals(fittedModel=probe.acc$full_model, plot=F)
 testResiduals(simulationOutput) 
 plotResiduals(simulationOutput) 
-testCategorical(simulationOutput, catPred=data$group)
-testCategorical(simulationOutput, catPred=data$session)
-testCategorical(simulationOutput, catPred=data$condition)
+testCategorical(simulationOutput, catPred=data$group[data$exclude_trial_matlab==0])
+testCategorical(simulationOutput, catPred=data$session[data$exclude_trial_matlab==0])
+testCategorical(simulationOutput, catPred=data$condition[data$exclude_trial_matlab==0])
 # diagnostics: ok 
 
 # post-test for fixed effects
@@ -328,6 +336,7 @@ testCategorical(simulationOutput, catPred=data$condition)
 afex_plot(probe.acc, "session", "group", "condition", id = "id",
           data_geom = ggbeeswarm::geom_quasirandom)
 
+probe.acc
 emmeans(probe.acc, pairwise ~ group, type="response", adjust="bonferroni")
 emmeans(probe.acc, pairwise ~ session, type="response")
 emmeans(probe.acc, pairwise ~ condition, type="response")
@@ -341,9 +350,7 @@ emmeans(probe.acc, pairwise ~ condition, type="response")
 # ::: METHOD: one aggregated value per person, therefore (robust) ANOVA ::: #  
 
 # --- change calculation --- #
-data_prepost <- sm_data %>%
-  filter(exclude_trial_matlab==0) %>%
-  filter(condition %in% c("allo_ret", "ego_ret")) %>%
+data_prepost <- data %>% 
   select(id, group, session, trial, condition, correct_final_alley) %>%
   pivot_wider(id_cols=c(id, trial, group, condition),
               names_from=session,
@@ -410,10 +417,9 @@ ggplot(data, aes(x=group, y=final_distance)) +
 ```{r stats_probe_metric}
 
 ## -- time -- ##
-
 probe.time <- lme(time ~ group*session*condition,
                          random=~session+condition | id,
-                         data=data, method="ML")
+                         data=data, na.action=na.omit, method="ML")
 probe.time_var <- update(probe.time, random=list(id=pdDiag(~ condition + session)),
                          weights=varIdent(form=~1 | group))
 anova.lme(probe.time, probe.time_var) 
@@ -422,9 +428,9 @@ plot(probe.time_var, resid(., type="p") ~ fitted(.) | group)
 plot(probe.time_var, group ~ resid(., type="p"))
 
 
-probe.time_t <- lme(1/time ~ group*session*condition,
+probe.time_t <- lme(log(time) ~ group*session*condition,
                     random=~session+condition | id,
-                    data=data, method="ML")
+                    data=data, na.action=na.omit, method="ML")
 probe.time_var_t <-  update(probe.time_t, random=list(id=pdDiag(~ condition + session)),
                          weights=varIdent(form=~1 | group))
 anova(probe.time_t, probe.time_var_t)
@@ -432,13 +438,20 @@ anova(probe.time_t, probe.time_var_t)
 plot(probe.time_var_t, resid(., type="p") ~ fitted(.) | group)
 plot(probe.time_var_t, group ~ resid(., type="p"))
 
+qqnorm(resid(probe.time))
+qqline(resid(probe.time))
+
+# # test bootstrapping
+# set.seed(1234)
+# m <- lmeresampler::bootstrap(probe.time_var, .f=fixef, type="reb", B=100, reb_type=1)
+
 
 # not super stable 
+anova(probe.time0)
 anova.lme(probe.time, type="marginal") 
 anova.lme(probe.time_t, type="marginal")  
 anova.lme(probe.time_var, type="marginal")  
 anova.lme(probe.time_var_t, type="marginal") 
-
 
 emmeans(probe.time, pairwise ~ group | session | condition, adjust="bonferroni")
 emmeans(probe.time_t, pairwise ~ group | session | condition, adjust="bonferroni")
@@ -792,6 +805,6 @@ lincon(score ~ group, data=data, tr=0.2, nboot=1000, method="bonferroni")
 
 # rm(data_gmda, GMDA, CanOrg, CanAcc, DistAcc, AngleAcc, boxplot)
 
-rm(list=ls(pattern="x")
+rm(list=ls(pattern="x"))
    
 ```
