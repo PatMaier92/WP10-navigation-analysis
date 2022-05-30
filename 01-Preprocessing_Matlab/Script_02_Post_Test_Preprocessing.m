@@ -71,7 +71,7 @@ for id=participant_start:participant_end
       
     %% set participant, group and session duration information 
     pt(p).id=id; 
-    [~,pt(p).group,~,pt(p).sex]=setGroupSexInfo(pt(p).id);
+    [pt(p).group,pt(p).sex]=setGroupSexInfo(pt(p).id);
     pt(p).session_duration=round(minutes(trial_data.timestamp(4,1) - trial_data.timestamp(1,1))); 
 
     % loop over trials
