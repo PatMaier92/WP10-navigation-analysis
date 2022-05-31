@@ -18,7 +18,7 @@ library(WRS2)
 library(afex)
 library(lme4)
 library(nlme)
-library(lmeresampler)
+# library(lmeresampler)
 # library(parameters)
 # library(lavaSearch2)
 library(emmeans)
@@ -104,34 +104,38 @@ data_l <- sm_data %>%
          block_f=factor(block)) %>% 
   droplevels()
 
-# # box-cox transformation
-# bc_t <- MASS::boxcox(time ~ group*block_f*trial_in_cond_c, data=data_l)
-# lambda_t <- bc_t$x[which.max(bc_t$y)]
-# bc_p <- MASS::boxcox(path_distance ~ group*block_f*trial_in_cond_c, data=data_l)
-# lambda_p <- bc_p$x[which.max(bc_p$y)]
-# data_l <- data_l %>% 
-#   mutate(boxcox_time=((time^lambda_t-1)/lambda_t),
-#          boxcox_path=((path_distance^lambda_p-1)/lambda_p))
-# rm(bc_t, bc_p, lambda_t, lambda_p)
-
 ## probe 
 data <- sm_data %>% 
+  filter(exclude_trial_matlab==0) %>% 
   filter(condition %in% c("allo_ret", "ego_ret")) %>% 
-  select(id, group, sex, session, block, trial, condition, trial_in_cond, goal, 
-         correct_final_alley, final_distance, final_local_distance,
-         time, path_length_error, 
-         path_distance, dtw_path_distance, chosen_path_distance,
-         path_edit_distance, chosen_path_edit_distance,
-         target_distance_error, chosen_target_distance, 
-         rotation_degrees, rotation_turns, rotation_turns_by_path_length,
-         exclude_trial_matlab) %>% 
-  mutate(across(correct_final_alley:rotation_turns_by_path_length, 
-                ~ case_when(exclude_trial_matlab==1 ~ NaN, T ~ .))) %>% 
+  droplevels()
+
+data_1 <- data %>% 
+  filter(session==1) %>% 
   droplevels()
 
 ## probe correct trials 
 data_c <- data %>% 
   filter(correct_final_alley==1) %>% 
+  droplevels()
+
+data_c_1 <- data_c %>% 
+  filter(session==1) %>% 
+  droplevels()
+
+## change 
+data_prepost <- data %>% 
+  select(id, group, session, trial, condition, correct_final_alley) %>%
+  pivot_wider(id_cols=c(id, trial, group, condition),
+              names_from=session,
+              names_prefix="s_",
+              values_from=correct_final_alley) %>%
+  group_by(id, group, condition) %>%
+  summarise_at(vars(s_1, s_2), mean, na.rm=T) %>% 
+  mutate(change_diff=s_2-s_1,
+         change_rel=s_2/s_1,
+         change_reldiff=(s_2-s_1)/s_1) %>% 
+  ungroup() %>% 
   droplevels()
 
 ```
@@ -187,61 +191,40 @@ learn.time_base <- lme(time ~ group*block_f*trial_in_cond_c,
                          random=~1+block_f| id,
                          data=data_l, method="ML")
 learn.time_var <- update(learn.time_base, weights=varIdent(form=~1 | group))
-anova.lme(learn.time_base, learn.time_var) # type="marginal" ?
+anova.lme(learn.time_base, learn.time_var)
 
-plot(learn.time_var, resid(., type="p") ~ fitted(.) | group)
+plot(learn.time_var, resid(., type="p") ~ fitted(.) | group, abline=0)
 plot(learn.time_var, group ~ resid(., type="p"))
 plot(learn.time_var, block_f ~ resid(., type="p"))
+qqnorm(resid(learn.time_var))
+qqline(resid(learn.time_var))
 
-## 3) advanced lme model with variance estimation and transformed outcome
-# contrasts set in beginning, check options("contrasts") if in doubt
-learn.time_var_t <- lme(1/time ~ group*block_f*trial_in_cond_c,
-                         random=~1+block_f | id,
-                         weights=varIdent(form=~1 | group),
-                         data=data_l, method="ML")
-
-plot(learn.time_var_t, resid(., type="p") ~ fitted(.) | group, abline=0)
-plot(learn.time_var_t, group ~ resid(., type="p"))
+# TBD: refit with REML
 
 # main effects & interactions  
-anova.lme(learn.time_var_t, type="marginal", adjustSigma=T)
+anova.lme(learn.time_var, type="marginal", adjustSigma=T)
 
 # post-hoc comparisons 
-emtrends(learn.time_var_t, pairwise ~ block_f, var="trial_in_cond_c", adjust="bonferroni")
-emtrends(learn.time_var_t, pairwise ~ group, var="trial_in_cond_c", adjust="bonferroni")
-emmeans(learn.time_var_t, pairwise ~ group, type="response", adjust="bonferroni")
+emtrends(learn.time_var, pairwise ~ block_f, var="trial_in_cond_c", adjust="bonferroni")
+emtrends(learn.time_var, pairwise ~ group, var="trial_in_cond_c", adjust="bonferroni")
+emmeans(learn.time_var, pairwise ~ group, type="response", adjust="bonferroni")
 
 
-## work in progress: check other variances 
-## 4) advanced lme model withother types of variance estimation
-learn.time_var2 <- update(learn.time_base, weights=varPower(form=~time)) # does not converge
-learn.time_var3 <- update(learn.time_base, weights=varConstPower(form=~time)) # does not converge
-learn.time_var4 <- update(learn.time_base, weights=varExp(form=~time))
-learn.time_var5 <- update(learn.time_base, weights=varPower(form=~time | group))
-learn.time_var6 <- update(learn.time_base, weights=varConstPower(form=~time | group)) # does not converge
-learn.time_var7 <- update(learn.time_base, weights=varComb(varIdent(form=~1 | group), varExp(form=~time)))
-
-anova(learn.time_base, learn.time_var, learn.time_var4, learn.time_var5, learn.time_var7)
-
-plot(learn.time_var5, resid(., type="p") ~ fitted(.) | group, abline=0)
-plot(learn.time_var5, group ~ resid(., type="p"))
-plot(learn.time_var5, block_f ~ resid(., type="p"))
-hist(resid(learn.time_var5, type="p"))
-
-anova(learn.time_base, learn.time_var, learn.time_var5)
-
-anova(learn.time_base, type="marginal")
-anova(learn.time_var, type="marginal")
-anova(learn.time_var_t, type="marginal")
-anova(learn.time_var5, type="marginal")
-
-## 
+# ## optional: advanced lme model withother types of variance estimation
+# learn.time_var2 <- update(learn.time_base, weights=varPower(form=~time)) # does not converge
+# learn.time_var3 <- update(learn.time_base, weights=varConstPower(form=~time)) # does not converge
+# learn.time_var4 <- update(learn.time_base, weights=varExp(form=~time))
+# learn.time_var5 <- update(learn.time_base, weights=varPower(form=~time | group))
+# learn.time_var6 <- update(learn.time_base, weights=varConstPower(form=~time | group)) # does not converge
+# learn.time_var7 <- update(learn.time_base, weights=varComb(varIdent(form=~1 | group), varExp(form=~time)))
+# 
+# anova(learn.time_base, learn.time_var, learn.time_var4, learn.time_var5, learn.time_var7)
 
 # # extract estimated variance
-# variance <- learn.time_var_log$modelStruct$varStruct %>%
+# variance <- learn.time_var$modelStruct$varStruct %>%
 #   coef(unconstrained = FALSE, allCoef = TRUE) %>%
 #   enframe(name = "grp", value = "varStruct") %>%
-#   mutate(sigma         = learn.time_var_log$sigma) %>%
+#   mutate(sigma         = learn.time_var$sigma) %>%
 #   mutate(StandardError = sigma * varStruct) %>%
 #   mutate(Variance      = StandardError ^ 2)
 
@@ -250,55 +233,41 @@ anova(learn.time_var5, type="marginal")
 
 ## 1) standard lme model without variance estimation 
 # contrasts set in beginning, check options("contrasts") if in doubt 
-learn.path <- lme(path_distance ~ group*block_f*trial_in_cond_c,
+learn.path_base <- lme(path_distance ~ group*block_f*trial_in_cond_c,
                   random=~1+block_f | id, 
-                  data=data_l, method="REML")
-plot(learn.path, resid(., type="p") ~ fitted(.) | group)
-plot(learn.path, group ~ resid(., type="p"))
-
+                  data=data_l, method="ML")
 
 ## 2) advanced lme model wit variance estimation 
 # contrasts set in beginning, check options("contrasts") if in doubt 
-learn.path_var <- lme(path_distance ~ group*block_f*trial_in_cond_c,
-                  random=~1+block_f | id, 
-                  weights=varIdent(form=~1 | group),
-                  data=data_l, method="REML")
+learn.path_var <- update(learn.path_base, weights=varIdent(form=~1 | group))
+anova(learn.path_base, learn.path_var) 
+
 plot(learn.path_var, resid(., type="p") ~ fitted(.) | group)
 plot(learn.path_var, group ~ resid(., type="p"))
+qqnorm(resid(learn.path_var))
+qqline(resid(learn.path_var))
 
-anova(learn.path, learn.path_var) # variance estimation improves model 
-
-
-## 3) lme model wit variance estimation and transformed outcome
-# contrasts set in beginning, check options("contrasts") if in doubt 
-learn.path_var_t <- lme(1/path_distance ~ group*block_f*trial_in_cond_c,
-                  random=~1+block_f | id, 
-                  weights=varIdent(form=~1 | group),
-                  data=data_l, method="REML")
-plot(learn.path_var_t, resid(., type="p") ~ fitted(.) | group)
-plot(learn.path_var_t, group ~ resid(., type="p"))
+# TBD: refit with REML
 
 
 ## -- path edit distance -- ##
 ## 1) standard lme model without variance estimation 
 # contrasts set in beginning, check options("contrasts") if in doubt 
-learn.path_ed <- lme(zone_editdistance ~ group*block_f*trial_in_cond_c,
-                  random=~1+block_f | id, 
-                  data=data_l, method="REML")
-plot(learn.path_ed, resid(., type="p") ~ fitted(.) | group)
-plot(learn.path_ed, group ~ resid(., type="p"))
-
+learn.edit_base <- lme(zone_editdistance ~ group*block_f*trial_in_cond_c,
+                       random=~1+block_f | id, 
+                       data=data_l, method="ML")
 
 ## 2) advanced lme model wit variance estimation
 # contrasts set in beginning, check options("contrasts") if in doubt 
-learn.path_ed_var <- lme(zone_editdistance ~ group*block_f*trial_in_cond_c,
-                  random=~1+block_f | id, 
-                  weights=varIdent(form=~1 | group),
-                  data=data_l, method="REML")
-plot(learn.path_ed_var, resid(., type="p") ~ fitted(.) | group)
-plot(learn.path_ed_var, group ~ resid(., type="p"))
+learn.edit_var <- update(learn.edit_base, weights=varIdent(form=~1 | group))
+anova(learn.edit_base, learn.edit_var) 
 
-anova(learn.path_ed, learn.path_ed_var) # variance estimation improves model 
+plot(learn.edit_var, resid(., type="p") ~ fitted(.) | group)
+plot(learn.edit_var, group ~ resid(., type="p"))
+qqnorm(resid(learn.edit_var))
+qqline(resid(learn.edit_var))
+
+# TBD: refit with REML
 
 
 ## -- target metric distance -- ##
@@ -310,29 +279,28 @@ anova(learn.path_ed, learn.path_ed_var) # variance estimation improves model
 
 #### Probe trials 
 
-```{r stats_probe_global_accuracy}
+```{r stats_probe_accuracy}
 
-# ::: METHOD: per person several trials (session, condition) with binomial outcome, therefore glmm model ::: #
+# ::: METHOD: several trials p. p. (session, condition) with binomial outcome, therefore glmm model ::: #
 # watch out for convergence (stepwise reduction of random effects) # 
 
-# -- correct final alley -- ##
+## -- correct final alley -- ##
+# **** sessions T1 & T2 **** # 
 # 1) full binomial model (with reduced random effects due to failed convergence)
 probe.acc <- mixed(correct_final_alley ~ group*session*condition + 
-                     (session*condition||id), data=data, na.action=na.omit, expand_re=T,
+                     (session*condition||id), data=data, expand_re=T,
                    family=binomial(link="logit"), method="LRT",
                    control=glmerControl(optimizer="bobyqa", optCtrl=list(maxfun=1e6)))
 
-# check model
+# check model: ok 
 simulationOutput <- simulateResiduals(fittedModel=probe.acc$full_model, plot=F)
 testResiduals(simulationOutput) 
 plotResiduals(simulationOutput) 
 testCategorical(simulationOutput, catPred=data$group[data$exclude_trial_matlab==0])
 testCategorical(simulationOutput, catPred=data$session[data$exclude_trial_matlab==0])
 testCategorical(simulationOutput, catPred=data$condition[data$exclude_trial_matlab==0])
-# diagnostics: ok 
 
 # post-test for fixed effects
-# TBD: add effect size calculation
 afex_plot(probe.acc, "session", "group", "condition", id = "id",
           data_geom = ggbeeswarm::geom_quasirandom)
 
@@ -341,29 +309,34 @@ emmeans(probe.acc, pairwise ~ group, type="response", adjust="bonferroni")
 emmeans(probe.acc, pairwise ~ session, type="response")
 emmeans(probe.acc, pairwise ~ condition, type="response")
 
-# ::: MEANING: Significant differences between age groups (the older, the better), sessions (s1 better than s2) and slight difference between conditions (ego slightly better than allo), no interactions. ::: # 
+
+# **** sessions T1 only **** # 
+# 1) full binomial model
+probe.acc_1 <- mixed(correct_final_alley ~ group*condition + 
+                       (condition|id), data=data_1, expand_re=T,
+                     family=binomial(link="logit"), method="LRT",
+                     control=glmerControl(optimizer="bobyqa", optCtrl=list(maxfun=1e6)))
+
+simulationOutput <- simulateResiduals(fittedModel=probe.acc_1$full_model, plot=F)
+testResiduals(simulationOutput) 
+plotResiduals(simulationOutput) 
+testCategorical(simulationOutput, catPred=data_1$group)
+testCategorical(simulationOutput, catPred=data_1$condition)
+
+# post-test for fixed effects
+afex_plot(probe.acc_1, "group", "condition", id = "id",
+          data_geom = ggbeeswarm::geom_quasirandom)
+
+probe.acc
+emmeans(probe.acc_1, pairwise ~ group, type="response", adjust="bonferroni")
+
+# ::: MEANING: Significant differences between age groups (the older, the better), sessions (s1 better than s2) and slight difference between conditions (ego slightly better than allo), no interactions ::: #
 
 ```
 
-```{r stats_probe_global_accuracy_change}
+```{r stats_probe_accuracy_change}
 
 # ::: METHOD: one aggregated value per person, therefore (robust) ANOVA ::: #  
-
-# --- change calculation --- #
-data_prepost <- data %>% 
-  select(id, group, session, trial, condition, correct_final_alley) %>%
-  pivot_wider(id_cols=c(id, trial, group, condition),
-              names_from=session,
-              names_prefix="s_",
-              values_from=correct_final_alley) %>%
-  group_by(id, group, condition) %>%
-  summarise_at(vars(s_1, s_2), mean, na.rm=T) %>% 
-  mutate(change_diff=s_2-s_1,
-         change_rel=s_2/s_1,
-         change_reldiff=(s_2-s_1)/s_1) %>% 
-  ungroup() %>% 
-  droplevels()
-
 
 # --- change relative difference --- # 
 # 1) standard ANOVA
@@ -394,112 +367,302 @@ lincon(change_reldiff ~ group, data=data_prepost, tr=0.2, alpha=0.05, method="bo
 
 ```
 
-```{r stats_probe_local_accuracy}
+```{r stats_probe_final_distance}
 
-### A) final distance in correct trials 
-ggplot(data_c, aes(x=group, y=final_distance)) +
-  geom_boxplot() + 
-  facet_grid(session ~ condition)
-
-### B) final distance in relation to local environment (alley boundary) for all trials 
-ggplot(data, aes(x=group, y=final_local_distance)) +
-  geom_boxplot() + 
-  facet_grid(session ~ condition)
+# ::: METHOD: several trials p. p. (session, condition) with metric (but possibly non-gaussian) outcome, therefore lmm model. Check if modelling of variance (heteroscedasticity) improves model significantly, i.e. use (n)lme instead of lmer/mixed. Disadvantages are that no non-gaussian distributions and potentially anti-conservative p-values (no Satterthwaite/Kenward-Roger df correction) ::: 
 
 
-### for comparison: final distance in all trials 
-ggplot(data, aes(x=group, y=final_distance)) +
-  geom_boxplot() + 
-  facet_grid(session ~ condition)
+## -- final distance in correct trials -- ##
+# **** sessions T1 & T2 **** # 
+## 1) standard lme model without variance estimation 
+# contrasts set in beginning, check options("contrasts") if in doubt 
+probe.fd_correct <- lme(final_distance ~ group*session*condition,
+                       random=list(id=pdDiag(~ condition * session)),
+                       data=data_c, method="ML")
+
+## 2) advanced lme model wit variance estimation
+# contrasts set in beginning, check options("contrasts") if in doubt 
+probe.fd_correct_var <- update(probe.fd_correct, weights=varIdent(form=~1 | group))
+anova(probe.fd_correct, probe.fd_correct_var) 
+
+# diagnostics
+plot(probe.fd_correct_var, resid(., type="p") ~ fitted(.) | group)
+plot(probe.fd_correct_var, group ~ resid(., type="p"))
+qqnorm(resid(probe.fd_correct_var))
+qqline(resid(probe.fd_correct_var))
+
+# TBD: refit with REML
+
+# statistics 
+anova(probe.fd_correct_var, type="marginal", adjustSigma=T)
+emmeans(probe.fd_correct_var, pairwise ~ group, adjust="bonferroni")
+emmeans(probe.fd_correct_var, pairwise ~ session)
+
+
+# **** sessions T1 only **** # 
+## 1) standard lme model without variance estimation 
+# contrasts set in beginning, check options("contrasts") if in doubt 
+probe.fd_correct_1 <- lme(final_distance ~ group*condition,
+                       random=list(id=pdDiag(~ condition)),
+                       data=data_c_1, method="ML")
+
+## 2) advanced lme model wit variance estimation
+# contrasts set in beginning, check options("contrasts") if in doubt 
+probe.fd_correct_var_1 <- update(probe.fd_correct_1, weights=varIdent(form=~1 | group))
+anova(probe.fd_correct_1, probe.fd_correct_var_1) 
+
+# diagnostics
+plot(probe.fd_correct_var_1, resid(., type="p") ~ fitted(.) | group)
+plot(probe.fd_correct_var_1, group ~ resid(., type="p"))
+qqnorm(resid(probe.fd_correct_var_1))
+qqline(resid(probe.fd_correct_var_1))
+
+# statistics 
+anova(probe.fd_correct_var_1, type="marginal", adjustSigma=T)
+emmeans(probe.fd_correct_var, pairwise ~ group, adjust="bonferroni")
+
+
+## -- final distance in relation to local environment (boundary) for all trials -- ##
+# **** sessions T1 & T2 **** # 
+## 1) standard lme model without variance estimation 
+# contrasts set in beginning, check options("contrasts") if in doubt 
+probe.fd_local <- lme(final_local_distance ~ group*session*condition,
+                      random=list(id=pdDiag(~ condition * session)),
+                      data=data, na.action=na.omit, method="ML")
+
+## 2) advanced lme model wit variance estimation
+# contrasts set in beginning, check options("contrasts") if in doubt 
+probe.fd_local_var <- update(probe.fd_local, weights=varIdent(form=~1 | group))
+anova(probe.fd_local, probe.fd_local_var) 
+
+# diagnostics
+plot(probe.fd_local_var, resid(., type="p") ~ fitted(.) | group)
+plot(probe.fd_local_var, group ~ resid(., type="p"))
+qqnorm(resid(probe.fd_local_var))
+qqline(resid(probe.fd_local_var))
+
+# statistics 
+anova(probe.fd_local_var, type="marginal", adjustSigma=T)
+emmeans(probe.fd_local_var, pairwise ~ group, adjust="bonferroni")
+emmeans(probe.fd_local_var, pairwise ~ session)
+
+
+# **** sessions T1 only **** # 
+## 1) standard lme model without variance estimation 
+# contrasts set in beginning, check options("contrasts") if in doubt 
+probe.fd_local_1 <- lme(final_local_distance ~ group*condition,
+                       random=list(id=pdDiag(~ condition)),
+                       data=data_c_1, na.action=na.omit, method="ML")
+
+## 2) advanced lme model wit variance estimation
+# contrasts set in beginning, check options("contrasts") if in doubt 
+probe.fd_local_var_1 <- update(probe.fd_local_1, weights=varIdent(form=~1 | group))
+anova(probe.fd_local_1, probe.fd_local_var_1) 
+
+# diagnostics
+plot(probe.fd_local_var_1, resid(., type="p") ~ fitted(.) | group)
+plot(probe.fd_local_var_1, group ~ resid(., type="p"))
+qqnorm(resid(probe.fd_local_var_1))
+qqline(resid(probe.fd_local_var_1))
+
+# statistics 
+anova(probe.fd_local_var_1, type="marginal", adjustSigma=T)
+emmeans(probe.fd_local_var_1, pairwise ~ group, adjust="bonferroni")
+
+
+# ::: MEANING: No significant interactions (in alignment with accuracy analysis) but group and session main effects ::: #
 
 ```
 
-```{r stats_probe_metric}
+```{r stats_probe_time}
+
+# ::: METHOD: several trials p. p. (session, condition) with metric (but possibly non-gaussian) outcome, therefore lmm model. Check if modelling of variance (heteroscedasticity) improves model significantly, i.e. use (n)lme instead of lmer/mixed. Disadvantages are that no non-gaussian distributions and potentially anti-conservative p-values (no Satterthwaite/Kenward-Roger df correction) ::: 
+
 
 ## -- time -- ##
+# **** sessions T1 & T2 **** # 
+## 1) standard lme model without variance estimation 
+# contrasts set in beginning, check options("contrasts") if in doubt 
 probe.time <- lme(time ~ group*session*condition,
-                         random=~session+condition | id,
-                         data=data, na.action=na.omit, method="ML")
-probe.time_var <- update(probe.time, random=list(id=pdDiag(~ condition + session)),
-                         weights=varIdent(form=~1 | group))
-anova.lme(probe.time, probe.time_var) 
-
-plot(probe.time_var, resid(., type="p") ~ fitted(.) | group)
-plot(probe.time_var, group ~ resid(., type="p"))
-
-
-probe.time_t <- lme(log(time) ~ group*session*condition,
-                    random=~session+condition | id,
-                    data=data, na.action=na.omit, method="ML")
-probe.time_var_t <-  update(probe.time_t, random=list(id=pdDiag(~ condition + session)),
-                         weights=varIdent(form=~1 | group))
-anova(probe.time_t, probe.time_var_t)
-
-plot(probe.time_var_t, resid(., type="p") ~ fitted(.) | group)
-plot(probe.time_var_t, group ~ resid(., type="p"))
-
-qqnorm(resid(probe.time))
-qqline(resid(probe.time))
-
-# # test bootstrapping
-# set.seed(1234)
-# m <- lmeresampler::bootstrap(probe.time_var, .f=fixef, type="reb", B=100, reb_type=1)
-
-
-# not super stable 
-anova(probe.time0)
-anova.lme(probe.time, type="marginal") 
-anova.lme(probe.time_t, type="marginal")  
-anova.lme(probe.time_var, type="marginal")  
-anova.lme(probe.time_var_t, type="marginal") 
-
-emmeans(probe.time, pairwise ~ group | session | condition, adjust="bonferroni")
-emmeans(probe.time_t, pairwise ~ group | session | condition, adjust="bonferroni")
-emmeans(probe.time_var, pairwise ~ group | session | condition, adjust="bonferroni")
-emmeans(probe.time_var_t, pairwise ~ group | session | condition, adjust="bonferroni")
-
-
-
-## -- path metric distance  -- ##
-
-probe.path <- lme(chosen_path_distance ~ group*session*condition,
-                  random=list(id=pdDiag(~ condition + session)),
+                  random=list(id=pdDiag(~ condition * session)),
                   data=data, method="ML")
-probe.path_var <- update(probe.path,
-                         weights=varIdent(form=~1 | group))
-anova.lme(probe.path, probe.path_var) 
 
+## 2) advanced lme model wit variance estimation
+# contrasts set in beginning, check options("contrasts") if in doubt 
+probe.time_var <- update(probe.time, weights=varIdent(form=~1 | group))
+anova(probe.time, probe.time_var) 
+
+# diagnostics
+plot(probe.time_var, resid(., type="p") ~ fitted(.))
 plot(probe.time_var, resid(., type="p") ~ fitted(.) | group)
 plot(probe.time_var, group ~ resid(., type="p"))
+qqnorm(resid(probe.time_var))
+qqline(resid(probe.time_var))
+
+# TBD: refit with REML
+
+# statistics 
+anova(probe.time_var, type="marginal", adjustSigma=T)
+emmeans(probe.time_var, pairwise ~ group | condition | session, adjust="bonferroni")
 
 
-# probe.path_t <- lme(1/chosen_path_distance*100 ~ group*session*condition,
-#                     random=list(id=pdDiag(~ condition + session)),
-#                     data=data, method="ML")
-# probe.path_var_t <-  update(probe.path_t, 
-#                          weights=varIdent(form=~1 | group))
-# anova(probe.path_t, probe.path_var_t)
-# 
-# plot(probe.path_var_t, resid(., type="p") ~ fitted(.) | group)
-# plot(probe.path_var_t, group ~ resid(., type="p"))
+# **** sessions T1 only **** # 
+## 1) standard lme model without variance estimation 
+# contrasts set in beginning, check options("contrasts") if in doubt 
+probe.time_1 <- lme(time ~ group*condition,
+                    random=list(id=pdDiag(~ condition)),
+                    data=data_1, method="ML")
+
+## 2) advanced lme model wit variance estimation
+# contrasts set in beginning, check options("contrasts") if in doubt 
+probe.time_var_1 <- update(probe.time_1, weights=varIdent(form=~1 | group))
+anova(probe.time_1, probe.time_var_1) 
+
+# diagnostics
+plot(probe.time_var_1, resid(., type="p") ~ fitted(.))
+plot(probe.time_var_1, resid(., type="p") ~ fitted(.) | group)
+plot(probe.time_var_1, group ~ resid(., type="p"))
+qqnorm(resid(probe.time_var_1))
+qqline(resid(probe.time_var_1))
+
+# TBD: refit with REML
+
+# statistics 
+anova(probe.time_var_1, type="marginal", adjustSigma=T)
+emmeans(probe.time_var, pairwise ~ group | condition, adjust="bonferroni")
 
 
-# relatively stable 
-anova.lme(probe.path, type="marginal") 
-# anova.lme(probe.path_t, type="marginal")  
-anova.lme(probe.path_var, type="marginal")  
-# anova.lme(probe.path_var_t, type="marginal") 
+# ::: MEANING: Strong group and condition main effects, no session main effect and some (potentially instable, because barely significant) interaction effects (e.g. stronger time group differences in allocentric compared to egocentric). Explore further/make sure not anti-conservative ::: #
+
+```
+
+``` {r stats_probe_path}
+
+# ::: METHOD: several trials p. p. (session, condition) with metric (but possibly non-gaussian) outcome, therefore lmm model. Check if modelling of variance (heteroscedasticity) improves model significantly, i.e. use (n)lme instead of lmer/mixed. Disadvantages are that no non-gaussian distributions and potentially anti-conservative p-values (no Satterthwaite/Kenward-Roger df correction) ::: 
 
 
-emmeans(probe.path, pairwise ~ group | session | condition, adjust="bonferroni")
-# emmeans(probe.path_t, pairwise ~ group | session | condition, adjust="bonferroni")
-emmeans(probe.path_var, pairwise ~ group | session | condition, adjust="bonferroni")
-# emmeans(probe.path_var_t, pairwise ~ group | session | condition, adjust="bonferroni")
+## -- path distance  to chosen -- ##
+# **** sessions T1 & T2 **** # 
+## 1) standard lme model without variance estimation 
+# contrasts set in beginning, check options("contrasts") if in doubt 
+probe.ch_path <- lme(chosen_path_distance ~ group*session*condition,
+                     random=list(id=pdDiag(~ condition + session)),
+                     data=data, method="ML")
+
+## 2) advanced lme model wit variance estimation
+# contrasts set in beginning, check options("contrasts") if in doubt 
+probe.ch_path_var <- update(probe.ch_path, weights=varIdent(form=~1 | group))
+anova(probe.ch_path, probe.ch_path_var) 
+
+# diagnostics
+plot(probe.ch_path_var, resid(., type="p") ~ fitted(.))
+plot(probe.ch_path_var, resid(., type="p") ~ fitted(.) | group)
+plot(probe.ch_path_var, group ~ resid(., type="p"))
+qqnorm(resid(probe.ch_path_var))
+qqline(resid(probe.ch_path_var))
+
+# TBD: refit with REML
+
+# statistics 
+anova(probe.ch_path_var, type="marginal", adjustSigma=T)
+emmeans(probe.ch_path_var, pairwise ~ group | condition, adjust="bonferroni")
+emmeans(probe.ch_path_var, pairwise ~ group | session, adjust="bonferroni")
+
+
+# **** sessions T1 only **** # 
+## 1) standard lme model without variance estimation 
+# contrasts set in beginning, check options("contrasts") if in doubt 
+probe.ch_path_1 <- lme(chosen_path_distance ~ group*condition,
+                       random=list(id=pdDiag(~ condition)),
+                       data=data_1, method="ML")
+
+## 2) advanced lme model wit variance estimation
+# contrasts set in beginning, check options("contrasts") if in doubt 
+probe.ch_path_var_1 <- update(probe.ch_path_1, weights=varIdent(form=~1 | group))
+anova(probe.ch_path_1, probe.ch_path_var_1) 
+
+# diagnostics
+plot(probe.ch_path_var_1, resid(., type="p") ~ fitted(.))
+plot(probe.ch_path_var_1, resid(., type="p") ~ fitted(.) | group)
+plot(probe.ch_path_var_1, group ~ resid(., type="p"))
+qqnorm(resid(probe.ch_path_var_1))
+qqline(resid(probe.ch_path_var_1))
+
+# TBD: refit with REML
+
+# statistics 
+anova(probe.ch_path_var_1, type="marginal", adjustSigma=T)
+emmeans(probe.ch_path_var_1, pairwise ~ group | condition, adjust="bonferroni")
+
+
+
+## -- target distance -- ##
+# **** sessions T1 & T2 **** # 
+## 1) standard lme model without variance estimation 
+# contrasts set in beginning, check options("contrasts") if in doubt 
+probe.distance_target <- lme(target_distance_error ~ group*session*condition,
+                             random=list(id=pdDiag(~ condition + session)),
+                             data=data, method="ML")
+
+## 2) advanced lme model wit variance estimation
+# contrasts set in beginning, check options("contrasts") if in doubt 
+probe.distance_target_var <- update(probe.distance_target, weights=varIdent(form=~1 | group))
+anova(probe.distance_target, probe.distance_target_var) 
+
+# diagnostics
+plot(probe.distance_target_var, resid(., type="p") ~ fitted(.))
+plot(probe.distance_target_var, resid(., type="p") ~ fitted(.) | group)
+plot(probe.distance_target_var, group ~ resid(., type="p"))
+qqnorm(resid(probe.distance_target_var))
+qqline(resid(probe.distance_target_var))
+
+# TBD: refit with REML
+
+# statistics 
+anova(probe.distance_target_var, type="marginal", adjustSigma=T)
+emmeans(probe.distance_target_var, pairwise ~ group | condition, adjust="bonferroni")
+emmeans(probe.distance_target_var, pairwise ~ session | condition, adjust="bonferroni")
+
+
+# **** sessions T1 only **** # 
+## 1) standard lme model without variance estimation 
+# contrasts set in beginning, check options("contrasts") if in doubt 
+probe.distance_target_1 <- lme(target_distance_error ~ group*condition,
+                             random=list(id=pdDiag(~ condition)),
+                             data=data_1, method="ML")
+
+## 2) advanced lme model wit variance estimation
+# contrasts set in beginning, check options("contrasts") if in doubt 
+probe.distance_target_var_1 <- update(probe.distance_target_1, weights=varIdent(form=~1 | group))
+anova(probe.distance_target_1, probe.distance_target_var_1) 
+
+# diagnostics
+plot(probe.distance_target_var_1, resid(., type="p") ~ fitted(.))
+plot(probe.distance_target_var_1, resid(., type="p") ~ fitted(.) | group)
+plot(probe.distance_target_var_1, group ~ resid(., type="p"))
+qqnorm(resid(probe.distance_target_var_1))
+qqline(resid(probe.distance_target_var_1))
+
+# TBD: refit with REML
+
+# statistics 
+anova(probe.distance_target_var_1, type="marginal", adjustSigma=T)
+emmeans(probe.distance_target_var_1, pairwise ~ group | condition, adjust="bonferroni")
+emmeans(probe.distance_target_var_1, pairwise ~ condition | group, adjust="bonferroni")
+
 
 
 ## -- path edit distance  -- ##
 
-## -- target metric distance -- ##
+
+# ::: MEANING: Strong group, session and condition main effects and some (potentially instable, because barely significant) interaction effects. However planned contrasts do not show meaningful interactions. Explore further/make sure not anti-conservative ::: #
+
+```
+
+```{r stats_probe_rotation}
+
+# ::: METHOD: several trials p. p. (session, condition) with metric (but possibly non-gaussian) outcome, therefore lmm model. Check if modelling of variance (heteroscedasticity) improves model significantly, i.e. use (n)lme instead of lmer/mixed. Disadvantages are that no non-gaussian distributions and potentially anti-conservative p-values (no Satterthwaite/Kenward-Roger df correction) ::: 
+
 
 ## -- rotation  -- ##
 ggplot(data, aes(x=group, y=rotation_degrees)) +
@@ -515,39 +678,65 @@ ggplot(data, aes(x=group, y=rotation_turns_by_path_length)) +
   facet_grid(session ~ condition)
 
 
+# **** sessions T1 & T2 **** # 
+## 1) standard lme model without variance estimation 
+# contrasts set in beginning, check options("contrasts") if in doubt 
 probe.rot <- lme(rotation_turns_by_path_length ~ group*session*condition,
-                         random=list(id=pdDiag(~ condition + session)), 
-                         data=data, method="ML")
-probe.rot_var <- update(probe.rot, weights=varIdent(form=~1 | group))
+                 random=list(id=pdDiag(~ condition + session)),
+                 data=data, method="ML")
 
-anova.lme(probe.rot, probe.rot_var)
+## 2) advanced lme model wit variance estimation
+# contrasts set in beginning, check options("contrasts") if in doubt 
+probe.rot_var <- update(probe.rot, weights=varIdent(form=~1 | group))
+anova(probe.rot, probe.rot_var) 
+
+# diagnostics
+plot(probe.rot_var, resid(., type="p") ~ fitted(.))
 plot(probe.rot_var, resid(., type="p") ~ fitted(.) | group)
 plot(probe.rot_var, group ~ resid(., type="p"))
+qqnorm(resid(probe.rot_var))
+qqline(resid(probe.rot_var))
 
-anova.lme(probe.rot_var, type="marginal") 
+# TBD: refit with REML
 
+# statistics 
+anova(probe.rot_var, type="marginal", adjustSigma=T)
+emmeans(probe.rot_var, pairwise ~ group | session, adjust="bonferroni")
+emmeans(probe.rot_var, pairwise ~ session | group, adjust="bonferroni")
 emmeans(probe.rot_var, pairwise ~ group | condition, adjust="bonferroni")
+emmeans(probe.rot_var, pairwise ~ condition | group, adjust="bonferroni")
+emmeans(probe.rot_var, pairwise ~ session | condition, adjust="bonferroni")
+emmeans(probe.rot_var, pairwise ~ condition | session, adjust="bonferroni")
 
 
-# probe.rot <- mixed(rotation_turns_by_path_length ~ group*session*condition + 
-#                      (condition||id), data=data, expand_re=T,
-#                    control=lmerControl(optimizer="bobyqa", optCtrl=list(maxfun=1e6)))
-# 
-# # check model
-# simulationOutput <- simulateResiduals(fittedModel=probe.rot$full_model, plot=F)
-# testResiduals(simulationOutput) 
-# plotResiduals(simulationOutput) 
-# testCategorical(simulationOutput, catPred=data$group)
-# testCategorical(simulationOutput, catPred=data$session)
-# testCategorical(simulationOutput, catPred=data$condition)
-# # diagnostics: not great 
-# 
-# afex_plot(probe.rot, "condition", "group", "session", id = "id",
-#           data_geom = ggbeeswarm::geom_quasirandom)
+# **** sessions T1 only **** # 
+## 1) standard lme model without variance estimation 
+# contrasts set in beginning, check options("contrasts") if in doubt 
+probe.rot_1 <- lme(rotation_turns_by_path_length ~ group*condition,
+                   random=list(id=pdDiag(~ condition)),
+                   data=data_1, method="ML")
+
+## 2) advanced lme model wit variance estimation
+# contrasts set in beginning, check options("contrasts") if in doubt 
+probe.rot_var_1 <- update(probe.rot_1, weights=varIdent(form=~1 | group))
+anova(probe.rot_1, probe.rot_var_1) 
+
+# diagnostics
+plot(probe.rot_1, resid(., type="p") ~ fitted(.))
+plot(probe.rot_1, resid(., type="p") ~ fitted(.) | group)
+plot(probe.rot_1, group ~ resid(., type="p"))
+qqnorm(resid(probe.rot_1))
+qqline(resid(probe.rot_1))
+
+# TBD: refit with REML
+
+# statistics 
+anova(probe.rot_1, type="marginal", adjustSigma=T)
+emmeans(probe.rot_1, pairwise ~ group | condition, adjust="bonferroni")
+emmeans(probe.rot_1, pairwise ~ condition | group, adjust="bonferroni")
 
 
-### change values or rather not? 
-
+# ::: MEANING: Strong interaction effects (mostly driven by session 2!). TBD! Check distribution (bimodal), check rotation raw values. Explore further/make sure not anti-conservative ::: #
 
 ```
 
@@ -576,32 +765,9 @@ discmcp(search_strategy ~ group, data=data %>% filter(condition=="ego_ret"), alp
 
 ```
 
-```{r stats_probe_allo_strategy}
-
-# TBD: change preprocessing in Matlab to make more inclusive 
-data_allo_strategy <- data %>% 
-  filter(condition=="allo_ret", session==1) %>% 
-  drop_na(search_strategy_in_allo) %>% 
-  mutate(search_strategy_2=fct_recode(search_strategy_in_allo, allo="direct_allo", 
-                                      allo="detour_allo", ego="direct_ego", ego="detour_ego"))
-
-table(data_allo_strategy$search_strategy_2, data_allo_strategy$group)
-
-# option 1) fisher test: tests independence of rows and columns in a contingency table with fixed marginals.
-fisher.test(table(data_allo_strategy$search_strategy_2, data_allo_strategy$group), simulate.p.value=T)
-
-# option 2) discANOVA from WRS2: tests hypothesis that independent groups have identical multinomial distributions. 
-discANOVA(search_strategy_2 ~ group, data=data_allo_strategy, nboot=500) 
-discmcp(search_strategy_2 ~ group, data=data_allo_strategy, alpha=0.05, nboot=500)
-
-# option 3) multinomial linear regression 
 
 
-# ::: MEANING: xxx ::: #
-
-```
-
-```{r stats_probe_ego_strategy}
+```{r stats_probe}
 
 ### EXPLORATIV 
 
@@ -804,7 +970,11 @@ lincon(score ~ group, data=data, tr=0.2, nboot=1000, method="bonferroni")
 # lincon(score ~ group, data=GMDA, tr=0.2, nboot=1000, method="bonferroni")
 
 # rm(data_gmda, GMDA, CanOrg, CanAcc, DistAcc, AngleAcc, boxplot)
+   
+```
+
+```{r end}
 
 rm(list=ls(pattern="x"))
-   
+
 ```
