@@ -107,7 +107,8 @@ data_l <- sm_data %>%
 ## probe 
 data <- sm_data %>% 
   filter(exclude_trial_matlab==0) %>% 
-  filter(condition %in% c("allo_ret", "ego_ret")) %>% 
+  filter(condition %in% c("allo_ret", "ego_ret")) %>%
+  mutate(goal_f=factor(goal_i)) %>% 
   droplevels()
 
 data_1 <- data %>% 
@@ -343,9 +344,9 @@ emmeans(probe.acc_1, pairwise ~ group, type="response", adjust="bonferroni")
 
 ## -- egocentric final alley (only for allocentric probe trials)-- ##
 # too few occasions for glmer (non-convergence)
-temp <- data %>% filter(condition=="allo_ret")
+temp <- data %>% filter(condition=="allo_ret", start_i %% 2==1, correct_final_alley==0)
+temp <- data %>% filter(condition=="allo_ret", start_i %% 2==1)
 table(temp$correct_final_alley_ego, temp$group)
-# TBD: this is so rare that it even seems below chance level, is this even meaningful?  
 
 # option 1) fisher test: tests independence of rows and columns in a contingency table with fixed marginals.
 fisher.test(table(temp$correct_final_alley_ego, temp$group), simulate.p.value=T)
@@ -354,6 +355,17 @@ fisher.test(table(temp$correct_final_alley_ego, temp$group), simulate.p.value=T)
 discANOVA(correct_final_alley_ego ~ group, data=temp, nboot=500) 
 discmcp(correct_final_alley_ego ~ group, data=temp, alpha=0.05, nboot=500)
 rm(temp)
+
+# WHAT IS CHANCE LEVEL?
+# > table(temp$correct_final_alley, temp$group)
+#     YoungKids OldKids YoungAdults
+#   0       134      95          33
+#   1       155     194         255
+# > table(temp$correct_final_alley_ego, temp$group)
+#     YoungKids OldKids YoungAdults
+#   0       245     246         274
+#   1        44      43          14
+# Going to egocentric alley happens rarely, children do it a bit more often. However, taking into account correctly solved trials and chance level: In allocentric trials where participants did not locate correct goal, were they more likely to go to egocentric  alley compared to other alleys (134 & 95 & 33 / 4 other alleys = chance level -> yes, they are more likely to go to egocentric alley  compared to other 4 alleys. This is around 50% of trials in each group, i.e. no group differences from this perspective))
 
 # ::: MEANING: Choosing egocentric goal in allocentric probe trials occurs rarely in general but slightly more often in children (both age groups) compared to adults. TBD: random (chance level) or meaningful? ::: #
 
@@ -544,7 +556,7 @@ emmeans(probe.fd_local_1_final, pairwise ~ group, adjust="bonferroni")
 ## 1) standard lme model without variance estimation 
 probe.fd_ego <- lme(final_distance_ego ~ group*session,
                     random=~1+session | id, 
-                    data=data %>% filter(condition=="allo_ret"), na.action=na.omit, method="ML")
+                    data=data %>% filter(condition=="allo_ret", start_i %% 2 == 1), method="ML")
 
 # diagnostics: non-normality, low heterogeneity 
 plot(probe.fd_ego, resid(., type="p") ~ fitted(.))
@@ -570,8 +582,8 @@ anova(probe.fd_ego_final, type="marginal", adjustSigma=T)
 emmeans(probe.fd_ego_final, pairwise ~ group, adjust="bonferroni")
 
 # helper plots 
-ggplot(data %>% filter(condition=="allo_ret"), aes(x=final_distance_ego)) + geom_histogram()
-ggplot(data %>% filter(condition=="allo_ret"), aes(x=group, y=final_distance_ego)) + geom_boxplot() + facet_grid(~ condition + session)
+ggplot(data %>% filter(condition=="allo_ret", start_i %% 2 == 1), aes(x=final_distance_ego)) + geom_histogram()
+ggplot(data %>% filter(condition=="allo_ret", start_i %% 2 == 1), aes(x=group, y=final_distance_ego)) + geom_boxplot() + facet_grid(~ condition + session)
 ggplot(data, aes(x=group, y=final_distance)) + geom_boxplot() + facet_grid(~ condition + session)
 
 
@@ -793,7 +805,7 @@ ggplot(data, aes(x=group, y=ego_path_distance)) + geom_boxplot() + facet_grid(~ 
 ## 1) standard lme model without variance estimation 
 probe.path_ego <- lme(ego_path_distance ~ group*session,
                       random=list(id=pdDiag(~ session)),
-                      data=data %>% filter(condition=="allo_ret"), method="ML", na.action=na.omit)
+                      data=data %>% filter(condition=="allo_ret", start_i %% 2 == 1), method="ML")
 
 # diagnostics: normality ok, low heterogeneity
 plot(probe.path_ego, resid(., type="p") ~ fitted(.), abline=0)
@@ -819,8 +831,8 @@ emmeans(probe.path_ego_final, pairwise ~ group | session, adjust="bonferroni")
 emmeans(probe.path_ego_final, pairwise ~ session | group, adjust="bonferroni")
 
 # helper plots
-ggplot(data %>% filter(condition=="allo_ret"), aes(x=ego_path_distance)) + geom_histogram()
-ggplot(data %>% filter(condition=="allo_ret"), aes(x=group, y=ego_path_distance)) + geom_boxplot() + facet_wrap(~session)
+ggplot(data %>% filter(condition=="allo_ret",  start_i %% 2 == 1), aes(x=ego_path_distance)) + geom_histogram()
+ggplot(data %>% filter(condition=="allo_ret",  start_i %% 2 == 1), aes(x=group, y=ego_path_distance)) + geom_boxplot() + facet_wrap(~session)
 
 
 ## -- target distance -- ##
@@ -909,7 +921,7 @@ emmeans(probe.distance_target_1_final, pairwise ~ condition | group, adjust="bon
 ## 1) standard lme model without variance estimation 
 probe.distance_target_ego <- lme(ego_target_distance_error ~ group*session,
                                  random=list(id=pdDiag(~ session)),
-                                 data=data %>% filter(condition=="allo_ret"), method="ML", na.action=na.omit)
+                                  data=data %>% filter(condition=="allo_ret", start_i %% 2 == 1), method="ML")
 
 # diagnostics: non-normality, low heterogeneity
 plot(probe.distance_target_ego, resid(., type="p") ~ fitted(.), abline=0)
@@ -933,8 +945,8 @@ anova(probe.distance_target_ego_final, type="marginal", adjustSigma=T)
 emmeans(probe.distance_target_ego_final, pairwise ~ group, adjust="bonferroni")
 
 # helper plots
-ggplot(data %>% filter(condition=="allo_ret"), aes(x=ego_target_distance_error)) + geom_histogram()
-ggplot(data %>% filter(condition=="allo_ret"), aes(x=group, y=target_distance_error)) + geom_boxplot() + facet_wrap(~session)
+ggplot(data %>% filter(condition=="allo_ret", start_i %% 2 == 1), aes(x=ego_target_distance_error)) + geom_histogram()
+ggplot(data %>% filter(condition=="allo_ret", start_i %% 2 == 1), aes(x=group, y=ego_target_distance_error)) + geom_boxplot() + facet_wrap(~session)
 
 
 ## -- path edit distance  -- ##
@@ -949,76 +961,105 @@ ggplot(data %>% filter(condition=="allo_ret"), aes(x=group, y=target_distance_er
 
 # ::: METHOD: several trials p. p. (session, condition) with metric (but possibly non-gaussian) outcome, therefore lmm model. Check if modelling of variance (heteroscedasticity) improves model significantly, i.e. use (n)lme instead of lmer/mixed. Disadvantages are that no non-gaussian distributions and potentially anti-conservative p-values (no Satterthwaite/Kenward-Roger df correction) ::: 
 
-### TBD ### 
 
 ## -- rotation (normalized by path length)  -- ##
 # **** sessions T1 & T2 **** # 
 ## 1) standard lme model without variance estimation 
-
-probe.rot <- lme(log(rotation_turns_by_path_length) ~ group*session*condition,
+probe.rot <- lme(rotation_turns_by_path_length ~ group*session*condition,
                  random=list(id=pdDiag(~ condition + session)),
                  data=data, method="ML")
 
+# diagnostics: non-normality, largest heterogeneity in condition, less group and session 
+plot(probe.rot, resid(., type="p") ~ fitted(.))
+plot(probe.rot, group ~ resid(., type="p"))
+plot(probe.rot, condition ~ resid(., type="p"))
+plot(probe.rot, session ~ resid(., type="p"))
+qqnorm(resid(probe.rot))
+qqline(resid(probe.rot))
+
+
 ## 2) advanced lme models with variance estimation
-
-probe.rot_var <- update(probe.rot, weights=varIdent(form=~1 | group))
-anova(probe.rot, probe.rot_var) 
-
-probe.rot_var2 <- update(probe.rot, weights=varIdent(form=~1 | condition))
-
-probe.rot_var3 <- update(probe.rot, weights=varComb(varIdent(form=~1 | condition),
+probe.rot_var1 <- update(probe.rot, weights=varIdent(form=~1 | condition))
+probe.rot_var2 <- update(probe.rot, weights=varComb(varIdent(form=~1 | condition),
                                                     varIdent(form=~1 | group)))
-
-anova(probe.rot, probe.rot_var, probe.rot_var2, probe.rot_var3) 
-
+probe.rot_var3 <- update(probe.rot, weights=varComb(varIdent(form=~1 | condition),
+                                                    varIdent(form=~1 | group),
+                                                    varIdent(form=~1 | session)))
+anova(probe.rot, probe.rot_var1, probe.rot_var2, probe.rot_var3) 
+# chose model 3 (or model 1)
 
 # diagnostics
-plot(probe.rot_var3, resid(., type="p") ~ fitted(.))
-plot(probe.rot_var3, resid(., type="p") ~ fitted(.) | group)
-plot(probe.rot_var3, group ~ resid(., type="p"))
-qqnorm(resid(probe.rot_var2))
-qqline(resid(probe.rot_var2))
+plot(probe.rot_var3, resid(., type="p") ~ fitted(.), abline=0)
+qqnorm(resid(probe.rot_var3))
+qqline(resid(probe.rot_var3))
 
-# TBD: refit with REML
+# re-fit with REML
+probe.rot_final <- update(probe.rot_var3, method="REML")
 
 # statistics 
-anova(probe.rot_var, type="marginal", adjustSigma=T)
-emmeans(probe.rot_var, pairwise ~ group | session, adjust="bonferroni")
-emmeans(probe.rot_var, pairwise ~ session | group, adjust="bonferroni")
-emmeans(probe.rot_var, pairwise ~ group | condition, adjust="bonferroni")
-emmeans(probe.rot_var, pairwise ~ condition | group, adjust="bonferroni")
-emmeans(probe.rot_var, pairwise ~ session | condition, adjust="bonferroni")
-emmeans(probe.rot_var, pairwise ~ condition | session, adjust="bonferroni")
+anova(probe.rot_final, type="marginal", adjustSigma=T)
+emmeans(probe.rot_final, pairwise ~ group | session, adjust="bonferroni")
+emmeans(probe.rot_final, pairwise ~ session | group, adjust="bonferroni")
+emmeans(probe.rot_final, pairwise ~ group | condition, adjust="bonferroni")
+emmeans(probe.rot_final, pairwise ~ condition | group, adjust="bonferroni")
+emmeans(probe.rot_final, pairwise ~ session | condition, adjust="bonferroni")
+emmeans(probe.rot_final, pairwise ~ condition | session, adjust="bonferroni")
+emmeans(probe.rot_final, pairwise ~ group | condition | session, adjust="bonferroni")
+
+# helper plots
+ggplot(data, aes(x=rotation_turns_by_path_length)) + geom_histogram()
+ggplot(data, aes(x=group, y=rotation_turns_by_path_length)) + geom_boxplot() + facet_wrap(~condition + session, nrow=1) + coord_cartesian(ylim=c(0,3))
+ggplot(data, aes(x=group, y=rotation_turns_by_path_length)) + geom_boxplot() + facet_wrap(~ condition, nrow=1) + coord_cartesian(ylim=c(0,3))
 
 
-# **** sessions T1 only **** # 
+## -- rotation in degrees (or turns, should not make difference)  -- ##
+# **** sessions T1 & T2 **** # 
 ## 1) standard lme model without variance estimation 
+probe.rot_d <- lme(rotation_degrees ~ group*session*condition,
+                 random=list(id=pdDiag(~ condition + session)),
+                 data=data, method="ML")
 
-probe.rot_1 <- lme(rotation_turns_by_path_length ~ group*condition,
-                   random=list(id=pdDiag(~ condition)),
-                   data=data_1, method="ML")
+# diagnostics: non-normality, largest heterogeneity in condition, less group and session 
+plot(probe.rot_d, resid(., type="p") ~ fitted(.))
+plot(probe.rot_d, group ~ resid(., type="p"))
+plot(probe.rot_d, condition ~ resid(., type="p"))
+plot(probe.rot_d, session ~ resid(., type="p"))
+qqnorm(resid(probe.rot_d))
+qqline(resid(probe.rot_d))
+
 
 ## 2) advanced lme models with variance estimation
-
-probe.rot_var_1 <- update(probe.rot_1, weights=varIdent(form=~1 | group))
-anova(probe.rot_1, probe.rot_var_1) 
+probe.rot_d_var1 <- update(probe.rot_d, weights=varIdent(form=~1 | condition))
+probe.rot_d_var2 <- update(probe.rot_d, weights=varComb(varIdent(form=~1 | condition),
+                                                    varIdent(form=~1 | group)))
+probe.rot_d_var3 <- update(probe.rot_d, weights=varComb(varIdent(form=~1 | condition),
+                                                    varIdent(form=~1 | group),
+                                                    varIdent(form=~1 | session)))
+anova(probe.rot_d, probe.rot_d_var1, probe.rot_d_var2, probe.rot_d_var3) 
+# chose model 2
 
 # diagnostics
-plot(probe.rot_1, resid(., type="p") ~ fitted(.))
-plot(probe.rot_1, resid(., type="p") ~ fitted(.) | group)
-plot(probe.rot_1, group ~ resid(., type="p"))
-qqnorm(resid(probe.rot_1))
-qqline(resid(probe.rot_1))
+plot(probe.rot_d_var2, resid(., type="p") ~ fitted(.), abline=0)
+qqnorm(resid(probe.rot_d_var2))
+qqline(resid(probe.rot_d_var2))
 
-# TBD: refit with REML
+# re-fit with REML
+probe.rot_d_final <- update(probe.rot_d_var2, method="REML")
 
 # statistics 
-anova(probe.rot_1, type="marginal", adjustSigma=T)
-emmeans(probe.rot_1, pairwise ~ group | condition, adjust="bonferroni")
-emmeans(probe.rot_1, pairwise ~ condition | group, adjust="bonferroni")
+anova(probe.rot_d_final, type="marginal", adjustSigma=T)
+emmeans(probe.rot_final, pairwise ~ group | session, adjust="bonferroni")
+emmeans(probe.rot_final, pairwise ~ session | group, adjust="bonferroni")
+emmeans(probe.rot_final, pairwise ~ session | condition, adjust="bonferroni")
+emmeans(probe.rot_final, pairwise ~ condition | session, adjust="bonferroni")
+emmeans(probe.rot_final, pairwise ~ group | condition | session, adjust="bonferroni")
+
+# helper plots
+ggplot(data, aes(x=rotation_degrees)) + geom_histogram()
+ggplot(data, aes(x=group, y=rotation_degrees)) + geom_boxplot() + facet_wrap(~condition + session, nrow=1)
 
 
-# ::: MEANING: Strong interaction effects (mostly driven by session 2!). TBD! Check distribution (bimodal), check rotation raw values. Explore further/make sure not anti-conservative ::: #
+# ::: MEANING: Strong interaction effects (mostly driven by session 2). TBD! Check model distribution (weird, bimodal). Explore further/make sure not anti-conservative ::: #
 
 ```
 
@@ -1051,95 +1092,36 @@ discmcp(search_strategy ~ group, data=data %>% filter(condition=="ego_ret"), alp
 
 ```{r stats_probe}
 
-### EXPLORATIV 
+### EXPLORATIV: different goals 
 
-data_ego <- data %>% 
-  filter(condition=="ego_ret") %>% 
-  select(id, group, session, trial, block, condition, goal_i, correct_final_alley) %>% 
-  mutate(goal_f=factor(goal_i))
+probe.goals_acc <- mixed(correct_final_alley ~ group*session*condition*goal_f +  
+                           (session+goal_f||id), data=data, expand_re=T,
+                         family=binomial(link="logit"), method="LRT",
+                         control=glmerControl(optimizer="bobyqa", optCtrl=list(maxfun=1e6)))
 
-probe_ego.acc <- mixed(correct_final_alley ~ group*session*goal_f +  
-                         (session*goal_f||id), data=data_ego, expand_re=T,
-                   family=binomial(link="logit"), method="LRT",
-                   control=glmerControl(optimizer="bobyqa", optCtrl=list(maxfun=1e6)))
+probe.goals_acc
+emmeans(probe.goals_acc, pairwise ~ goal_f | group | session, type="response", adjust="bonferroni")
+emmeans(probe.goals_acc, pairwise ~ condition * session, type="response", adjust="bonferroni")
+emmeans(probe.goals_acc, pairwise ~ condition | group, type="response", adjust="bonferroni")
+emmeans(probe.goals_acc, pairwise ~ goal_f | group | condition, type="response", adjust="bonferroni") # TBD: with planned contrasts 
 
-afex_plot(probe_ego.acc, "session", "group", "goal_f", id = "id",
+
+# group:session:goal_f: no differences between goals 1/2 and 3 for young adults (for both sessions), but for young children (for both sessions), and partially for old children (mostly session 1, less for session 2)
+# session:condition: ego > allo only in session 1 (ego is better), both decline over time 
+# group:condition: on whether ego > allo: only older children, probably ceiling effect in adults and floor effect in young children; in both condition general age effect on performance
+
+
+probe.goals_acc_1 <- mixed(correct_final_alley ~ group*condition*goal_f +  
+                             (goal_f||id), data=data_1, expand_re=T,
+                           family=binomial(link="logit"), method="LRT",
+                           control=glmerControl(optimizer="bobyqa", optCtrl=list(maxfun=1e6)))
+
+afex_plot(probe.goals_acc_1, "goal_f", "group", "condition", id = "id",
           data_geom = ggbeeswarm::geom_quasirandom)
 
-emmeans(probe_ego.acc, pairwise ~ group | session | goal_f, type="response", adjust="bonferroni")
-emmeans(probe_ego.acc, pairwise ~ goal_f, type="response", adjust="bonferroni")
-emmeans(probe_ego.acc, pairwise ~ group, type="response", adjust="bonferroni")
-emmeans(probe_ego.acc, pairwise ~ session, type="response", adjust="bonferroni")
-
-
-# data_allo <- data %>% 
-#   filter(condition=="allo_ret") %>% 
-#   select(id, group, session, trial, block, condition, goal_i, correct_final_alley) %>% 
-#   mutate(goal_f=factor(goal_i))
-# 
-# probe_allo.acc <- mixed(correct_final_alley ~ group*session*goal_f +  
-#                          (session+goal_f||id), data=data_allo, expand_re=T,
-#                    family=binomial(link="logit"), method="LRT",
-#                    control=glmerControl(optimizer="bobyqa", optCtrl=list(maxfun=1e6)))
-# 
-# afex_plot(probe_allo.acc, "session", "group", "goal_f", id = "id",
-#           data_geom = ggbeeswarm::geom_quasirandom)
-# 
-# emmeans(probe_allo.acc, pairwise ~ group | session | goal_f, type="response", adjust="bonferroni")
-# emmeans(probe_allo.acc, pairwise ~ goal_f, type="response", adjust="bonferroni")
-# emmeans(probe_allo.acc, pairwise ~ group, type="response", adjust="bonferroni")
-# emmeans(probe_allo.acc, pairwise ~ session, type="response", adjust="bonferroni")
-
-t1 <- data_l %>% 
-  select(id, group, session, trial, goal_i, correct_final_alley, time, path_distance) %>% 
-  mutate(goal_f=factor(goal_i)) %>% 
-  group_by(id, group, session, goal_f) %>% 
-  summarize(correct_final_alley=mean(correct_final_alley, na.rm=T),
-            time=mean(time, na.rm=T),
-            path=mean(path_distance, na.rm=T))
-
-ggplot(t1, aes(x=goal_f, y=time)) +
-  geom_boxplot() +
-  facet_wrap(~ group)
-
-ggplot(t1, aes(x=goal_f, y=path)) +
-  geom_boxplot() +
-  facet_wrap(~ group)
-
-
-t2 <- data %>% 
-  select(id, group, session, condition, trial, goal_i, correct_final_alley, final_distance, time, path_distance) %>% 
-  mutate(goal_f=factor(goal_i)) %>% 
-  filter(session==1) %>% 
-  group_by(id, group, condition, goal_f) %>% 
-  summarize(correct_final_alley=mean(correct_final_alley, na.rm=T),
-            final_distance=mean(final_distance, na.rm=T),
-            time=mean(time, na.rm=T),
-            path=mean(path_distance, na.rm=T))
-
-ggplot(t2, aes(x=goal_f, y=final_distance)) +
-  geom_boxplot() +
-  facet_grid(condition ~ group)
-
-ggplot(t2, aes(x=goal_f, y=time)) +
-  geom_boxplot() +
-  facet_grid(condition ~ group)
-
-ggplot(t2, aes(x=goal_f, y=path)) +
-  geom_boxplot() +
-  facet_grid(condition ~ group)
-
-ggplot(t2, aes(x=goal_f, y=final_distance)) +
-  geom_boxplot() +
-  facet_wrap(~ condition)
-
-ggplot(t2, aes(x=goal_f, y=time)) +
-  geom_boxplot() +
-  facet_wrap(~ condition)
-
-ggplot(t2, aes(x=goal_f, y=path)) +
-  geom_boxplot() +
-  facet_wrap(~ condition)
+probe.goals_acc_1
+emmeans(probe.goals_acc_1, pairwise ~ condition | group, type="response", adjust="bonferroni")
+emmeans(probe.goals_acc_1, pairwise ~ goal_f | group | condition, type="response", adjust="bonferroni")
 
 ```
 
