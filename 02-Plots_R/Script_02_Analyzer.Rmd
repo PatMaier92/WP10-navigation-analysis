@@ -226,7 +226,7 @@ learn.path_base <- lme(path_distance ~ group*block_f*trial_in_cond_c,
                        random=~1+block_f | id, 
                        data=data_l, method="ML")
 
-## 2) advanced lme models withvariance estimation 
+## 2) advanced lme models with variance estimation 
 learn.path_var1 <- update(learn.path_base, weights=varIdent(form=~1 | group))
 learn.path_var2 <- update(learn.path_base, weights=varComb(varIdent(form=~1 | group),
                                                            varIdent(form=~1 | block_f)))
@@ -255,7 +255,7 @@ learn.edit_base <- lme(path_edit_distance ~ group*block_f*trial_in_cond_c,
                        random=~1+block_f | id, 
                        data=data_l, method="ML")
 
-## 2) advanced lme models withvariance estimation
+## 2) advanced lme models with variance estimation
 learn.edit_var1 <- update(learn.edit_base, weights=varIdent(form=~1 | group))
 # learn.edit_var2 <- update(learn.edit_base, weights=varComb(varIdent(form=~1 | group),
 #                                                            varIdent(form=~1 | block_f)))
@@ -340,6 +340,23 @@ emmeans(probe.acc_1, pairwise ~ group, type="response", adjust="bonferroni")
 
 # ::: MEANING: Significant differences between age groups (the older, the better), sessions (s1 better than s2) and slight difference between conditions (ego slightly better than allo), no interactions ::: #
 
+
+## -- egocentric final alley (only for allocentric probe trials)-- ##
+# too few occasions for glmer (non-convergence)
+temp <- data %>% filter(condition=="allo_ret")
+table(temp$correct_final_alley_ego, temp$group)
+# TBD: this is so rare that it even seems below chance level, is this even meaningful?  
+
+# option 1) fisher test: tests independence of rows and columns in a contingency table with fixed marginals.
+fisher.test(table(temp$correct_final_alley_ego, temp$group), simulate.p.value=T)
+
+# option 2) discANOVA from WRS2: tests hypothesis that independent groups have identical multinomial distributions. 
+discANOVA(correct_final_alley_ego ~ group, data=temp, nboot=500) 
+discmcp(correct_final_alley_ego ~ group, data=temp, alpha=0.05, nboot=500)
+rm(temp)
+
+# ::: MEANING: Choosing egocentric goal in allocentric probe trials occurs rarely in general but slightly more often in children (both age groups) compared to adults. TBD: random (chance level) or meaningful? ::: #
+
 ```
 
 ```{r stats_probe_accuracy_change}
@@ -388,7 +405,7 @@ probe.fd_correct <- lme(final_distance ~ group*session*condition,
                        data=data_c, method="ML")
 anova(probe.fd_correct)
 
-# diagnostics: non-normality, largest heterogenity between groups, less between condition & session 
+# diagnostics: non-normality, largest heterogeneity between groups, less between condition & session 
 plot(probe.fd_correct, resid(., type="p") ~ fitted(.))
 plot(probe.fd_correct, group ~ resid(., type="p"))
 plot(probe.fd_correct, condition ~ resid(., type="p"))
@@ -426,7 +443,7 @@ probe.fd_correct_1 <- lme(final_distance ~ group*condition,
                           random=list(id=pdDiag(~ condition)),
                           data=data_c_1, method="ML")
 
-# diagnostics: non-normality, largest heterogenity between groups, less between conditions 
+# diagnostics: non-normality, largest heterogeneity between groups, less between conditions 
 plot(probe.fd_correct_1, resid(., type="p") ~ fitted(.))
 plot(probe.fd_correct_1, group ~ resid(., type="p"))
 plot(probe.fd_correct_1, condition ~ resid(., type="p"))
@@ -461,7 +478,7 @@ probe.fd_local <- lme(final_local_distance ~ group*session*condition,
                       random=list(id=pdDiag(~ condition * session)),
                       data=data, na.action=na.omit, method="ML")
 
-# diagnostics: non-normality, largest heterogenity between groups, then sessions, then conditions 
+# diagnostics: non-normality, largest heterogeneity between groups, then sessions, then conditions 
 plot(probe.fd_local, resid(., type="p") ~ fitted(.))
 plot(probe.fd_local, group ~ resid(., type="p"))
 plot(probe.fd_local, condition ~ resid(., type="p"))
@@ -470,7 +487,7 @@ qqnorm(resid(probe.fd_correct_1))
 qqline(resid(probe.fd_correct_1))
 
 
-## 2) advanced lme models withvariance estimation
+## 2) advanced lme models with variance estimation
 probe.fd_local_var1 <- update(probe.fd_local, weights=varIdent(form=~1 | group))
 probe.fd_local_var2 <- update(probe.fd_local, weights=varComb(varIdent(form=~1 | group),
                                                               varIdent(form=~1 | session)))
@@ -502,7 +519,7 @@ probe.fd_local_1 <- lme(final_local_distance ~ group*condition,
                        random=list(id=pdDiag(~ condition)),
                        data=data_c_1, na.action=na.omit, method="ML")
 
-## 2) advanced lme models withvariance estimation
+## 2) advanced lme models with variance estimation
 probe.fd_local_1_var1 <- update(probe.fd_local_1, weights=varIdent(form=~1 | group))
 # probe.fd_local_1_var2 <- update(probe.fd_local_1, weights=varComb(varIdent(form=~1 | group),
 #                                                                   varIdent(form=~1 | condition)))
@@ -522,6 +539,42 @@ anova(probe.fd_local_1_final, type="marginal", adjustSigma=T)
 emmeans(probe.fd_local_1_final, pairwise ~ group, adjust="bonferroni")
 
 
+## -- final distance to egocentric target (only for allocentric probe trials) -- ##
+# **** sessions T1 & T2 **** # 
+## 1) standard lme model without variance estimation 
+probe.fd_ego <- lme(final_distance_ego ~ group*session,
+                    random=~1+session | id, 
+                    data=data %>% filter(condition=="allo_ret"), na.action=na.omit, method="ML")
+
+# diagnostics: non-normality, low heterogeneity 
+plot(probe.fd_ego, resid(., type="p") ~ fitted(.))
+plot(probe.fd_ego, group ~ resid(., type="p"))
+plot(probe.fd_ego, session ~ resid(., type="p"))
+qqnorm(resid(probe.fd_ego))
+qqline(resid(probe.fd_ego))
+
+
+## 2) advanced lme models with variance estimation
+probe.fd_ego_var1 <- update(probe.fd_ego, weights=varIdent(form=~1 | group))
+probe.fd_ego_var2 <- update(probe.fd_ego, weights=varIdent(form=~1 | group))
+probe.fd_ego_var3 <- update(probe.fd_ego, weights=varComb(varIdent(form=~1 | group),
+                                                          varIdent(form=~1 | session)))
+anova(probe.fd_ego, probe.fd_ego_var1, probe.fd_ego_var2, probe.fd_ego_var3, test=T) 
+# chose model base 
+
+# re-fit final model with with REML
+probe.fd_ego_final <- update(probe.fd_ego, method="REML")
+
+# statistics 
+anova(probe.fd_ego_final, type="marginal", adjustSigma=T)
+emmeans(probe.fd_ego_final, pairwise ~ group, adjust="bonferroni")
+
+# helper plots 
+ggplot(data %>% filter(condition=="allo_ret"), aes(x=final_distance_ego)) + geom_histogram()
+ggplot(data %>% filter(condition=="allo_ret"), aes(x=group, y=final_distance_ego)) + geom_boxplot() + facet_grid(~ condition + session)
+ggplot(data, aes(x=group, y=final_distance)) + geom_boxplot() + facet_grid(~ condition + session)
+
+
 # ::: MEANING: No significant interactions (in alignment with accuracy analysis) but group and session main effects ::: #
 
 ```
@@ -537,7 +590,7 @@ probe.time <- lme(time ~ group*session*condition,
                   random=list(id=pdDiag(~ condition * session)),
                   data=data, method="ML")
 
-# diagnostics: non-normality, largest heterogenity between groups, then conditions, then sessions 
+# diagnostics: non-normality, largest heterogeneity between groups, then conditions, then sessions 
 plot(probe.time, resid(., type="p") ~ fitted(.))
 plot(probe.time, group ~ resid(., type="p"))
 plot(probe.time, condition ~ resid(., type="p"))
@@ -546,7 +599,7 @@ qqnorm(resid(probe.time))
 qqline(resid(probe.time))
 
 
-## 2) advanced lme model withvariance estimation
+## 2) advanced lme model with variance estimation
 probe.time_var1 <- update(probe.time, weights=varIdent(form=~1 | group))
 probe.time_var2 <- update(probe.time,  weights=varComb(varIdent(form=~1 | group),
                                                        varIdent(form=~1 | condition)))
@@ -578,7 +631,7 @@ probe.time_1 <- lme(time ~ group*condition,
                     random=list(id=pdDiag(~ condition)),
                     data=data_1, method="ML")
 
-# diagnostics: non-normality, largest heterogenity between groups, then conditions
+# diagnostics: non-normality, largest heterogeneity between groups, then conditions
 plot(probe.time_1, resid(., type="p") ~ fitted(.), abline=0)
 plot(probe.time_1, group ~ resid(., type="p"))
 plot(probe.time_1, condition ~ resid(., type="p"))
@@ -615,120 +668,277 @@ emmeans(probe.time_1_final, pairwise ~ condition | group, adjust="bonferroni")
 
 # ::: METHOD: several trials p. p. (session, condition) with metric (but possibly non-gaussian) outcome, therefore lmm model. Check if modelling of variance (heteroscedasticity) improves model significantly, i.e. use (n)lme instead of lmer/mixed. Disadvantages are that no non-gaussian distributions and potentially anti-conservative p-values (no Satterthwaite/Kenward-Roger df correction) ::: 
 
-# TBD: UPDATE FITTING PROCEDURE, SEE ABOVE
 
-## -- path distance  to chosen -- ##
+## -- path distance to chosen -- ##
 # **** sessions T1 & T2 **** # 
 ## 1) standard lme model without variance estimation 
-
 probe.ch_path <- lme(chosen_path_distance ~ group*session*condition,
                      random=list(id=pdDiag(~ condition + session)),
                      data=data, method="ML")
 
-## 2) advanced lme model withvariance estimation
+# diagnostics: non-normality, largest heterogeneity between groups & conditions, then sessions
+plot(probe.ch_path, resid(., type="p") ~ fitted(.), abline=0)
+plot(probe.ch_path, group ~ resid(., type="p"))
+plot(probe.ch_path, session ~ resid(., type="p"))
+plot(probe.ch_path, condition ~ resid(., type="p"))
+qqnorm(resid(probe.ch_path))
+qqline(resid(probe.ch_path))
 
-probe.ch_path_var <- update(probe.ch_path, weights=varIdent(form=~1 | group))
-anova(probe.ch_path, probe.ch_path_var) 
 
-# diagnostics
-plot(probe.ch_path_var, resid(., type="p") ~ fitted(.))
-plot(probe.ch_path_var, resid(., type="p") ~ fitted(.) | group)
-plot(probe.ch_path_var, group ~ resid(., type="p"))
-qqnorm(resid(probe.ch_path_var))
-qqline(resid(probe.ch_path_var))
+## 2) advanced lme models withv ariance estimation
+probe.ch_path_var1 <- update(probe.ch_path, weights=varIdent(form=~1 | group))
+probe.ch_path_var2 <- update(probe.ch_path, weights=varComb(varIdent(form=~1 | group),
+                                                       varIdent(form=~1 | condition)))
+probe.ch_path_var3 <- update(probe.ch_path, weights=varComb(varIdent(form=~1 | group),
+                                                       varIdent(form=~1 | session),
+                                                       varIdent(form=~1 | condition)))
+anova(probe.ch_path, probe.ch_path_var1, probe.ch_path_var2, probe.ch_path_var3) 
+# chose model 2 (or model 3)
 
-# TBD: refit with REML
+# diagnostics: naja 
+plot(probe.ch_path_var2, resid(., type="p") ~ fitted(.), abline=0)
+qqnorm(resid(probe.ch_path_var2))
+qqline(resid(probe.ch_path_var2))
+
+# re-fit with REML
+probe.ch_path_final <- update(probe.ch_path_var2, method="REML")
 
 # statistics 
-anova(probe.ch_path_var, type="marginal", adjustSigma=T)
-emmeans(probe.ch_path_var, pairwise ~ group | condition, adjust="bonferroni")
-emmeans(probe.ch_path_var, pairwise ~ group | session, adjust="bonferroni")
+anova(probe.ch_path_final, type="marginal", adjustSigma=T)
+emmeans(probe.ch_path_final, pairwise ~ group | condition, adjust="bonferroni")
+emmeans(probe.ch_path_final, pairwise ~ condition | group, adjust="bonferroni")
+emmeans(probe.ch_path_final, pairwise ~ group | session, adjust="bonferroni")
+emmeans(probe.ch_path_final, pairwise ~ session | group, adjust="bonferroni")
 
 
 # **** sessions T1 only **** # 
 ## 1) standard lme model without variance estimation 
-
 probe.ch_path_1 <- lme(chosen_path_distance ~ group*condition,
                        random=list(id=pdDiag(~ condition)),
                        data=data_1, method="ML")
 
-## 2) advanced lme model withvariance estimation
+## 2) advanced lme models with variance estimation
+probe.ch_path_1_var1 <- update(probe.ch_path_1, weights=varIdent(form=~1 | group))
+probe.ch_path_1_var2 <- update(probe.ch_path_1, weights=varComb(varIdent(form=~1 | group),
+                                                       varIdent(form=~1 | condition)))
+anova(probe.ch_path_1, probe.ch_path_1_var1, probe.ch_path_1_var2) 
+# chose model 2 
 
-probe.ch_path_var_1 <- update(probe.ch_path_1, weights=varIdent(form=~1 | group))
-anova(probe.ch_path_1, probe.ch_path_var_1) 
+# diagnostics: naja 
+plot(probe.ch_path_1_var2, resid(., type="p") ~ fitted(.), abline=0)
+qqnorm(resid(probe.ch_path_1_var2))
+qqline(resid(probe.ch_path_1_var2))
 
-# diagnostics
-plot(probe.ch_path_var_1, resid(., type="p") ~ fitted(.))
-plot(probe.ch_path_var_1, resid(., type="p") ~ fitted(.) | group)
-plot(probe.ch_path_var_1, group ~ resid(., type="p"))
-qqnorm(resid(probe.ch_path_var_1))
-qqline(resid(probe.ch_path_var_1))
-
-# TBD: refit with REML
+# re-fit with REML
+probe.ch_path_1_final <- update(probe.ch_path_1_var2, method="REML")
 
 # statistics 
-anova(probe.ch_path_var_1, type="marginal", adjustSigma=T)
-emmeans(probe.ch_path_var_1, pairwise ~ group | condition, adjust="bonferroni")
+anova(probe.ch_path_1_final, type="marginal", adjustSigma=T)
+emmeans(probe.ch_path_1_final, pairwise ~ group | condition, adjust="bonferroni")
+emmeans(probe.ch_path_1_final, pairwise ~ condition | group, adjust="bonferroni")
 
+
+## -- path distance to target -- ##
+# **** sessions T1 & T2 **** # 
+## 1) standard lme model without variance estimation 
+probe.path <- lme(path_distance ~ group*session*condition,
+                  random=list(id=pdDiag(~ condition + session)),
+                  data=data, method="ML")
+
+# diagnostics: some non-normality, largest heterogeneity in group, condition, then session
+plot(probe.path, resid(., type="p") ~ fitted(.), abline=0)
+plot(probe.path, group ~ resid(., type="p"))
+plot(probe.path, condition ~ resid(., type="p"))
+plot(probe.path, session ~ resid(., type="p"))
+qqnorm(resid(probe.path))
+qqline(resid(probe.path))
+
+## 2) advanced lme models with variance estimation
+probe.path_var1 <- update(probe.path, weights=varIdent(form=~1 | group))
+probe.path_var2 <- update(probe.path, weights=varComb(varIdent(form=~1 | group),
+                                                                 varIdent(form=~1 | condition)))
+probe.path_var3 <- update(probe.path, weights=varComb(varIdent(form=~1 | group),
+                                                                 varIdent(form=~1 | condition),
+                                                                 varIdent(form=~1 | session)))
+anova(probe.path, probe.path_var1, probe.path_var2, probe.path_var3) 
+# chose model 3 
+
+# diagnostics: ok 
+plot(probe.path_var3, resid(., type="p") ~ fitted(.), abline=0)
+qqnorm(resid(probe.path_var3))
+qqline(resid(probe.path_var3))
+
+# re-fit with REML
+probe.path_final <- update(probe.path_var3, method="REML")
+
+# statistics 
+anova(probe.path_final, type="marginal", adjustSigma=T)
+emmeans(probe.path_final, pairwise ~ group | session, adjust="bonferroni")
+emmeans(probe.path_final, pairwise ~ session | group, adjust="bonferroni")
+emmeans(probe.path_final, pairwise ~ session | condition, adjust="bonferroni")
+emmeans(probe.path_final, pairwise ~ condition | session, adjust="bonferroni")
+
+# helper plots 
+ggplot(data, aes(x=path_distance)) + geom_histogram()
+ggplot(data, aes(x=group, y=path_distance)) + geom_boxplot() + facet_grid(~ condition + session)
+ggplot(data, aes(x=group, y=ego_path_distance)) + geom_boxplot() + facet_grid(~ condition + session)
+
+
+# **** sessions T1 only **** # 
+## TBD ###
+
+
+## -- path distance to egocentric (only for allocentric probe with outer start) -- ##
+# **** sessions T1 & T2 **** # 
+## 1) standard lme model without variance estimation 
+probe.path_ego <- lme(ego_path_distance ~ group*session,
+                      random=list(id=pdDiag(~ session)),
+                      data=data %>% filter(condition=="allo_ret"), method="ML", na.action=na.omit)
+
+# diagnostics: normality ok, low heterogeneity
+plot(probe.path_ego, resid(., type="p") ~ fitted(.), abline=0)
+plot(probe.path_ego, group ~ resid(., type="p"))
+plot(probe.path_ego, session ~ resid(., type="p"))
+qqnorm(resid(probe.path_ego))
+qqline(resid(probe.path_ego))
+
+## 2) advanced lme models with variance estimation
+probe.path_ego_var1 <- update(probe.path_ego, weights=varIdent(form=~1 | group))
+probe.path_ego_var2 <- update(probe.path_ego, weights=varIdent(form=~1 | session))
+probe.path_ego_var3 <- update(probe.path_ego, weights=varComb(varIdent(form=~1 | group),
+                                                              varIdent(form=~1 | session)))
+anova(probe.path_ego, probe.path_ego_var1, probe.path_ego_var2, probe.path_ego_var3) 
+# chose model base (or model 2)
+
+# re-fit with REML
+probe.path_ego_final <- update(probe.path_ego, method="REML")
+
+# statistics 
+anova(probe.path_ego_final, type="marginal", adjustSigma=T)
+emmeans(probe.path_ego_final, pairwise ~ group | session, adjust="bonferroni")
+emmeans(probe.path_ego_final, pairwise ~ session | group, adjust="bonferroni")
+
+# helper plots
+ggplot(data %>% filter(condition=="allo_ret"), aes(x=ego_path_distance)) + geom_histogram()
+ggplot(data %>% filter(condition=="allo_ret"), aes(x=group, y=ego_path_distance)) + geom_boxplot() + facet_wrap(~session)
 
 
 ## -- target distance -- ##
 # **** sessions T1 & T2 **** # 
 ## 1) standard lme model without variance estimation 
-
 probe.distance_target <- lme(target_distance_error ~ group*session*condition,
                              random=list(id=pdDiag(~ condition + session)),
                              data=data, method="ML")
 
-## 2) advanced lme model withvariance estimation
+# diagnostics: some non-normality, largest heterogeneity in group, condition, then session (all relatively high)
+plot(probe.distance_target, resid(., type="p") ~ fitted(.), abline=0)
+plot(probe.distance_target, group ~ resid(., type="p"))
+plot(probe.distance_target, condition ~ resid(., type="p"))
+plot(probe.distance_target, session ~ resid(., type="p"))
+qqnorm(resid(probe.distance_target))
+qqline(resid(probe.distance_target))
 
-probe.distance_target_var <- update(probe.distance_target, weights=varIdent(form=~1 | group))
-anova(probe.distance_target, probe.distance_target_var) 
+## 2) advanced lme models with variance estimation
+probe.distance_target_var1 <- update(probe.distance_target, weights=varIdent(form=~1 | group))
+probe.distance_target_var2 <- update(probe.distance_target, weights=varComb(varIdent(form=~1 | group),
+                                                                            varIdent(form=~1 | condition)))
+probe.distance_target_var3 <- update(probe.distance_target, weights=varComb(varIdent(form=~1 | group),
+                                                                            varIdent(form=~1 | condition),
+                                                                            varIdent(form=~1 | session)))
+anova(probe.distance_target, probe.distance_target_var1, probe.distance_target_var2, probe.distance_target_var3) 
+# chose model 2 (only because model 3 cannot be re-fit with REML without convergence issues)
 
-# diagnostics
-plot(probe.distance_target_var, resid(., type="p") ~ fitted(.))
-plot(probe.distance_target_var, resid(., type="p") ~ fitted(.) | group)
-plot(probe.distance_target_var, group ~ resid(., type="p"))
-qqnorm(resid(probe.distance_target_var))
-qqline(resid(probe.distance_target_var))
+# diagnostics: ok 
+plot(probe.distance_target_var2, resid(., type="p") ~ fitted(.), abline=0)
+qqnorm(resid(probe.distance_target_var2))
+qqline(resid(probe.distance_target_var2))
 
-# TBD: refit with REML
+# re-fit with REML
+probe.distance_target_final <- update(probe.distance_target_var2, method="REML")
 
 # statistics 
-anova(probe.distance_target_var, type="marginal", adjustSigma=T)
-emmeans(probe.distance_target_var, pairwise ~ group | condition, adjust="bonferroni")
-emmeans(probe.distance_target_var, pairwise ~ session | condition, adjust="bonferroni")
+anova(probe.distance_target_final, type="marginal", adjustSigma=T)
+emmeans(probe.distance_target_final, pairwise ~ group | condition, adjust="bonferroni")
+emmeans(probe.distance_target_final, pairwise ~ condition | session, adjust="bonferroni")
+emmeans(probe.distance_target_final, pairwise ~ session | condition, adjust="bonferroni")
+emmeans(probe.distance_target_final, pairwise ~ condition | session, adjust="bonferroni")
+
+# helper plots 
+ggplot(data, aes(x=target_distance_error)) + geom_histogram()
+ggplot(data, aes(x=group, y=target_distance_error)) + geom_boxplot() + facet_grid(~ condition + session)
+ggplot(data, aes(x=group, y=ego_target_distance_error)) + geom_boxplot() + facet_grid(~ condition + session)
 
 
 # **** sessions T1 only **** # 
 ## 1) standard lme model without variance estimation 
-
 probe.distance_target_1 <- lme(target_distance_error ~ group*condition,
                              random=list(id=pdDiag(~ condition)),
                              data=data_1, method="ML")
 
-## 2) advanced lme model withvariance estimation
+# diagnostics: non-normality, larger heterogeneity in group & condition
+plot(probe.distance_target_1, resid(., type="p") ~ fitted(.), abline=0)
+plot(probe.distance_target_1, group ~ resid(., type="p"))
+plot(probe.distance_target_1, condition ~ resid(., type="p"))
+qqnorm(resid(probe.distance_target_1))
+qqline(resid(probe.distance_target_1))
 
-probe.distance_target_var_1 <- update(probe.distance_target_1, weights=varIdent(form=~1 | group))
-anova(probe.distance_target_1, probe.distance_target_var_1) 
 
-# diagnostics
-plot(probe.distance_target_var_1, resid(., type="p") ~ fitted(.))
-plot(probe.distance_target_var_1, resid(., type="p") ~ fitted(.) | group)
-plot(probe.distance_target_var_1, group ~ resid(., type="p"))
-qqnorm(resid(probe.distance_target_var_1))
-qqline(resid(probe.distance_target_var_1))
+## 2) advanced lme models with variance estimation
+probe.distance_target_1_var1 <- update(probe.distance_target_1, weights=varIdent(form=~1 | group))
+probe.distance_target_1_var2 <- update(probe.distance_target_1, weights=varComb(varIdent(form=~1 | group),
+                                                                               varIdent(form=~1 | condition)))
+anova(probe.distance_target_1, probe.distance_target_1_var1, probe.distance_target_1_var2) 
+# chose model 2
 
-# TBD: refit with REML
+# diagnostics: ok 
+plot(probe.distance_target_1_var2, resid(., type="p") ~ fitted(.), abline=0)
+qqnorm(resid(probe.distance_target_1_var2))
+qqline(resid(probe.distance_target_1_var2))
+
+# re-fit with REML
+probe.distance_target_1_final <- update(probe.distance_target_1_var2, method="REML")
 
 # statistics 
-anova(probe.distance_target_var_1, type="marginal", adjustSigma=T)
-emmeans(probe.distance_target_var_1, pairwise ~ group | condition, adjust="bonferroni")
-emmeans(probe.distance_target_var_1, pairwise ~ condition | group, adjust="bonferroni")
+anova(probe.distance_target_1_final, type="marginal", adjustSigma=T)
+emmeans(probe.distance_target_1_final, pairwise ~ group | condition, adjust="bonferroni")
+emmeans(probe.distance_target_1_final, pairwise ~ condition | group, adjust="bonferroni")
 
+
+## -- target distance to egocentric target (only for allocentric probe with outer start) -- ##
+# **** sessions T1 & T2 **** # 
+## 1) standard lme model without variance estimation 
+probe.distance_target_ego <- lme(ego_target_distance_error ~ group*session,
+                                 random=list(id=pdDiag(~ session)),
+                                 data=data %>% filter(condition=="allo_ret"), method="ML", na.action=na.omit)
+
+# diagnostics: non-normality, low heterogeneity
+plot(probe.distance_target_ego, resid(., type="p") ~ fitted(.), abline=0)
+plot(probe.distance_target_ego, group ~ resid(., type="p"))
+plot(probe.distance_target_ego, session ~ resid(., type="p"))
+qqnorm(resid(probe.distance_target_ego))
+qqline(resid(probe.distance_target_ego))
+
+## 2) advanced lme models with variance estimation
+probe.distance_target_ego_var1 <- update(probe.distance_target_ego, weights=varIdent(form=~1 | group))
+probe.distance_target_ego_var2 <- update(probe.distance_target_ego, weights=varComb(varIdent(form=~1 | group),
+                                                                                    varIdent(form=~1 | session)))
+anova(probe.distance_target_ego, probe.distance_target_ego_var1, probe.distance_target_ego_var2) 
+# chose model base 
+
+# re-fit with REML
+probe.distance_target_ego_final <- update(probe.distance_target_ego, method="REML")
+
+# statistics 
+anova(probe.distance_target_ego_final, type="marginal", adjustSigma=T)
+emmeans(probe.distance_target_ego_final, pairwise ~ group, adjust="bonferroni")
+
+# helper plots
+ggplot(data %>% filter(condition=="allo_ret"), aes(x=ego_target_distance_error)) + geom_histogram()
+ggplot(data %>% filter(condition=="allo_ret"), aes(x=group, y=target_distance_error)) + geom_boxplot() + facet_wrap(~session)
 
 
 ## -- path edit distance  -- ##
+### TBD: but unclear if suitable because count data ### 
 
 
 # ::: MEANING: Strong group, session and condition main effects and some (potentially instable, because barely significant) interaction effects. However planned contrasts do not show meaningful interactions. Explore further/make sure not anti-conservative ::: #
@@ -739,6 +949,7 @@ emmeans(probe.distance_target_var_1, pairwise ~ condition | group, adjust="bonfe
 
 # ::: METHOD: several trials p. p. (session, condition) with metric (but possibly non-gaussian) outcome, therefore lmm model. Check if modelling of variance (heteroscedasticity) improves model significantly, i.e. use (n)lme instead of lmer/mixed. Disadvantages are that no non-gaussian distributions and potentially anti-conservative p-values (no Satterthwaite/Kenward-Roger df correction) ::: 
 
+### TBD ### 
 
 ## -- rotation (normalized by path length)  -- ##
 # **** sessions T1 & T2 **** # 
@@ -748,7 +959,7 @@ probe.rot <- lme(log(rotation_turns_by_path_length) ~ group*session*condition,
                  random=list(id=pdDiag(~ condition + session)),
                  data=data, method="ML")
 
-## 2) advanced lme model withvariance estimation
+## 2) advanced lme models with variance estimation
 
 probe.rot_var <- update(probe.rot, weights=varIdent(form=~1 | group))
 anova(probe.rot, probe.rot_var) 
@@ -787,7 +998,7 @@ probe.rot_1 <- lme(rotation_turns_by_path_length ~ group*condition,
                    random=list(id=pdDiag(~ condition)),
                    data=data_1, method="ML")
 
-## 2) advanced lme model withvariance estimation
+## 2) advanced lme models with variance estimation
 
 probe.rot_var_1 <- update(probe.rot_1, weights=varIdent(form=~1 | group))
 anova(probe.rot_1, probe.rot_var_1) 
