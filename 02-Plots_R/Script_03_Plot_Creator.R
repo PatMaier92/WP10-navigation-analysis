@@ -20,14 +20,14 @@ library(corrplot)
 file_name <- "../WP10_data/WP10_results/wp10_navigation_data.RData"
 load(file_name)
 sm_orig <- sm_data
-sm_data <- sm_data %>% filter(exclude_trial_matlab==0 | session==3) # TBD: fix motor control not excluded
+sm_data <- sm_data %>% filter(exclude_trial_matlab==0)
 rm(file_name)
 
 file_name <- "../WP10_data/WP10_results/wp10_post_nav_data.RData"
 load(file_name)
 rm(file_name)
 
-file_name <- "../WP10_data/WP10_results/WP10_GMDA_data_220203.RData" # TBD: Update 
+file_name <- "../WP10_data/WP10_results/WP10_GMDA_data_220505.RData"  
 load(file_name)
 rm(file_name)
 gmda_data <- data_gmda 
@@ -70,20 +70,17 @@ l_time <- "time in seconds"
 l_velocity <- "velocity"
 l_correct_alley <- "% in correct area" 
 l_final_distance <- "final distance"
-l_shortest_path_alley <- "% shortest path to correct area"
-l_editdistance <- "path zone error"
-l_editdistance_chosen <- "path zone error (chosen)"
-l_path_length <- "path length"
+l_final_local_distance <- "final distance (local)"
+l_edit_distance <- "path zone error"
+l_edit_distance_chosen <- "path zone error (chosen)"
 l_path_length_error <- "path length error"
 l_path_distance <- "avg. path distance"
 l_path_distance_chosen <- "avg. path distance (chosen)"
-l_adj_path_distance <- "adj. avg. path distance"
 l_dtw_path_distance <- "DTW path distance"
-l_adj_dtw_path_distance <- "adj. DTW path distance"
 l_target_distance_error <- "target distance error"
-l_rotation_xyz <- "total yaw rotation"
-l_rotation_xy <- "yaw rotation by x-/y-movement"
-l_rotation_z <- "pure yaw rotation"
+l_target_distance_error_chosen <- "target distance error (chosen)"
+l_rotation <- "rotation (turns)"
+l_rotation_by_path <- "rotation by path length"
 l_search_strategy <- "% of use"
 ## ----
 
@@ -394,7 +391,7 @@ rm(ex1_data, ex2_data, sm_orig, plot_excluded)
 corr1_data <- sm_data %>%
   select(correct_goal, correct_final_alley, final_distance, shortest_path_correct_alley,
          path_length, path_length_error, path_distance, adj_path_distance, 
-         dtw_path_distance, adj_dtw_path_distance, target_distance, target_distance_error, zones_entered, zone_editdistance) %>% 
+         dtw_path_distance, adj_dtw_path_distance, target_distance, target_distance_error, zones_entered, path_edit_distance) %>% 
   drop_na() %>% 
   cor()
 
@@ -411,24 +408,21 @@ rm(corr1_data, corr_variables)
 # all trials
 sm_trialwise <- sm_data %>%
   filter(session==1) %>%
-  group_by(group, trial_num, condition) %>% 
-  summarise_at(c("correct_final_alley", "time","path_distance", "zone_editdistance"), mean, na.rm=T)
+  group_by(group, trial, condition) %>% 
+  summarise_at(c("correct_final_alley", "time","path_distance"), mean, na.rm=T)
 
-trial_cfa <- trial_plot(sm_trialwise, "trial_num", "correct_final_alley", "condition", "group", NULL, l_correct_alley, mylabels, "top", 8, type_colors)
-trial_t <- trial_plot(sm_trialwise, "trial_num", "time", "condition", "group", NULL, l_time, mylabels, "top", 8, type_colors)
-trial_pd <- trial_plot(sm_trialwise, "trial_num", "path_distance", "condition", "group", NULL, l_path_distance, mylabels, "top", 8, type_colors)
-trial_ed <- trial_plot(sm_trialwise, "trial_num", "zone_editdistance", "condition", "group", NULL, l_editdistance, mylabels, "top", 8, type_colors)
-
+trial_cfa <- trial_plot(sm_trialwise, "trial", "correct_final_alley", "condition", "group", NULL, l_correct_alley, mylabels, "top", 8, type_colors)
+trial_t <- trial_plot(sm_trialwise, "trial", "time", "condition", "group", NULL, l_time, mylabels, "top", 8, type_colors)
+trial_pd <- trial_plot(sm_trialwise, "trial", "path_distance", "condition", "group", NULL, l_path_distance, mylabels, "top", 8, type_colors)
 
 # learning trials
 sm_trialwise_learn <- sm_data %>%
   filter(session==1, condition=="main_learn") %>%
   group_by(id, group, trial_in_cond) %>% 
-  summarise_at(c("time","path_distance", "zones_entered", "zone_editdistance"), mean, na.rm=T)
+  summarise_at(c("time","path_distance"), mean, na.rm=T)
 
 line_t <- line_plot(sm_trialwise_learn, "trial_in_cond", "time", "group", NULL, l_time, mylabels, "bottom", group_colors)
 line_pd <- line_plot(sm_trialwise_learn, "trial_in_cond", "path_distance", "group", NULL, l_path_distance, mylabels, "bottom", group_colors)
-line_ed <- line_plot(sm_trialwise_learn, "trial_in_cond", "zone_editdistance", "group", NULL, l_editdistance, mylabels, "bottom", group_colors)
 ## ----
 rm(sm_trialwise, sm_trialwise_learn)
 
@@ -441,43 +435,54 @@ rm(sm_trialwise, sm_trialwise_learn)
 sm_agg <- sm_data %>%
   filter(session!=3, condition!="main_ret") %>% 
   group_by(id, group, session, condition) %>% 
-  summarise_at(c("correct_final_alley", "shortest_path_correct_alley", "time", "path_distance", "chosen_path_distance", "zone_editdistance"), mean, na.rm=T)
+  summarise_at(c("correct_final_alley", "final_local_distance", "time", "path_length_error", 
+                 "path_distance", "chosen_path_distance", 
+                 "path_edit_distance", "chosen_path_edit_distance",
+                 "target_distance_error", "chosen_target_distance_error", 
+                 "rotation_turns", "rotation_turns_by_path_length"), mean, na.rm=T)
 
 sm_agg_correct <- sm_data %>%
   filter(condition %in% c("ego_ret", "allo_ret") & correct_final_alley==1) %>% 
   group_by(id, group, session, condition) %>% 
-  summarise_at(c("time", "path_distance", "final_distance"), mean, na.rm=T)
+  summarise_at(c("time", "path_distance", "target_distance_error", "final_distance"), mean, na.rm=T)
 
 
 # learning trials
-box_learn_spcs <- box_plot(sm_agg %>% filter(condition=="main_learn"), "group", "shortest_path_correct_alley", "group", "condition", "none", NULL, NULL, l_shortest_path_alley, mylabels, "top", group_colors, group_colors_o)
 box_learn_t <- box_plot(sm_agg %>% filter(condition=="main_learn"), "group", "time", "group", "condition", "none", NULL, NULL, l_time, mylabels, "top", group_colors, group_colors_o)
-box_learn_pd <- box_plot(sm_agg %>% filter(condition=="main_learn"), "group", "path_distance", "group", "condition", "none", NULL, NULL, l_path_distance, mylabels, "top", group_colors, group_colors_o)
-box_learn_ed <- box_plot(sm_agg %>% filter(condition=="main_learn"), "group", "zone_editdistance", "group", "condition", "none", NULL, NULL, l_editdistance, mylabels, "top", group_colors, group_colors_o)
-
+box_learn_pl <- box_plot(sm_agg %>% filter(condition=="main_learn"), "group", "path_length_error", "group", "condition", "none", NULL, NULL, l_path_length_error, mylabels, "top", group_colors, group_colors_o)
+# box_learn_pd <- box_plot(sm_agg %>% filter(condition=="main_learn"), "group", "path_distance", "group", "condition", "none", NULL, NULL, l_path_distance, mylabels, "top", group_colors, group_colors_o)
+box_learn_td <- box_plot(sm_agg %>% filter(condition=="main_learn"), "group", "target_distance_error", "group", "condition", "none", NULL, NULL, l_target_distance_error, mylabels, "top", group_colors, group_colors_o)
+box_learn_r <- box_plot(sm_agg %>% filter(condition=="main_learn"), "group", "rotation_turns", "group", "condition", "none", NULL, NULL, l_rotation, mylabels, "top", group_colors, group_colors_o)
+box_learn_rpl <- box_plot(sm_agg %>% filter(condition=="main_learn"), "group", "rotation_turns_by_path_length", "group", "condition", "none", NULL, NULL, l_rotation_by_path, mylabels, "top", group_colors, group_colors_o)
 
 # egocentric probe trials
 box_ego_cfa <- box_plot(sm_agg %>% filter(condition=="ego_ret"), "group", "correct_final_alley", "group", "session", "none", NULL, NULL, l_correct_alley, mylabels, "top", group_colors, group_colors_o)
+box_ego_fdl <- box_plot(sm_agg %>% filter(condition=="ego_ret"), "group", "final_local_distance", "group", "session", "none", NULL, NULL, l_final_local_distance, mylabels, "top", group_colors, group_colors_o)
 box_ego_t <- box_plot(sm_agg %>% filter(condition=="ego_ret"), "group", "time", "group", "session", "none", NULL, NULL, l_time, mylabels, "top", group_colors, group_colors_o)
-box_ego_pdch <- box_plot(sm_agg %>% filter(condition=="ego_ret"), "group", "chosen_path_distance", "group", "session", "none", NULL, NULL, l_path_distance_chosen, mylabels, "top", group_colors, group_colors_o)
-# box_ego_ed <- box_plot(sm_agg %>% filter(condition=="ego_ret"), "group", "zone_editdistance", "group", "session", "none", NULL, NULL, l_editdistance, mylabels, "top", group_colors, group_colors_o)
+box_ego_pl <- box_plot(sm_agg %>% filter(condition=="ego_ret"), "group", "path_length_error", "group", "session", "none", NULL, NULL, l_path_length_error, mylabels, "top", group_colors, group_colors_o)
+# box_ego_pd <- box_plot(sm_agg %>% filter(condition=="ego_ret"), "group", "path_distance", "group", "session", "none", NULL, NULL, l_path_distance, mylabels, "top", group_colors, group_colors_o)
+box_ego_td <- box_plot(sm_agg %>% filter(condition=="ego_ret"), "group", "target_distance_error", "group", "session", "none", NULL, NULL, l_target_distance_error, mylabels, "top", group_colors, group_colors_o)
+box_ego_r <- box_plot(sm_agg %>% filter(condition=="ego_ret"), "group", "rotation_turns", "group", "session", "none", NULL, NULL, l_rotation, mylabels, "top", group_colors, group_colors_o)
+box_ego_rpl <- box_plot(sm_agg %>% filter(condition=="ego_ret"), "group", "rotation_turns_by_path_length", "group", "session", "none", NULL, NULL, l_rotation_by_path, mylabels, "top", group_colors, group_colors_o)
 
 # correct egocentric probe trials 
 box_ego_cor_t <- box_plot(sm_agg_correct %>% filter(condition=="ego_ret"), "group", "time", "group", "session", "none", NULL, NULL, l_time, mylabels, "top", group_colors, group_colors_o)
 box_ego_cor_fd <- box_plot(sm_agg_correct %>% filter(condition=="ego_ret"), "group", "final_distance", "group", "session", "none", NULL, NULL, l_final_distance, mylabels, "top", group_colors, group_colors_o)
-box_ego_cor_pd <- box_plot(sm_agg_correct %>% filter(condition=="ego_ret"), "group", "path_distance", "group", "session", "none", NULL, NULL, l_path_distance, mylabels, "top", group_colors, group_colors_o)
-
 
 # allocentric probe trials
 box_allo_cfa <- box_plot(sm_agg %>% filter(condition=="allo_ret"), "group", "correct_final_alley", "group", "session", "none", NULL, NULL, l_correct_alley, mylabels, "top", group_colors, group_colors_o)
+box_allo_fdl <- box_plot(sm_agg %>% filter(condition=="allo_ret"), "group", "final_local_distance", "group", "session", "none", NULL, NULL, l_final_local_distance, mylabels, "top", group_colors, group_colors_o)
 box_allo_t <- box_plot(sm_agg %>% filter(condition=="allo_ret"), "group", "time", "group", "session", "none", NULL, NULL, l_time, mylabels, "top", group_colors, group_colors_o)
-box_allo_pdch <- box_plot(sm_agg %>% filter(condition=="allo_ret"), "group", "chosen_path_distance", "group", "session", "none", NULL, NULL, l_path_distance_chosen, mylabels, "top", group_colors, group_colors_o)
-#box_allo_ed <- box_plot(sm_agg %>% filter(condition=="allo_ret"), "group", "zone_editdistance", "group", "session", "none", NULL, NULL, l_editdistance, mylabels, "top", group_colors, group_colors_o)
+box_allo_pl <- box_plot(sm_agg %>% filter(condition=="allo_ret"), "group", "path_length_error", "group", "session", "none", NULL, NULL, l_path_length_error, mylabels, "top", group_colors, group_colors_o)
+# box_allo_pd <- box_plot(sm_agg %>% filter(condition=="allo_ret"), "group", "path_distance", "group", "session", "none", NULL, NULL, l_path_distance, mylabels, "top", group_colors, group_colors_o)
+box_allo_td <- box_plot(sm_agg %>% filter(condition=="allo_ret"), "group", "target_distance_error", "group", "session", "none", NULL, NULL, l_target_distance_error, mylabels, "top", group_colors, group_colors_o)
+box_allo_r <- box_plot(sm_agg %>% filter(condition=="allo_ret"), "group", "rotation_turns", "group", "session", "none", NULL, NULL, l_rotation, mylabels, "top", group_colors, group_colors_o)
+box_allo_rpl <- box_plot(sm_agg %>% filter(condition=="allo_ret"), "group", "rotation_turns_by_path_length", "group", "session", "none", NULL, NULL, l_rotation_by_path, mylabels, "top", group_colors, group_colors_o)
 
 # correct allocentric probe trials 
 box_allo_cor_t <- box_plot(sm_agg_correct %>% filter(condition=="allo_ret"), "group", "time", "group", "session", "none", NULL, NULL, l_time, mylabels, "top", group_colors, group_colors_o)
 box_allo_cor_fd <- box_plot(sm_agg_correct %>% filter(condition=="allo_ret"), "group", "final_distance", "group", "session", "none", NULL, NULL, l_final_distance, mylabels, "top", group_colors, group_colors_o)
-box_allo_cor_pd <- box_plot(sm_agg_correct %>% filter(condition=="allo_ret"), "group", "path_distance", "group", "session", "none", NULL, NULL, l_path_distance, mylabels, "top", group_colors, group_colors_o)
+
 ## ----
 rm(sm_agg, sm_agg_correct)
 
@@ -491,66 +496,39 @@ ratio <- function(d1, d2) {
 sm_change <- sm_data %>%
   filter(condition %in% c("ego_ret", "allo_ret"))  %>%
   group_by(id, group, session, condition) %>% 
-  summarise_at(c("correct_final_alley", "time", "path_distance", "chosen_path_distance"), mean, na.rm=T) %>% 
+  summarise_at(c("correct_final_alley", "final_distance", "final_local_distance"), mean, na.rm=T) %>% 
   pivot_wider(names_from=session,
               values_from=-c(id, group, session, condition)) %>% 
   group_by(id, group, condition) %>%
   mutate(cfa_ratio=ratio(correct_final_alley_1, correct_final_alley_2),
-         t_ratio=ratio(time_1, time_2),
-         pd_ratio=ratio(path_distance_1, path_distance_2),
-         pdch_ratio=ratio(chosen_path_distance_1, chosen_path_distance_2),
-         #ed_ratio=ratio(zone_editdistance_1, zone_editdistance_2),
+         fd_ratio=ratio(final_distance_1, final_distance_2),
+         fdl_ratio=ratio(final_local_distance_1, final_local_distance_2),
          session="Consolidation")
 
-sm_change_correct <- sm_data %>%
-  filter(condition %in% c("ego_ret", "allo_ret") & correct_final_alley==1) %>% 
-  group_by(id, group, session, condition) %>% 
-  summarise_at(c("time", "final_distance", "path_distance"), mean, na.rm=T) %>% 
-  pivot_wider(names_from=session,
-              values_from=-c(id, group, session, condition)) %>% 
-  group_by(id, group, condition) %>%
-  mutate(t_ratio=ratio(time_1, time_2),
-         fd_ratio=ratio(final_distance_1, final_distance_2),
-         pd_ratio=ratio(path_distance_1, path_distance_2),
-         session="Consolidation")
+# sm_change_correct <- sm_data %>%
+#   filter(condition %in% c("ego_ret", "allo_ret") & correct_final_alley==1) %>% 
+#   group_by(id, group, session, condition) %>% 
+#   summarise_at(c("final_distance", "time"), mean, na.rm=T) %>% 
+#   pivot_wider(names_from=session,
+#               values_from=-c(id, group, session, condition)) %>% 
+#   group_by(id, group, condition) %>%
+#   mutate(fd_ratio=ratio(final_distance_1, final_distance_2),
+#          session="Consolidation")
 
 
 # egocentric probe trials
 box_ego_delta_cfa <- change_box_plot(sm_change %>% filter(condition=="ego_ret"), "group", "cfa_ratio", "group", "session", NULL, mylabels, "none", group_colors, group_colors_o, ylabel=l_correct_alley)
-box_ego_delta_t <- change_box_plot(sm_change %>% filter(condition=="ego_ret"), "group", "t_ratio", "group", "session", NULL, mylabels, "none", group_colors, group_colors_o, ylabel=l_time)
-box_ego_delta_pdch <- change_box_plot(sm_change %>% filter(condition=="ego_ret"), "group", "pdch_ratio", "group", "session", NULL, mylabels, "none", group_colors, group_colors_o, ylabel=l_path_distance_chosen)
-#box_ego_delta_ed <- change_box_plot(sm_change %>% filter(condition=="ego_ret"), "group", "ed_ratio", "group", "session", NULL, mylabels, "none", group_colors, group_colors_o, ylabel=l_editdistance)
 
-# correct egocentric probe trials
-box_ego_delta_cor_t <- change_box_plot(sm_change_correct  %>% filter(condition=="ego_ret"), "group", "t_ratio", "group", "session", NULL, mylabels, "none", group_colors, group_colors_o, ylabel=l_time)
-box_ego_delta_cor_fd <- change_box_plot(sm_change_correct  %>% filter(condition=="ego_ret"), "group", "fd_ratio", "group", "session", NULL, mylabels, "none", group_colors, group_colors_o, ylabel=l_final_distance)
-box_ego_delta_cor_pd <- change_box_plot(sm_change_correct %>% filter(condition=="ego_ret"), "group", "pd_ratio", "group", "session", NULL, mylabels, "none", group_colors, group_colors_o, ylabel=l_path_distance)
-
+# # correct egocentric probe trials
+# box_ego_delta_cor_fd <- change_box_plot(sm_change_correct  %>% filter(condition=="ego_ret"), "group", "fd_ratio", "group", "session", NULL, mylabels, "none", group_colors, group_colors_o, ylabel=l_final_distance)
 
 # allocentric probe trials
 box_allo_delta_cfa <- change_box_plot(sm_change %>% filter(condition=="allo_ret"), "group", "cfa_ratio", "group", "session", NULL, mylabels, "none", group_colors, group_colors_o, ylabel=l_correct_alley)
-box_allo_delta_t <- change_box_plot(sm_change %>% filter(condition=="allo_ret"), "group", "t_ratio", "group", "session", NULL, mylabels, "none", group_colors, group_colors_o, ylabel=l_time)
-box_allo_delta_pdch <- change_box_plot(sm_change %>% filter(condition=="allo_ret"), "group", "pdch_ratio", "group", "session", NULL, mylabels, "none", group_colors, group_colors_o, ylabel=l_path_distance_chosen)
-#box_allo_delta_ed <- change_box_plot(sm_change %>% filter(condition=="allo_ret"), "group", "ed_ratio", "group", "session", NULL, mylabels, "none", group_colors, group_colors_o, ylabel=l_editdistance)
 
-# correct allocentric probe trials
-box_allo_delta_cor_t <- change_box_plot(sm_change_correct  %>% filter(condition=="allo_ret"), "group", "t_ratio", "group", "session", NULL, mylabels, "none", group_colors, group_colors_o, ylabel=l_time)
-box_allo_delta_cor_fd <- change_box_plot(sm_change_correct  %>% filter(condition=="allo_ret"), "group", "fd_ratio", "group", "session", NULL, mylabels, "none", group_colors, group_colors_o, ylabel=l_final_distance)
-box_allo_delta_cor_pd <- change_box_plot(sm_change_correct %>% filter(condition=="allo_ret"), "group", "pd_ratio", "group", "session", NULL, mylabels, "none", group_colors, group_colors_o, ylabel=l_path_distance)
+# # correct allocentric probe trials
+# box_allo_delta_cor_fd <- change_box_plot(sm_change_correct  %>% filter(condition=="allo_ret"), "group", "fd_ratio", "group", "session", NULL, mylabels, "none", group_colors, group_colors_o, ylabel=l_final_distance)
 ## ----
 rm(sm_change, sm_change_correct, ratio)
-
-
-# ## ---- data_rotation ### TBD: explore this further
-#
-# sm_s12 <- sm_data %>%
-#   filter(condition %in% c("ego_ret", "allo_ret"))  %>%
-#   group_by(id, group, session, condition) %>% 
-#   summarise_at(vars(matches("rotation")), mean, na.rm=T)
-# 
-# box_plot(sm_s12,"group", "rotation_xyz", "group", "session", "condition", NULL, NULL, l_rotation_xyz, mylabels, "top", group_colors)
-# ## ----
-# rm(sm_s12)
 
 
 # ########################################## #
@@ -560,8 +538,8 @@ rm(sm_change, sm_change_correct, ratio)
 # ## ---- data_raincloud
 # sm_s1 <- sm_data %>%
 #   filter(session==1) %>% 
-#   group_by(group, trial_num, condition) %>% 
-#   summarise_at(c("time", "correct_final_alley", "correct_goal", "shortest_path_correct_alley", "path_distance", "zone_editdistance"), mean, na.rm=T)
+#   group_by(group, trial, condition) %>% 
+#   summarise_at(c("time", "correct_final_alley", "correct_goal", "shortest_path_correct_alley", "path_distance", "path_edit_distance"), mean, na.rm=T)
 # 
 # raincloud_plot(sm_s1, "group", "path_distance", NULL, "Variable", mylabels, group_colors, group_colors_o, ymin="n", ymax="n", mysubtitle=NULL, facetvar="n")
 # ## ----
@@ -618,27 +596,27 @@ rm(sm_strat, sm_strat2)
 
 # :::   allocentric strategy plots    ::: #
 
-## ---- data_allo_strategy
-# strategy stacked bar plots
-sm_allo <- sm_data %>%
-  filter(condition %in% c("allo_ret")) %>%
-  filter(!is.na(search_strategy_in_allo)) %>%
-  group_by(group, session, search_strategy_in_allo) %>%
-  tally() %>%
-  mutate(percent=n/sum(n))
-
-sm_allo_2 <- sm_data %>%
-  filter(condition %in% c("allo_ret")) %>%
-  filter(!is.na(search_strategy_in_allo)) %>%
-  mutate(search_strategy_in_allo=fct_recode(search_strategy_in_allo, allo="direct_allo", allo="detour_allo",
-                                            ego="direct_ego", allo="detour_ego")) %>% 
-  group_by(group, session, search_strategy_in_allo) %>%
-  tally() %>%
-  mutate(percent=n/sum(n))
-
-bar_allo_detailed_strategy <- bar_plot(sm_allo, "group", "percent", "search_strategy_in_allo", "session", mylabels, "Allocentric trials (excl. trials with inner starts)", NULL, l_search_strategy, "bottom", strategy_colors_allo, c("black", "black", "black", "black", "black", "black"), isPalette=F, stackReverse=T)
+# ## ---- data_allo_strategy
+# # strategy stacked bar plots
+# sm_allo <- sm_data %>%
+#   filter(condition %in% c("allo_ret")) %>%
+#   filter(!is.na(search_strategy_in_allo)) %>%
+#   group_by(group, session, search_strategy_in_allo) %>%
+#   tally() %>%
+#   mutate(percent=n/sum(n))
+# 
+# sm_allo_2 <- sm_data %>%
+#   filter(condition %in% c("allo_ret")) %>%
+#   filter(!is.na(search_strategy_in_allo)) %>%
+#   mutate(search_strategy_in_allo=fct_recode(search_strategy_in_allo, allo="direct_allo", allo="detour_allo",
+#                                             ego="direct_ego", allo="detour_ego")) %>% 
+#   group_by(group, session, search_strategy_in_allo) %>%
+#   tally() %>%
+#   mutate(percent=n/sum(n))
+# 
+# bar_allo_detailed_strategy <- bar_plot(sm_allo, "group", "percent", "search_strategy_in_allo", "session", mylabels, "Allocentric trials (excl. trials with inner starts)", NULL, l_search_strategy, "bottom", strategy_colors_allo, c("black", "black", "black", "black", "black", "black"), isPalette=F, stackReverse=T)
 ## ----
-rm(sm_allo)
+# rm(sm_allo)
 
 
 # ########################################## #
@@ -920,7 +898,7 @@ ggsave("Allocentric_1_zoom.jpeg", bar_allo_detailed_n, width=4.2, height=4.5, dp
 sm_agg_ego <- sm_data %>%
   filter(condition=="ego_ret", session==1) %>% 
   group_by(group, goal_i) %>% 
-  summarise_at(c("correct_final_alley", "time", "path_distance", "chosen_path_distance", "zone_editdistance"), mean, na.rm=T)
+  summarise_at(c("correct_final_alley", "time", "path_distance", "chosen_path_distance", "path_edit_distance"), mean, na.rm=T)
 mylabels_ego <- as_labeller(c(`YoungKids` = "6-7yo", `OldKids` = "9-10yo", `YoungAdults` = "adults", 
                           `1`="Goal 1", `2`="Goal 2", `3` = "Goal 3"))
 bar_ego_detailed <- bar_plot(sm_agg_ego, "group", "correct_final_alley", "group", "goal_i", mylabels_ego, NULL, NULL, l_correct_alley, "bottom", group_colors, group_colors_o, isPalette=F, isStacked=F, axisLabels=F) 
