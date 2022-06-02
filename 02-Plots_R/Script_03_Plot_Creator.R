@@ -43,15 +43,12 @@ rm(data_gmda)
 mylabels <- as_labeller(c(`YoungKids` = "6-7yo", `OldKids` = "9-10yo", `YoungAdults` = "adults", 
                           `main_learn` = "Learning", `main_ret` = "Retrieval", 
                           `allo_ret` = "Allocentric", `ego_ret` = "Egocentric",
-                          `1`="T1 - Immediate", `2`=" T2 - Delayed", `Consolidation` = "Consolidation",
+                          `1`="T1 - Immediate", `2`=" T2 - Delayed", `Consolidation` = "(T2-T1)/T1", `collapsed` = "T1 & T2",
                           `direct` = "direct", `detour` = "detour",`reoriented` = "reoriented",
-                          `direct_allo` = "direct allo", `detour_allo` = "detour allo",
-                          `direct_ego` = "direct ego", `detour_ego` = "detour ego",   
-                          `back_to_start` ="back to start", `unclassified` = "unclassified",
-                          `layout`="Layout recognition", `landmarks`="Landmark recognition", 
-                          `goals`="Goal recognition", `position`="Landmark & goal position",
-                          `1-FourSquare`="FourSquare", `2-FourFork`="FourFork", `3-FourX`="FourX", 
-                          `4-FiveStar`="FiveStar (correct)", `5-SixSquare`="SixSquare", `6-SevenStar`="SevenStar",
+                          `layout`="Layout", `landmarks`="Landmarks", 
+                          `goals`="Goals", `position`="Positioning",
+                          `1-FourSquare`="4-Square", `2-FourFork`="4-Fork", `3-FourX`="4-X", 
+                          `4-FiveStar`="5-Star", `5-SixSquare`="6-Square", `6-SevenStar`="7-Star",
                           `1-correct`="correct", `2-lure similar`="lure similar", `3-lure dissimilar`="lure dissimilar",
                           `SQRT(CanOrg)`="SQRT(CanOrg)", `CanAcc`="CanAcc", `DistAcc`="DistAcc", `AngleAcc`="AngleAcc"))
 
@@ -62,26 +59,27 @@ group_colors_o <-  c("YoungKids"="#CC6600", "OldKids"="#003399", "YoungAdults"="
 type_colors <- c("main_learn"="#667270", "main_ret"="#C4CAC9", "allo_ret"="#FDBF6F", "ego_ret"="#A6CEE3")
 type_colors_o <- c("main_learn"="#667270", "main_ret"="#667270", "allo_ret"="#FF7F00", "ego_ret"="#1F78B4")
 strategy_colors <- c("direct"="#E4534D", "detour"="#ED8E8A", "reoriented"="#F9DAD9")
-strategy_colors_allo <- c("direct_allo"="#FDBF6F", "detour_allo"="#FEE8CA", "direct_ego"="#B2DF8A", "detour_ego"="#E3F3D4", "back_to_start"="#DBEBF4", "unclassified"="#FEFAAE")
+# strategy_colors_allo <- c("direct_allo"="#FDBF6F", "detour_allo"="#FEE8CA", "direct_ego"="#B2DF8A", "detour_ego"="#E3F3D4", "back_to_start"="#DBEBF4", "unclassified"="#FEFAAE")
 landmark_colors <- rev(RColorBrewer::brewer.pal(3,"Blues"))
 
 # variable labels
 l_time <- "time in seconds"
 l_velocity <- "velocity"
-l_correct_alley <- "% in correct area" 
+l_correct_alley <- "accuracy in %"
 l_final_distance <- "final distance"
 l_final_local_distance <- "final distance (local)"
 l_edit_distance <- "path zone error"
 l_edit_distance_chosen <- "path zone error (chosen)"
 l_path_length_error <- "path length error"
-l_path_distance <- "avg. path distance"
-l_path_distance_chosen <- "avg. path distance (chosen)"
-l_dtw_path_distance <- "DTW path distance"
+l_path_distance <- "path distance error"
+l_path_distance_chosen <- "path distance error (chosen)"
+l_dtw_path_distance <- "DTW path distance error"
 l_target_distance_error <- "target distance error"
+l_target_distance_error_ego <- "ego target distance error"
 l_target_distance_error_chosen <- "target distance error (chosen)"
 l_rotation <- "rotation (turns)"
-l_rotation_by_path <- "rotation by path length"
-l_search_strategy <- "% of use"
+l_rotation_by_path <- "rotation / 360°/ path length"
+l_search_strategy <- "usage in %"
 ## ----
 
 
@@ -143,6 +141,7 @@ box_plot <- function(data, xvar, yvar, fillby, facetr, facetc, subtitle, xlabel,
     scale_color_manual(labels=mylabels, values=mycolors2) + 
     coord_cartesian(clip="off", ylim=c(0, NA)) +
     theme_classic() + 
+    theme(strip.background=element_blank()) + 
     labs(subtitle=subtitle, 
          x=xlabel,
          y=ylabel)
@@ -188,7 +187,8 @@ change_box_plot <- function(data, xvar, yvar, fillby, facetvar, subtitle, mylabe
     scale_fill_manual(labels=mylabels, values=mycolors) +
     scale_color_manual(labels=mylabels, values=mycolors2) + 
     theme_classic() + 
-    theme(legend.position=legendPos,
+    theme(strip.background=element_blank(),
+          legend.position=legendPos,
           legend.title=element_blank(), 
           legend.key.size=unit(0.5, 'cm'),
           legend.justification=c(0,0),
@@ -196,8 +196,7 @@ change_box_plot <- function(data, xvar, yvar, fillby, facetvar, subtitle, mylabe
           axis.text.x=element_blank()) +
     labs(subtitle=subtitle,
          x=xlabel,
-         y=ylabel2,
-         caption="change = (T2-T1)/T1")
+         y=ylabel2)
   
   if (facetvar != "none"){
     p <- p + facet_wrap(facetvar, labeller=mylabels)
@@ -212,7 +211,8 @@ bar_plot <- function(data, xvar, yvar, fillvar, facetvar, mylabels, subtitle, xl
   p <- ggplot(data, aes(x=get(xvar), y=get(yvar), fill=get(fillvar), color=get(fillvar))) +
     scale_x_discrete(labels=mylabels) +
     theme_classic() +
-    theme(legend.position=legendPos,
+    theme(strip.background = element_blank(),
+          legend.position=legendPos,
           legend.title=element_blank(),
           legend.key.size=unit(0.5, 'cm'),
           legend.justification=c(0,0)) +
@@ -438,13 +438,19 @@ sm_agg <- sm_data %>%
   summarise_at(c("correct_final_alley", "final_local_distance", "time", "path_length_error", 
                  "path_distance", "chosen_path_distance", 
                  "path_edit_distance", "chosen_path_edit_distance",
-                 "target_distance_error", "chosen_target_distance_error", 
+                 "target_distance_error", "chosen_target_distance_error", "ego_target_distance_error", 
                  "rotation_turns", "rotation_turns_by_path_length"), mean, na.rm=T)
 
 sm_agg_correct <- sm_data %>%
   filter(condition %in% c("ego_ret", "allo_ret") & correct_final_alley==1) %>% 
   group_by(id, group, session, condition) %>% 
   summarise_at(c("time", "path_distance", "target_distance_error", "final_distance"), mean, na.rm=T)
+
+sm_agg_collapsed <- sm_data %>%
+  filter(condition %in% c("ego_ret", "allo_ret")) %>% 
+  group_by(id, group, condition) %>% 
+  summarise_at(c("path_length_error", "target_distance_error", "ego_target_distance_error"), mean, na.rm=T) %>% 
+  mutate(session="collapsed")
 
 
 # learning trials
@@ -454,6 +460,7 @@ box_learn_pl <- box_plot(sm_agg %>% filter(condition=="main_learn"), "group", "p
 box_learn_td <- box_plot(sm_agg %>% filter(condition=="main_learn"), "group", "target_distance_error", "group", "condition", "none", NULL, NULL, l_target_distance_error, mylabels, "top", group_colors, group_colors_o)
 box_learn_r <- box_plot(sm_agg %>% filter(condition=="main_learn"), "group", "rotation_turns", "group", "condition", "none", NULL, NULL, l_rotation, mylabels, "top", group_colors, group_colors_o)
 box_learn_rpl <- box_plot(sm_agg %>% filter(condition=="main_learn"), "group", "rotation_turns_by_path_length", "group", "condition", "none", NULL, NULL, l_rotation_by_path, mylabels, "top", group_colors, group_colors_o)
+
 
 # egocentric probe trials
 box_ego_cfa <- box_plot(sm_agg %>% filter(condition=="ego_ret"), "group", "correct_final_alley", "group", "session", "none", NULL, NULL, l_correct_alley, mylabels, "top", group_colors, group_colors_o)
@@ -469,6 +476,11 @@ box_ego_rpl <- box_plot(sm_agg %>% filter(condition=="ego_ret"), "group", "rotat
 box_ego_cor_t <- box_plot(sm_agg_correct %>% filter(condition=="ego_ret"), "group", "time", "group", "session", "none", NULL, NULL, l_time, mylabels, "top", group_colors, group_colors_o)
 box_ego_cor_fd <- box_plot(sm_agg_correct %>% filter(condition=="ego_ret"), "group", "final_distance", "group", "session", "none", NULL, NULL, l_final_distance, mylabels, "top", group_colors, group_colors_o)
 
+# egocentric probe trials collapsed over sessions
+box_ego_12_pl <- box_plot(sm_agg_collapsed %>% filter(condition=="ego_ret"), "group", "path_length_error", "group", "none", "none", NULL, NULL, l_path_length_error, mylabels, "top", group_colors, group_colors_o) + theme(axis.text.x=element_blank(), axis.ticks.x=element_blank())
+box_ego_12_td <- box_plot(sm_agg_collapsed %>% filter(condition=="ego_ret"), "group", "target_distance_error", "group", "none", "none", NULL, NULL, l_target_distance_error, mylabels, "top", group_colors, group_colors_o) + theme(axis.text.x=element_blank(), axis.ticks.x=element_blank())
+
+
 # allocentric probe trials
 box_allo_cfa <- box_plot(sm_agg %>% filter(condition=="allo_ret"), "group", "correct_final_alley", "group", "session", "none", NULL, NULL, l_correct_alley, mylabels, "top", group_colors, group_colors_o)
 box_allo_fdl <- box_plot(sm_agg %>% filter(condition=="allo_ret"), "group", "final_local_distance", "group", "session", "none", NULL, NULL, l_final_local_distance, mylabels, "top", group_colors, group_colors_o)
@@ -483,6 +495,10 @@ box_allo_rpl <- box_plot(sm_agg %>% filter(condition=="allo_ret"), "group", "rot
 box_allo_cor_t <- box_plot(sm_agg_correct %>% filter(condition=="allo_ret"), "group", "time", "group", "session", "none", NULL, NULL, l_time, mylabels, "top", group_colors, group_colors_o)
 box_allo_cor_fd <- box_plot(sm_agg_correct %>% filter(condition=="allo_ret"), "group", "final_distance", "group", "session", "none", NULL, NULL, l_final_distance, mylabels, "top", group_colors, group_colors_o)
 
+# egocentric probe trials collapsed over sessions
+box_allo_12_pl <- box_plot(sm_agg_collapsed %>% filter(condition=="allo_ret"), "group", "path_length_error", "group", "none", "none", NULL, NULL, l_path_length_error, mylabels, "top", group_colors, group_colors_o) + theme(axis.text.x=element_blank(), axis.ticks.x=element_blank())
+box_allo_12_td <- box_plot(sm_agg_collapsed %>% filter(condition=="allo_ret"), "group", "target_distance_error", "group", "none", "none", NULL, NULL, l_target_distance_error, mylabels, "top", group_colors, group_colors_o) + theme(axis.text.x=element_blank(), axis.ticks.x=element_blank())
+box_allo_12_tde <- box_plot(sm_agg_collapsed %>% filter(condition=="allo_ret"), "group", "ego_target_distance_error", "group", "none", "none", NULL, NULL, l_target_distance_error_ego, mylabels, "top", group_colors, group_colors_o) + theme(axis.text.x=element_blank(), axis.ticks.x=element_blank())
 ## ----
 rm(sm_agg, sm_agg_correct)
 
@@ -664,7 +680,7 @@ layout_data_avg <- layout_data %>%
   
 layout <- bar_plot(layout_data, "group", "perc", "group", "layout_obj_1", mylabels, NULL, NULL, "% response (per group)", "bottom", group_colors, group_colors_o, isPalette=F, isStacked=F, axisLabels=F) 
 
-layout_avg <- bar_plot(layout_data_avg, "group", "perc", "group", "layout_obj_1", mylabels, NULL, NULL, "% response (per group)", "bottom", group_colors, group_colors_o, isPalette=F, isStacked=F, axisLabels=F) 
+layout_avg <- bar_plot(layout_data_avg, "group", "perc", "group", "layout_obj_1", mylabels, NULL, NULL, "accuracy in %", "bottom", group_colors, group_colors_o, isPalette=F, isStacked=F, axisLabels=F) 
 
 
 # :::   landmark recognition     ::: #
@@ -836,7 +852,7 @@ ggsave("Post_tests_l.jpeg", pt, width=10, height=4, dpi=600)
 
 ###############################################################################################################
 
-# :::   COMBINE POSTER PLOT     :::
+# :::   COMBINE BBMS 2022 POSTER PLOT     :::
 
 box_ego_cfa_1 <- box_plot(sm_agg %>% filter(condition=="ego_ret") %>% filter(session==1), "group", "correct_final_alley", "group", "session", "none", "Egocentric probe", NULL, "% correct goal area", mylabels, "top", group_colors, group_colors_o)
 box_ego_delta_cfa_n <- change_box_plot(sm_change %>% filter(condition=="ego_ret"), "group", "cfa_ratio", "group", "session", NULL, mylabels, "none", group_colors, group_colors_o, ylabel="(T2-T1)/T1")
@@ -863,7 +879,7 @@ ggsave("Poster_figure.jpeg", figure, width=8.2, height=10.5, dpi=600)
 
 ###############################################################################################################
 
-# :::   COMBINE TEAP TALK PLOT     :::
+# :::   COMBINE TEAP 2022 TALK PLOT     :::
 
 box_ego_cfa_1 <- box_plot(sm_agg %>% filter(condition=="ego_ret") %>% filter(session==1), "group", "correct_final_alley", "group", "session", "none", "Egocentric probe", NULL, "% correct goal area", mylabels, "top", group_colors, group_colors_o)
 box_allo_cfa_1 <- box_plot(sm_agg %>% filter(condition=="allo_ret") %>% filter(session==1), "group", "correct_final_alley", "group", "session", "none", "Allocentric probe", NULL, "% correct goal area", mylabels, "none", group_colors, group_colors_o)
@@ -903,6 +919,54 @@ mylabels_ego <- as_labeller(c(`YoungKids` = "6-7yo", `OldKids` = "9-10yo", `Youn
                           `1`="Goal 1", `2`="Goal 2", `3` = "Goal 3"))
 bar_ego_detailed <- bar_plot(sm_agg_ego, "group", "correct_final_alley", "group", "goal_i", mylabels_ego, NULL, NULL, l_correct_alley, "bottom", group_colors, group_colors_o, isPalette=F, isStacked=F, axisLabels=F) 
 ggsave("Egocentric_1_zoom.jpeg", bar_ego_detailed, width=4, height=4, dpi=600)
+
+
+###############################################################################################################
+
+# :::   COMBINE iNAV 2022 TALK PLOT     :::
+
+cfa_ego <- wrap_plots(box_ego_cfa + theme(legend.position="none") + coord_cartesian(ylim=c(0,1.2)),
+                       box_ego_delta_cfa + theme(legend.position="none") + coord_cartesian(ylim=c(-1.5,1.5))) + 
+  plot_layout(widths=c(0.7,0.3)) + plot_annotation(title="Accuracy") 
+ggsave("Ego_acc_iNav.jpeg", cfa_ego, width=4.80, height=2.70, dpi=600)
+
+cfa_allo <- wrap_plots(box_allo_cfa + theme(legend.position="none") + coord_cartesian(ylim=c(0,1.2)),
+                       box_allo_delta_cfa + theme(legend.position="none") + coord_cartesian(ylim=c(-1.5,1.5))) + 
+  plot_layout(widths=c(0.7,0.3)) + plot_annotation(title="Accuracy") 
+ggsave("Allo_acc_iNav.jpeg", cfa_allo, width=4.80, height=2.70, dpi=600)
+
+
+path_ego <- wrap_plots(box_ego_12_pl + theme(legend.position="none") + coord_cartesian(ylim=c(0,250)),
+                       box_ego_12_td + theme(legend.position="none") + coord_cartesian(ylim=c(0,80)),
+                       plot_spacer()) + plot_annotation(title="Path measures (T1 & T2 collapsed)") 
+ggsave("Ego_path_iNav.jpeg", path_ego, width=4.80, height=2.70, dpi=600)
+
+path_allo <- wrap_plots(box_allo_12_pl + theme(legend.position="none") + coord_cartesian(ylim=c(0,250)),
+                        box_allo_12_td + theme(legend.position="none") + coord_cartesian(ylim=c(0,80)),
+                        box_allo_12_tde + theme(legend.position="none") + coord_cartesian(ylim=c(0,80))) +
+  plot_annotation(title="Path measures (T1 & T2 collapsed)") 
+ggsave("Allo_path_iNav.jpeg", path_allo, width=4.80, height=2.70, dpi=600)
+
+
+rot_ego <- wrap_plots(box_ego_rpl + theme(legend.position="none") + coord_cartesian(ylim=c(0,3)),
+                      plot_spacer()) +   plot_layout(widths=c(0.7,0.3)) + plot_annotation(title="Rotation (by path length)") 
+ggsave("Ego_rot_iNav.jpeg", rot_ego, width=4.80, height=2.70, dpi=600)
+
+rot_allo <- wrap_plots(box_allo_rpl + theme(legend.position="none") + coord_cartesian(ylim=c(0,3)),
+                       plot_spacer()) +   plot_layout(widths=c(0.7,0.3)) + plot_annotation(title="Rotation (by path length)") 
+ggsave("Allo_rot_iNav.jpeg", rot_allo, width=4.80, height=2.70, dpi=600)
+
+
+post <- wrap_plots(layout_avg + theme(legend.position="none"),
+                   landmark_avg + theme(legend.position="none"),
+                   gmda_avg + theme(legend.position="none")) + plot_annotation(title="") 
+ggsave("Post_iNav.jpeg", post, width=4.80, height=2.70, dpi=600)
+
+post2 <- wrap_plots(layout + theme(legend.position="none"),
+                    landmark_avg + theme(legend.position="none"),
+                    gmda_avg + theme(legend.position="none")) + 
+  plot_layout(widths=c(0.5,0.25,0.25)) + plot_annotation(title="") 
+ggsave("Post2_iNav.jpeg", post2, width=6.40, height=2.70, dpi=600)
 
 
 ###############################################################################################################
