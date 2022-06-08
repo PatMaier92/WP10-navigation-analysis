@@ -74,9 +74,9 @@ l_path_length_error <- "path length error"
 l_path_distance <- "path distance error"
 l_path_distance_chosen <- "path distance error (chosen)"
 l_dtw_path_distance <- "DTW path distance error"
-l_target_distance_error <- "target distance error"
-l_target_distance_error_ego <- "ego target distance error"
-l_target_distance_error_chosen <- "target distance error (chosen)"
+l_target_distance_error <- "distance to goal error"
+l_target_distance_error_ego <- "distance to ego error"
+l_target_distance_error_chosen <- "distance to chosen goal error"
 l_rotation <- "rotation (turns)"
 l_rotation_by_path <- "rotation / 360°/ path length"
 l_search_strategy <- "usage in %"
@@ -925,48 +925,41 @@ ggsave("Egocentric_1_zoom.jpeg", bar_ego_detailed, width=4, height=4, dpi=600)
 
 # :::   COMBINE iNAV 2022 TALK PLOT     :::
 
-cfa_ego <- wrap_plots(box_ego_cfa + theme(legend.position="none") + coord_cartesian(ylim=c(0,1.2)),
-                       box_ego_delta_cfa + theme(legend.position="none") + coord_cartesian(ylim=c(-1.5,1.5))) + 
-  plot_layout(widths=c(0.7,0.3)) + plot_annotation(title="Accuracy") 
-ggsave("Ego_acc_iNav.jpeg", cfa_ego, width=4.80, height=2.70, dpi=600)
+cfa_ego <- box_ego_cfa + theme(legend.position="none") + coord_cartesian(ylim=c(0,1.2)) + 
+  plot_annotation(title="Accuracy") 
+ggsave("Ego_acc_iNav.svg", cfa_ego, width=3, height=2.70, dpi=600)
 
-cfa_allo <- wrap_plots(box_allo_cfa + theme(legend.position="none") + coord_cartesian(ylim=c(0,1.2)),
-                       box_allo_delta_cfa + theme(legend.position="none") + coord_cartesian(ylim=c(-1.5,1.5))) + 
-  plot_layout(widths=c(0.7,0.3)) + plot_annotation(title="Accuracy") 
-ggsave("Allo_acc_iNav.jpeg", cfa_allo, width=4.80, height=2.70, dpi=600)
+cfa_ego_change <- box_ego_delta_cfa + theme(legend.position="none") + coord_cartesian(ylim=c(-1.5,1.5))
+ggsave("Ego_acc_ch_iNav.svg", cfa_ego_change, width=1.70, height=2.20, dpi=600)
+
+
+cfa_allo <- box_allo_cfa + theme(legend.position="none") + coord_cartesian(ylim=c(0,1.2)) + 
+  plot_annotation(title="") 
+ggsave("Allo_acc_iNav.svg", cfa_allo, width=3, height=2.70, dpi=600)
+
+cfa_allo_change <- box_allo_delta_cfa + theme(legend.position="none") + coord_cartesian(ylim=c(-1.5,1.5))
+ggsave("Allo_acc_ch_iNav.svg", cfa_allo_change, width=1.70, height=2.20, dpi=600)
 
 
 path_ego <- wrap_plots(box_ego_12_pl + theme(legend.position="none") + coord_cartesian(ylim=c(0,250)),
                        box_ego_12_td + theme(legend.position="none") + coord_cartesian(ylim=c(0,80)),
-                       plot_spacer()) + plot_annotation(title="Path measures (T1 & T2 collapsed)") 
-ggsave("Ego_path_iNav.jpeg", path_ego, width=4.80, height=2.70, dpi=600)
+                       plot_spacer()) + plot_annotation(title="Path measures") 
+ggsave("Ego_path_iNav.svg", path_ego, width=4.80, height=2.70, dpi=600)
 
 path_allo <- wrap_plots(box_allo_12_pl + theme(legend.position="none") + coord_cartesian(ylim=c(0,250)),
                         box_allo_12_td + theme(legend.position="none") + coord_cartesian(ylim=c(0,80)),
                         box_allo_12_tde + theme(legend.position="none") + coord_cartesian(ylim=c(0,80))) +
-  plot_annotation(title="Path measures (T1 & T2 collapsed)") 
-ggsave("Allo_path_iNav.jpeg", path_allo, width=4.80, height=2.70, dpi=600)
+  plot_annotation(title="") 
+ggsave("Allo_path_iNav.svg", path_allo, width=4.80, height=2.70, dpi=600)
 
 
-rot_ego <- wrap_plots(box_ego_rpl + theme(legend.position="none") + coord_cartesian(ylim=c(0,3)),
-                      plot_spacer()) +   plot_layout(widths=c(0.7,0.3)) + plot_annotation(title="Rotation (by path length)") 
-ggsave("Ego_rot_iNav.jpeg", rot_ego, width=4.80, height=2.70, dpi=600)
+rot_ego <- wrap_plots(box_ego_rpl + theme(legend.position="none") + coord_cartesian(ylim=c(0,3))) +   
+  plot_annotation(title="Rotation") 
+ggsave("Ego_rot_iNav.svg", rot_ego, width=3, height=2.70, dpi=600)
 
-rot_allo <- wrap_plots(box_allo_rpl + theme(legend.position="none") + coord_cartesian(ylim=c(0,3)),
-                       plot_spacer()) +   plot_layout(widths=c(0.7,0.3)) + plot_annotation(title="Rotation (by path length)") 
-ggsave("Allo_rot_iNav.jpeg", rot_allo, width=4.80, height=2.70, dpi=600)
-
-
-post <- wrap_plots(layout_avg + theme(legend.position="none"),
-                   landmark_avg + theme(legend.position="none"),
-                   gmda_avg + theme(legend.position="none")) + plot_annotation(title="") 
-ggsave("Post_iNav.jpeg", post, width=4.80, height=2.70, dpi=600)
-
-post2 <- wrap_plots(layout + theme(legend.position="none"),
-                    landmark_avg + theme(legend.position="none"),
-                    gmda_avg + theme(legend.position="none")) + 
-  plot_layout(widths=c(0.5,0.25,0.25)) + plot_annotation(title="") 
-ggsave("Post2_iNav.jpeg", post2, width=6.40, height=2.70, dpi=600)
+rot_allo <- wrap_plots(box_allo_rpl + theme(legend.position="none") + coord_cartesian(ylim=c(0,3))) +   
+  plot_annotation(title="") 
+ggsave("Allo_rot_iNav.svg", rot_allo, width=3, height=2.70, dpi=600)
 
 
 ###############################################################################################################
