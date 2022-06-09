@@ -64,30 +64,6 @@ Cross-sectional comparison between
 * Young adults (18-35 yrs, n = `r length(unique(sm_data$id[sm_data$group=="YoungAdults"]))`)
 
 
-### How long did the sessions take on average?
-
-```{r, session_duration, include=FALSE}
-t1 <- sm_data %>% group_by(session, group) %>%
-  summarize(mean=mean(duration, na.rm = T))
-
-t2 <- pt_data %>% group_by(group) %>%
-  summarize(mean=mean(duration, na.rm = T))
-```
-
-```{r, temp}
-# *Young kids*: 
-# 
-# * Day 1: `r round(t1$mean[t1$session==3 & t1$group=="YoungKids"])` min for practise, `r round(t1$mean[t1$session==1 & t1$group=="YoungKids"])` min for learning
-# * Day 13: `r round(t1$mean[t1$session==2 & t1$group=="YoungKids"])` min for retrieval, `r round(t2$mean[t2$group=="YoungKids"])` min for non-navigational tests
-# 
-# *Older kids*: 
-# 
-# * Day 1: `r round(t1$mean[t1$session==3 & t1$group=="OldKids"])` min for practise, `r round(t1$mean[t1$session==1 & t1$group=="OldKids"])` min for learning
-# * Day 13: `r round(t1$mean[t1$session==2 & t1$group=="OldKids"])` min for retrieval, `r round(t2$mean[t2$group=="OldKids"])` min for non-navigational tests
-```
-
-\newpage 
-
 ### Variables of interest
 
 In learning trials, the goal is visible, i.e. the trial is always completed successfully except if the participant needs more than 120 seconds (time out). In egocentric and allocentric retrieval trials, the goal is not visible. Participants go to the place where they remember the goal being located and press a button. 
@@ -105,7 +81,7 @@ $$\text{Distance to goal error} = (distance-distance_{ideal})/distance_{ideal}$$
 * **Rotation** (turns normalized by path length): Sum of z-rotations over time divided by 360° (i.e. full turns) and divided by path length (reason: longer paths automatically involve more rotation in a Starmaze environment, therefore normalized rotation is more indicative of exploration/looking-around). 
 * **Strategy classification**: Classification into three strategies: Direct to chosen goal, detour (entering more zones than necessary), or reorientation (re-entering same zones). 
 
-![TBD Examples for variables](./pics/Var_all.jpg){width=300px,height=500x}
+![Examples for variables](./pics/Var_all.jpg){width=300px,height=500x}
 
 
 ``` {r, plot_settings, include=FALSE}
