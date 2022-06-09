@@ -2,7 +2,7 @@
 title: "Preliminary Descriptives & Plots of Starmaze Data"
 author: "Patrizia Maier"
 date: "`r format(Sys.time(), '%d %B, %Y')`"
-output: pdf_document
+output: html_document
 ---
 
 ### Task
@@ -16,12 +16,12 @@ Navigating a star-shaped maze environment ("Starmaze") with three goal locations
 *Day 2*
 
 * Practise trials, including joystick control practise (2 trials) and task explanation (5 trials).
-* Navigation to and remembering of the position of three goal locations. Baseline retrieval in egocentric (observer-dependent, i.e. from same starting point but without landmark cues) and allocentric (observer-independent, i.e. from new starting points) condition (15 trials per goal location; 45 in total).
+* Navigation to and remembering of three goal locations. Baseline retrieval in egocentric (observer-dependent, i.e. from same starting point but without landmark cues) and allocentric (observer-independent, i.e. from new starting points) condition (15 trials * 3 goal locations = 45 trials).
 
 *Day 14*
 
-* Consolidated retrieval in egocentric and allocentric condition (5 trials per goal location; 15 in total).
-* Non-navigational memory retrieval: Recognize maze shape, recognize landmarks and goal objects, reconstruct location of landmarks and goal object (4 trials in total).
+* Retrieval in egocentric and allocentric condition (5 trials * 3 locations = 15 trials).
+* Post-navigation memory test: Recognize maze shape, recognize landmarks and goal objects, reconstruct location of landmarks and goal object (4 trials).
 
 ![Example view from task](./pics/Starmaze_01.png){width=500px}
 
@@ -35,60 +35,56 @@ Navigating a star-shaped maze environment ("Starmaze") with three goal locations
 library(tidyverse)
 library(patchwork)
 library(kableExtra)
-source("R_rainclouds.R") # requires plyr package
 # install.packages('tinytex')
 # tinytex::install_tinytex() # latex for pdf file creation
 
-knitr::read_chunk('Script_02_Table_Plot_Creator.R')
+#knitr::read_chunk('Script_03_Plot_Creator.R')
+#knitr::read_chunk('Script_02_Analyzer.Rmd')
 ```
 
 
 ```{r, load_data, include=FALSE}
-in_file <- "../WP10_data/WP10_results/WP10_results_table.RData"
-load(in_file)
-rm(in_file)
+file_name <- "../WP10_data/WP10_results/wp10_navigation_data.RData"
+load(file_name)
+sm_orig <- sm_data 
+sm_data <- sm_data %>% filter(exclude_trial_matlab==0)
+rm(file_name)
 
-in_file <- "../WP10_data/WP10_results/WP10_results_table_support.RData"
-load(in_file)
-rm(in_file)
-```
-
-```{r, prepare_data, include=FALSE}
-
-sm_trial_data <- sm_trial_data[sm_trial_data$exclude_trial_matlab==0,]
-
-sm_trial_data_support <- sm_trial_data_support[sm_trial_data_support$exclude_trial_matlab==0,]
-
+file_name <- "../WP10_data/WP10_results/wp10_post_nav_data.RData"
+load(file_name)
+rm(file_name)
 ```
 
 
 ### Current sample
 Cross-sectional comparison between
 
-* Young kids (6-7 yrs, n = `r length(unique(sm_trial_data$id[sm_trial_data$group=="YoungKids"]))`) 
-* Older kids (9-10 yrs, n = `r length(unique(sm_trial_data$id[sm_trial_data$group=="OldKids"]))`)
-* Young adults (18-35 yrs, n = `r length(unique(sm_trial_data$id[sm_trial_data$group=="YoungAdults"]))`)
-* Older adults (68-75 yrs, n = `r length(unique(sm_trial_data$id[sm_trial_data$group=="OldAdults"]))`)
+* Young kids (6-7 yrs, n = `r length(unique(sm_data$id[sm_data$group=="YoungKids"]))`) 
+* Older kids (9-10 yrs, n = `r length(unique(sm_data$id[sm_data$group=="OldKids"]))`)
+* Young adults (18-35 yrs, n = `r length(unique(sm_data$id[sm_data$group=="YoungAdults"]))`)
 
 
 ### How long did the sessions take on average?
 
 ```{r, session_duration, include=FALSE}
+t1 <- sm_data %>% group_by(session, group) %>%
+  summarize(mean=mean(duration, na.rm = T))
 
-temp <- sm_trial_data %>% group_by(session, group) %>%
-  summarize(mean=mean(session_duration, na.rm = T))
-
+t2 <- pt_data %>% group_by(group) %>%
+  summarize(mean=mean(duration, na.rm = T))
 ```
 
-*Young kids*: 
-
-* Day 2: `r round(temp$mean[temp$session==3 & temp$group=="YoungKids"])` min for practise, `r round(temp$mean[temp$session==1 & temp$group=="YoungKids"])` min for learning
-* Day 14: `r round(temp$mean[temp$session==2 & temp$group=="YoungKids"])` min for retrieval, x min for non-navigational tests
-
-*Older kids*: 
-
-* Day 2: `r round(temp$mean[temp$session==3 & temp$group=="OldKids"])` min for practise, `r round(temp$mean[temp$session==1 & temp$group=="OldKids"])` min for learning
-* Day 14: `r round(temp$mean[temp$session==2 & temp$group=="OldKids"])` min for retrieval, x min for non-navigational tests
+```{r, temp}
+# *Young kids*: 
+# 
+# * Day 1: `r round(t1$mean[t1$session==3 & t1$group=="YoungKids"])` min for practise, `r round(t1$mean[t1$session==1 & t1$group=="YoungKids"])` min for learning
+# * Day 13: `r round(t1$mean[t1$session==2 & t1$group=="YoungKids"])` min for retrieval, `r round(t2$mean[t2$group=="YoungKids"])` min for non-navigational tests
+# 
+# *Older kids*: 
+# 
+# * Day 1: `r round(t1$mean[t1$session==3 & t1$group=="OldKids"])` min for practise, `r round(t1$mean[t1$session==1 & t1$group=="OldKids"])` min for learning
+# * Day 13: `r round(t1$mean[t1$session==2 & t1$group=="OldKids"])` min for retrieval, `r round(t2$mean[t2$group=="OldKids"])` min for non-navigational tests
+```
 
 \newpage 
 
@@ -96,27 +92,20 @@ temp <- sm_trial_data %>% group_by(session, group) %>%
 
 In learning trials, the goal is visible, i.e. the trial is always completed successfully except if the participant needs more than 120 seconds (time out). In egocentric and allocentric retrieval trials, the goal is not visible. Participants go to the place where they remember the goal being located and press a button. 
 
-* **Correct goal** (yes/no): Finding the correct goal location. The criterion is being away less than 0.1 virtual units (~ approx. being in the correct alley).
+* **Correct goal alley** (yes/no): Finding the correct goal alley (outer arm + intersection). 
 * **Final distance** (metric): Distance between x-/y-coordinates of the chosen and the correct goal location. 
 $$\text{Final distance} = \sqrt{(x_{correct}-x_{chosen})^2 + (y_{correct}-y_{chosen})^2}$$
-* **Shortest path** (yes/no): Finding the correct goal location and additionally taking the shortest path without entering any additional zones. 
-* **Path zone score** (metric): Total number of zones that were entered, including re-entries. Zones were defined based on maze geometry.
-    + *Variation*: Absolute deviation of actual to ideal value ${abs((v_{actual}-v_{ideal}) / v_{ideal})}$.
-* **Path length** (metric): Absolute length of traveled path to chosen goal location. Calculated as summation of distance between x-/y-coordinates over time. Value can be misleading if chosen location is not correct location (e.g., shorter path length if incorrect but closer location selected). 
-    + *Variation*: Absolute deviation of actual to ideal value.
+* **Time**: Time to complete trial in seconds.
+* **Path length (error)** (metric): Absolute deviation of travelled path length in relation to ideal path length. Calculated as summation of distance between x-/y-coordinates over time, then deviation of actual compared to ideal value (Caution: value can be misleading if chosen location is not correct location).
 $$\text{Path length} = \sum \sqrt{(x_{t}-x_{t+1})^2 + (y_{t}-y_{t+1})^2}$$
-* **Avg. distance to target** (metric): Average cumulative distance to goal location. Calculated as summation of distance between the player's x-/y-coordinates and the goal's x-/y-coordinates, then averaged by the number of x-/y data points. 
-$$\text{Distance to target} = \frac {\sum \sqrt{(x_{t}-x_{goal})^2 + (y_{t}-y_{goal})^2}} {n_{t}}$$
-    + *Variation*: Absolute deviation of actual to ideal value.
-* **Avg. distance to ideal path** (metric): Average cumulative distance to the ideal path to the goal. Calculated as summation of distance between the player's x-/y-coordinates and the nearest neighbor on the (interpolated) ideal path, then averaged by the number of x-/y data points.
-$$\text{Distance to path} = \frac {\sum \sqrt{(x_{t}-x_{path})^2 + (y_{t}-y_{path})^2}} {n_{t}}$$
-    + ***Adjusted* avg. distance to ideal path** (metric): Variation where chosen path is reduced to unique data points i.e., rotation on the spot/waiting at a spot is removed from the calculation. 
-    + **Avg. distance to (ideal path) to *chosen* goal** (metric): Variation that considers chosen goal instead of the correct goal, therefore more comparable across correct/incorrect trials.
-* **Time**: Time to complete trial in seconds. Can be computed per zone (e.g., time spend in relevant/irrelevant areas).
-* **Sum of head rotation**: Sum of z-rotations indicating exploration behavior ('looking around'). Can be computed per zone (e.g., initial orientation phase).
+$$\text{Path length error} = (path-path_{ideal})/path_{ideal}$$
+* **Distance to location (error)** (metric): Absolute deviation of the cumulative distance to a location (e.g. goal, egocentric location) in relation to the ideal cumulative distance to the location (on the shortest possible path). Calculated as summation of distance between the player's x-/y-coordinates and the location's x-/y-coordinates, then averaged by the number of x-/y data points. 
+$$\text{Distance to goal} = \frac {\sum \sqrt{(x_{t}-x_{goal})^2 + (y_{t}-y_{goal})^2}} {n_{t}}$$
+$$\text{Distance to goal error} = (distance-distance_{ideal})/distance_{ideal}$$
+* **Rotation** (turns normalized by path length): Sum of z-rotations over time divided by 360° (i.e. full turns) and divided by path length (reason: longer paths automatically involve more rotation in a Starmaze environment, therefore normalized rotation is more indicative of exploration/looking-around). 
 * **Strategy classification**: Classification into three strategies: Direct to chosen goal, detour (entering more zones than necessary), or reorientation (re-entering same zones). 
 
-![Examples for variables](./pics/Var_all.jpg){width=300px,height=500x}
+![TBD Examples for variables](./pics/Var_all.jpg){width=300px,height=500x}
 
 
 ``` {r, plot_settings, include=FALSE}
@@ -127,87 +116,17 @@ $$\text{Distance to path} = \frac {\sum \sqrt{(x_{t}-x_{path})^2 + (y_{t}-y_{pat
 
 \newpage
 
-### Memory encoding: Learning curves at Day 2 
+### Memory encoding: Learning curves at Day 1
 
 How well did participants learn the position of the three goal locations at Day 2?  
 
-``` {r, data_func_all_trials, include=FALSE}
-```
 
-``` {r, trial_wise_s1, echo=FALSE, warning=FALSE, fig.width=8, fig.height=5, fig.align="center" }
-
-p1 + plot_annotation(title="Initial learning and recall", tag_levels = 'A') +
-  plot_layout(ncol=1, guides="collect") & theme(legend.position = "top",
-                                                legend.justification=c(0,0))
-
-```
-
-``` {r, func_agg, include=FALSE}
-```
-
-``` {r, data_agg_s1, include=FALSE}
-```
-
-``` {r, agg_s1_learn, echo=FALSE, warning=FALSE, fig.width=10, fig.align="center"  }
-
-p1 + p3 + p4 + p2 + plot_annotation(title="Averaged values during learning in session 1",
-                               subtitle="learning trials only (correct goal is visible)",
-                               tag_levels = 'A') +
-  plot_layout(ncol=4, guides="collect") & theme(legend.position = "bottom",
-                                                legend.justification=c(0,0))
-
-```
 
 \newpage 
 
-``` {r, agg_s1_probe, echo=FALSE, warning=FALSE, fig.width=10, fig.height=6, fig.align="center" }
-
-p11 + p12 + p13 + p14 + 
-  plot_annotation(title="Averaged values during free recall in session 1",
-                  subtitle="egocentric and allocentric trials only (goal invisible)",
-                  tag_levels = 'A') +
-  plot_layout(ncol=2, guides="collect") & theme(legend.position = "bottom",
-                                                legend.justification=c(0,0)) 
-
-```
-
-``` {r, data_agg_s1_final, include=FALSE}
-```
-
-``` {r, agg_s1_probe_final, echo=FALSE, warning=FALSE, fig.width=10, fig.height=6, fig.align="center"  }
-
-p111 + p112 + p113 + p114 + 
-  plot_annotation(title="Final recall in session 1",
-                  subtitle="egocentric and allocentric trials only (goal invisible)",
-                  tag_levels = 'A') +
-  plot_layout(ncol=2, guides="collect") & theme(legend.position = "bottom",
-                                                legend.justification=c(0,0)) 
+### Immediate (Day ) vs. consolidated retrieval (Day 13): Egocentric and allocentric condition 
 
 
-```
-
-\newpage 
-
-### Immediate (Day 2) vs. consolidated retrieval (Day 14): Egocentric and allocentric condition 
-
-``` {r, data_agg_s2_s1, include=FALSE }
-
-```
-
-``` {r, agg_diff_s2_s1, echo=FALSE, warning=FALSE, fig.width=8, fig.height=6, fig.align="center"}
-
-p1a + p1c + p3a + p3c + 
-  plot_annotation(title="Averaged values during free recall in session 2 and changes to average from session 1",
-                  subtitle="egocentric and allocentric trials only (goal invisible)",
-                  tag_levels = 'A') + 
-  plot_layout(ncol=2, widths=c(2,1), guides="collect") & theme(legend.position = "bottom",
-                                                legend.justification=c(0,0)) 
-```
-\newpage 
-
-``` {r, data_func_rain, include=FALSE }
-
-```
 
 ### Strategy use data 
 
@@ -220,39 +139,11 @@ I categorized participant's trajectories into strategies. Strategies are a quali
 * **Reoriented**: Non-direct path with re-entry of zones to chosen goal location. 
 
 ![Examples for strategies](./pics/Overview_Strategies.jpg){width=300px}
-
-``` {r, data_func_strategy, include=FALSE}
-```
-
-``` {r, agg_strategy, echo=FALSE, fig.height=7, fig.width=10, fig.align="center" }
-
-s1 + guide_area() + s2 + s3 + 
-  plot_annotation(title= "Strategy use in %", tag_levels = 'A') +
-  plot_layout(ncol=2, guides="collect") 
-
-```
+`
 \newpage 
 
-``` {r, data_func_scatter, include=FALSE}
-```
+### Correlations 
 
-``` {r, scatter, echo=FALSE, warning=FALSE, fig.width=7, fig.height=4, fig.align="center"}
-
-sc1 + 
-  plot_annotation(title="Relation between egocentric and allocentric performance",
-                  tag_levels = 'A')
-
-```
-# ``` {r, data_func_rotation, include=FALSE}
-# ```
-# 
-# ``` {r, rotation, echo=FALSE, warning=FALSE, fig.width=8, fig.height=10, fig.align="center"}
-# 
-# rot1 + guide_area() + rot2 + rot3 + rot4 + rot5 + 
-#   plot_annotation(title= "Initial 'head' rotation", tag_levels = 'A') +
-#   plot_layout(ncol=2, guides="collect") 
-# 
-# ```
 
 \newpage
 
@@ -260,90 +151,9 @@ sc1 +
 
 ![Non-navigational memory retrieval at Day 14 (4 trials)](./pics/Overview_Session2_PostTest.jpg){width=500px}
 
-```{r, load_post_data, include=FALSE}
-in_file <- "../WP10_data/WP10_results/WP10_post_results_table.RData"
-load(in_file)
-rm(in_file)
-
-in_file <- "../WP10_data/WP10_results/WP10_GMDA_data.RData"
-load(in_file)
-rm(in_file)
-```
-
-``` {r, data_func_post_tests, include=FALSE}
-```
-
-``` {r, post_tests, echo=FALSE, warning=FALSE, fig.width=14, fig.height=10, fig.align="center" }
-
-nonav + shape + landmark + gmda +
-  plot_annotation(title="Performance in non-navigational memory tasks",
-                  tag_levels = 'A') +
-  plot_layout(height=c(1,1), guides='auto')
-
-
-```
-
 \newpage 
 
 ### Motor Control Task 
 
 ![Motor control practise task](./pics/Motor_Control.jpg){width=600px}
 
-``` {r, data_func_motor_control, include=FALSE}
-```
-
-``` {r, motor_control, echo=FALSE, warning=FALSE, fig.width=10, fig.height=5, fig.align="center" }
-
-mc1 + mc2 + mc3 + 
-  plot_annotation(title="Motor control practise trial",
-                  subtitle="Task: To navigate to 10 red balls as quickly and efficiently as possible", 
-                  tag_levels = 'A') 
-
-```
-\newpage 
-
-<!-- # ### Table with descriptive mean values
-
-<!-- # ``` {r, table_setup, echo=FALSE, message=FALSE } -->
-<!-- # -->
-<!-- # table_dat <- sm_trial_data %>% -->
-<!-- #   group_by(group, session, trial_condition)  %>% -->
-<!-- #   summarise(correct_goal=mean(correct_goal), -->
-<!-- #             direct_path=mean(direct_path), -->
-<!-- #             final_distance=mean(final_distance)) -->
-<!-- # -->
-<!-- # ``` -->
-
-<!-- # ``` {r, table_learn, echo=FALSE, message=FALSE, warning=FALSE, results='asis' } -->
-<!-- #  -->
-<!-- # table_dat  %>% -->
-<!-- #   filter(trial_condition=="main_learn")  %>%  -->
-<!-- #   select(group, correct_goal, direct_path, final_distance) %>% -->
-<!-- #   arrange(group) %>% -->
-<!-- #   kbl(format="pandoc", -->
-<!-- #       caption = "Mean values for learning trials", -->
-<!-- #       col.names = c("Session", "Group", "% Correct goal", "% Shortest path", "Final distance"), -->
-<!-- #       digits = 2) %>%  -->
-<!-- #   kable_classic(html_font = "Latin Modern") %>%  -->
-<!-- #   row_spec(0, bold=T) %>% -->
-<!-- #   add_header_above(bold=T, c(" " = 2, "Variables" = 4)) -->
-<!-- #  -->
-<!-- # ``` -->
-
-<!-- # ``` {r, table_alloego, echo=FALSE, message=FALSE, warning=FALSE, results='asis' } -->
-<!-- #  -->
-<!-- # table_dat  %>% -->
-<!-- #   filter((trial_condition=="ego_ret" | trial_condition=="allo_ret"))  %>%  -->
-<!-- #   mutate(trial_condition=if_else(trial_condition=="allo_ret", "Allocentric", "Egocentric")) %>% -->
-<!-- #   select(trial_condition, session, group, correct_goal, direct_path, final_distance) %>% -->
-<!-- #   arrange(trial_condition, session, group) %>%  -->
-<!-- #   kbl(format="pandoc", -->
-<!-- #       caption = "Mean values for allocentric and egocentric trials",  -->
-<!-- #       col.names = c("Type", "Session", "Group", "% Correct goal", "% Shortest path", "Final distance", "Path"), -->
-<!-- #       digits = 2)%>%  -->
-<!-- #   kable_classic(html_font = "Latin Modern") %>%  -->
-<!-- #   row_spec(0, bold=T) %>%  -->
-<!-- #   collapse_rows(columns = 1:3, valign = "top") %>% -->
-<!-- #   add_header_above(bold=T, c(" " = 3, "Variables" = 4)) -->
-<!-- #  -->
-<!-- # ``` -->
