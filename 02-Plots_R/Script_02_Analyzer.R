@@ -94,12 +94,12 @@ data_c_1 <- data_c %>%
 
 # change 
 data_prepost <- data %>% 
-  select(id, group, session, trial, condition, correct_final_alley) %>%
-  pivot_wider(id_cols=c(id, trial, group, condition),
+  select(id, sex, group, session, trial, condition, correct_final_alley) %>%
+  pivot_wider(id_cols=c(id, sex, trial, group, condition),
               names_from=session,
               names_prefix="s_",
               values_from=correct_final_alley) %>%
-  group_by(id, group, condition) %>%
+  group_by(id, sex, group, condition) %>%
   summarise_at(vars(s_1, s_2), mean, na.rm=T) %>% 
   mutate(change_diff=s_2-s_1,
          change_rel=s_2/s_1,
@@ -339,8 +339,8 @@ emmeans(learn.path_final, pairwise ~ group, adjust="bonferroni")
 
 # **** sessions T1 & T2 **** # 
 # 1) full binomial model (with reduced random effects due to failed convergence)
-probe.acc <- mixed(correct_final_alley ~ group*session*condition + 
-                     (session*condition||id), data=data, expand_re=T,
+probe.acc <- mixed(correct_final_alley ~ group*session*condition + sex + 
+                   (session*condition||id), data=data, expand_re=T,
                    family=binomial(link="logit"), method="LRT",
                    control=glmerControl(optimizer="bobyqa", optCtrl=list(maxfun=1e6)))
 
@@ -407,30 +407,14 @@ rm(temp)
 ## NOTE: change in accuracy 
 # ::: METHOD: one aggregated value per person, therefore (robust) ANOVA ::: #  
 
-# 1) standard ANOVA
-# contrasts are set to sum by default
-aov.change <- aov_car(change_reldiff ~ group*condition + Error(id/condition), data=data_prepost)
-qqPlot(data_prepost$change_reldiff) # non-normality
-data_prepost %>% shapiro_test(change_reldiff) 
-plot(predict(aov.change), residuals(aov.change), main="Residuals vs. Predicted") # homoscedasticity ok
-data_prepost %>% levene_test(change_reldiff ~ group) 
-summary(aov.change)
-emmeans(aov.change, pairwise ~ group | condition, adjust="bonferroni")
-
-
-# 2) robust ANOVA from WRS/WRS2 
+# 1) robust ANOVA from WRS/WRS2 
 # contrasts are set to sum by default (I think)
-# # robust mixed anova 
 raov.change <- bwtrim(change_reldiff ~ group*condition, id=id, data=data_prepost, tr=0.2)
-# # alternative to trim: mom-esitmator
-# sppba(change_reldiff ~ group*condition, id=id, data=data_prepost, est="mom", avg=TRUE, nboot=500, MDIS=FALSE)
-# sppbb(change_reldiff ~ group*condition, id=id, data=data_prepost, est="mom", avg=TRUE, nboot=500)
-# sppbi(change_reldiff ~ group*condition, id=id, data=data_prepost, est="mom", avg=TRUE, nboot=500)
 raov.change
-# using one-way post-test lincon() because no dedicated post-test for bwtrim() 
+# using one-way post-test lincon() because there is no dedicated post-test for bwtrim() and there are no interactions
 lincon(change_reldiff ~ group, data=data_prepost, tr=0.2, alpha=0.05, method="bonferroni")
 
-# ::: MEANING: Some evidence in favor of consolidation differences between children and adults. However, effect was found only in robust and not in standard ANOVA. There was also no significant group*session interaction in the previous analysis. Does this make sense? ::: #
+# ::: MEANING: Evidence in favor of consolidation differences between children and adults ::: #
 ## ---- 
 
 # ######################################################### #
@@ -485,7 +469,7 @@ emmeans(probe.fd_correct_final, pairwise ~ session)
 ## 1) standard lme model without variance estimation 
 probe.fd_local <- lme(final_local_distance ~ group*session*condition,
                       random=list(id=pdDiag(~ condition * session)),
-                      data=data, na.action=na.omit, method="ML")
+                      na.action=na.omit, data=data, method="ML")
 
 # diagnostics: non-normality, largest heterogeneity between groups, then sessions, then conditions 
 plot(probe.fd_local, resid(., type="p") ~ fitted(.))
@@ -571,9 +555,9 @@ ggplot(data, aes(x=group, y=final_distance)) + geom_boxplot() + facet_grid(~ con
 
 # **** sessions T1 & T2 **** # 
 ## 1) standard lme model without variance estimation 
-probe.time <- lme(time ~ group*session*condition,
+probe.time <- lme(time ~ group*session*condition + cov_t + sex,
                   random=list(id=pdDiag(~ condition * session)),
-                  data=data, method="ML")
+                  na.action=na.omit, data=data, method="ML")
 
 # diagnostics: non-normality, largest heterogeneity between groups, then conditions, then sessions 
 plot(probe.time, resid(., type="p") ~ fitted(.))
@@ -595,7 +579,7 @@ probe.time_var4 <- update(probe.time,  weights=varComb(varIdent(form=~1 | group)
                                                        varIdent(form=~1 | condition)))
 anova(probe.time, probe.time_var1, probe.time_var2, probe.time_var3, probe.time_var4, test=F) 
 anova(probe.time, probe.time_var1, probe.time_var2, probe.time_var4, test=T) 
-# chose model 4 (or model 2)
+# chose model 2 (non-convergence of model 4 with REML)
 
 # diagnostics: naja 
 plot(probe.time_var4, resid(., type="p") ~ fitted(.), abline=0)
@@ -603,13 +587,14 @@ qqnorm(resid(probe.time_var4))
 qqline(resid(probe.time_var4))
 
 # re-fit final model with with REML
-probe.time_final <- update(probe.time_var4, method="REML")
+probe.time_final <- update(probe.time_var2, method="REML")
 
 # statistics 
 anova(probe.time_final, type="marginal", adjustSigma=T)
 emmeans(probe.time_final, pairwise ~ group | condition | session, adjust="bonferroni")
 
-# ::: MEANING: Strong group and condition main effects, no session main effect and some (potentially instable, because barely significant) interaction effects (e.g. stronger time group differences in allocentric compared to egocentric). Explore further/make sure not anti-conservative ::: #
+# ::: MEANING: Strong group and condition main effects, no session main effect and some (potentially instable, because barely significant) interaction effects (e.g. stronger time group differences in allocentric compared to egocentric). 
+# Explore further/make sure not anti-conservative ::: #
 ## ---- 
 
 # ######################################################### #
@@ -620,9 +605,9 @@ emmeans(probe.time_final, pairwise ~ group | condition | session, adjust="bonfer
 
 # **** sessions T1 & T2 **** # 
 ## 1) standard lme model without variance estimation 
-probe.path_error <- lme(path_length_error ~ group*session*condition,
+probe.path_error <- lme(path_length_error ~ group*session*condition + cov_pl + sex,
                         random=list(id=pdDiag(~ condition + session)),
-                        data=data, method="ML")
+                        na.action=na.omit, data=data, method="ML")
 
 # diagnostics: non-normality, largest heterogeneity between groups & conditions, then sessions
 plot(probe.path_error, resid(., type="p") ~ fitted(.), abline=0)
@@ -673,9 +658,9 @@ ggplot(data, aes(x=group, y=path_length_error)) + geom_boxplot() + facet_grid(~ 
 
 # **** sessions T1 & T2 **** # 
 ## 1) standard lme model without variance estimation 
-probe.path <- lme(path_distance ~ group*session*condition,
+probe.path <- lme(path_distance ~ group*session*condition + cov_pl + sex,
                   random=list(id=pdDiag(~ condition + session)),
-                  data=data, method="ML")
+                  na.action=na.omit, data=data, method="ML")
 
 # diagnostics: some non-normality, largest heterogeneity in group, condition, then session
 plot(probe.path, resid(., type="p") ~ fitted(.), abline=0)
@@ -724,9 +709,9 @@ ggplot(data, aes(x=group, y=ego_path_distance)) + geom_boxplot() + facet_grid(~ 
 
 # **** sessions T1 & T2 **** # 
 ## 1) standard lme model without variance estimation 
-probe.path_ego <- lme(ego_path_distance ~ group*session,
+probe.path_ego <- lme(ego_path_distance ~ group*session + cov_pl + sex,
                       random=list(id=pdDiag(~ session)),
-                      data=data %>% filter(condition=="allo_ret", start_i %% 2 == 1), method="ML")
+                      na.action=na.omit, data=data %>% filter(condition=="allo_ret", start_i %% 2 == 1), method="ML")
 
 # diagnostics: normality ok, low heterogeneity
 plot(probe.path_ego, resid(., type="p") ~ fitted(.), abline=0)
@@ -763,9 +748,9 @@ ggplot(data %>% filter(condition=="allo_ret",  start_i %% 2 == 1), aes(x=group, 
 
 # **** sessions T1 & T2 **** # 
 ## 1) standard lme model without variance estimation 
-probe.distance_target <- lme(target_distance_error ~ group*session*condition,
+probe.distance_target <- lme(target_distance_error ~ group*session*condition + cov_pl + sex,
                              random=list(id=pdDiag(~ condition + session)),
-                             data=data, method="ML")
+                             na.action=na.omit, data=data, method="ML")
 
 # diagnostics: some non-normality, largest heterogeneity in group, condition, then session (all relatively high)
 plot(probe.distance_target, resid(., type="p") ~ fitted(.), abline=0)
@@ -817,9 +802,9 @@ ggplot(data, aes(x=group, y=ego_target_distance_error)) + geom_boxplot() + facet
 
 # **** sessions T1 & T2 **** # 
 ## 1) standard lme model without variance estimation 
-probe.distance_target_ego <- lme(ego_target_distance_error ~ group*session,
+probe.distance_target_ego <- lme(ego_target_distance_error ~ group*session + cov_pl + sex,
                                  random=list(id=pdDiag(~ session)),
-                                  data=data %>% filter(condition=="allo_ret", start_i %% 2 == 1), method="ML")
+                                 na.action=na.omit, data=data %>% filter(condition=="allo_ret", start_i %% 2 == 1), method="ML")
 
 # diagnostics: non-normality, low heterogeneity
 plot(probe.distance_target_ego, resid(., type="p") ~ fitted(.), abline=0)
@@ -862,9 +847,9 @@ ggplot(data %>% filter(condition=="allo_ret", start_i %% 2 == 1), aes(x=group, y
 
 # **** sessions T1 & T2 **** # 
 ## 1) standard lme model without variance estimation 
-probe.rot <- lme(rotation_turns_by_path_length ~ group*session*condition,
+probe.rot <- lme(rotation_turns_by_path_length ~ group*session*condition + cov_pl + sex,
                  random=list(id=pdDiag(~ condition + session)),
-                 data=data, method="ML")
+                 na.action=na.omit, data=data, method="ML")
 
 # diagnostics: non-normality, largest heterogeneity in condition, less group and session 
 plot(probe.rot, resid(., type="p") ~ fitted(.))
@@ -916,9 +901,9 @@ ggplot(data, aes(x=group, y=rotation_turns_by_path_length)) + geom_boxplot() + f
 
 # **** sessions T1 & T2 **** # 
 ## 1) standard lme model without variance estimation 
-probe.rot_d <- lme(rotation_degrees ~ group*session*condition,
+probe.rot_d <- lme(rotation_degrees ~ group*session*condition + cov_pl + sex,
                  random=list(id=pdDiag(~ condition + session)),
-                 data=data, method="ML")
+                 na.action=na.omit, data=data, method="ML")
 
 # diagnostics: non-normality, largest heterogeneity in condition, less group and session 
 plot(probe.rot_d, resid(., type="p") ~ fitted(.))
@@ -1054,16 +1039,7 @@ data <- pt_data %>%
   filter(condition=="landmarks") %>% 
   drop_na(score)
 
-# option 1) standard ANOVA
-aov.lm <- aov_car(score ~ group + Error(id), data=data)
-qqPlot(data$score) # non-normality
-data %>% shapiro_test(score) 
-plot(predict(aov.lm), residuals(aov.lm), main="Residuals vs. Predicted") # homoscedasticity ok
-data %>% levene_test(score ~ group) 
-summary(aov.lm)
-emmeans(aov.lm, pairwise ~ group, adjust="bonferroni")
-
-# option 2) robust ANOVA (WSR2)
+# robust ANOVA (WSR2)
 t1way(score ~ group, data=data, tr=0.2, nboot=1000)
 lincon(score ~ group, data=data, tr=0.2, nboot=1000, method="bonferroni")
 
@@ -1078,16 +1054,7 @@ data <- pt_data %>%
   filter(condition=="position") %>% 
   drop_na(score)
 
-# option 1) standard ANOVA
-aov.gmda <- aov_car(score ~ group + Error(id), data=data)
-qqPlot(data$score) # non-normality
-data %>% shapiro_test(score) 
-plot(predict(aov.gmda), residuals(aov.gmda), main="Residuals vs. Predicted") # heteroscedasticity
-data %>% levene_test(score ~ group) 
-summary(aov.gmda)
-emmeans(aov.gmda, pairwise ~ group, adjust="bonferroni")
-
-# option 2) robust ANOVA (WSR2)
+# robust ANOVA (WSR2)
 t1way(score ~ group, data=data, tr=0.2, nboot=1000)
 lincon(score ~ group, data=data, tr=0.2, nboot=1000, method="bonferroni")
 
