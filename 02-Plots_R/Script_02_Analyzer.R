@@ -50,15 +50,16 @@ rm(file_name)
 # practise motor control
 data_p <- sm_data %>%
   filter(condition %in% c("practise")) %>%  
-  select(id, group, sex, time, path_length, velocity) %>% 
+  select(id, group, sex, time, path_length, velocity, rotation_degrees) %>% 
   droplevels()
 
 covariates <- data_p %>% 
-  select(id, time, path_length, velocity) %>% 
+  select(id, time, path_length, velocity, rotation_degrees) %>% 
   mutate(time=time-mean(time, na.rm=T),
          path_length=path_length-mean(path_length, na.rm=T),
-         velocity=velocity-mean(velocity, na.rm=T)) %>% 
-  rename(cov_t=time, cov_pl=path_length, cov_v=velocity) 
+         velocity=velocity-mean(velocity, na.rm=T),
+         rotation_degrees=rotation_degrees-mean(rotation_degrees, na.rm=T)) %>% 
+  rename(cov_t=time, cov_pl=path_length, cov_v=velocity, cov_r=rotation_degrees) 
 
 # learning
 data_l <- sm_data %>%
@@ -299,7 +300,7 @@ emmeans(learn.distance_final, pairwise ~ group, adjust="bonferroni")
 ## ---- stats_learning_rot_pl
 ## NOTE: rotation (normalized by path length)
 ## 1) standard lme model without variance estimation 
-learn.rot_base <- lme(rotation_turns_by_path_length ~ group*block_f*trial_in_cond_c + cov_pl + sex,
+learn.rot_base <- lme(rotation_turns_by_path_length ~ group*block_f*trial_in_cond_c + cov_r + sex,
                       random=~1+block_f | id, 
                       na.action=na.omit, data=data_l, method="ML")
 
@@ -320,9 +321,15 @@ learn.rot_final <- update(learn.rot_var2, method="REML")
 
 # statistics 
 anova.lme(learn.rot_final, type="marginal", adjustSigma=T)
-emtrends(learn.path_final, pairwise ~ group, var="trial_in_cond_c", adjust="bonferroni")
-emtrends(learn.path_final, pairwise ~ block_f, var="trial_in_cond_c", adjust="bonferroni")
-emmeans(learn.path_final, pairwise ~ group, adjust="bonferroni")
+emtrends(learn.rot_final, pairwise ~ group, var="trial_in_cond_c", adjust="bonferroni")
+emtrends(learn.rot_final, pairwise ~ block_f, var="trial_in_cond_c", adjust="bonferroni")
+emmeans(learn.rot_final, pairwise ~ group, adjust="bonferroni")
+
+# helper plots
+ggplot(data_l, aes(x=factor(trial_in_cond), y=rotation_turns_by_path_length)) + geom_boxplot() + coord_cartesian(ylim=c(0,3)) + facet_wrap(~group)
+ggplot(data_l, aes(x=factor(trial_in_cond), y=rotation_degrees)) + geom_boxplot() + coord_cartesian(ylim=c(0,2000)) + facet_wrap(~group)
+ggplot(data_l, aes(x=factor(trial_in_cond), y=rotation_turns_by_path_length)) + geom_boxplot() + coord_cartesian(ylim=c(0,3)) + facet_wrap(~block_f)
+ggplot(data_l, aes(x=factor(trial_in_cond), y=rotation_degrees)) + geom_boxplot() + coord_cartesian(ylim=c(0,2000)) + facet_wrap(~block_f)
 ## ---- 
 
 
@@ -847,7 +854,7 @@ ggplot(data %>% filter(condition=="allo_ret", start_i %% 2 == 1), aes(x=group, y
 
 # **** sessions T1 & T2 **** # 
 ## 1) standard lme model without variance estimation 
-probe.rot <- lme(rotation_turns_by_path_length ~ group*session*condition + cov_pl + sex,
+probe.rot <- lme(rotation_turns_by_path_length ~ group*session*condition + cov_r + sex,
                  random=list(id=pdDiag(~ condition + session)),
                  na.action=na.omit, data=data, method="ML")
 
@@ -901,7 +908,7 @@ ggplot(data, aes(x=group, y=rotation_turns_by_path_length)) + geom_boxplot() + f
 
 # **** sessions T1 & T2 **** # 
 ## 1) standard lme model without variance estimation 
-probe.rot_d <- lme(rotation_degrees ~ group*session*condition + cov_pl + sex,
+probe.rot_d <- lme(rotation_degrees ~ group*session*condition + cov_r + sex,
                  random=list(id=pdDiag(~ condition + session)),
                  na.action=na.omit, data=data, method="ML")
 
@@ -922,15 +929,15 @@ probe.rot_d_var3 <- update(probe.rot_d, weights=varComb(varIdent(form=~1 | condi
                                                     varIdent(form=~1 | group),
                                                     varIdent(form=~1 | session)))
 anova(probe.rot_d, probe.rot_d_var1, probe.rot_d_var2, probe.rot_d_var3) 
-# chose model 2
+# chose model 3
 
 # diagnostics
-plot(probe.rot_d_var2, resid(., type="p") ~ fitted(.), abline=0)
-qqnorm(resid(probe.rot_d_var2))
-qqline(resid(probe.rot_d_var2))
+plot(probe.rot_d_var3, resid(., type="p") ~ fitted(.), abline=0)
+qqnorm(resid(probe.rot_d_var3))
+qqline(resid(probe.rot_d_var3))
 
 # re-fit with REML
-probe.rot_d_final <- update(probe.rot_d_var2, method="REML")
+probe.rot_d_final <- update(probe.rot_d_var3, method="REML")
 
 # statistics 
 anova(probe.rot_d_final, type="marginal", adjustSigma=T)
@@ -944,7 +951,7 @@ emmeans(probe.rot_d_final, pairwise ~ group | condition | session, adjust="bonfe
 ggplot(data, aes(x=rotation_degrees)) + geom_histogram()
 ggplot(data, aes(x=group, y=rotation_degrees)) + geom_boxplot() + facet_wrap(~condition + session, nrow=1)
 
-# ::: MEANING: Strong interaction effects (mostly driven by session 2). TBD! Check model distribution (weird, bimodal). Explore further/make sure not anti-conservative ::: #
+# ::: TBD! Check model distribution (weird, bimodal). Explore further/make sure not anti-conservative ::: #
 ## ---- 
 
 # ######################################################### #
