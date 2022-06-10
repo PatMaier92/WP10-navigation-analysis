@@ -1,5 +1,5 @@
 ### --------------- WP10 Starmaze data  ----------------- ###
-### Script_02_Table_Plot_Creator                          ###
+### Script_03_Table_Plot_Creator                          ###
 ### Author: Patrizia Maier                                ###
 
 
@@ -78,7 +78,7 @@ l_target_distance_error <- "distance to goal error"
 l_target_distance_error_ego <- "distance to ego error"
 l_target_distance_error_chosen <- "distance to chosen goal error"
 l_rotation <- "rotation (turns)"
-l_rotation_by_path <- "rotation / 360°/ path length"
+l_rotation_by_path <- "rotation / 360?/ path length"
 l_search_strategy <- "usage in %"
 ## ----
 
