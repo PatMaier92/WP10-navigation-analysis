@@ -53,6 +53,13 @@ data_p <- sm_data %>%
   select(id, group, sex, time, path_length, velocity) %>% 
   droplevels()
 
+covariates <- data_p %>% 
+  select(id, time, path_length, velocity) %>% 
+  mutate(time=time-mean(time, na.rm=T),
+         path_length=path_length-mean(path_length, na.rm=T),
+         velocity=velocity-mean(velocity, na.rm=T)) %>% 
+  rename(cov_t=time, cov_pl=path_length, cov_v=velocity) 
+
 # learning
 data_l <- sm_data %>%
   filter(exclude_trial_matlab==0) %>% 
@@ -61,6 +68,7 @@ data_l <- sm_data %>%
          trial_in_cond_0=trial_in_cond-1,
          trial_in_cond_c=trial_in_cond-4.5,
          block_f=factor(block)) %>% 
+  full_join(covariates) %>% 
   droplevels()
 
 # probe 
@@ -68,6 +76,7 @@ data <- sm_data %>%
   filter(exclude_trial_matlab==0) %>% 
   filter(condition %in% c("allo_ret", "ego_ret")) %>%
   mutate(goal_f=factor(goal_i)) %>% 
+  full_join(covariates) %>% 
   droplevels()
 
 data_1 <- data %>% 
@@ -189,9 +198,9 @@ testCategorical(simulationOutput, catPred=data_l$group)
 
 
 # 2) advanced lme models with variance estimation 
-learn.time_base <- lme(time ~ group*block_f*trial_in_cond_c,
+learn.time_base <- lme(time ~ group*block_f*trial_in_cond_c + cov_t + sex,
                        random=~1+block_f | id, 
-                       data=data_l, method="ML")
+                       na.action=na.omit, data=data_l, method="ML")
 learn.time_var1 <- update(learn.time_base, weights=varIdent(form=~1 | group))
 # learn.time_var2 <- update(learn.time_base, weights=varComb(varIdent(form=~1 | group),
 #                                                            varIdent(form=~1 | block_f)))
@@ -212,7 +221,7 @@ learn.time_final = update(learn.time_var1, method="REML")
 anova.lme(learn.time_final, type="marginal", adjustSigma=T)
 emtrends(learn.time_final, pairwise ~ block_f, var="trial_in_cond_c", adjust="bonferroni")
 emtrends(learn.time_final, pairwise ~ group, var="trial_in_cond_c", adjust="bonferroni")
-emmeans(learn.time_final, pairwise ~ group, type="response", adjust="bonferroni")
+emmeans(learn.time_final, pairwise ~ group, adjust="bonferroni")
 
 # # extract estimated variance
 # variance <- learn.time_var$modelStruct$varStruct %>%
@@ -226,73 +235,94 @@ emmeans(learn.time_final, pairwise ~ group, type="response", adjust="bonferroni"
 # ######################################################### #
 
 ## ---- stats_learning_ple
+## NOTE: path length error 
 ## 1) standard lme model without variance estimation 
-learn.path <- lme(path_length_error ~ group*block_f*trial_in_cond_c,
+learn.path_base <- lme(path_length_error ~ group*block_f*trial_in_cond_c + cov_pl + sex,
                   random=~1+block_f | id, 
-                  data=data_l, method="ML")
+                  na.action=na.omit, data=data_l, method="ML")
 
 ## 2) advanced lme models with variance estimation 
 learn.path_var1 <- update(learn.path_base, weights=varIdent(form=~1 | group))
 learn.path_var2 <- update(learn.path_base, weights=varComb(varIdent(form=~1 | group),
                                                            varIdent(form=~1 | block_f)))
 anova(learn.path_base, learn.path_var1, learn.path_var2, test=T) 
-# chose model 2 (or model 1)
+# chose model 1
 
 # diagnostics: ok 
-plot(learn.path_var2, resid(., type="p") ~ fitted(.), abline=0)
-qqnorm(resid(learn.path_var2))
-qqline(resid(learn.path_var2))
+plot(learn.path_var1, resid(., type="p") ~ fitted(.), abline=0)
+qqnorm(resid(learn.path_var1))
+qqline(resid(learn.path_var1))
 
 # re-fit with REML
-learn.path_final <- update(learn.path_var2, method="REML")
+learn.path_final <- update(learn.path_var1, method="REML")
 
 # statistics 
 anova.lme(learn.path_final, type="marginal", adjustSigma=T)
-emtrends(learn.path_final, pairwise ~ block_f, var="trial_in_cond_c", adjust="bonferroni")
 emtrends(learn.path_final, pairwise ~ group, var="trial_in_cond_c", adjust="bonferroni")
-emmeans(learn.path_final, pairwise ~ group, type="response", adjust="bonferroni")
-## ---- 
-
-# ######################################################### #
-
-## ---- stats_learning_ped
-# TBD: count data? consider poisson model (glmmTMB or lmer, not lme)
-## 1) standard lme model without variance estimation 
-learn.edit_base <- lme(path_edit_distance ~ group*block_f*trial_in_cond_c,
-                       random=~1+block_f | id, 
-                       data=data_l, method="ML")
-
-## 2) advanced lme models with variance estimation
-learn.edit_var1 <- update(learn.edit_base, weights=varIdent(form=~1 | group))
-# learn.edit_var2 <- update(learn.edit_base, weights=varComb(varIdent(form=~1 | group),
-#                                                            varIdent(form=~1 | block_f)))
-anova(learn.edit_base, learn.edit_var1) 
-# chose model 1 
-
-# diagnostics: naja 
-plot(learn.edit_var1, resid(., type="p") ~ fitted(.), abline=0)
-qqnorm(resid(learn.edit_var1))
-qqline(resid(learn.edit_var1))
-
-# re-fit with REML
-learn.edit_final <- update(learn.edit_var1, method="REML")
-
-# statistics 
-anova.lme(learn.edit_final, type="marginal", adjustSigma=T)
-emtrends(learn.edit_final, pairwise ~ block_f, var="trial_in_cond_c", adjust="bonferroni")
-emtrends(learn.edit_final, pairwise ~ group, var="trial_in_cond_c", adjust="bonferroni")
-emmeans(learn.edit_final, pairwise ~ group, type="response", adjust="bonferroni")
+emtrends(learn.path_final, pairwise ~ group | block_f, var="trial_in_cond_c", adjust="bonferroni")
+emtrends(learn.path_final, pairwise ~ block_f | group, var="trial_in_cond_c", adjust="bonferroni")
+emmeans(learn.path_final, pairwise ~ group | block_f, adjust="bonferroni")
+emmeans(learn.path_final, pairwise ~ block_f | group, adjust="bonferroni")
 ## ---- 
 
 # ######################################################### #
 
 ## ---- starts_learning_dge 
+## NOTE: distance to goal error 
+## 1) standard lme model without variance estimation 
+learn.distance_base <- lme(target_distance_error~ group*block_f*trial_in_cond_c + cov_pl + sex,
+                           random=list(id=pdDiag(~ block_f)),
+                           na.action=na.omit, data=data_l, method="ML")
+
+## 2) advanced lme models with variance estimation 
+learn.distance_var1 <- update(learn.distance_base, weights=varIdent(form=~1 | group))
+learn.distance_var2 <- update(learn.distance_base, weights=varComb(varIdent(form=~1 | group),
+                                                                   varIdent(form=~1 | block_f)))
+anova(learn.distance_base, learn.distance_var1, learn.distance_var2, test=T) 
+# chose model 1
+
+# diagnostics: ok 
+plot(learn.distance_var1, resid(., type="p") ~ fitted(.), abline=0)
+qqnorm(resid(learn.distance_var1))
+qqline(resid(learn.distance_var1))
+
+# re-fit with REML
+learn.distance_final <- update(learn.distance_var1, method="REML")
+
+# statistics 
+anova.lme(learn.distance_final, type="marginal", adjustSigma=T)
+emmeans(learn.distance_final, pairwise ~ group, adjust="bonferroni")
 ## ---- 
 
 # ######################################################### #
 
-## ---- stats_learning_rot
+## ---- stats_learning_rot_pl
+## NOTE: rotation (normalized by path length)
+## 1) standard lme model without variance estimation 
+learn.rot_base <- lme(rotation_turns_by_path_length ~ group*block_f*trial_in_cond_c + cov_pl + sex,
+                      random=~1+block_f | id, 
+                      na.action=na.omit, data=data_l, method="ML")
 
+## 2) advanced lme models with variance estimation 
+learn.rot_var1 <- update(learn.rot_base, weights=varIdent(form=~1 | group))
+learn.rot_var2 <- update(learn.rot_base, weights=varComb(varIdent(form=~1 | group),
+                                                         varIdent(form=~1 | block_f)))
+anova(learn.rot_base, learn.rot_var1, learn.rot_var2, test=T) 
+# chose model 2
+
+# diagnostics: ok 
+plot(learn.rot_var2, resid(., type="p") ~ fitted(.), abline=0)
+qqnorm(resid(learn.rot_var2))
+qqline(resid(learn.rot_var2))
+
+# re-fit with REML
+learn.rot_final <- update(learn.rot_var2, method="REML")
+
+# statistics 
+anova.lme(learn.rot_final, type="marginal", adjustSigma=T)
+emtrends(learn.path_final, pairwise ~ group, var="trial_in_cond_c", adjust="bonferroni")
+emtrends(learn.path_final, pairwise ~ block_f, var="trial_in_cond_c", adjust="bonferroni")
+emmeans(learn.path_final, pairwise ~ group, adjust="bonferroni")
 ## ---- 
 
 
