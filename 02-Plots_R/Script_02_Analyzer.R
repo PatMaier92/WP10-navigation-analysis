@@ -186,22 +186,11 @@ lincon(velocity ~ group, data=data_p, tr=0.2, alpha=0.05,  nboot=1000, method="b
 # watch out for convergence (stepwise reduction of random effects), normality of residuals, homoscedasticity and outliers # 
 
 # 1) standard lmer model 
-# contrasts set to sum-coding by mixed
-learn.time <- mixed(time ~ group*block_f*trial_in_cond_c + (block_f|id), 
-                    data=data_l, expand_re=T,
-                    control=lmerControl(optimizer="bobyqa", optCtrl=list(maxfun=1e6)))
-# check model
-simulationOutput <- simulateResiduals(fittedModel=learn.time$full_model, plot=F)
-testResiduals(simulationOutput)
-plotResiduals(simulationOutput)
-testCategorical(simulationOutput, catPred=data_l$group)
-# model diagnostics are bad
-
-
-# 2) advanced lme models with variance estimation 
 learn.time_base <- lme(time ~ group*block_f*trial_in_cond_c + cov_t + sex,
                        random=~1+block_f | id, 
                        na.action=na.omit, data=data_l, method="ML")
+
+# 2) advanced lme models with variance estimation 
 learn.time_var1 <- update(learn.time_base, weights=varIdent(form=~1 | group))
 # learn.time_var2 <- update(learn.time_base, weights=varComb(varIdent(form=~1 | group),
 #                                                            varIdent(form=~1 | block_f)))
@@ -221,7 +210,6 @@ learn.time_final = update(learn.time_var1, method="REML")
 # statistics 
 anova.lme(learn.time_final, type="marginal", adjustSigma=T)
 emtrends(learn.time_final, pairwise ~ block_f, var="trial_in_cond_c", adjust="bonferroni")
-emtrends(learn.time_final, pairwise ~ group, var="trial_in_cond_c", adjust="bonferroni")
 emmeans(learn.time_final, pairwise ~ group, adjust="bonferroni")
 
 # # extract estimated variance
