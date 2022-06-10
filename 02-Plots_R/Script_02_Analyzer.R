@@ -1,5 +1,5 @@
 ### --------------- WP10 Starmaze data  ----------------- ###
-### Script_03_Table_Plot_Creator                          ###
+### Script_02_Analyzer                                    ###
 ### Author: Patrizia Maier                                ###
 
 # ::: get packages ::: #
