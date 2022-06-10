@@ -2,7 +2,7 @@
 title: "Preliminary Descriptives & Plots of Starmaze Data"
 author: "Patrizia Maier"
 date: "`r format(Sys.time(), '%d %B, %Y')`"
-output: html_document
+output: pdf_document
 ---
 
 ### Task
@@ -30,15 +30,16 @@ Navigating a star-shaped maze environment ("Starmaze") with three goal locations
 ![Trial order at Day 14 (15 trials)](./pics/Overview_Session2.jpg){width=500px}
 
 
-```{r setup, include = FALSE, cache=FALSE}
+```{r setup, include=FALSE, cache=FALSE}
 
 library(tidyverse)
 library(patchwork)
+library(ggrepel)
 library(kableExtra)
 # install.packages('tinytex')
 # tinytex::install_tinytex() # latex for pdf file creation
 
-#knitr::read_chunk('Script_03_Plot_Creator.R')
+knitr::read_chunk('Script_03_Plot_Creator.R')
 #knitr::read_chunk('Script_02_Analyzer.R')
 ```
 
@@ -68,17 +69,18 @@ Cross-sectional comparison between
 
 In learning trials, the goal is visible, i.e. the trial is always completed successfully except if the participant needs more than 120 seconds (time out). In egocentric and allocentric retrieval trials, the goal is not visible. Participants go to the place where they remember the goal being located and press a button. 
 
-* **Correct goal alley** (yes/no): Finding the correct goal alley (outer arm + intersection). 
+* **Correct goal alley** (yes/no): Finding the correct goal alley (x-/y-coordinates in correct outer arm or intersection right in front). 
 * **Final distance** (metric): Distance between x-/y-coordinates of the chosen and the correct goal location. 
 $$\text{Final distance} = \sqrt{(x_{correct}-x_{chosen})^2 + (y_{correct}-y_{chosen})^2}$$
 * **Time**: Time to complete trial in seconds.
 * **Path length (error)** (metric): Absolute deviation of travelled path length in relation to ideal path length. Calculated as summation of distance between x-/y-coordinates over time, then deviation of actual compared to ideal value (Caution: value can be misleading if chosen location is not correct location).
 $$\text{Path length} = \sum \sqrt{(x_{t}-x_{t+1})^2 + (y_{t}-y_{t+1})^2}$$
-$$\text{Path length error} = (path-path_{ideal})/path_{ideal}$$
+$$\text{Path length error} = \frac {(path-path_{ideal})} {path_{ideal}}$$
 * **Distance to location (error)** (metric): Absolute deviation of the cumulative distance to a location (e.g. goal, egocentric location) in relation to the ideal cumulative distance to the location (on the shortest possible path). Calculated as summation of distance between the player's x-/y-coordinates and the location's x-/y-coordinates, then averaged by the number of x-/y data points. 
 $$\text{Distance to goal} = \frac {\sum \sqrt{(x_{t}-x_{goal})^2 + (y_{t}-y_{goal})^2}} {n_{t}}$$
-$$\text{Distance to goal error} = (distance-distance_{ideal})/distance_{ideal}$$
-* **Rotation** (turns normalized by path length): Sum of z-rotations over time divided by 360? (i.e. full turns) and divided by path length (reason: longer paths automatically involve more rotation in a Starmaze environment, therefore normalized rotation is more indicative of exploration/looking-around). 
+$$\text{Distance to goal error} = \frac {(distance-distance_{ideal})} {distance_{ideal}}$$
+* **Rotation** (turns normalized by path length): Sum of absolute z-rotations over time (takes into account switch at 0/360°) divided by 360° (i.e. full turns) and divided by path length (reason: longer paths automatically involve more rotation in a Starmaze environment, therefore normalized rotation is more indicative of exploration/looking-around). 
+$$\text{Rotation} = \frac {\sum |(z_{t}-z_{t+1})|} {path} * \frac {1} {360} $$
 * **Strategy classification**: Classification into three strategies: Direct to chosen goal, detour (entering more zones than necessary), or reorientation (re-entering same zones). 
 
 ![Examples for variables](./pics/Var_all.jpg){width=300px,height=500x}
@@ -87,26 +89,167 @@ $$\text{Distance to goal error} = (distance-distance_{ideal})/distance_{ideal}$$
 ``` {r, plot_settings, include=FALSE}
 ```
 
-``` {r, func_mean, include=FALSE}
+``` {r, plot_functions, include=FALSE}
 ```
 
 \newpage
 
 ### Memory encoding: Learning curves at Day 1
 
-How well did participants learn the position of the three goal locations at Day 2?  
+```{r, plots_learning_trialwise, include=F }
+```
 
+```{r, warning=F, echo=F }
+
+line_t + line_ple + line_dge + line_rpl + 
+  plot_annotation("Navigation behaviour in learning trials (goal visible)") + 
+  plot_layout(guides="collect") & theme(legend.position="top", legend.justification=c(0,0))
+
+#rm(line_t,line_ple, line_dge, line_rpl, sm_trialwise)
+```
+ 
+**TBD: add statistics**
 
 
 \newpage 
 
-### Immediate (Day ) vs. consolidated retrieval (Day 13): Egocentric and allocentric condition 
+### Immediate (Day 1) vs. consolidated retrieval (Day 13): Egocentric and allocentric condition 
 
+```{r, plots_aggregated, include=F }
+```
 
+```{r, plots_aggregated_change, include=F }
+```
 
-### Strategy use data 
+```{r, plots_probe_locations, include=F }
+```
 
-I categorized participant's trajectories into strategies. Strategies are a qualitative description of the trajectory and independent of performance. For example, direct strategy means that the participant went straight to the chosen goal location without any detours or reorienting, independent of whether the chosen goal location was correct or incorrect. 
+#### Accuracy 
+
+raw data 
+
+```{r, warning=F, echo=F }
+
+dots_ego + dots_allo +
+  #plot_annotation("Chosen locations in probe trials") + 
+  plot_layout(nrow=2)
+
+#rm(dots_ego, dots_allo)
+```
+
+correct final alley
+
+```{r, warning=F, echo=F }
+
+box_ego_cfa + labs(subtitle="Egocentric") + box_allo_cfa + labs(subtitle="Allocentric") +
+  plot_annotation("Accuracy in probe trials") + 
+  plot_layout(guides="collect") & theme(legend.position="bottom", legend.justification=c(0,0))
+
+#rm(box_ego_cfa, box_allo_cfa)
+```
+**TBD: add statistics**
+
+```{r, warning=F, echo=F }
+
+box_ego_delta_cfa + labs(subtitle="Egocentric") + box_allo_delta_cfa + labs(subtitle="Allocentroc")  +
+  plot_annotation("Change in accuracy in probe trials") + 
+  plot_layout(guides="collect") & theme(legend.position="bottom", legend.justification=c(0,0))
+
+#rm(box_ego_delta_cfa, box_allo_delta_cfa)
+```
+
+**TBD: add statistics**
+
+final distance (boundary consideration)
+
+```{r, warning=F, echo=F }
+
+box_ego_cor_fd + labs(subtitle="Egocentric") + box_allo_cor_fd + labs(subtitle="Allocentric") +
+  plot_annotation("Final distance in correctly solved probe trials") + 
+  plot_layout(guides="collect") & theme(legend.position="bottom", legend.justification=c(0,0))
+
+#rm(box_ego_cor_fd, box_allo_cor_fd)
+```
+
+```{r, warning=F, echo=F }
+
+box_ego_fdl + labs(subtitle="Egocentric") + box_allo_fdl + labs(subtitle="Allocentric") +
+  plot_annotation("Local final distance in all probe trials") + 
+  plot_layout(guides="collect") & theme(legend.position="bottom", legend.justification=c(0,0))
+
+#rm(box_ego_fdl, box_allo_fdl)
+```
+**TBD: decide for one of the measures and add statistics** 
+
+\newpage 
+
+#### Navigation behaviour: metric variables
+time, path length error, distance to goal error, distance to ego goal error, rotation 
+
+```{r, warning=F, echo=F }
+
+box_ego_t + labs(subtitle="Egocentric") + box_allo_t + labs(subtitle="Allocentric") +
+  plot_annotation("Time in probe trials") + 
+  plot_layout(guides="collect") & theme(legend.position="bottom", legend.justification=c(0,0))
+
+#rm(box_ego_t, box_allo_t)
+```
+
+**TBD: add statistics**
+
+```{r, warning=F, echo=F }
+
+box_ego_ple + labs(subtitle="Egocentric") + box_allo_ple + labs(subtitle="Allocentric") +
+  plot_annotation("Path length error in probe trials") + 
+  plot_layout(guides="collect") & theme(legend.position="bottom", legend.justification=c(0,0))
+
+#rm(box_ego_ple, box_allo_ple)
+```
+
+**TBD: add statistics**
+
+```{r, warning=F, echo=F }
+
+box_ego_dge + labs(subtitle="Egocentric")  + 
+  box_allo_dge + labs(subtitle="Allocentric") + 
+  box_allo_dege + labs(subtitle="Allocentric") + 
+  plot_annotation("Distance to goal error & distance to ego error in probe trials") + 
+  plot_layout(guides="collect") & theme(legend.position="bottom", legend.justification=c(0,0))
+
+#rm(box_ego_dge, box_allo_dge, box_allo_dege)
+```
+
+**TBD: add statistics**
+
+```{r, warning=F, echo=F }
+
+box_ego_r + labs(subtitle="Egocentric") + box_allo_r + labs(subtitle="Allocentric") +
+  plot_annotation("Rotation (full turns) in probe trials") + 
+  plot_layout(guides="collect") & theme(legend.position="bottom", legend.justification=c(0,0))
+
+#rm(box_ego_r, box_allo_r)
+```
+
+**TBD: add statistics**
+
+```{r, warning=F, echo=F }
+
+box_ego_rpl + labs(subtitle="Egocentric") + box_allo_rpl + labs(subtitle="Allocentric") +
+  plot_annotation("Relative rotation (full turns, normalized by path length) in probe trials") + 
+  plot_layout(guides="collect") & theme(legend.position="bottom", legend.justification=c(0,0))
+
+#rm(box_ego_rpl, box_allo_rpl)
+#rm(list=ls(pattern="agg"), sm_change)
+```
+
+**TBD: add statistics**
+
+#### Navigation behaviour: strategy use data 
+
+```{r, plots_probe_strategy, include=F }
+```
+
+Strategies are a qualitative description of the trajector, independent of accuracy. For example, direct strategy means that the participant went straight to the chosen goal location without any detours or reorienting, independent of whether the chosen goal location was correct or incorrect. 
 
 *Criteria for strategy assignment*:
 
@@ -115,7 +258,17 @@ I categorized participant's trajectories into strategies. Strategies are a quali
 * **Reoriented**: Non-direct path with re-entry of zones to chosen goal location. 
 
 ![Examples for strategies](./pics/Overview_Strategies.jpg){width=300px}
-`
+
+```{r, warning=F, echo=F }
+
+bar_ego_strategy + labs(subtitle="Egocentric") + bar_allo_strategy + labs(subtitle="Allocentric") +
+  plot_annotation("Search strategy") + 
+  plot_layout(guides="collect") & theme(legend.position="bottom", legend.justification=c(0,0))
+
+#rm(bar_ego_strategy, bar_allo_strategy, box_ego_strategy, box_allo_strategy, sm_strat, sm_strat2)
+```
+**TBD: add statistics**
+
 \newpage 
 
 ### Correlations 
@@ -123,13 +276,53 @@ I categorized participant's trajectories into strategies. Strategies are a quali
 
 \newpage
 
-### Non-navigational memory tasks
+### Post-navigational memory tasks
 
 ![Non-navigational memory retrieval at Day 14 (4 trials)](./pics/Overview_Session2_PostTest.jpg){width=500px}
+
+```{r, plots_post_tests, include=F }
+```
+
+```{r, warning=F, echo=F }
+
+layout + landmark_avg + gmda_avg + 
+  plot_annotation("Post-navigational memory tests") + 
+  plot_layout(width=c(0.4, 0.2, 0.2), guides="collect") & theme(legend.position="bottom", legend.justification=c(0,0))
+
+#rm(list=ls(pattern="la"), gmda_avg)
+```
+
+**TBD: add statistics**
 
 \newpage 
 
 ### Motor Control Task 
 
 ![Motor control practise task](./pics/Motor_Control.jpg){width=600px}
+
+``` {r, plots_motor_control, include=FALSE}
+```
+
+```{r, warning=F, echo=F }
+
+mc_t + mc_pl + mc_v + mc_r + 
+  plot_annotation("Motor control practise task") + 
+  plot_layout(guides="collect") & theme(legend.position="bottom", legend.justification=c(0,0))
+
+#rm(list=ls(pattern="mc"), sm_practise)
+```
+
+### Excluded trials 
+
+``` {r, plots_excluded, include=FALSE}
+```
+
+```{r, warning=F, echo=F }
+
+ex1 + ex2 +
+  plot_annotation("Overview of excluded trial data") + 
+  plot_layout(guides="collect") & theme(legend.position="bottom", legend.justification=c(0,0))
+
+#rm(list=ls(pattern="mc"), sm_practise)
+```
 
