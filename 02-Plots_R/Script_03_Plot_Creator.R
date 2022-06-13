@@ -66,8 +66,10 @@ landmark_colors <- rev(RColorBrewer::brewer.pal(3,"Blues"))
 l_time <- "time in seconds"
 l_velocity <- "velocity"
 l_correct_alley <- "accuracy in %"
+l_ego_alley <- "egocentric in %"
 l_final_distance <- "final distance"
 l_final_local_distance <- "final distance (local)"
+l_final_local_ego <- "final distance to ego"
 l_edit_distance <- "path zone error"
 l_edit_distance_chosen <- "path zone error (chosen)"
 l_path_length_error <- "path length error"
@@ -442,11 +444,17 @@ rm(sm_trialwise)
 sm_agg <- sm_data %>%
   filter(session!=3, condition!="main_ret") %>% 
   group_by(id, group, session, condition) %>% 
-  summarise_at(c("correct_final_alley", "final_local_distance", "time", "path_length_error", 
+  summarise_at(c("correct_final_alley", "final_local_distance",
+                 "time", "path_length_error", 
                  "path_distance", "chosen_path_distance", 
                  "path_edit_distance", "chosen_path_edit_distance",
                  "target_distance_error", "chosen_target_distance_error", "ego_target_distance_error", 
                  "rotation_turns", "rotation_turns_by_path_length"), mean, na.rm=T)
+
+sm_agg2 <- sm_data %>%
+  filter(condition=="allo_ret", start_i %% 2==1) %>% 
+  group_by(id, group, session, condition) %>% 
+  summarise_at(c("correct_final_alley_ego", "final_distance_ego"), mean, na.rm=T)
 
 sm_agg_correct <- sm_data %>%
   filter(condition %in% c("ego_ret", "allo_ret") & correct_final_alley==1) %>% 
@@ -487,6 +495,8 @@ box_ego_12_dge <- box_plot(sm_agg_collapsed %>% filter(condition=="ego_ret"), "g
 
 # allocentric probe trials
 box_allo_cfa <- box_plot(sm_agg %>% filter(condition=="allo_ret"), "group", "correct_final_alley", "group", "session", "none", NULL, NULL, l_correct_alley, mylabels, "top", group_colors, group_colors_o)
+box_allo_efa <- box_plot(sm_agg2, "group", "correct_final_alley_ego", "group", "session", "none", NULL, NULL, l_ego_alley, mylabels, "top", group_colors, group_colors_o)
+box_allo_fde <- box_plot(sm_agg2, "group", "final_distance_ego", "group", "session", "none", NULL, NULL, l_final_local_ego, mylabels, "top", group_colors, group_colors_o)
 box_allo_fdl <- box_plot(sm_agg %>% filter(condition=="allo_ret"), "group", "final_local_distance", "group", "session", "none", NULL, NULL, l_final_local_distance, mylabels, "top", group_colors, group_colors_o)
 box_allo_t <- box_plot(sm_agg %>% filter(condition=="allo_ret"), "group", "time", "group", "session", "none", NULL, NULL, l_time, mylabels, "top", group_colors, group_colors_o)
 box_allo_ple <- box_plot(sm_agg %>% filter(condition=="allo_ret"), "group", "path_length_error", "group", "session", "none", NULL, NULL, l_path_length_error, mylabels, "top", group_colors, group_colors_o)

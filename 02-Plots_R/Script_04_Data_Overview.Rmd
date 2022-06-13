@@ -191,8 +191,32 @@ rm(box_ego_delta_cfa, box_allo_delta_cfa)
 
 \newpage 
 
-** Egocentric goal alley**
-*TBD: PLOTS & STATS*
+**Egocentric goal alley (in allocentric probe trials with outer starts only)**
+
+```{r, warning=F, echo=F }
+
+box_allo_efa + labs(subtitle="Allocentroc")  +
+  plot_annotation("Percentage where egocentric alley was chosen in allocentric probe trials") + 
+  plot_layout(guides="collect") & theme(legend.position="bottom", legend.justification=c(0,0))
+
+rm(box_allo_efa, sm_agg2)
+```
+
+```{r, warning=F}
+
+# How often did participants chose the egocentric alley?
+temp1 <- data %>% filter(condition=="allo_ret", start_i %% 2==1)
+table(temp1$correct_final_alley_ego, temp1$group)
+temp1 %>% group_by(group) %>% summarise(mean(correct_final_alley_ego))
+```
+
+```{r, warning=F}
+# If participants did not find the correct goal, how often did they chose the egocentric alley
+temp2 <- data %>% filter(condition=="allo_ret", start_i %% 2==1, correct_final_alley==0)
+table(temp2$correct_final_alley_ego, temp2$group)
+temp2 %>% group_by(group) %>% summarise(mean(correct_final_alley_ego, na.rm=T))
+```
+
 
 \newpage 
 
@@ -228,9 +252,16 @@ rm(box_ego_fdl, box_allo_fdl)
 
 \newpage 
 
-**Final distance to egocentric (in allocentric probe trials)**
+**Final distance to egocentric (in allocentric probe trials with outer starts only)**
 
-*TBD: PLOTS*
+```{r, warning=F, echo=F }
+
+box_allo_fde + labs(subtitle="Allocentric") +
+  plot_annotation("Final distance to egocentric in allocentric probe trials") + 
+  plot_layout(guides="collect") & theme(legend.position="bottom", legend.justification=c(0,0))
+
+rm(box_allo_fde)
+```
 
 ```{r, stats_probe_fd_ego_in_allo }
 ```
