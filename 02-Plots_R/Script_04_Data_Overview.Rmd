@@ -35,16 +35,17 @@ Navigating a star-shaped maze environment ("Starmaze") with three goal locations
 library(tidyverse)
 library(patchwork)
 library(ggrepel)
-library(kableExtra)
 # install.packages('tinytex')
 # tinytex::install_tinytex() # latex for pdf file creation
 
 knitr::read_chunk('Script_03_Plot_Creator.R')
-#knitr::read_chunk('Script_02_Analyzer.R')
+knitr::read_chunk('Script_02_Analyzer.R')
 ```
 
+```{r, analysis_packages_and_sum_coding, include=FALSE, cache=FALSE}
+```
 
-```{r, load_data, include=FALSE}
+```{r, include=FALSE}
 file_name <- "../WP10_data/WP10_results/wp10_navigation_data.RData"
 load(file_name)
 sm_orig <- sm_data 
@@ -56,6 +57,8 @@ load(file_name)
 rm(file_name)
 ```
 
+```{r, analysis_data, include=FALSE}
+```
 
 ### Current sample
 Cross-sectional comparison between
@@ -105,11 +108,28 @@ line_t + line_ple + line_dge + line_rpl +
   plot_annotation("Navigation behaviour in learning trials (goal visible)") + 
   plot_layout(guides="collect") & theme(legend.position="top", legend.justification=c(0,0))
 
-#rm(line_t,line_ple, line_dge, line_rpl, sm_trialwise)
+rm(line_t,line_ple, line_dge, line_rpl, sm_trialwise)
 ```
  
-**TBD: add statistics**
+**Time**
 
+```{r, stats_learning_time }
+```
+
+**Path length error**
+
+```{r, stats_learning_ple }
+```
+
+**Distance to goal error**
+
+```{r, stats_learning_dge }
+```
+
+**Rotation (by path length)**
+
+```{r, stats_learning_rpl }
+```
 
 \newpage 
 
@@ -126,18 +146,25 @@ line_t + line_ple + line_dge + line_rpl +
 
 #### Accuracy 
 
-raw data 
+**Raw data**
 
-```{r, warning=F, echo=F }
+```{r, warning=F, echo=F, fig.height=4 }
 
-dots_ego + dots_allo +
-  #plot_annotation("Chosen locations in probe trials") + 
-  plot_layout(nrow=2)
+dots_ego 
 
-#rm(dots_ego, dots_allo)
+rm(dots_ego)
 ```
 
-correct final alley
+```{r, warning=F, echo=F, fig.height=4 }
+
+dots_allo 
+
+rm(dots_allo)
+```
+
+\newpage 
+
+**Correct final alley**
 
 ```{r, warning=F, echo=F }
 
@@ -145,9 +172,10 @@ box_ego_cfa + labs(subtitle="Egocentric") + box_allo_cfa + labs(subtitle="Alloce
   plot_annotation("Accuracy in probe trials") + 
   plot_layout(guides="collect") & theme(legend.position="bottom", legend.justification=c(0,0))
 
-#rm(box_ego_cfa, box_allo_cfa)
+rm(box_ego_cfa, box_allo_cfa)
 ```
-**TBD: add statistics**
+```{r, stats_probe_acc }
+```
 
 ```{r, warning=F, echo=F }
 
@@ -155,12 +183,20 @@ box_ego_delta_cfa + labs(subtitle="Egocentric") + box_allo_delta_cfa + labs(subt
   plot_annotation("Change in accuracy in probe trials") + 
   plot_layout(guides="collect") & theme(legend.position="bottom", legend.justification=c(0,0))
 
-#rm(box_ego_delta_cfa, box_allo_delta_cfa)
+rm(box_ego_delta_cfa, box_allo_delta_cfa)
 ```
 
-**TBD: add statistics**
+```{r, stats_probe_acc_change }
+```
 
-final distance (boundary consideration)
+\newpage 
+
+** Egocentric goal alley**
+*TBD: PLOTS & STATS*
+
+\newpage 
+
+**Final distance to goal (correct trials only)**
 
 ```{r, warning=F, echo=F }
 
@@ -168,8 +204,15 @@ box_ego_cor_fd + labs(subtitle="Egocentric") + box_allo_cor_fd + labs(subtitle="
   plot_annotation("Final distance in correctly solved probe trials") + 
   plot_layout(guides="collect") & theme(legend.position="bottom", legend.justification=c(0,0))
 
-#rm(box_ego_cor_fd, box_allo_cor_fd)
+rm(box_ego_cor_fd, box_allo_cor_fd)
 ```
+
+```{r, stats_probe_fd_in_corr }
+```
+
+\newpage 
+
+**Local final distance**
 
 ```{r, warning=F, echo=F }
 
@@ -177,14 +220,26 @@ box_ego_fdl + labs(subtitle="Egocentric") + box_allo_fdl + labs(subtitle="Alloce
   plot_annotation("Local final distance in all probe trials") + 
   plot_layout(guides="collect") & theme(legend.position="bottom", legend.justification=c(0,0))
 
-#rm(box_ego_fdl, box_allo_fdl)
+rm(box_ego_fdl, box_allo_fdl)
 ```
-**TBD: decide for one of the measures and add statistics** 
+
+```{r, stats_probe_fd_loc_in_all }
+```
+
+\newpage 
+
+**Final distance to egocentric (in allocentric probe trials)**
+
+*TBD: PLOTS*
+
+```{r, stats_probe_fd_ego_in_allo }
+```
 
 \newpage 
 
 #### Navigation behaviour: metric variables
-time, path length error, distance to goal error, distance to ego goal error, rotation 
+
+**Time**
 
 ```{r, warning=F, echo=F }
 
@@ -192,10 +247,15 @@ box_ego_t + labs(subtitle="Egocentric") + box_allo_t + labs(subtitle="Allocentri
   plot_annotation("Time in probe trials") + 
   plot_layout(guides="collect") & theme(legend.position="bottom", legend.justification=c(0,0))
 
-#rm(box_ego_t, box_allo_t)
+rm(box_ego_t, box_allo_t)
 ```
 
-**TBD: add statistics**
+```{r, stats_probe_time}
+```
+
+\newpage 
+
+**Path length error**
 
 ```{r, warning=F, echo=F }
 
@@ -203,10 +263,15 @@ box_ego_ple + labs(subtitle="Egocentric") + box_allo_ple + labs(subtitle="Alloce
   plot_annotation("Path length error in probe trials") + 
   plot_layout(guides="collect") & theme(legend.position="bottom", legend.justification=c(0,0))
 
-#rm(box_ego_ple, box_allo_ple)
+rm(box_ego_ple, box_allo_ple)
 ```
 
-**TBD: add statistics**
+```{r, stats_probe_ple}
+```
+
+\newpage 
+
+**Distance to goal error & distance to ego error** 
 
 ```{r, warning=F, echo=F }
 
@@ -216,10 +281,18 @@ box_ego_dge + labs(subtitle="Egocentric")  +
   plot_annotation("Distance to goal error & distance to ego error in probe trials") + 
   plot_layout(guides="collect") & theme(legend.position="bottom", legend.justification=c(0,0))
 
-#rm(box_ego_dge, box_allo_dge, box_allo_dege)
+rm(box_ego_dge, box_allo_dge, box_allo_dege)
 ```
 
-**TBD: add statistics**
+```{r, stats_probe_dge}
+```
+
+```{r, stats_probe_dge_ego_in_allo}
+```
+
+\newpage 
+
+**Rotation and rotation by path length**
 
 ```{r, warning=F, echo=F }
 
@@ -227,10 +300,8 @@ box_ego_r + labs(subtitle="Egocentric") + box_allo_r + labs(subtitle="Allocentri
   plot_annotation("Rotation (full turns) in probe trials") + 
   plot_layout(guides="collect") & theme(legend.position="bottom", legend.justification=c(0,0))
 
-#rm(box_ego_r, box_allo_r)
+rm(box_ego_r, box_allo_r)
 ```
-
-**TBD: add statistics**
 
 ```{r, warning=F, echo=F }
 
@@ -238,11 +309,14 @@ box_ego_rpl + labs(subtitle="Egocentric") + box_allo_rpl + labs(subtitle="Alloce
   plot_annotation("Relative rotation (full turns, normalized by path length) in probe trials") + 
   plot_layout(guides="collect") & theme(legend.position="bottom", legend.justification=c(0,0))
 
-#rm(box_ego_rpl, box_allo_rpl)
-#rm(list=ls(pattern="agg"), sm_change)
+rm(box_ego_rpl, box_allo_rpl)
+rm(list=ls(pattern="agg"), sm_change)
 ```
 
-**TBD: add statistics**
+```{r, stats_probe_rpl}
+```
+
+\newpage 
 
 #### Navigation behaviour: strategy use data 
 
@@ -265,14 +339,14 @@ bar_ego_strategy + labs(subtitle="Egocentric") + bar_allo_strategy + labs(subtit
   plot_annotation("Search strategy") + 
   plot_layout(guides="collect") & theme(legend.position="bottom", legend.justification=c(0,0))
 
-#rm(bar_ego_strategy, bar_allo_strategy, box_ego_strategy, box_allo_strategy, sm_strat, sm_strat2)
+rm(bar_ego_strategy, bar_allo_strategy, box_ego_strategy, box_allo_strategy, sm_strat, sm_strat2)
 ```
-**TBD: add statistics**
 
 \newpage 
 
 ### Correlations 
 
+*TBD*
 
 \newpage
 
@@ -289,10 +363,21 @@ layout + landmark_avg + gmda_avg +
   plot_annotation("Post-navigational memory tests") + 
   plot_layout(width=c(0.4, 0.2, 0.2), guides="collect") & theme(legend.position="bottom", legend.justification=c(0,0))
 
-#rm(list=ls(pattern="la"), gmda_avg)
+rm(layout, layout_avg, landmark_details, landmark_avg, gmda_avg)
 ```
 
-**TBD: add statistics**
+**Layout**
+
+```{r, stats_layout }
+```
+
+**Landmarks**
+```{r, stats_landmark }
+```
+
+**Positioning**
+```{r, stats_gmda }
+```
 
 \newpage 
 
@@ -305,11 +390,10 @@ layout + landmark_avg + gmda_avg +
 
 ```{r, warning=F, echo=F }
 
-mc_t + mc_pl + mc_v + mc_r + 
-  plot_annotation("Motor control practise task") + 
+mc_t + mc_pl + mc_v + mc_r +
+  plot_annotation("Motor control practise task") +
   plot_layout(guides="collect") & theme(legend.position="bottom", legend.justification=c(0,0))
 
-#rm(list=ls(pattern="mc"), sm_practise)
 ```
 
 ### Excluded trials 
@@ -323,6 +407,5 @@ ex1 + ex2 +
   plot_annotation("Overview of excluded trial data") + 
   plot_layout(guides="collect") & theme(legend.position="bottom", legend.justification=c(0,0))
 
-#rm(list=ls(pattern="mc"), sm_practise)
 ```
 
