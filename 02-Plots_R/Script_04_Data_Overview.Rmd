@@ -5,13 +5,13 @@ date: "`r format(Sys.time(), '%d %B, %Y')`"
 output: pdf_document
 ---
 
-### Task
+## Task
 
 Navigating a star-shaped maze environment ("Starmaze") with three goal locations.
 
 ![Map of the environment](./pics/Starmaze_Environment.jpg){width=400px}
 
-### Sessions
+## Sessions
 
 *Day 2*
 
@@ -60,7 +60,7 @@ rm(file_name)
 ```{r, analysis_data, include=FALSE}
 ```
 
-### Current sample
+## Current sample
 Cross-sectional comparison between
 
 * Young kids (6-7 yrs, n = `r length(unique(sm_data$id[sm_data$group=="YoungKids"]))`) 
@@ -68,7 +68,7 @@ Cross-sectional comparison between
 * Young adults (18-35 yrs, n = `r length(unique(sm_data$id[sm_data$group=="YoungAdults"]))`)
 
 
-### Variables of interest
+## Variables of interest
 
 In learning trials, the goal is visible, i.e. the trial is always completed successfully except if the participant needs more than 120 seconds (time out). In egocentric and allocentric retrieval trials, the goal is not visible. Participants go to the place where they remember the goal being located and press a button. 
 
@@ -97,7 +97,7 @@ $$\text{Rotation} = \frac {\sum |(z_{t}-z_{t+1})|} {path} * \frac {1} {360} $$
 
 \newpage
 
-### Memory encoding: Learning curves at Day 1
+## Memory encoding: Learning curves at Day 1
 
 ```{r, plots_learning_trialwise, include=F }
 ```
@@ -111,29 +111,29 @@ line_t + line_ple + line_dge + line_rpl +
 rm(line_t,line_ple, line_dge, line_rpl, sm_trialwise)
 ```
  
-**Time**
+### **Time**
 
 ```{r, stats_learning_time }
 ```
 
-**Path length error**
+### **Path length error**
 
 ```{r, stats_learning_ple }
 ```
 
-**Distance to goal error**
+### **Distance to goal error**
 
 ```{r, stats_learning_dge }
 ```
 
-**Rotation (by path length)**
+### **Rotation (by path length)**
 
 ```{r, stats_learning_rpl }
 ```
 
 \newpage 
 
-### Immediate (Day 1) vs. consolidated retrieval (Day 13): Egocentric and allocentric condition 
+## Immediate (Day 1) vs. consolidated retrieval (Day 13): Egocentric and allocentric condition 
 
 ```{r, plots_aggregated, include=F }
 ```
@@ -144,18 +144,18 @@ rm(line_t,line_ple, line_dge, line_rpl, sm_trialwise)
 ```{r, plots_probe_locations, include=F }
 ```
 
-#### Accuracy 
+### Accuracy 
 
 **Raw data**
 
-```{r, warning=F, echo=F, fig.height=4 }
+```{r, warning=F, echo=F, fig.height=5 }
 
 dots_ego 
 
 rm(dots_ego)
 ```
 
-```{r, warning=F, echo=F, fig.height=4 }
+```{r, warning=F, echo=F, fig.height=5 }
 
 dots_allo 
 
@@ -179,7 +179,7 @@ rm(box_ego_cfa, box_allo_cfa)
 
 ```{r, warning=F, echo=F }
 
-box_ego_delta_cfa + labs(subtitle="Egocentric") + box_allo_delta_cfa + labs(subtitle="Allocentroc")  +
+box_ego_delta_cfa + labs(subtitle="Egocentric") + box_allo_delta_cfa + labs(subtitle="Allocentric")  +
   plot_annotation("Change in accuracy in probe trials") + 
   plot_layout(guides="collect") & theme(legend.position="bottom", legend.justification=c(0,0))
 
@@ -195,7 +195,7 @@ rm(box_ego_delta_cfa, box_allo_delta_cfa)
 
 ```{r, warning=F, echo=F }
 
-box_allo_efa + labs(subtitle="Allocentroc")  +
+box_allo_efa + labs(subtitle="Allocentric")  +
   plot_annotation("Percentage where egocentric alley was chosen in allocentric probe trials") + 
   plot_layout(guides="collect") & theme(legend.position="bottom", legend.justification=c(0,0))
 
@@ -236,22 +236,6 @@ rm(box_ego_cor_fd, box_allo_cor_fd)
 
 \newpage 
 
-**Local final distance**
-
-```{r, warning=F, echo=F }
-
-box_ego_fdl + labs(subtitle="Egocentric") + box_allo_fdl + labs(subtitle="Allocentric") +
-  plot_annotation("Local final distance in all probe trials") + 
-  plot_layout(guides="collect") & theme(legend.position="bottom", legend.justification=c(0,0))
-
-rm(box_ego_fdl, box_allo_fdl)
-```
-
-```{r, stats_probe_fd_loc_in_all }
-```
-
-\newpage 
-
 **Final distance to egocentric (in allocentric probe trials with outer starts only)**
 
 ```{r, warning=F, echo=F }
@@ -268,7 +252,7 @@ rm(box_allo_fde)
 
 \newpage 
 
-#### Navigation behaviour: metric variables
+### Navigation behaviour: metric variables
 
 **Time**
 
@@ -349,7 +333,7 @@ rm(list=ls(pattern="agg"), sm_change)
 
 \newpage 
 
-#### Navigation behaviour: strategy use data 
+### Navigation behaviour: strategy use data 
 
 ```{r, plots_probe_strategy, include=F }
 ```
@@ -370,18 +354,18 @@ bar_ego_strategy + labs(subtitle="Egocentric") + bar_allo_strategy + labs(subtit
   plot_annotation("Search strategy") + 
   plot_layout(guides="collect") & theme(legend.position="bottom", legend.justification=c(0,0))
 
-rm(bar_ego_strategy, bar_allo_strategy, box_ego_strategy, box_allo_strategy, sm_strat, sm_strat2)
+rm(bar_ego_strategy, bar_allo_strategy, sm_strategy)
 ```
 
 \newpage 
 
-### Correlations 
+## Correlations 
 
 *TBD*
 
 \newpage
 
-### Post-navigational memory tasks
+## Post-navigational memory tasks
 
 ![Non-navigational memory retrieval at Day 14 (4 trials)](./pics/Overview_Session2_PostTest.jpg){width=500px}
 
@@ -397,22 +381,22 @@ layout + landmark_avg + gmda_avg +
 rm(layout, layout_avg, landmark_details, landmark_avg, gmda_avg)
 ```
 
-**Layout**
+### **Layout**
 
 ```{r, stats_layout }
 ```
 
-**Landmarks**
+### **Landmarks**
 ```{r, stats_landmark }
 ```
 
-**Positioning**
+### **Positioning**
 ```{r, stats_gmda }
 ```
 
 \newpage 
 
-### Motor Control Task 
+## Motor Control Task 
 
 ![Motor control practise task](./pics/Motor_Control.jpg){width=600px}
 
@@ -427,7 +411,7 @@ mc_t + mc_pl + mc_v + mc_r +
 
 ```
 
-### Excluded trials 
+## Excluded trials 
 
 ``` {r, plots_excluded, include=FALSE}
 ```

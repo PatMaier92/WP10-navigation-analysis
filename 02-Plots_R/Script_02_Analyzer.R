@@ -167,22 +167,21 @@ t2 <- pt_data %>%
 
 ## ---- stats_motor_control
 # time: GROUPS DIFFER SIGNIFICANTLY 
-motor.time <- t1way(time ~ group, data=data_p, tr=0.2, alpha=0.05, nboot=1000)
-motor.time_post <- lincon(time ~ group, data=data_p, tr=0.2, alpha=0.05,  nboot=1000, method="bonferroni") # default: hochberg
-motor.time_tbl <- as.data.frame(motor.time_post$comp)
-names(motor.time_tbl)[1:2] <- c("Group1", "Group2")
-motor.time_tbl %>% gt::gt()
-motor.time_tbl %>% flextable::flextable()
+t1way(time ~ group, data=data_p, tr=0.2, alpha=0.05, nboot=1000)
+lincon(time ~ group, data=data_p, tr=0.2, alpha=0.05, method="bonferroni") # default: hochberg
 
 # path length: GROUPS DIFFER SIGNIFICANTLY
 t1way(path_length ~ group, data=data_p, tr=0.2, alpha=0.05, nboot=1000)
-lincon(path_length ~ group, data=data_p, tr=0.2, alpha=0.05,  nboot=1000, method="bonferroni")
+lincon(path_length ~ group, data=data_p, tr=0.2, alpha=0.05, method="bonferroni")
 
 # velocity: no differences 
 t1way(velocity ~ group, data=data_p, tr=0.2, alpha=0.05, nboot=1000)
-lincon(velocity ~ group, data=data_p, tr=0.2, alpha=0.05,  nboot=1000, method="bonferroni")
+lincon(velocity ~ group, data=data_p, tr=0.2, alpha=0.05, method="bonferroni")
+
+# rotation: GROUPS DIFFER SIGNIFICANTLY  
+t1way(rotation_degrees ~ group, data=data_p, tr=0.2, alpha=0.05, nboot=1000)
+lincon(rotation_degrees ~ group, data=data_p, tr=0.2, alpha=0.05, method="bonferroni")
 ## ---- 
-# ::: MEANING: during practise, the younger the participants, the longer they take to complete the trial and the more they deviate from an ideal path (i.e. difficulties with joystick motor control) --> include time, path length and/or velocity as covariate ::: #
 
 
 # ######################################################### #
@@ -196,28 +195,29 @@ lincon(velocity ~ group, data=data_p, tr=0.2, alpha=0.05,  nboot=1000, method="b
 # watch out for convergence (stepwise reduction of random effects), normality of residuals, homoscedasticity and outliers # 
 # 1) standard lmer model 
 learn.time_base <- lme(time ~ group*block_f*trial_in_cond_c + cov_t + sex,
-                       random=list(id=pdDiag(~ block_f)),
+                       random=~1 | id, 
                        na.action=na.omit, data=data_l, method="ML")
 
 # 2) advanced lme models with variance estimation 
 learn.time_var1 <- update(learn.time_base, weights=varIdent(form=~1 | group))
-# learn.time_var2 <- update(learn.time_base, weights=varComb(varIdent(form=~1 | group),
-#                                                            varIdent(form=~1 | block_f)))
-anova.lme(learn.time_base, learn.time_var1)
-# chose model 1
+learn.time_var2 <- update(learn.time_base, weights=varComb(varIdent(form=~1 | group),
+                                                           varIdent(form=~1 | block_f)))
+anova.lme(learn.time_base, learn.time_var1, learn.time_var2)
+# chose model 2
 
 # diagnostics: naja 
-plot(learn.time_var1, resid(., type="p") ~ fitted(.), abline=0)
-plot(learn.time_var1, group ~ resid(., type="p"))
-plot(learn.time_var1, block_f ~ resid(., type="p"))
-qqnorm(resid(learn.time_var1))
-qqline(resid(learn.time_var1))
+plot(learn.time_var2, resid(., type="p") ~ fitted(.), abline=0)
+plot(learn.time_var2, group ~ resid(., type="p"))
+plot(learn.time_var2, block_f ~ resid(., type="p"))
+qqnorm(resid(learn.time_var2))
+qqline(resid(learn.time_var2))
 
 ## ---- stats_learning_time
 # re-fit final model with REML
 learn.time_final <- lme(time ~ group*block_f*trial_in_cond_c + cov_t + sex,
-                        random=list(id=pdDiag(~ block_f)),
-                        weights=varIdent(form=~1 | group), 
+                        random=~1 | id, 
+                        weights=varComb(varIdent(form=~1 | group),
+                                        varIdent(form=~1 | block_f)),
                         na.action=na.omit, data=data_l, method="REML")
 
 # random effects
@@ -245,7 +245,7 @@ rm(learn.time_final)
 # --- PATH LENGTH ERROR -- #
 ## 1) standard lme model without variance estimation 
 learn.path_base <- lme(path_length_error ~ group*block_f*trial_in_cond_c + cov_pl + sex,
-                       random=list(id=pdDiag(~ block_f)),
+                       random=~1 | id, 
                        na.action=na.omit, data=data_l, method="ML")
 
 ## 2) advanced lme models with variance estimation 
@@ -263,7 +263,7 @@ qqline(resid(learn.path_var1))
 ## ---- stats_learning_ple
 # re-fit final model with REML
 learn.path_final <-lme(path_length_error ~ group*block_f*trial_in_cond_c + cov_pl + sex,
-                       random=list(id=pdDiag(~ block_f)),
+                       random=~1 | id, 
                        weights=varIdent(form=~1 | group),
                        na.action=na.omit, data=data_l, method="REML")
 
@@ -276,8 +276,6 @@ learn.path_final$modelStruct$varStruct
 # statistics on fixed effects 
 anova.lme(learn.path_final, type="marginal", adjustSigma=T)
 emtrends(learn.path_final, pairwise ~ group, var="trial_in_cond_c", adjust="bonferroni")$contrasts
-emtrends(learn.path_final, pairwise ~ group | block_f, var="trial_in_cond_c", adjust="bonferroni")$contrasts
-emtrends(learn.path_final, pairwise ~ block_f | group, var="trial_in_cond_c", adjust="bonferroni")$contrasts
 emmeans(learn.path_final, pairwise ~ group | block_f, adjust="bonferroni")$contrasts
 emmeans(learn.path_final, pairwise ~ block_f | group, adjust="bonferroni")$contrasts
 rm(learn.path_final)
@@ -288,7 +286,7 @@ rm(learn.path_final)
 # -- DISTANCE TO GOAL ERROR -- #
 ## 1) standard lme model without variance estimation 
 learn.distance_base <- lme(target_distance_error~ group*block_f*trial_in_cond_c + cov_pl + sex,
-                           random=list(id=pdDiag(~ block_f)),
+                           random=~1 | id, 
                            na.action=na.omit, data=data_l, method="ML")
 
 ## 2) advanced lme models with variance estimation 
@@ -296,18 +294,19 @@ learn.distance_var1 <- update(learn.distance_base, weights=varIdent(form=~1 | gr
 learn.distance_var2 <- update(learn.distance_base, weights=varComb(varIdent(form=~1 | group),
                                                                    varIdent(form=~1 | block_f)))
 anova(learn.distance_base, learn.distance_var1, learn.distance_var2, test=T) 
-# chose model 1
+# chose model 2
 
 # diagnostics: ok 
-plot(learn.distance_var1, resid(., type="p") ~ fitted(.), abline=0)
-qqnorm(resid(learn.distance_var1))
-qqline(resid(learn.distance_var1))
+plot(learn.distance_var2, resid(., type="p") ~ fitted(.), abline=0)
+qqnorm(resid(learn.distance_var2))
+qqline(resid(learn.distance_var2))
 
 ## ---- stats_learning_dge
 # re-fit final model with REML
 learn.distance_final <- lme(target_distance_error~ group*block_f*trial_in_cond_c + cov_pl + sex,
-                            random=list(id=pdDiag(~ block_f)),
-                            weights=varIdent(form=~1 | group),
+                            random=~1 | id, 
+                            weights=varComb(varIdent(form=~1 | group),
+                                            varIdent(form=~1 | block_f)),
                             na.action=na.omit, data=data_l, method="REML")
 
 # random effects
@@ -318,7 +317,8 @@ learn.distance_final$modelStruct$varStruct
 
 # statistics on fixed effects 
 anova.lme(learn.distance_final, type="marginal", adjustSigma=T)
-emmeans(learn.distance_final, pairwise ~ group, adjust="bonferroni")$contrasts
+emmeans(learn.distance_final, pairwise ~ group | block_f, adjust="bonferroni")$contrasts
+emmeans(learn.distance_final, pairwise ~ block_f | group, adjust="bonferroni")$contrasts
 rm(learn.distance_final)
 ## ---- 
 
@@ -327,7 +327,7 @@ rm(learn.distance_final)
 # -- ROTATION (BY PATH LENGTH) -- # 
 ## 1) standard lme model without variance estimation 
 learn.rot_base <- lme(rotation_turns_by_path_length ~ group*block_f*trial_in_cond_c + cov_r + sex,
-                      random=list(id=pdDiag(~ block_f)),
+                      random=~1 | id, 
                       na.action=na.omit, data=data_l, method="ML")
 
 ## 2) advanced lme models with variance estimation 
@@ -345,7 +345,7 @@ qqline(resid(learn.rot_var2))
 ## ---- stats_learning_rpl
 # re-fit final model with REML
 learn.rot_final <- lme(rotation_turns_by_path_length ~ group*block_f*trial_in_cond_c + cov_r + sex,
-                       random=list(id=pdDiag(~ block_f)),
+                       random=~1 | id, 
                        weights=varComb(varIdent(form=~1 | group),
                                        varIdent(form=~1 | block_f)),
                        na.action=na.omit, data=data_l, method="REML")
@@ -359,9 +359,8 @@ learn.rot_final$modelStruct$varStruct
 
 # statistics on fixed effects 
 anova.lme(learn.rot_final, type="marginal", adjustSigma=T)
-emtrends(learn.rot_final, pairwise ~ group, var="trial_in_cond_c", adjust="bonferroni")$contrasts
-emtrends(learn.rot_final, pairwise ~ block_f, var="trial_in_cond_c", adjust="bonferroni")$contrasts
-emmeans(learn.rot_final, pairwise ~ group, adjust="bonferroni")$contrasts
+emtrends(learn.rot_final, pairwise ~ group, var="trial_in_cond_c", adjust="bonferroni")
+emtrends(learn.rot_final, pairwise ~ block_f, var="trial_in_cond_c", adjust="bonferroni")
 rm(learn.rot_final)
 ## ---- 
 # helper plots
@@ -433,8 +432,8 @@ table(temp$correct_final_alley_ego, temp$group)
 fisher.test(table(temp$correct_final_alley_ego, temp$group), simulate.p.value=T)
 
 # option 2) discANOVA from WRS2: tests hypothesis that independent groups have identical multinomial distributions. 
-discANOVA(correct_final_alley_ego ~ group, data=temp, nboot=500) 
-discmcp(correct_final_alley_ego ~ group, data=temp, alpha=0.05, nboot=500)
+discANOVA(correct_final_alley_ego ~ group, data=temp, nboot=2000) 
+discmcp(correct_final_alley_ego ~ group, data=temp, alpha=0.05, nboot=2000)
 rm(temp)
 
 # WHAT IS CHANCE LEVEL?
@@ -475,7 +474,7 @@ lincon(change_reldiff ~ group, data=data_prepost, tr=0.2, alpha=0.05, method="bo
 
 ## 1) standard lme model without variance estimation 
 probe.fd_correct <- lme(final_distance ~ group*session*condition,
-                       random=list(id=pdDiag(~ condition * session)), 
+                       random=list(id=pdDiag(~ condition + session)), 
                        data=data_c, method="ML")
 anova(probe.fd_correct)
 
@@ -504,7 +503,7 @@ qqline(resid(probe.fd_correct_var3))
 ## ---- stats_probe_fd_in_corr
 # re-fit final model with with REML
 probe.fd_correct_final <- lme(final_distance ~ group*session*condition,
-                              random=list(id=pdDiag(~ condition * session)), 
+                              random=list(id=pdDiag(~ condition + session)), 
                               weights=varComb(varIdent(form=~1 | group),
                                               varIdent(form=~1 | session)),
                               data=data_c, method="REML")
@@ -527,7 +526,7 @@ rm(probe.fd_correct_final)
 # -- FINAL DISTANCE IN ALL TRIALS TO LOCAL ENVIRONMENT -- #
 ## 1) standard lme model without variance estimation 
 probe.fd_local <- lme(final_local_distance ~ group*session*condition,
-                      random=list(id=pdDiag(~ condition * session)),
+                      random=list(id=pdDiag(~ condition + session)),
                       na.action=na.omit, data=data, method="ML")
 
 # diagnostics: non-normality, largest heterogeneity between groups, then sessions, then conditions 
@@ -559,7 +558,7 @@ qqline(resid(probe.fd_local_var2))
 ## ---- stats_probe_fd_loc_in_all
 # re-fit final model with with REML
 probe.fd_local_final <- lme(final_local_distance ~ group*session*condition,
-                            random=list(id=pdDiag(~ condition * session)),
+                            random=list(id=pdDiag(~ condition + session)),
                             weights=varComb(varIdent(form=~1 | group),
                                             varIdent(form=~1 | session)),
                             na.action=na.omit, data=data, method="REML")
@@ -582,7 +581,7 @@ rm(probe.fd_local_final)
 # -- FINAL DISTANCE TO EGOCENTRIC (in allocentric probe trials) -- # 
 ## 1) standard lme model without variance estimation 
 probe.fd_ego <- lme(final_distance_ego ~ group*session,
-                    random=list(id=pdDiag(~ session)),
+                    random=~1 | id,
                     data=data %>% filter(condition=="allo_ret", start_i %% 2 == 1), 
                     method="ML")
 
@@ -605,7 +604,7 @@ anova(probe.fd_ego, probe.fd_ego_var1, probe.fd_ego_var2, probe.fd_ego_var3, tes
 ## ---- stats_probe_fd_ego_in_allo
 # re-fit final model with with REML
 probe.fd_ego_final <- lme(final_distance_ego ~ group*session,
-                          random=list(id=pdDiag(~ session)),
+                          random=~1 | id,
                           data=data %>% filter(condition=="allo_ret", start_i %% 2 == 1), 
                           method="REML")
 
@@ -617,7 +616,6 @@ probe.fd_ego_final$modelStruct$varStruct
 
 # statistics on fixed effects 
 anova(probe.fd_ego_final, type="marginal", adjustSigma=T)
-emmeans(probe.fd_ego_final, pairwise ~ group | session, adjust="bonferroni")$contrasts
 emmeans(probe.fd_ego_final, pairwise ~ group, adjust="bonferroni")$contrasts
 ## ----
 # helper plots 
@@ -636,7 +634,7 @@ ggplot(data, aes(x=group, y=final_distance)) + geom_boxplot() + facet_grid(~ con
 
 ## 1) standard lme model without variance estimation 
 probe.time <- lme(time ~ group*session*condition + cov_t + sex,
-                  random=list(id=pdDiag(~ condition * session)),
+                  random=list(id=pdDiag(~ condition + session)),
                   na.action=na.omit, data=data, method="ML")
 
 # diagnostics: non-normality, largest heterogeneity between groups, then conditions, then sessions 
@@ -668,7 +666,7 @@ qqline(resid(probe.time_var4))
 ## ---- stats_probe_time
 # re-fit final model with with REML
 probe.time_final <-  lme(time ~ group*session*condition + cov_t + sex,
-                         random=list(id=pdDiag(~ condition * session)),
+                         random=list(id=pdDiag(~ condition + session)),
                          weights=varComb(varIdent(form=~1 | group),
                                          varIdent(form=~1 | condition)),
                          na.action=na.omit, data=data, method="REML")
@@ -681,7 +679,12 @@ probe.time_final$modelStruct$varStruct
 
 # statistics on fixed effects 
 anova(probe.time_final, type="marginal", adjustSigma=T)
-emmeans(probe.time_final, pairwise ~ group | condition | session, adjust="bonferroni")$contrasts
+emmeans(probe.time_final, pairwise ~ group | condition, adjust="bonferroni")$contrasts
+emmeans(probe.time_final, pairwise ~ condition | group, adjust="bonferroni")$contrasts
+emmeans(probe.time_final, pairwise ~ session | group, adjust="bonferroni")$contrasts
+emmeans(probe.time_final, pairwise ~ group | session, adjust="bonferroni")$contrasts
+emmeans(probe.time_final, pairwise ~ session | condition, adjust="bonferroni")$contrasts
+emmeans(probe.time_final, pairwise ~ condition | session, adjust="bonferroni")$contrasts
 rm(probe.time_final)
 ## ---- 
 # ::: MEANING: Strong group and condition main effects, no session main effect and some (potentially instable, because barely significant) interaction effects (e.g. stronger time group differences in allocentric compared to egocentric). 
@@ -737,10 +740,10 @@ probe.path_error_final$modelStruct$varStruct
 anova(probe.path_error_final, type="marginal", adjustSigma=T)
 emmeans(probe.path_error_final, pairwise ~ group | condition, adjust="bonferroni")$contrasts
 emmeans(probe.path_error_final, pairwise ~ condition | group, adjust="bonferroni")$contrasts
-emmeans(probe.path_error_final, pairwise ~ group | session, adjust="bonferroni")$contrasts
 emmeans(probe.path_error_final, pairwise ~ session | group, adjust="bonferroni")$contrasts
-emmeans(probe.path_error_final, pairwise ~ condition | session, adjust="bonferroni")$contrasts
+emmeans(probe.path_error_final, pairwise ~ group | session, adjust="bonferroni")$contrasts
 emmeans(probe.path_error_final, pairwise ~ session | condition, adjust="bonferroni")$contrasts
+emmeans(probe.path_error_final, pairwise ~ condition | session, adjust="bonferroni")$contrasts
 rm(probe.path_error_final)
 ## ----
 # helper plots 
@@ -882,8 +885,6 @@ probe.distance_target_final$modelStruct$varStruct
 
 # statistics on fixed effects 
 anova(probe.distance_target_final, type="marginal", adjustSigma=T)
-emmeans(probe.distance_target_final, pairwise ~ group | session, adjust="bonferroni")$contrasts
-emmeans(probe.distance_target_final, pairwise ~ session | group, adjust="bonferroni")$contrasts
 emmeans(probe.distance_target_final, pairwise ~ group | condition, adjust="bonferroni")$contrasts
 emmeans(probe.distance_target_final, pairwise ~ condition | session, adjust="bonferroni")$contrasts
 emmeans(probe.distance_target_final, pairwise ~ session | condition, adjust="bonferroni")$contrasts
@@ -1000,13 +1001,12 @@ probe.rot_final$modelStruct$varStruct
 
 # statistics on fixed effects 
 anova(probe.rot_final, type="marginal", adjustSigma=T)
-emmeans(probe.rot_final, pairwise ~ group | session, adjust="bonferroni")$contrasts
-emmeans(probe.rot_final, pairwise ~ session | group, adjust="bonferroni")$contrasts
 emmeans(probe.rot_final, pairwise ~ group | condition, adjust="bonferroni")$contrasts
 emmeans(probe.rot_final, pairwise ~ condition | group, adjust="bonferroni")$contrasts
+emmeans(probe.rot_final, pairwise ~ group | session, adjust="bonferroni")$contrasts
+emmeans(probe.rot_final, pairwise ~ session | group, adjust="bonferroni")$contrasts
 emmeans(probe.rot_final, pairwise ~ session | condition, adjust="bonferroni")$contrasts
 emmeans(probe.rot_final, pairwise ~ condition | session, adjust="bonferroni")$contrasts
-emmeans(probe.rot_final, pairwise ~ group | condition | session, adjust="bonferroni")$contrasts
 rm(probe.rot_final)
 ## ----
 # helper plots
@@ -1147,14 +1147,13 @@ data <- pt_data %>%
   filter(condition=="layout") %>% 
   drop_na(score)
 
-# option 1) fisher test: tests independence of rows and columns in a contingency table with fixed marginals.
+# fisher test: tests independence of rows and columns in a contingency table with fixed marginals.
 fisher.test(table(data$score, data$group))
 pairwise_fisher_test(table(data$score, data$group), p.adjust.method="bonferroni")
-
-# option 2) discANOVA from WRS2: tests hypothesis that independent groups have identical multinomial distributions. 
-discANOVA(score ~ group, data=data, nboot=500)
-discmcp(score ~ group, data=data, alpha=0.05, nboot=500) 
 ## ---- 
+# alternative discANOVA from WRS2: tests hypothesis that independent groups have identical multinomial distributions. 
+discANOVA(score ~ group, data=data, nboot=2000)
+discmcp(score ~ group, data=data, alpha=0.05, nboot=2000, method="bonferroni") 
 
 # ######################################################### #
 
@@ -1166,7 +1165,7 @@ data <- pt_data %>%
 
 # robust ANOVA (WSR2)
 t1way(score ~ group, data=data, tr=0.2, nboot=1000)
-lincon(score ~ group, data=data, tr=0.2, nboot=1000, method="bonferroni")
+lincon(score ~ group, data=data, tr=0.2, method="bonferroni")
 ## ---- 
 
 # ######################################################### #
@@ -1179,7 +1178,7 @@ data <- pt_data %>%
 
 # robust ANOVA (WSR2)
 t1way(score ~ group, data=data, tr=0.2, nboot=1000)
-lincon(score ~ group, data=data, tr=0.2, nboot=1000, method="bonferroni")
+lincon(score ~ group, data=data, tr=0.2, method="bonferroni")
 ## ---- 
 
 # ######################################################### #
@@ -1203,23 +1202,23 @@ boxplot <- function(d){
 }
 
 boxplot(CanOrg)
-lincon(score ~ group, data=CanOrg, tr=0.2, nboot=1000, method="bonferroni")
+lincon(score ~ group, data=CanOrg, tr=0.2, method="bonferroni")
 
 boxplot(CanAcc)
-lincon(score ~ group, data=CanAcc, tr=0.2, nboot=1000, method="bonferroni")
+lincon(score ~ group, data=CanAcc, tr=0.2, method="bonferroni")
 
 boxplot(DistAcc)
-lincon(score ~ group, data=DistAcc, tr=0.2, nboot=1000, method="bonferroni")
+lincon(score ~ group, data=DistAcc, tr=0.2, method="bonferroni")
 
 boxplot(AngleAcc)
-lincon(score ~ group, data=AngleAcc, tr=0.2, nboot=1000, method="bonferroni")
+lincon(score ~ group, data=AngleAcc, tr=0.2, method="bonferroni")
 
 # composite score
 GMDA <- data_gmda %>% filter(gmda_measure %in% c("SQRT(CanOrg)", "CanAcc", "DistAcc", "AngleAcc")) %>%
   group_by(id, group) %>% summarise(score=mean(score))
 
 boxplot(GMDA)
-lincon(score ~ group, data=GMDA, tr=0.2, nboot=1000, method="bonferroni")
+lincon(score ~ group, data=GMDA, tr=0.2, method="bonferroni")
 
 rm(data_gmda, GMDA, CanOrg, CanAcc, DistAcc, AngleAcc, boxplot)
 ## ---- 

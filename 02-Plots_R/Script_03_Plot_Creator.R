@@ -45,7 +45,7 @@ mylabels <- as_labeller(c(`YoungKids` = "6-7yo", `OldKids` = "9-10yo", `YoungAdu
                           `main_learn` = "Learning", `main_ret` = "Retrieval", 
                           `allo_ret` = "Allocentric", `ego_ret` = "Egocentric",
                           `1`="T1 - Immediate", `2`=" T2 - Delayed", `Consolidation` = "(T2-T1)/T1", `collapsed` = "T1 & T2",
-                          `direct` = "direct", `detour` = "detour",`reoriented` = "reoriented",
+                          `direct` = "direct", `detour` = "detour",`reorient` = "reorient",
                           `layout`="Layout", `landmarks`="Landmarks", 
                           `goals`="Goals", `position`="Positioning",
                           `1-FourSquare`="4-Square", `2-FourFork`="4-Fork", `3-FourX`="4-X", 
@@ -59,7 +59,7 @@ group_colors <- c("YoungKids"="#FFE476", "OldKids"="#6699FF", "YoungAdults"="#C4
 group_colors_o <-  c("YoungKids"="#CC6600", "OldKids"="#003399", "YoungAdults"="#667270")
 type_colors <- c("main_learn"="#667270", "main_ret"="#C4CAC9", "allo_ret"="#FDBF6F", "ego_ret"="#A6CEE3")
 type_colors_o <- c("main_learn"="#667270", "main_ret"="#667270", "allo_ret"="#FF7F00", "ego_ret"="#1F78B4")
-strategy_colors <- c("direct"="#E4534D", "detour"="#ED8E8A", "reoriented"="#F9DAD9")
+strategy_colors <- c("direct"="#E4534D", "detour"="#ED8E8A", "reorient"="#F9DAD9")
 landmark_colors <- rev(RColorBrewer::brewer.pal(3,"Blues"))
 
 # variable labels
@@ -79,7 +79,7 @@ l_dtw_path_distance <- "DTW path distance error"
 l_target_distance_error <- "distance to goal error"
 l_target_distance_error_ego <- "distance to ego error"
 l_target_distance_error_chosen <- "distance to chosen goal error"
-l_rotation <- "rotation (turns)"
+l_rotation <- "rotation / 360"
 l_rotation_by_path <- "rotation / 360/ path length"
 l_search_strategy <- "usage in %"
 ## ----
@@ -358,7 +358,7 @@ sm_practise <- sm_data %>%
 mc_t <- box_plot(sm_practise, "group", "time", "group", "none", "none", NULL, NULL, l_time, mylabels, "top", group_colors, group_colors_o, mcVariant=T, mc_outlier="out_time")
 mc_pl <- box_plot(sm_practise, "group", "path_length_error", "group", "none", "none", NULL, NULL, l_path_length_error, mylabels, "top", group_colors, group_colors_o, mcVariant=T, mc_outlier="out_path")
 mc_v <- box_plot(sm_practise, "group", "velocity", "group", "none", "none", NULL, NULL, l_velocity, mylabels, "top", group_colors, group_colors_o, mcVariant=T, mc_outlier="out_velocity")
-mc_r <- box_plot(sm_practise, "group", "rotation_degrees", "group", "none", "none", NULL, NULL, l_velocity, mylabels, "top", group_colors, group_colors_o, mcVariant=T, mc_outlier="out_velocity")
+mc_r <- box_plot(sm_practise, "group", "rotation_degrees", "group", "none", "none", NULL, NULL, l_rotation, mylabels, "top", group_colors, group_colors_o, mcVariant=T, mc_outlier="out_velocity")
 ## ----
 rm(sm_practise, is_outlier)
 
@@ -564,30 +564,18 @@ rm(sm_locations)
 # :::     strategy plots                  ::: #
 
 ## ---- plots_probe_strategy
-# strategy box plots
-sm_strat <- sm_data %>%
-  filter(condition %in% c("allo_ret","ego_ret")) %>% 
-  group_by(id, group, session, condition, search_strategy) %>% 
-  tally() %>%
-  mutate(percent=n/sum(n))
-
-box_ego_strategy <- box_plot(sm_strat %>% filter(condition=="ego_ret"), "search_strategy", "percent", "search_strategy", "session", "group", "Egocentric trials", NULL, l_search_strategy,  mylabels, "bottom", strategy_colors, c("black", "black", "black"))
-
-box_allo_strategy <- box_plot(sm_strat %>% filter(condition=="allo_ret"), "search_strategy", "percent", "search_strategy", "session", "group", "Allocentric trials", NULL, l_search_strategy,  mylabels, "bottom", strategy_colors, c("black", "black", "black"))
-
-
 # strategy stacked bar plots 
-sm_strat2 <- sm_data %>%
+sm_strategy <- sm_data %>%
   filter(condition %in% c("allo_ret","ego_ret")) %>% 
   group_by(group, session, condition, search_strategy) %>% 
   tally() %>%
   mutate(percent=n/sum(n))
 
-bar_ego_strategy <- bar_plot(sm_strat2 %>% filter(condition=="ego_ret"), "group", "percent", "search_strategy", "session", mylabels, "Egocentric trials", NULL, l_search_strategy, "bottom", strategy_colors, c("black", "black", "black"), isPalette=F, stackReverse=T)
+bar_ego_strategy <- bar_plot(sm_strategy %>% filter(condition=="ego_ret"), "group", "percent", "search_strategy", "session", mylabels, "Egocentric trials", NULL, l_search_strategy, "bottom", strategy_colors, c("black", "black", "black"), isPalette=F, stackReverse=T)
 
-bar_allo_strategy <- bar_plot(sm_strat2 %>% filter(condition=="allo_ret"), "group", "percent", "search_strategy", "session", mylabels, "Allocentric trials", NULL, l_search_strategy, "bottom", strategy_colors, c("black", "black", "black"), isPalette=F, stackReverse=T)
+bar_allo_strategy <- bar_plot(sm_strategy %>% filter(condition=="allo_ret"), "group", "percent", "search_strategy", "session", mylabels, "Allocentric trials", NULL, l_search_strategy, "bottom", strategy_colors, c("black", "black", "black"), isPalette=F, stackReverse=T)
 ## ----
-rm(sm_strat, sm_strat2)
+rm(sm_strategy)
 
 # ######################################################### #
 
@@ -682,7 +670,7 @@ box_ego_cfa_1 <- box_plot(sm_agg %>% filter(condition=="ego_ret") %>% filter(ses
 box_ego_delta_cfa_n <- change_box_plot(sm_change %>% filter(condition=="ego_ret"), "group", "cfa_ratio", "group", "session", NULL, mylabels, "none", group_colors, group_colors_o, ylabel="(T2-T1)/T1")
 box_allo_cfa_1 <- box_plot(sm_agg %>% filter(condition=="allo_ret") %>% filter(session==1), "group", "correct_final_alley", "group", "session", "none", "\nAllocentric probe", NULL, "% correct goal area", mylabels, "none", group_colors, group_colors_o)
 box_allo_delta_cfa_n <- change_box_plot(sm_change %>% filter(condition=="allo_ret"), "group", "cfa_ratio", "group", "session", NULL, mylabels, "none", group_colors, group_colors_o, ylabel="(T2-T1)/T1")
-#bar_allo_strategy_n <- bar_plot(sm_strat2 %>% filter(condition=="allo_ret"), "group", "percent", "search_strategy", "session", mylabels, "\nStrategy in allocentric probe", NULL, l_search_strategy, "bottom", landmark_colors, c("black", "black", "black"), isPalette=F, stackReverse=T)
+#bar_allo_strategy_n <- bar_plot(sm_strategy %>% filter(condition=="allo_ret"), "group", "percent", "search_strategy", "session", mylabels, "\nStrategy in allocentric probe", NULL, l_search_strategy, "bottom", landmark_colors, c("black", "black", "black"), isPalette=F, stackReverse=T)
 bar_allo_detailed_n <- bar_plot(sm_allo %>% filter(session==1), "group", "percent", "search_strategy_in_allo", "session", mylabels, "Strategy in allocentric probe", NULL, l_search_strategy, "bottom", strategy_colors_allo, c("black", "black", "black", "black", "black", "black"), isPalette=F, stackReverse=T) & theme(legend.key.size=unit(0.5, 'cm'))
 
 
