@@ -116,6 +116,52 @@ data_prepost <- data %>%
 rm(covariates)
 ## ---- 
 
+## ---- contrast_matrices 
+con_list_group_block <- list(
+  "b1_v_b2_YCH" = c(1, 0, 0, -1, 0, 0, 0, 0, 0),
+  "b1_v_b3_YCH" = c(1, 0, 0, 0, 0, 0, -1, 0, 0),
+  "b2_v_b3_YCH" = c(0, 0, 0, 1, 0, 0, -1, 0, 0),
+  "b1_v_b2_OCH" = c(0, 1, 0, 0, -1, 0, 0, 0, 0),
+  "b1_v_b3_OCH" = c(0, 1, 0, 0, 0, 0, 0, -1, 0),
+  "b2_v_b3_OCH" = c(0, 0, 0, 0, 1, 0, 0, -1, 0),
+  "b1_v_b2_YAD" = c(0, 0, 1, 0, 0, -1, 0, 0, 0),
+  "b1_v_b3_YAD" = c(0, 0, 1, 0, 0, 0, 0, 0, -1),
+  "b2_v_b3_YAD" = c(0, 0, 0, 0, 0, 1, 0, 0, -1),
+  "YCH_v_OCH_b1" = c(1, -1, 0, 0, 0, 0, 0, 0, 0),
+  "YCH_v_YAD_b1" = c(1, 0, -1, 0, 0, 0, 0, 0, 0),
+  "OCH_v_YAD_b1" = c(0, 1, -1, 0, 0, 0, 0, 0, 0),
+  "YCH_v_OCH_b2" = c(0, 0, 0, 1, -1, 0, 0, 0, 0),
+  "YCH_v_YAD_b2" = c(0, 0, 0, 1, 0, -1, 0, 0, 0),
+  "OCH_v_YAD_b2" = c(0, 0, 0, 0, 1, -1, 0, 0, 0),
+  "YCH_v_OCH_b3" = c(0, 0, 0, 0, 0, 0, 1, -1, 0),
+  "YCH_v_YAD_b3" = c(0, 0, 0, 0, 0, 0, 1, 0, -1),
+  "OCH_v_YAD_b3" = c(0, 0, 0, 0, 0, 0, 0, 1, -1))
+
+con_list_group_session <- list(
+  "t1_v_t2_YCH" = c(1, 0, 0, -1, 0, 0),
+  "t1_v_t2_OCH" = c(0, 1, 0, 0, -1, 0),
+  "t1_v_t2_YAD" = c(0, 0, 1, 0, 0, -1),
+  "YCH_v_OCH_t1" = c(1, -1, 0, 0, 0, 0),
+  "YCH_v_YAD_t1" = c(1, 0, -1, 0, 0, 0),
+  "OCH_v_YAD_t1" = c(0, 1, -1, 0, 0, 0)) 
+
+con_list_group_condition <- list(
+  "a_vs_e_YCH" = c(1, 0, 0, -1, 0, 0),
+  "a_vs_e_OCH" = c(0, 1, 0, 0, -1, 0),
+  "a_vs_e_YAD" = c(0, 0, 1, 0, 0, -1),
+  "YCH_v_OCH_a" = c(1, -1, 0, 0, 0, 0),
+  "YCH_v_YAD_a" = c(1, 0, -1, 0, 0, 0),
+  "OCH_v_YAD_a" = c(0, 1, -1, 0, 0, 0),
+  "YCH_v_OCH_e" = c(0, 0, 0, 1, -1, 0),
+  "YCH_v_YAD_e" = c(0, 0, 0, 1, 0, -1),
+  "OCH_v_YAD_e" = c(0, 0, 0, 0, 1, -1)) 
+
+con_list_session_condition <- list(
+  "t1_v_t2_a" = c(1, -1, 0, 0),
+  "t1_v_t2_e" = c(0, 0, 1, -1),
+  "a_vs_e_t1" = c(1, 0, -1, 0)) 
+## ----
+
 
 # ######################################################### #
 # ######################################################### #
@@ -275,10 +321,11 @@ learn.path_final$modelStruct$varStruct
 
 # statistics on fixed effects 
 anova.lme(learn.path_final, type="marginal", adjustSigma=T)
-emtrends(learn.path_final, pairwise ~ group, var="trial_in_cond_c", adjust="bonferroni")$contrasts
-emmeans(learn.path_final, pairwise ~ group | block_f, adjust="bonferroni")$contrasts
-emmeans(learn.path_final, pairwise ~ block_f | group, adjust="bonferroni")$contrasts
-rm(learn.path_final)
+emm <- emmeans(learn.path_final, ~ group * block_f)
+con <- contrast(emm, method=con_list_group_block, adjust="bonferroni")
+con
+# confint(c, adjust="bonferroni")
+rm(learn.path_final, emm, con)
 ## ---- 
 
 # ######################################################### #
@@ -317,9 +364,10 @@ learn.distance_final$modelStruct$varStruct
 
 # statistics on fixed effects 
 anova.lme(learn.distance_final, type="marginal", adjustSigma=T)
-emmeans(learn.distance_final, pairwise ~ group | block_f, adjust="bonferroni")$contrasts
-emmeans(learn.distance_final, pairwise ~ block_f | group, adjust="bonferroni")$contrasts
-rm(learn.distance_final)
+emm <- emmeans(learn.distance_final, ~ group * block_f)
+con <- contrast(emm, method=con_list_group_block, adjust="bonferroni")
+con
+rm(learn.distance_final, emm, con)
 ## ---- 
 
 # ######################################################### #
@@ -679,13 +727,16 @@ probe.time_final$modelStruct$varStruct
 
 # statistics on fixed effects 
 anova(probe.time_final, type="marginal", adjustSigma=T)
-emmeans(probe.time_final, pairwise ~ group | condition, adjust="bonferroni")$contrasts
-emmeans(probe.time_final, pairwise ~ condition | group, adjust="bonferroni")$contrasts
-emmeans(probe.time_final, pairwise ~ session | group, adjust="bonferroni")$contrasts
-emmeans(probe.time_final, pairwise ~ group | session, adjust="bonferroni")$contrasts
-emmeans(probe.time_final, pairwise ~ session | condition, adjust="bonferroni")$contrasts
-emmeans(probe.time_final, pairwise ~ condition | session, adjust="bonferroni")$contrasts
-rm(probe.time_final)
+emm1 <- emmeans(probe.time_final, ~ group * session)
+con1 <- contrast(emm1, con_list_group_session, adjust="bonferroni")
+con1
+emm2 <- emmeans(probe.time_final, ~ group * condition)
+con2 <- contrast(emm2, con_list_group_condition, adjust="bonferroni")
+con2
+emm3 <- emmeans(probe.time_final, ~ session * condition)
+con3 <- contrast(emm3, con_list_session_condition, adjust="bonferroni")
+con3
+rm(probe.time_final, con1, con2, con3, emm1, emm2, emm3)
 ## ---- 
 # ::: MEANING: Strong group and condition main effects, no session main effect and some (potentially instable, because barely significant) interaction effects (e.g. stronger time group differences in allocentric compared to egocentric). 
 # Explore further/make sure not anti-conservative ::: #
@@ -738,13 +789,13 @@ probe.path_error_final$modelStruct$varStruct
 
 # statistics on fixed effects 
 anova(probe.path_error_final, type="marginal", adjustSigma=T)
-emmeans(probe.path_error_final, pairwise ~ group | condition, adjust="bonferroni")$contrasts
-emmeans(probe.path_error_final, pairwise ~ condition | group, adjust="bonferroni")$contrasts
-emmeans(probe.path_error_final, pairwise ~ session | group, adjust="bonferroni")$contrasts
-emmeans(probe.path_error_final, pairwise ~ group | session, adjust="bonferroni")$contrasts
-emmeans(probe.path_error_final, pairwise ~ session | condition, adjust="bonferroni")$contrasts
-emmeans(probe.path_error_final, pairwise ~ condition | session, adjust="bonferroni")$contrasts
-rm(probe.path_error_final)
+emm1 <- emmeans(probe.path_error_final, ~ group * condition)
+con1 <- contrast(emm1, con_list_group_condition, adjust="bonferroni")
+con1
+emm2 <- emmeans(probe.path_error_final, ~ session * condition)
+con2 <- contrast(emm2, con_list_session_condition, adjust="bonferroni")
+con2
+rm(probe.path_error_final, con1, con2, emm1, emm2)
 ## ----
 # helper plots 
 ggplot(data, aes(x=path_length_error)) + geom_histogram()
@@ -885,11 +936,13 @@ probe.distance_target_final$modelStruct$varStruct
 
 # statistics on fixed effects 
 anova(probe.distance_target_final, type="marginal", adjustSigma=T)
-emmeans(probe.distance_target_final, pairwise ~ group | condition, adjust="bonferroni")$contrasts
-emmeans(probe.distance_target_final, pairwise ~ condition | session, adjust="bonferroni")$contrasts
-emmeans(probe.distance_target_final, pairwise ~ session | condition, adjust="bonferroni")$contrasts
-emmeans(probe.distance_target_final, pairwise ~ condition | session, adjust="bonferroni")$contrasts
-rm(probe.distance_target_final)
+emm1 <- emmeans(probe.distance_target_final, ~ group * condition)
+con1 <- contrast(emm1, con_list_group_condition, adjust="bonferroni")
+con1
+emm2 <- emmeans(probe.distance_target_final, ~ session * condition)
+con2 <- contrast(emm2, con_list_session_condition, adjust="bonferroni")
+con2
+rm(probe.distance_target_final, con1, con2, emm1, emm2)
 ## ----
 # helper plots 
 ggplot(data, aes(x=target_distance_error)) + geom_histogram()
@@ -954,7 +1007,7 @@ ggplot(data %>% filter(condition=="allo_ret", start_i %% 2 == 1), aes(x=group, y
 
 # ######################################################### #
 
-# -- ROTATION BY PATH LENGHT -- # 
+# -- ROTATION BY PATH LENGTH -- # 
 ## 1) standard lme model without variance estimation 
 probe.rot <- lme(rotation_turns_by_path_length ~ group*session*condition + cov_r + sex,
                  random=list(id=pdDiag(~ condition + session)),
@@ -1001,13 +1054,13 @@ probe.rot_final$modelStruct$varStruct
 
 # statistics on fixed effects 
 anova(probe.rot_final, type="marginal", adjustSigma=T)
-emmeans(probe.rot_final, pairwise ~ group | condition, adjust="bonferroni")$contrasts
-emmeans(probe.rot_final, pairwise ~ condition | group, adjust="bonferroni")$contrasts
-emmeans(probe.rot_final, pairwise ~ group | session, adjust="bonferroni")$contrasts
-emmeans(probe.rot_final, pairwise ~ session | group, adjust="bonferroni")$contrasts
-emmeans(probe.rot_final, pairwise ~ session | condition, adjust="bonferroni")$contrasts
-emmeans(probe.rot_final, pairwise ~ condition | session, adjust="bonferroni")$contrasts
-rm(probe.rot_final)
+emm1 <- emmeans(probe.rot_final, ~ group * condition)
+con1 <- contrast(emm1, con_list_group_condition, adjust="bonferroni")
+con1
+emm2 <- emmeans(probe.rot_final, ~ session * condition)
+con2 <- contrast(emm2, con_list_session_condition, adjust="bonferroni")
+con2
+rm(probe.rot_final, con1, con2, emm1, emm2)
 ## ----
 # helper plots
 ggplot(data, aes(x=rotation_turns_by_path_length)) + geom_histogram()
@@ -1063,12 +1116,13 @@ probe.rot_d_final$modelStruct$varStruct
 
 # statistics on fixed effects 
 anova(probe.rot_d_final, type="marginal", adjustSigma=T)
-emmeans(probe.rot_d_final, pairwise ~ group | session, adjust="bonferroni")$contrasts
-emmeans(probe.rot_d_final, pairwise ~ session | group, adjust="bonferroni")$contrasts
-emmeans(probe.rot_d_final, pairwise ~ session | condition, adjust="bonferroni")$contrasts
-emmeans(probe.rot_d_final, pairwise ~ condition | session, adjust="bonferroni")$contrasts
-emmeans(probe.rot_d_final, pairwise ~ group | condition | session, adjust="bonferroni")$contrasts
-rm(probe.rot_d_final)
+emm1 <- emmeans(probe.rot_d_final, ~ group * session)
+con1 <- contrast(emm1, con_list_group_session, adjust="bonferroni")
+con1
+emm2 <- emmeans(probe.rot_d_final, ~ session * condition)
+con2 <- contrast(emm2, con_list_session_condition, adjust="bonferroni")
+con2
+rm(probe.rot_d_final, con1, con2, emm1, emm2)
 ## ---- 
 # helper plots
 ggplot(data, aes(x=rotation_degrees)) + geom_histogram()

@@ -60,6 +60,9 @@ rm(file_name)
 ```{r, analysis_data, include=FALSE}
 ```
 
+```{r, contrast_matrices, include=FALSE}
+```
+
 ## Current sample
 Cross-sectional comparison between
 
