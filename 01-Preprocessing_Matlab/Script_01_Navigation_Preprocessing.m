@@ -367,7 +367,8 @@ tic;
                 
                 % evaluate global accuracy of chosen location
                 sm.participant(p).session(s).trial(k).correct_final_alley=sm.participant(p).session(s).trial(k).goal_alley==sm.participant(p).session(s).trial(k).chosen_alley_i; 
-                sm.participant(p).session(s).trial(k).correct_final_alley_ego=sm.participant(p).session(s).trial(k).ego_alley==sm.participant(p).session(s).trial(k).chosen_alley_i;        
+                sm.participant(p).session(s).trial(k).correct_final_alley_ego=sm.participant(p).session(s).trial(k).ego_alley==sm.participant(p).session(s).trial(k).chosen_alley_i ...
+                    && sm.participant(p).session(s).trial(k).correct_final_alley==0;        
 
                 % evaluate local accuracy of chosen location: see later
                 
@@ -623,7 +624,7 @@ tic;
                 clear x_line_motor y_line_motor;     
             end
             
-            clear x* y* t r *seq* zones* name;             
+            clear x* y* t r ideal_path* origin* *seq* zones* name;             
         end
         
         clear files trial_data input_folder; 
