@@ -1,46 +1,21 @@
-function [goal_x_local, goal_y_local]=computeLocalGoalLocation(chosen_alley,...
-    goal_alley, goal_x, goal_y)
-% computeLocalGoalLocation: Function for determining theoretical local goal
+function [goal_x_local, goal_y_local]=computeLocalGoalLocation(goal_x_in_alleys,...
+    goal_y_in_alleys, chosen_alley, goal)
+% computeLocalGoalLocation: Function for determining hypothetical local goal
 % location in chosen goal alley. 
 %
 % Input:
+% goal_x_in_alleys, goal_y_in_alleys are matrices with coordinates (float)
 % chosen alley, goal alley (integer)
-% goal_x, goal_y are coordinates (float)
 % 
 % Returns: goal_x_local, goal_y_local are local coordinates in chosen alley (float)
 
-% set default (used when chosen alley in inner rectangle)
+% set default (used when chosen alley is in inner rectangle)
 goal_x_local=999; goal_y_local=999;
 
-% compute local goal location if chosen alley is in any outer alley (incl. triangle) 
+% get local goal location if chosen alley is in any outer alley (incl. triangle) 
 if mod(chosen_alley,2)~=0
-    diff=chosen_alley-goal_alley;
-    if diff~=0
-        % correction for negative diff (i.e. when chosen=1, goal=9)
-        if diff<0
-            diff=diff+10;
-        end
-        
-        % original goal
-        v = [goal_x ; goal_y];
-        % define center of rotation
-        x_center = 0.5; y_center = 0.5;
-        % create a matrix
-        center = repmat([x_center; y_center], 1, length(v));
-        
-        % create rotation matrix
-        theta=-360/5*diff/2; % rotates clockwise in 72° steps
-        R = [cosd(theta) -sind(theta); sind(theta) cosd(theta)];
-        
-        % do rotation
-        vo = R*(v - center) + center;
-        
-        % get rotated x- and y-data
-        goal_x_local = vo(1,1);
-        goal_y_local = vo(2,1);
-    else
-        goal_x_local=goal_x; goal_y_local=goal_y;
-    end
+    goal_x_local=goal_x_in_alleys(goal,(chosen_alley + 1)/2);
+    goal_y_local=goal_y_in_alleys(goal,(chosen_alley + 1)/2);
 end
 
 % % test plot
