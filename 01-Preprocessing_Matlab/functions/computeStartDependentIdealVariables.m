@@ -163,6 +163,15 @@ clear path_nodes x1 y1 x2 y2 length* isValid *_s2;
 [x_line_A, y_line_A, ideal_path_A]=computeShortestPath(cp_polyshape, polyshape_array,...
     Graph, graph_x, graph_y, start, goal_x_in_alleys(goal,1), goal_y_in_alleys(goal,1));
 
+% central_polygon=cp_polyshape
+% full_polyshape=polyshape_array
+% graph=Graph
+% graph_x
+% graph_y
+% start
+% end_x=goal_x_in_alleys(goal,1)
+% end_y=goal_y_in_alleys(goal,1)
+
 [x_line_C, y_line_C, ideal_path_C]=computeShortestPath(cp_polyshape, polyshape_array,...
     Graph, graph_x, graph_y, start, goal_x_in_alleys(goal,2), goal_y_in_alleys(goal,2));
 
@@ -175,14 +184,18 @@ clear path_nodes x1 y1 x2 y2 length* isValid *_s2;
 [x_line_I, y_line_I, ideal_path_I]=computeShortestPath(cp_polyshape, polyshape_array,...
     Graph, graph_x, graph_y, start, goal_x_in_alleys(goal,5), goal_y_in_alleys(goal,5));
 
-% % test plot
-% figure; plot(polyshape_array); hold on; 
-% plot(x_line_A, y_line_A, 'k-.',...
-%     x_line_C, y_line_C, 'r-.',...
-%     x_line_E, y_line_E, 'b-.',...
-%     x_line_G, y_line_G, 'g-.',...
-%     x_line_I, y_line_I, 'y-.',...
-%     x_line_chosen, y_line_chosen, 'p--');
-% xlim([0 1]); ylim([0 1]); hold off; 
+% test plot
+figure; plot(polyshape_array); hold on; 
+plot(x_line_A, y_line_A, 'k-.',...
+    x_line_C, y_line_C, 'r-.',...
+    x_line_E, y_line_E, 'b-.',...
+    x_line_G, y_line_G, 'g-.',...
+    x_line_I, y_line_I, 'y-.',...
+    x_line_chosen, y_line_chosen, 'p--');
+xlim([0 1]); ylim([0 1]); hold off; 
+
+figure; plot(polyshape_array); hold on; 
+plot(x_line_chosen, y_line_chosen, 'p--');
+xlim([0 1]); ylim([0 1]); hold off; 
 
 end
