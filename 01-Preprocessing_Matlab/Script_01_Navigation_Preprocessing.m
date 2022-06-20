@@ -288,7 +288,7 @@ tic;
             if sm.participant(p).session(s).trial(k).condition~="practise"
                 %% compute support variables depending on this trial's settings
                 % ideal path coordinates & ideal path length
-                % Caveat: dummy values for egocentric path from inner starts (because no clear ideal egocentric path)
+                % Caveat: dummy values for egocentric from inner starts
                 [x_line, y_line, origin_x_line, origin_y_line, x_line_chosen, y_line_chosen, x_line_ego, y_line_ego,...
                     x_line_A, y_line_A, x_line_C, y_line_C, x_line_E, y_line_E, x_line_G, y_line_G, x_line_I, y_line_I,...
                     sm.participant(p).session(s).trial(k).goal_x_ego, sm.participant(p).session(s).trial(k).goal_y_ego,...
@@ -302,6 +302,22 @@ tic;
                     sm.coord.goal_x_in_alleys, sm.coord.goal_y_in_alleys,...
                     sm.coord.alley_full_x, sm.coord.alley_full_y, sm.coord.rec_x, sm.coord.rec_y, ...
                     sm.coord.central_poly, sm.coord.full_poly);
+
+%                     Graph=sm.coord.graph
+%                     graph_x=sm.coord.graph_x
+%                     graph_y=sm.coord.graph_y
+%                     start=sm.participant(p).session(s).trial(k).start_i
+%                     goal=sm.participant(p).session(s).trial(k).goal_i
+%                     chosen_x=sm.participant(p).session(s).trial(k).x_n
+%                     chosen_y=sm.participant(p).session(s).trial(k).y_n
+%                     goal_x_in_alleys=sm.coord.goal_x_in_alleys
+%                     goal_y_in_alleys=sm.coord.goal_y_in_alleys
+%                     alley_full_x=sm.coord.alley_full_x
+%                     alley_full_y=sm.coord.alley_full_y
+%                     rec_x=sm.coord.rec_x
+%                     rec_y=sm.coord.rec_y
+%                     cp_polyshape=sm.coord.central_poly
+%                     polyshape_array=sm.coord.full_poly
                 
 %                 % test plot
 %                 figure; plot(sm.coord.full_poly); hold on;
@@ -357,12 +373,12 @@ tic;
                     sm.coord.alley_poly, sm.coord.rec_poly, sm.coord.tri_poly, sm.coord.alley_names, sm.coord.goal_names,...
                     sm.participant(p).session(s).trial(k).x_n, sm.participant(p).session(s).trial(k).y_n);
                 
-                % compute theoretical local goal location in chosen alley 
-                [sm.participant(p).session(s).trial(k).goal_x_local, ...
-                    sm.participant(p).session(s).trial(k).goal_y_local]=computeLocalGoalLocation(...
-                    sm.coord.goal_x_in_alleys, sm.coord.goal_y_in_alleys,...
-                    sm.participant(p).session(s).trial(k).chosen_alley_i,...
-                    sm.participant(p).session(s).trial(k).goal_i); 
+%                 % compute theoretical local goal location in chosen alley 
+%                 [sm.participant(p).session(s).trial(k).goal_x_local, ...
+%                     sm.participant(p).session(s).trial(k).goal_y_local]=computeLocalGoalLocation(...
+%                     sm.coord.goal_x_in_alleys, sm.coord.goal_y_in_alleys,...
+%                     sm.participant(p).session(s).trial(k).chosen_alley_i,...
+%                     sm.participant(p).session(s).trial(k).goal_i); 
   
                 % evaluate global accuracy of chosen location
                 sm.participant(p).session(s).trial(k).correct_final_alley=sm.participant(p).session(s).trial(k).goal_alley==sm.participant(p).session(s).trial(k).chosen_alley_i; 
@@ -391,23 +407,6 @@ tic;
                 sm.participant(p).session(s).trial(k).velocity=sm.participant(p).session(s).trial(k).path_length / ...
                     sm.participant(p).session(s).trial(k).time;
                 
-                % FINAL DISTANCE to GLOBAL target and LOCAL target
-                sm.participant(p).session(s).trial(k).final_distance=999;
-                sm.participant(p).session(s).trial(k).final_local_distance=999;
-                if sm.participant(p).session(s).trial(k).feedback=="false"
-                    % distance to GLOBAL target
-                    sm.participant(p).session(s).trial(k).final_distance=computeDistance(...
-                        sm.participant(p).session(s).trial(k).goal_x, sm.participant(p).session(s).trial(k).x_n, ...
-                        sm.participant(p).session(s).trial(k).goal_y, sm.participant(p).session(s).trial(k).y_n);
-                    
-                    % distance to theroetical LOCAL target
-                    if sm.participant(p).session(s).trial(k).goal_x_local~=999
-                        sm.participant(p).session(s).trial(k).final_local_distance=computeDistance(...
-                            sm.participant(p).session(s).trial(k).goal_x_local, sm.participant(p).session(s).trial(k).x_n, ...
-                            sm.participant(p).session(s).trial(k).goal_y_local, sm.participant(p).session(s).trial(k).y_n);
-                    end
-                end
-                
                 % AVERAGE DISTANCE to PATH
                 % with full x-/y-trajectory
                 [sm.participant(p).session(s).trial(k).path_distance, ~] = computePathDistance(...
@@ -434,10 +433,33 @@ tic;
                     sm.participant(p).session(s).trial(k).target_distance, ideal_distance_target);
                 clear ideal_distance_target; 
                 
+                % set defaults for FINAL DISTANCE to GLOBAL target and LOCAL target
+                sm.participant(p).session(s).trial(k).final_distance=999;
+%                 sm.participant(p).session(s).trial(k).final_local_distance=999;
+                sm.participant(p).session(s).trial(k).final_distance_ego=999; 
+                sm.participant(p).session(s).trial(k).final_distance_baseline=999;
+
                 % fprintf('Standard path and distance analysis done for %d, session %d, file no %d.\n', id, s, k);
                 
                 %% additional distance analysis for probe trials  
                 if sm.participant(p).session(s).trial(k).feedback=="false"  
+                    % FINAL DISTANCE to GLOBAL target and LOCAL target
+                    % final distance to GLOBAL target
+                    sm.participant(p).session(s).trial(k).final_distance=computeDistance(...
+                        sm.participant(p).session(s).trial(k).goal_x, sm.participant(p).session(s).trial(k).x_n, ...
+                        sm.participant(p).session(s).trial(k).goal_y, sm.participant(p).session(s).trial(k).y_n);
+%                     % final distance to theroetical LOCAL target
+%                     if sm.participant(p).session(s).trial(k).goal_x_local~=999
+%                         sm.participant(p).session(s).trial(k).final_local_distance=computeDistance(...
+%                             sm.participant(p).session(s).trial(k).goal_x_local, sm.participant(p).session(s).trial(k).x_n, ...
+%                             sm.participant(p).session(s).trial(k).goal_y_local, sm.participant(p).session(s).trial(k).y_n);
+%                     end
+                    % AVG final distance to HYPOTHETICAL target in OTHER ALLEYS
+                    sm.participant(p).session(s).trial(k).final_distance_baseline=computeBaselineFinalDistance(sm.coord.goal_x_in_alleys,...
+                        sm.coord.goal_y_in_alleys, sm.participant(p).session(s).trial(k).goal_i,...
+                        sm.participant(p).session(s).trial(k).goal_x, sm.participant(p).session(s).trial(k).goal_x_ego,...
+                        sm.participant(p).session(s).trial(k).x_n, sm.participant(p).session(s).trial(k).y_n);
+
                     % AVERAGE DISTANCE to PATH to CHOSEN target 
                     % with full x-/y-trajectory
                     [sm.participant(p).session(s).trial(k).chosen_path_distance, ~] = computePathDistance(...
