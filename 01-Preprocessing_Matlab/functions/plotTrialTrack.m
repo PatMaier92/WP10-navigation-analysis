@@ -1,5 +1,5 @@
 function plotTrialTrack(trial,session,condition,start,id,Group,...
-    correct_alley,strategy,strategy_in_allo,...
+    correct_alley,strategy,...
     polyshape,x,y,x_line,y_line,x_line_ego,y_line_ego,...
     x_line_chosen,y_line_chosen,goal_x,goal_y,folder)
 % plotTrialTrack Creates track plots for each individual trial.
@@ -13,7 +13,6 @@ Session=num2str(session);
 ID=num2str(id);
 Accuracy=num2str(correct_alley); 
 Strategy=char(strategy);
-Strategy_in_allo=char(strategy_in_allo); 
 
 wfig=figure('visible','off');
 plot(polyshape,'FaceColor',[0.6 0.6 0.6],'FaceAlpha',0.1);
@@ -47,7 +46,7 @@ else
     type = ' (XXXXX)'; 
 end
 title({[ID ' (' Group ') Session: ' Session ', Trial: ' Trial type]; ...
-    ['Acc.: ', Accuracy, ', Strategy: ' Strategy ' (in Allo: ' Strategy_in_allo ')']});
+    ['Acc.: ', Accuracy, ', Strategy: ' Strategy]});
 hold off; 
 
 % save plot
