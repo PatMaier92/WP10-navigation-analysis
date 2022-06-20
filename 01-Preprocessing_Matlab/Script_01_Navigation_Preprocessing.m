@@ -56,7 +56,8 @@ if ~exist('sm','var')
     % coordinates of goal positions (normalized!)
     goal=table2array(readtable('wp10_goal.csv'));
     [sm.coord.goal_x,sm.coord.goal_y]=setGoalValues(goal,sm.coord.xmin,sm.coord.xmax,sm.coord.ymin,sm.coord.ymax);
-
+    [sm.coord.goal_x_in_alleys,sm.coord.goal_y_in_alleys]=setGoalMatrix(sm.coord.goal_x,sm.coord.goal_y);
+    
     % coordinates of alley corners (normalized!)
     alley_x=table2array(readtable('wp10_alley_x.csv'));
     [n_corners,n_alleys] = size(alley_x);
@@ -298,7 +299,7 @@ tic;
                     sm.participant(p).session(s).trial(k).x_n, sm.participant(p).session(s).trial(k).y_n,...
                     sm.coord.alley_full_x, sm.coord.alley_full_y, sm.coord.rec_x, sm.coord.rec_y, ...
                     sm.coord.central_poly, sm.coord.full_poly);
-              
+             
                 % interpolate ideal path data for further analysis
                 % using 'interparc' function by John D'Errico (Matlab File Exchanger)
                 [xi_al,yi_al]=interpolateData(x_line, y_line, sm.participant(p).session(s).trial(k).ideal_path_length);
