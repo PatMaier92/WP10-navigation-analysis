@@ -289,6 +289,8 @@ tic;
                 %% compute support variables depending on this trial's settings
                 % ideal path coordinates & ideal path length
                 % Caveat: dummy values for egocentric from inner starts
+                % Requires Matlab 2021a for 'shortestpath' function and
+                % 'interparc' function by John D'Errico (Matlab File Exchanger)
                 [x_line, y_line, origin_x_line, origin_y_line, x_line_chosen, y_line_chosen, x_line_ego, y_line_ego,...
                     x_line_A, y_line_A, x_line_C, y_line_C, x_line_E, y_line_E, x_line_G, y_line_G, x_line_I, y_line_I,...
                     sm.participant(p).session(s).trial(k).goal_x_ego, sm.participant(p).session(s).trial(k).goal_y_ego,...
@@ -302,35 +304,7 @@ tic;
                     sm.coord.goal_x_in_alleys, sm.coord.goal_y_in_alleys,...
                     sm.coord.alley_full_x, sm.coord.alley_full_y, sm.coord.rec_x, sm.coord.rec_y, ...
                     sm.coord.central_poly, sm.coord.full_poly);
-
-%                     Graph=sm.coord.graph
-%                     graph_x=sm.coord.graph_x
-%                     graph_y=sm.coord.graph_y
-%                     start=sm.participant(p).session(s).trial(k).start_i
-%                     goal=sm.participant(p).session(s).trial(k).goal_i
-%                     chosen_x=sm.participant(p).session(s).trial(k).x_n
-%                     chosen_y=sm.participant(p).session(s).trial(k).y_n
-%                     goal_x_in_alleys=sm.coord.goal_x_in_alleys
-%                     goal_y_in_alleys=sm.coord.goal_y_in_alleys
-%                     alley_full_x=sm.coord.alley_full_x
-%                     alley_full_y=sm.coord.alley_full_y
-%                     rec_x=sm.coord.rec_x
-%                     rec_y=sm.coord.rec_y
-%                     cp_polyshape=sm.coord.central_poly
-%                     polyshape_array=sm.coord.full_poly
-                
-%                 % test plot
-%                 figure; plot(sm.coord.full_poly); hold on;
-%                 plot(x_line, y_line, 'k-x',...
-%                     x_line_ego, y_line_ego, 'g--',...
-%                     x_line_chosen, y_line_chosen, 'p--',...
-%                     x_line_A, y_line_A, 'k-.',...
-%                     x_line_C, y_line_C, 'r-.',...
-%                     x_line_E, y_line_E, 'b-.',...
-%                     x_line_G, y_line_G, 'g-.',...
-%                     x_line_I, y_line_I, 'y-.');
-%                 xlim([0 1]); ylim([0 1]); hold off;
-                
+                               
                 % interpolate ideal path data for further analysis
                 % using 'interparc' function by John D'Errico (Matlab File Exchanger)
                 [xi_al,yi_al]=interpolateData(x_line, y_line, sm.participant(p).session(s).trial(k).ideal_path_length);
@@ -407,13 +381,13 @@ tic;
                 sm.participant(p).session(s).trial(k).velocity=sm.participant(p).session(s).trial(k).path_length / ...
                     sm.participant(p).session(s).trial(k).time;
                 
-                % AVERAGE DISTANCE to PATH
-                % with full x-/y-trajectory
-                [sm.participant(p).session(s).trial(k).path_distance, ~] = computePathDistance(...
-                    xi_al, yi_al, x, y, sm.participant(p).session(s).trial(k).final_distance, true);  
-                % with unique x-/y-trajectory (duplicates due to waiting and rotation are removed)              
-                [sm.participant(p).session(s).trial(k).adj_path_distance, ~] = computePathDistance(...
-                    xi_al, yi_al, x_unique, y_unique, sm.participant(p).session(s).trial(k).final_distance, true);  
+%                 % AVERAGE DISTANCE to PATH
+%                 % with full x-/y-trajectory
+%                 [sm.participant(p).session(s).trial(k).path_distance, ~] = computePathDistance(...
+%                     xi_al, yi_al, x, y, sm.participant(p).session(s).trial(k).final_distance, true);  
+%                 % with unique x-/y-trajectory (duplicates due to waiting and rotation are removed)              
+%                 [sm.participant(p).session(s).trial(k).adj_path_distance, ~] = computePathDistance(...
+%                     xi_al, yi_al, x_unique, y_unique, sm.participant(p).session(s).trial(k).final_distance, true);  
                 
                 % Exploratory: DYNAMIC TIME WARPING DISTANCE for PATH 
                 % with full x-/y-trajectory
@@ -495,13 +469,13 @@ tic;
                         sm.participant(p).session(s).trial(k).goal_x_ego, sm.participant(p).session(s).trial(k).x_n,...
                         sm.participant(p).session(s).trial(k).goal_y_ego, sm.participant(p).session(s).trial(k).y_n);
                     
-                    % AVERAGE DISTANCE to EGOCENTRIC PATH
-                    % with full x-/y-trajectory
-                    [sm.participant(p).session(s).trial(k).ego_path_distance, ~] = computePathDistance(...
-                        xi_eg, yi_eg, x, y, sm.participant(p).session(s).trial(k).final_distance_ego, true); 
-                    % with unique x-/y-trajectory (duplicates due to waiting/rotation are removed)              
-                    [sm.participant(p).session(s).trial(k).adj_ego_path_distance, ~] = computePathDistance(...
-                        xi_eg, yi_eg, x_unique, y_unique, sm.participant(p).session(s).trial(k).final_distance_ego, true);        
+%                     % AVERAGE DISTANCE to EGOCENTRIC PATH
+%                     % with full x-/y-trajectory
+%                     [sm.participant(p).session(s).trial(k).ego_path_distance, ~] = computePathDistance(...
+%                         xi_eg, yi_eg, x, y, sm.participant(p).session(s).trial(k).final_distance_ego, true); 
+%                     % with unique x-/y-trajectory (duplicates due to waiting/rotation are removed)              
+%                     [sm.participant(p).session(s).trial(k).adj_ego_path_distance, ~] = computePathDistance(...
+%                         xi_eg, yi_eg, x_unique, y_unique, sm.participant(p).session(s).trial(k).final_distance_ego, true);        
  
                     % AVERAGE DISTANCE to EGOCENTRIC TARGET
                     % target distance 

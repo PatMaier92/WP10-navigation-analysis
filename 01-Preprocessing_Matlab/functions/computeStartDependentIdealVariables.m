@@ -3,11 +3,13 @@ function [x_line, y_line, o_x_line, o_y_line, x_line_chosen, y_line_chosen,...
     x_line_E, y_line_E, x_line_G, y_line_G, x_line_I, y_line_I,...
     goal_x_ego, goal_y_ego, ego_alley,...
     ideal_path, ideal_path_chosen, ideal_ego_path, ideal_path_A, ...
-    ideal_path_C, ideal_path_E, ideal_path_G, ideal_path_I]=computeStartDependentIdealVariables(Graph,...
-    graph_x, graph_y, start, goal, chosen_x, chosen_y, goal_x_in_alleys, goal_y_in_alleys,...
+    ideal_path_C, ideal_path_E, ideal_path_G, ideal_path_I]=computeStartDependentIdealVariables(...
+    Graph, graph_x, graph_y, start, goal,...
+    chosen_x, chosen_y, goal_x_in_alleys, goal_y_in_alleys,...
     alley_full_x, alley_full_y, rec_x, rec_y, cp_polyshape, polyshape_array)
 % computeStartDependentIdealVariables: Function for determining starting point dependent
-% variables in Starmaze WP1. Requires Matlab 2021a for shortestPath function.
+% variables in Starmaze WP1. Requires Matlab 2021a for 'shortestpath' function and 
+% 'interparc' function by John D'Errico (Matlab File Exchanger).
 %
 % Input:
 % Graph is graph representation of all start-goal connections
@@ -19,44 +21,29 @@ function [x_line, y_line, o_x_line, o_y_line, x_line_chosen, y_line_chosen,...
 % polyshape_array is array of all polyshape elements
 %
 % Returns:
-% goal_x_ego, goal_y_ego are x-/y-coordinates of the egocentric goal
 % *x_line*, *y_line* are vectors with ideal x-/y-coordinates
-% ideal_path* are ideal distance values
-% ego_alley is identifier for hypothetical egocentric goal alley
+% goal_x_ego, goal_y_ego are x-/y-coordinates of the egocentric goal
+% ego_alley is integer for hypothetical egocentric goal alley 
+% ideal_path* are ideal path length values
 
 %% shortest path from original start to goal
-o_start_node=7; 
-end_node=size(Graph.Nodes,1)+1-goal;
-[path_nodes,~]=shortestpath(Graph, o_start_node, end_node);
+start_node=7; 
+goal_node=size(Graph.Nodes,1)+1-goal;
+[o_x_line, o_y_line, ~]=computeShortestPath(true,...
+    cp_polyshape, polyshape_array, Graph, graph_x, graph_y, start_node, goal_node,...
+    0, 0);
 
-% path with all nodes
-o_x1=graph_x(path_nodes); 
-o_y1=graph_y(path_nodes);
-length_o1=computePathLength(o_x1, o_y1);
-
-% path with reduced nodes
-o_x2=graph_x([path_nodes(1:end-2) path_nodes(end)]); 
-o_y2=graph_y([path_nodes(1:end-2) path_nodes(end)]);
-length_o2=computePathLength(o_x2, o_y2);
-% interpolate last segment (using 'interparc' function by John D'Errico (Matlab File Exchanger)) 
-[xi_s2,yi_s2]=interpolateData(o_x2(end-1:end),o_y2(end-1:end),length_o2);
-% check if last segment is valid (i.e., not outside starmaze area)  
-isValid=all(isinterior(union(polyshape_array),xi_s2,yi_s2));
-
-% determine best option and set values
-if length_o2 < length_o1 && isValid 
-    o_x_line=o_x2; o_y_line=o_y2; 
-else
-    o_x_line=o_x1; o_y_line=o_y1; 
-end
-clear path_nodes o_x1 o_y1 o_x2 o_y2 length* isValid *_s2; 
-
-% % test plot
+% % helper plot
+% [path_nodes,~]=shortestpath(Graph, start_node, goal_node);
 % figure; plot(polyshape_array); hold on; 
-% % pl = plot(Graph,'XData',graph_x,'YData',graph_y,'EdgeLabel',Graph.Edges.Weight);
 % pl = plot(Graph,'XData',graph_x,'YData',graph_y);
 % highlight(pl,path_nodes,'EdgeColor','r');
 % xlim([0 1]); ylim([0 1]); hold off; 
+% clear path_nodes; 
+% % test plot
+% figure; plot(polyshape_array); hold on;
+% plot(o_x_line, o_y_line, 'k-');
+% xlim([0 1]); ylim([0 1]); hold off;
 
 %% shortest path from actual start to egocentric goal (using a rotation matrix) 
 % define x- and y-data for original line
@@ -123,79 +110,57 @@ ideal_ego_path=computePathLength(x_line_ego, y_line_ego);
 
 %% shortest path from actual start to goal
 start_node=start;
-end_node=size(Graph.Nodes,1)+1-goal;
-[path_nodes,~]=shortestpath(Graph, start_node, end_node);
-
-% path with all nodes
-x1=graph_x(path_nodes); 
-y1=graph_y(path_nodes);
-length_1=computePathLength(x1, y1);
-
-% path with reduced nodes
-x2=graph_x([path_nodes(1:end-2) path_nodes(end)]); 
-y2=graph_y([path_nodes(1:end-2) path_nodes(end)]);
-length_2=computePathLength(x2, y2);
-% interpolate last segment (using 'interparc' function by John D'Errico (Matlab File Exchanger)) 
-[xi_s2,yi_s2]=interpolateData(x2(end-1:end),y2(end-1:end),length_2);
-% check if last segment is valid (i.e., not outside starmaze area)  
-isValid=all(isinterior(union(polyshape_array),xi_s2,yi_s2));
-
-% determine best option and set values
-if length_2 < length_1 && isValid 
-    x_line=x2; y_line=y2; ideal_path=length_2;
-else
-    x_line=x1; y_line=y1; ideal_path=length_1;
-end
-clear path_nodes x1 y1 x2 y2 length* isValid *_s2; 
+goal_node=size(Graph.Nodes,1)+1-goal;
+[x_line, y_line, ideal_path]=computeShortestPath(true,...
+    cp_polyshape, polyshape_array, Graph, graph_x, graph_y, start_node, goal_node,...
+    0, 0);
 
 % % test plot
+% [path_nodes,~]=shortestpath(Graph, start_node, end_node);
 % figure; plot(polyshape_array); hold on; 
-% % pl = plot(Graph,'XData',graph_x,'YData',graph_y,'EdgeLabel',Graph.Edges.Weight);
 % pl = plot(Graph,'XData',graph_x,'YData',graph_y);
 % highlight(pl,path_nodes,'EdgeColor','r');
 % xlim([0 1]); ylim([0 1]); hold off; 
+% clear path_nodes; 
+% % test plot
+% figure; plot(polyshape_array); hold on;
+% plot(x_line, y_line, 'k-');
+% xlim([0 1]); ylim([0 1]); hold off;
 
 %% shortest path from actual start to chosen goal 
-[x_line_chosen, y_line_chosen, ideal_path_chosen]=computeShortestPath(cp_polyshape, polyshape_array,...
-    Graph, graph_x, graph_y, start, chosen_x, chosen_y);
-
+[x_line_chosen, y_line_chosen, ideal_path_chosen]=computeShortestPath(false,...
+    cp_polyshape, polyshape_array, Graph, graph_x, graph_y, start, 0,...
+    chosen_x, chosen_y);
+    
 %% shortest path from actual start to hypothetical goal in all alleys (only for allocentric probe trials from outer starts)
-[x_line_A, y_line_A, ideal_path_A]=computeShortestPath(cp_polyshape, polyshape_array,...
-    Graph, graph_x, graph_y, start, goal_x_in_alleys(goal,1), goal_y_in_alleys(goal,1));
+[x_line_A, y_line_A, ideal_path_A]=computeShortestPath(false,...
+    cp_polyshape, polyshape_array, Graph, graph_x, graph_y, start, 0,...
+    goal_x_in_alleys(goal,1), goal_y_in_alleys(goal,1));
 
-% central_polygon=cp_polyshape
-% full_polyshape=polyshape_array
-% graph=Graph
-% graph_x
-% graph_y
-% start
-% end_x=goal_x_in_alleys(goal,1)
-% end_y=goal_y_in_alleys(goal,1)
+[x_line_C, y_line_C, ideal_path_C]=computeShortestPath(false,...
+    cp_polyshape, polyshape_array, Graph, graph_x, graph_y, start, 0,...
+    goal_x_in_alleys(goal,2), goal_y_in_alleys(goal,2));
 
-[x_line_C, y_line_C, ideal_path_C]=computeShortestPath(cp_polyshape, polyshape_array,...
-    Graph, graph_x, graph_y, start, goal_x_in_alleys(goal,2), goal_y_in_alleys(goal,2));
+[x_line_E, y_line_E, ideal_path_E]=computeShortestPath(false,...
+    cp_polyshape, polyshape_array, Graph, graph_x, graph_y, start, 0,...
+    goal_x_in_alleys(goal,3), goal_y_in_alleys(goal,3));
 
-[x_line_E, y_line_E, ideal_path_E]=computeShortestPath(cp_polyshape, polyshape_array,...
-    Graph, graph_x, graph_y, start, goal_x_in_alleys(goal,3), goal_y_in_alleys(goal,3));
+[x_line_G, y_line_G, ideal_path_G]=computeShortestPath(false,...
+    cp_polyshape, polyshape_array, Graph, graph_x, graph_y, start, 0,...
+    goal_x_in_alleys(goal,4), goal_y_in_alleys(goal,4));
 
-[x_line_G, y_line_G, ideal_path_G]=computeShortestPath(cp_polyshape, polyshape_array,...
-    Graph, graph_x, graph_y, start, goal_x_in_alleys(goal,4), goal_y_in_alleys(goal,4));
+[x_line_I, y_line_I, ideal_path_I]=computeShortestPath(false,...
+    cp_polyshape, polyshape_array, Graph, graph_x, graph_y, start, 0,...
+    goal_x_in_alleys(goal,5), goal_y_in_alleys(goal,5));
 
-[x_line_I, y_line_I, ideal_path_I]=computeShortestPath(cp_polyshape, polyshape_array,...
-    Graph, graph_x, graph_y, start, goal_x_in_alleys(goal,5), goal_y_in_alleys(goal,5));
-
-% test plot
-figure; plot(polyshape_array); hold on; 
-plot(x_line_A, y_line_A, 'k-.',...
-    x_line_C, y_line_C, 'r-.',...
-    x_line_E, y_line_E, 'b-.',...
-    x_line_G, y_line_G, 'g-.',...
-    x_line_I, y_line_I, 'y-.',...
-    x_line_chosen, y_line_chosen, 'p--');
-xlim([0 1]); ylim([0 1]); hold off; 
-
-figure; plot(polyshape_array); hold on; 
-plot(x_line_chosen, y_line_chosen, 'p--');
-xlim([0 1]); ylim([0 1]); hold off; 
+% % test plot
+% figure; plot(polyshape_array); hold on; 
+% plot(x_line_A, y_line_A, 'k-.',...
+%     x_line_C, y_line_C, 'r-.',...
+%     x_line_E, y_line_E, 'b-.',...
+%     x_line_G, y_line_G, 'g-.',...
+%     x_line_I, y_line_I, 'y-.',...
+%     x_line_chosen, y_line_chosen, 'p--');
+% xlim([0 1]); ylim([0 1]); hold off; 
 
 end
