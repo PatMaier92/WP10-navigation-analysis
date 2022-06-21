@@ -254,13 +254,7 @@ tic;
             % save start and end points 
             sm.participant(p).session(s).trial(k).x_1=x(1); sm.participant(p).session(s).trial(k).y_1=y(1);
             sm.participant(p).session(s).trial(k).x_n=x(end); sm.participant(p).session(s).trial(k).y_n=y(end);
-            
-            % unique x-/y values, excluding periods without movement
-            xy_unique = unique([x y],'rows','stable'); % excluding row duplicates
-            x_unique = xy_unique(:,1);
-            y_unique = xy_unique(:,2); 
-            clear xy_unique; 
-                       
+                                  
             %% get single trial info from trial_results
             sm.participant(p).session(s).session_duration=round(minutes(trial_data.timestamp(numel(files),1) - trial_data.timestamp(1,1))); 
             
@@ -346,21 +340,12 @@ tic;
                     sm.participant(p).rand_dict, char(trial_data.chosen_goal(k,1)), ...
                     sm.coord.alley_poly, sm.coord.rec_poly, sm.coord.tri_poly, sm.coord.alley_names, sm.coord.goal_names,...
                     sm.participant(p).session(s).trial(k).x_n, sm.participant(p).session(s).trial(k).y_n);
-                
-%                 % compute theoretical local goal location in chosen alley 
-%                 [sm.participant(p).session(s).trial(k).goal_x_local, ...
-%                     sm.participant(p).session(s).trial(k).goal_y_local]=computeLocalGoalLocation(...
-%                     sm.coord.goal_x_in_alleys, sm.coord.goal_y_in_alleys,...
-%                     sm.participant(p).session(s).trial(k).chosen_alley_i,...
-%                     sm.participant(p).session(s).trial(k).goal_i); 
-  
+                 
                 % evaluate global accuracy of chosen location
                 sm.participant(p).session(s).trial(k).correct_final_alley=sm.participant(p).session(s).trial(k).goal_alley==sm.participant(p).session(s).trial(k).chosen_alley_i; 
                 sm.participant(p).session(s).trial(k).correct_final_alley_ego=sm.participant(p).session(s).trial(k).ego_alley==sm.participant(p).session(s).trial(k).chosen_alley_i ...
                     && sm.participant(p).session(s).trial(k).correct_final_alley==0;        
 
-                % evaluate local accuracy of chosen location: see later
-                
                 % fprintf('Accuracy analysis done for %d, session %d, file no %d.\n', id, s, k);   
                 
                 %% time analysis
@@ -385,15 +370,10 @@ tic;
 %                 % with full x-/y-trajectory
 %                 [sm.participant(p).session(s).trial(k).path_distance, ~] = computePathDistance(...
 %                     xi_al, yi_al, x, y, sm.participant(p).session(s).trial(k).final_distance, true);  
-%                 % with unique x-/y-trajectory (duplicates due to waiting and rotation are removed)              
-%                 [sm.participant(p).session(s).trial(k).adj_path_distance, ~] = computePathDistance(...
-%                     xi_al, yi_al, x_unique, y_unique, sm.participant(p).session(s).trial(k).final_distance, true);  
                 
                 % Exploratory: DYNAMIC TIME WARPING DISTANCE for PATH 
                 % with full x-/y-trajectory
                 sm.participant(p).session(s).trial(k).dtw_path_distance = dtw([xi_al,yi_al]',[x,y]');
-                % with unique x-/y-trajectory (duplicates due to waiting and rotation are removed) 
-                sm.participant(p).session(s).trial(k).adj_dtw_path_distance = dtw([xi_al,yi_al]',[x_unique,y_unique]');
                 
                 % AVERAGE DISTANCE to TARGET 
                 % target distance 
@@ -407,12 +387,6 @@ tic;
                     sm.participant(p).session(s).trial(k).target_distance, ideal_distance_target);
                 clear ideal_distance_target; 
                 
-                % set defaults for FINAL DISTANCE to GLOBAL target and LOCAL target
-                sm.participant(p).session(s).trial(k).final_distance=999;
-%                 sm.participant(p).session(s).trial(k).final_local_distance=999;
-                sm.participant(p).session(s).trial(k).final_distance_ego=999; 
-                sm.participant(p).session(s).trial(k).final_distance_baseline=999;
-
                 % fprintf('Standard path and distance analysis done for %d, session %d, file no %d.\n', id, s, k);
                 
                 %% additional distance analysis for probe trials  
@@ -434,13 +408,10 @@ tic;
                         sm.participant(p).session(s).trial(k).goal_x, sm.participant(p).session(s).trial(k).goal_x_ego,...
                         sm.participant(p).session(s).trial(k).x_n, sm.participant(p).session(s).trial(k).y_n);
 
-                    % AVERAGE DISTANCE to PATH to CHOSEN target 
-                    % with full x-/y-trajectory
-                    [sm.participant(p).session(s).trial(k).chosen_path_distance, ~] = computePathDistance(...
-                        xi_ch, yi_ch, x, y, 0, false); 
-                    % with unique x-/y-trajectory (duplicates due to waiting/rotation are removed)              
-                    [sm.participant(p).session(s).trial(k).adj_chosen_path_distance, ~] = computePathDistance(...
-                        xi_ch, yi_ch, x_unique, y_unique, 0, false);     
+%                     % AVERAGE DISTANCE to PATH to CHOSEN target 
+%                     % with full x-/y-trajectory
+%                     [sm.participant(p).session(s).trial(k).chosen_path_distance, ~] = computePathDistance(...
+%                         xi_ch, yi_ch, x, y, 0, false);   
                     
                     % AVERAGE DISTANCE to CHOSEN TARGET
                     % target distance 
@@ -453,8 +424,9 @@ tic;
                     clear ideal_chosen_target_distance; 
                 else
                     % dummy values
-                    sm.participant(p).session(s).trial(k).chosen_path_distance=999;
-                    sm.participant(p).session(s).trial(k).adj_chosen_path_distance=999;
+                    sm.participant(p).session(s).trial(k).final_distance=999;
+                    sm.participant(p).session(s).trial(k).final_distance_baseline=999;
+%                     sm.participant(p).session(s).trial(k).chosen_path_distance=999;
                     sm.participant(p).session(s).trial(k).chosen_target_distance=999;
                     sm.participant(p).session(s).trial(k).chosen_target_distance_error=999;
                 end
@@ -472,10 +444,7 @@ tic;
 %                     % AVERAGE DISTANCE to EGOCENTRIC PATH
 %                     % with full x-/y-trajectory
 %                     [sm.participant(p).session(s).trial(k).ego_path_distance, ~] = computePathDistance(...
-%                         xi_eg, yi_eg, x, y, sm.participant(p).session(s).trial(k).final_distance_ego, true); 
-%                     % with unique x-/y-trajectory (duplicates due to waiting/rotation are removed)              
-%                     [sm.participant(p).session(s).trial(k).adj_ego_path_distance, ~] = computePathDistance(...
-%                         xi_eg, yi_eg, x_unique, y_unique, sm.participant(p).session(s).trial(k).final_distance_ego, true);        
+%                         xi_eg, yi_eg, x, y, sm.participant(p).session(s).trial(k).final_distance_ego, true);      
  
                     % AVERAGE DISTANCE to EGOCENTRIC TARGET
                     % target distance 
@@ -491,8 +460,7 @@ tic;
                 else
                     % dummy values
                     sm.participant(p).session(s).trial(k).final_distance_ego=999;
-                    sm.participant(p).session(s).trial(k).ego_path_distance=999;
-                    sm.participant(p).session(s).trial(k).adj_ego_path_distance=999;
+%                     sm.participant(p).session(s).trial(k).ego_path_distance=999;
                     sm.participant(p).session(s).trial(k).ego_target_distance=999;
                     sm.participant(p).session(s).trial(k).ego_target_distance_error=999;
                 end
