@@ -368,12 +368,12 @@ tic;
                 
 %                 % AVERAGE DISTANCE to PATH
 %                 % with full x-/y-trajectory
-%                 [sm.participant(p).session(s).trial(k).path_distance, ~] = computePathDistance(...
+%                 [sm.participant(p).session(s).trial(k).path_distance, ~]=computePathDistance(...
 %                     xi_al, yi_al, x, y, sm.participant(p).session(s).trial(k).final_distance, true);  
                 
                 % Exploratory: DYNAMIC TIME WARPING DISTANCE for PATH 
                 % with full x-/y-trajectory
-                sm.participant(p).session(s).trial(k).dtw_path_distance = dtw([xi_al,yi_al]',[x,y]');
+                sm.participant(p).session(s).trial(k).dtw_path_distance=dtw([xi_al,yi_al]',[x,y]');
                 
                 % AVERAGE DISTANCE to TARGET 
                 % target distance 
@@ -391,27 +391,32 @@ tic;
                 
                 %% additional distance analysis for probe trials  
                 if sm.participant(p).session(s).trial(k).feedback=="false"  
-                    % FINAL DISTANCE to GLOBAL target and LOCAL target
-                    % final distance to GLOBAL target
+                    % FINAL DISTANCE to TARGET 
                     sm.participant(p).session(s).trial(k).final_distance=computeDistance(...
                         sm.participant(p).session(s).trial(k).goal_x, sm.participant(p).session(s).trial(k).x_n, ...
                         sm.participant(p).session(s).trial(k).goal_y, sm.participant(p).session(s).trial(k).y_n);
-%                     % final distance to theroetical LOCAL target
-%                     if sm.participant(p).session(s).trial(k).goal_x_local~=999
-%                         sm.participant(p).session(s).trial(k).final_local_distance=computeDistance(...
-%                             sm.participant(p).session(s).trial(k).goal_x_local, sm.participant(p).session(s).trial(k).x_n, ...
-%                             sm.participant(p).session(s).trial(k).goal_y_local, sm.participant(p).session(s).trial(k).y_n);
-%                     end
                     % AVG final distance to HYPOTHETICAL target in OTHER ALLEYS
                     sm.participant(p).session(s).trial(k).final_distance_baseline=computeBaselineFinalDistance(sm.coord.goal_x_in_alleys,...
                         sm.coord.goal_y_in_alleys, sm.participant(p).session(s).trial(k).goal_i,...
                         sm.participant(p).session(s).trial(k).goal_x, sm.participant(p).session(s).trial(k).goal_x_ego,...
                         sm.participant(p).session(s).trial(k).x_n, sm.participant(p).session(s).trial(k).y_n);
+                    
+                    goal_x_in_alleys=sm.coord.goal_x_in_alleys
+                    goal_y_in_alleys=sm.coord.goal_y_in_alleys
+                    goal=sm.participant(p).session(s).trial(k).goal_i
+                    goal_x=sm.participant(p).session(s).trial(k).goal_x
+                    goal_x_ego=sm.participant(p).session(s).trial(k).goal_x_ego
+                    x_n=sm.participant(p).session(s).trial(k).x_n
+                    y_n=sm.participant(p).session(s).trial(k).y_n
 
 %                     % AVERAGE DISTANCE to PATH to CHOSEN target 
 %                     % with full x-/y-trajectory
-%                     [sm.participant(p).session(s).trial(k).chosen_path_distance, ~] = computePathDistance(...
+%                     [sm.participant(p).session(s).trial(k).chosen_path_distance, ~]=computePathDistance(...
 %                         xi_ch, yi_ch, x, y, 0, false);   
+
+                    % Exploratory: DYNAMIC TIME WARPING DISTANCE for PATH
+                    % with full x-/y-trajectory
+                    sm.participant(p).session(s).trial(k).chosen_dtw_path_distance=dtw([xi_ch,yi_ch]',[x,y]');
                     
                     % AVERAGE DISTANCE to CHOSEN TARGET
                     % target distance 
@@ -427,6 +432,7 @@ tic;
                     sm.participant(p).session(s).trial(k).final_distance=999;
                     sm.participant(p).session(s).trial(k).final_distance_baseline=999;
 %                     sm.participant(p).session(s).trial(k).chosen_path_distance=999;
+                    sm.participant(p).session(s).trial(k).chosen_dtw_path_distance=999;
                     sm.participant(p).session(s).trial(k).chosen_target_distance=999;
                     sm.participant(p).session(s).trial(k).chosen_target_distance_error=999;
                 end
@@ -443,8 +449,12 @@ tic;
                     
 %                     % AVERAGE DISTANCE to EGOCENTRIC PATH
 %                     % with full x-/y-trajectory
-%                     [sm.participant(p).session(s).trial(k).ego_path_distance, ~] = computePathDistance(...
-%                         xi_eg, yi_eg, x, y, sm.participant(p).session(s).trial(k).final_distance_ego, true);      
+%                     [sm.participant(p).session(s).trial(k).ego_path_distance, ~]=computePathDistance(...
+%                         xi_eg, yi_eg, x, y, sm.participant(p).session(s).trial(k).final_distance_ego, true);     
+
+                    % Exploratory: DYNAMIC TIME WARPING DISTANCE for PATH
+                    % with full x-/y-trajectory
+                    sm.participant(p).session(s).trial(k).ego_dtw_path_distance=dtw([xi_eg,yi_eg]',[x,y]');
  
                     % AVERAGE DISTANCE to EGOCENTRIC TARGET
                     % target distance 
@@ -461,6 +471,7 @@ tic;
                     % dummy values
                     sm.participant(p).session(s).trial(k).final_distance_ego=999;
 %                     sm.participant(p).session(s).trial(k).ego_path_distance=999;
+                    sm.participant(p).session(s).trial(k).ego_dtw_path_distance=999;
                     sm.participant(p).session(s).trial(k).ego_target_distance=999;
                     sm.participant(p).session(s).trial(k).ego_target_distance_error=999;
                 end
