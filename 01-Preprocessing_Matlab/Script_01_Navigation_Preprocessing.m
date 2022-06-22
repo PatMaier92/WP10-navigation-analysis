@@ -94,6 +94,18 @@ if ~exist('sm','var')
         sm.coord.alley_poly_out{1,3} sm.coord.alley_poly_in{1,3}...
         sm.coord.alley_poly_out{1,4} sm.coord.alley_poly_in{1,4}...
         sm.coord.alley_poly_out{1,5} sm.coord.alley_poly_in{1,5} sm.coord.central_poly];
+    
+    % compute random x-/y-coordinate distribution in Starmaze 
+    [sm.coord.random_x, sm.coord.random_y]=computeRandomLocations(sm.coord.full_poly, 1000); 
+    
+    % compute final distance to random x-/y-coordnates 
+    sm.coord.final_distance_to_goal_distribution=zeros(length(sm.coord.goal_x),length(sm.coord.random_x));
+    for i=1:length(sm.coord.goal_x)
+        for j=1:length(sm.coord.random_x)
+            sm.coord.final_distance_to_goal_distribution(i,j)=computeDistance(...
+                sm.coord.goal_x(i), sm.coord.random_x(j), sm.coord.goal_y(i), sm.coord.random_y(j));
+        end
+    end
 
     % create graph
     % for automated shortest path calculation (requires Matlab 2021a)
