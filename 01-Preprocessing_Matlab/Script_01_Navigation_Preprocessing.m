@@ -95,22 +95,22 @@ if ~exist('sm','var')
         sm.coord.alley_poly_out{1,4} sm.coord.alley_poly_in{1,4}...
         sm.coord.alley_poly_out{1,5} sm.coord.alley_poly_in{1,5} sm.coord.central_poly];
     
-    % compute random x-/y-coordinate distribution in Starmaze 
+    % compute random x-/y-coordinate distribution in Starmaze
     [sm.coord.random_x, sm.coord.random_y]=computeRandomLocations(sm.coord.full_poly, 1000); 
     
-    % compute final distance to random x-/y-coordinates 
-    fd_distribution=zeros(length(sm.coord.goal_x),length(sm.coord.random_x));
-    for i=1:length(sm.coord.goal_x)
-        for j=1:length(sm.coord.random_x)
-            fd_distribution(i,j)=computeDistance(...
-                sm.coord.goal_x(i), sm.coord.random_x(j), sm.coord.goal_y(i), sm.coord.random_y(j));
-        end
+    % compute final distance between locations and random x-/y-coordinates 
+    sm.coord.final_distance_distribution={}; 
+    for i=1:size(sm.coord.goal_x_in_alleys,1)
+        for j=1:size(sm.coord.goal_x_in_alleys,2)
+            distribution=zeros(length(sm.coord.random_x),1); 
+            for m=1:length(sm.coord.random_x)
+                distribution(m)=computeDistance(sm.coord.goal_x_in_alleys(i,j),...
+                    sm.coord.random_x(m), sm.coord.goal_y_in_alleys(i,j), sm.coord.random_y(m));
+            end
+            sm.coord.final_distance_distribution{i,j}=sort(distribution, 'ascend'); 
+        end 
     end
-    sm.coord.final_distance_to_goal_distribution=sort(fd_distribution, 2, 'ascend'); 
-%     figure; hist(sm.coord.final_distance_to_goal_distribution(1,:), 50); ylim([0 70]); 
-%     figure; hist(sm.coord.final_distance_to_goal_distribution(2,:), 50); ylim([0 70]); 
-%     figure; hist(sm.coord.final_distance_to_goal_distribution(3,:), 50); ylim([0 70]); 
-        
+    
     % create graph
     % for automated shortest path calculation (requires Matlab 2021a)
     [sm.coord.graph,sm.coord.graph_x,sm.coord.graph_y]=setGraph(sm.coord.start_x,sm.coord.start_y,...
@@ -124,7 +124,7 @@ if ~exist('sm','var')
     % create test figure plot
     % plotTestFigure("s_maze",sm.coord.full_poly,sm.coord.goal_x,sm.coord.goal_y,sm.coord.start_x,sm.coord.start_y,sm.coord.goal_names,sm.coord.graph,sm.coord.graph_x,sm.coord.graph_y);
 
-    clear alley_x alley_y pentagon_x pentagon_y i_alley n_alleys i_corner n_corners start goal values; 
+    clear i j distribution alley_x alley_y pentagon_x pentagon_y i_alley n_alleys i_corner n_corners start goal values; 
     
     %% set up Practise environment (for motor control task)
     % coordinates of min/max values
@@ -411,14 +411,11 @@ tic;
                     sm.participant(p).session(s).trial(k).final_distance=computeDistance(...
                         sm.participant(p).session(s).trial(k).goal_x, sm.participant(p).session(s).trial(k).x_n, ...
                         sm.participant(p).session(s).trial(k).goal_y, sm.participant(p).session(s).trial(k).y_n);
-                    % AVG final distance to HYPOTHETICAL target in OTHER ALLEYS
-                    sm.participant(p).session(s).trial(k).final_distance_baseline=computeBaselineFinalDistance(sm.coord.goal_x_in_alleys,...
-                        sm.coord.goal_y_in_alleys, sm.participant(p).session(s).trial(k).goal_i,...
-                        sm.participant(p).session(s).trial(k).goal_x, sm.participant(p).session(s).trial(k).goal_x_ego,...
-                        sm.participant(p).session(s).trial(k).x_n, sm.participant(p).session(s).trial(k).y_n);
+                   
                     % MEMORY SCORE (final distance in relation to distribution of final distance for random points)
-                    sm.participant(p).session(s).trial(k).memory_score=computeMemoryScore(sm.coord.final_distance_to_goal_distribution,...
-                        sm.participant(p).session(s).trial(k).final_distance, sm.participant(p).session(s).trial(k).goal_i);
+                    sm.participant(p).session(s).trial(k).memory_score=computeMemoryScore(sm.coord.final_distance_distribution,...
+                        sm.participant(p).session(s).trial(k).final_distance, sm.participant(p).session(s).trial(k).goal_i,...
+                        sm.participant(p).session(s).trial(k).goal_alley);
 
 %                     % AVERAGE DISTANCE to PATH to CHOSEN target 
 %                     % with full x-/y-trajectory
@@ -441,7 +438,6 @@ tic;
                 else
                     % dummy values
                     sm.participant(p).session(s).trial(k).final_distance=999;
-                    sm.participant(p).session(s).trial(k).final_distance_baseline=999;
                     sm.participant(p).session(s).trial(k).memory_score=999; 
 %                     sm.participant(p).session(s).trial(k).chosen_path_distance=999;
                     sm.participant(p).session(s).trial(k).chosen_dtw_path_distance=999;
@@ -458,6 +454,11 @@ tic;
                     sm.participant(p).session(s).trial(k).final_distance_ego=computeDistance(...
                         sm.participant(p).session(s).trial(k).goal_x_ego, sm.participant(p).session(s).trial(k).x_n,...
                         sm.participant(p).session(s).trial(k).goal_y_ego, sm.participant(p).session(s).trial(k).y_n);
+                    
+                    % EGO MEMORY SCORE (final distance to ego in relation to distribution of final distance for random points)
+                    sm.participant(p).session(s).trial(k).memory_score_ego=computeMemoryScore(sm.coord.final_distance_distribution,...
+                        sm.participant(p).session(s).trial(k).final_distance_ego, sm.participant(p).session(s).trial(k).goal_i,...
+                        sm.participant(p).session(s).trial(k).ego_alley);
                     
 %                     % AVERAGE DISTANCE to EGOCENTRIC PATH
 %                     % with full x-/y-trajectory
@@ -482,6 +483,7 @@ tic;
                 else
                     % dummy values
                     sm.participant(p).session(s).trial(k).final_distance_ego=999;
+                    sm.participant(p).session(s).trial(k).memory_score_ego=999;
 %                     sm.participant(p).session(s).trial(k).ego_path_distance=999;
                     sm.participant(p).session(s).trial(k).ego_dtw_path_distance=999;
                     sm.participant(p).session(s).trial(k).ego_target_distance=999;
