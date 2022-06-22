@@ -421,7 +421,6 @@ tic;
                         sm.participant(p).session(s).trial(k).ideal_chosen_path_length);
                 
 %                     % AVERAGE DISTANCE to PATH to CHOSEN target 
-%                     % with full x-/y-trajectory
 %                     [sm.participant(p).session(s).trial(k).chosen_path_distance, ~]=computePathDistance(...
 %                         xi_ch, yi_ch, x, y, 0, false);   
 
@@ -464,12 +463,10 @@ tic;
                         sm.participant(p).session(s).trial(k).ego_alley);
                     
 %                     % AVERAGE DISTANCE to EGOCENTRIC PATH
-%                     % with full x-/y-trajectory
 %                     [sm.participant(p).session(s).trial(k).ego_path_distance, ~]=computePathDistance(...
 %                         xi_eg, yi_eg, x, y, sm.participant(p).session(s).trial(k).final_distance_ego, true);     
 
                     % Exploratory: DYNAMIC TIME WARPING DISTANCE for PATH
-                    % with full x-/y-trajectory
                     sm.participant(p).session(s).trial(k).ego_dtw_path_distance=dtw([xi_eg,yi_eg]',[x,y]');
  
                     % AVERAGE DISTANCE to EGOCENTRIC TARGET
