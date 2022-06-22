@@ -98,15 +98,19 @@ if ~exist('sm','var')
     % compute random x-/y-coordinate distribution in Starmaze 
     [sm.coord.random_x, sm.coord.random_y]=computeRandomLocations(sm.coord.full_poly, 1000); 
     
-    % compute final distance to random x-/y-coordnates 
-    sm.coord.final_distance_to_goal_distribution=zeros(length(sm.coord.goal_x),length(sm.coord.random_x));
+    % compute final distance to random x-/y-coordinates 
+    fd_distribution=zeros(length(sm.coord.goal_x),length(sm.coord.random_x));
     for i=1:length(sm.coord.goal_x)
         for j=1:length(sm.coord.random_x)
-            sm.coord.final_distance_to_goal_distribution(i,j)=computeDistance(...
+            fd_distribution(i,j)=computeDistance(...
                 sm.coord.goal_x(i), sm.coord.random_x(j), sm.coord.goal_y(i), sm.coord.random_y(j));
         end
     end
-
+    sm.coord.final_distance_to_goal_distribution=sort(fd_distribution, 2, 'ascend'); 
+%     figure; hist(sm.coord.final_distance_to_goal_distribution(1,:), 50); ylim([0 70]); 
+%     figure; hist(sm.coord.final_distance_to_goal_distribution(2,:), 50); ylim([0 70]); 
+%     figure; hist(sm.coord.final_distance_to_goal_distribution(3,:), 50); ylim([0 70]); 
+        
     % create graph
     % for automated shortest path calculation (requires Matlab 2021a)
     [sm.coord.graph,sm.coord.graph_x,sm.coord.graph_y]=setGraph(sm.coord.start_x,sm.coord.start_y,...
@@ -412,14 +416,9 @@ tic;
                         sm.coord.goal_y_in_alleys, sm.participant(p).session(s).trial(k).goal_i,...
                         sm.participant(p).session(s).trial(k).goal_x, sm.participant(p).session(s).trial(k).goal_x_ego,...
                         sm.participant(p).session(s).trial(k).x_n, sm.participant(p).session(s).trial(k).y_n);
-                    
-                    goal_x_in_alleys=sm.coord.goal_x_in_alleys
-                    goal_y_in_alleys=sm.coord.goal_y_in_alleys
-                    goal=sm.participant(p).session(s).trial(k).goal_i
-                    goal_x=sm.participant(p).session(s).trial(k).goal_x
-                    goal_x_ego=sm.participant(p).session(s).trial(k).goal_x_ego
-                    x_n=sm.participant(p).session(s).trial(k).x_n
-                    y_n=sm.participant(p).session(s).trial(k).y_n
+                    % MEMORY SCORE (final distance in relation to distribution of final distance for random points)
+                    sm.participant(p).session(s).trial(k).memory_score=computeMemoryScore(sm.coord.final_distance_to_goal_distribution,...
+                        sm.participant(p).session(s).trial(k).final_distance, sm.participant(p).session(s).trial(k).goal_i);
 
 %                     % AVERAGE DISTANCE to PATH to CHOSEN target 
 %                     % with full x-/y-trajectory
@@ -443,6 +442,7 @@ tic;
                     % dummy values
                     sm.participant(p).session(s).trial(k).final_distance=999;
                     sm.participant(p).session(s).trial(k).final_distance_baseline=999;
+                    sm.participant(p).session(s).trial(k).memory_score=999; 
 %                     sm.participant(p).session(s).trial(k).chosen_path_distance=999;
                     sm.participant(p).session(s).trial(k).chosen_dtw_path_distance=999;
                     sm.participant(p).session(s).trial(k).chosen_target_distance=999;
