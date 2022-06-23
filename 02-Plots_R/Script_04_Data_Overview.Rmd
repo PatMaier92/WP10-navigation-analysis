@@ -107,11 +107,11 @@ $$\text{Rotation} = \frac {\sum |(z_{t}-z_{t+1})|} {path} * \frac {1} {360} $$
 
 ```{r, warning=F, echo=F }
 
-line_t + line_ple + line_dge + line_rpl + 
+line_t + line_pler + line_dge + line_rpl + 
   plot_annotation("Navigation behaviour in learning trials (goal visible)") + 
   plot_layout(guides="collect") & theme(legend.position="top", legend.justification=c(0,0))
 
-rm(line_t,line_ple, line_dge, line_rpl, sm_trialwise)
+rm(line_t,line_pler, line_dge, line_rpl, sm_trialwise)
 ```
  
 ### **Time**
@@ -121,7 +121,12 @@ rm(line_t,line_ple, line_dge, line_rpl, sm_trialwise)
 
 ### **Path length error**
 
-```{r, stats_learning_ple }
+```{r, stats_learning_pler }
+```
+
+### **Excess path length**
+
+```{r, stats_learning_plex }
 ```
 
 ### **Distance to goal error**
@@ -177,6 +182,7 @@ box_ego_cfa + labs(subtitle="Egocentric") + box_allo_cfa + labs(subtitle="Alloce
 
 rm(box_ego_cfa, box_allo_cfa)
 ```
+
 ```{r, stats_probe_acc }
 ```
 
@@ -239,6 +245,34 @@ rm(box_ego_cor_fd, box_allo_cor_fd)
 
 \newpage 
 
+**Memory score (all trials)**
+
+```{r, warning=F, echo=F }
+
+box_ego_ms + labs(subtitle="Egocentric") + box_allo_ms + labs(subtitle="Allocentric") +
+  plot_annotation("Memory score in all probe trials") + 
+  plot_layout(guides="collect") & theme(legend.position="bottom", legend.justification=c(0,0))
+
+rm(box_ego_ms, box_allo_ms)
+```
+
+```{r, stats_probe_ms }
+```
+
+```{r, warning=F, echo=F }
+
+box_ego_delta_ms + labs(subtitle="Egocentric") + box_allo_delta_ms + labs(subtitle="Allocentric")  +
+  plot_annotation("Change in memory score in probe trials") + 
+  plot_layout(guides="collect") & theme(legend.position="bottom", legend.justification=c(0,0))
+
+rm(box_ego_delta_ms, box_allo_delta_ma)
+```
+
+```{r, stats_probe_ms_change }
+```
+
+\newpage 
+
 **Final distance to egocentric (in allocentric probe trials with outer starts only)**
 
 ```{r, warning=F, echo=F }
@@ -253,7 +287,23 @@ rm(box_allo_fde)
 ```{r, stats_probe_fd_ego_in_allo }
 ```
 
-\newpage 
+\newpage
+
+**Egocentric memory score (in allocentric probe trials with outer starts only)**
+
+```{r, warning=F, echo=F }
+
+box_allo_mse + labs(subtitle="Allocentric") +
+  plot_annotation("Egocentric memory score in allocentric probe trials") + 
+  plot_layout(guides="collect") & theme(legend.position="bottom", legend.justification=c(0,0))
+
+rm(box_allo_mse)
+```
+
+```{r, stats_probe_ms_ego_in_allo }
+```
+
+\newpage
 
 ### Navigation behaviour: metric variables
 
@@ -277,14 +327,30 @@ rm(box_ego_t, box_allo_t)
 
 ```{r, warning=F, echo=F }
 
-box_ego_ple + labs(subtitle="Egocentric") + box_allo_ple + labs(subtitle="Allocentric") +
+box_ego_pler + labs(subtitle="Egocentric") + box_allo_pler + labs(subtitle="Allocentric") +
   plot_annotation("Path length error in probe trials") + 
   plot_layout(guides="collect") & theme(legend.position="bottom", legend.justification=c(0,0))
 
-rm(box_ego_ple, box_allo_ple)
+rm(box_ego_pler, box_allo_pler)
 ```
 
-```{r, stats_probe_ple}
+```{r, stats_probe_pler}
+```
+
+\newpage 
+
+**Excess path length**
+
+```{r, warning=F, echo=F }
+
+box_ego_cplex + labs(subtitle="Egocentric") + box_allo_cplex + labs(subtitle="Allocentric") +
+  plot_annotation("Excess path length in probe trials") + 
+  plot_layout(guides="collect") & theme(legend.position="bottom", legend.justification=c(0,0))
+
+rm(box_ego_cplex, box_allo_cplex)
+```
+
+```{r, stats_probe_chplex }
 ```
 
 \newpage 

@@ -100,16 +100,18 @@ data_c_1 <- data_c %>%
 
 # change 
 data_prepost <- data %>% 
-  select(id, sex, group, session, trial, condition, correct_final_alley) %>%
+  select(id, sex, group, session, trial, condition, correct_final_alley, memory_score, memory_score_ego) %>%
   pivot_wider(id_cols=c(id, sex, trial, group, condition),
               names_from=session,
               names_prefix="s_",
-              values_from=correct_final_alley) %>%
+              values_from=c(correct_final_alley, memory_score, memory_score_ego)) %>%
   group_by(id, sex, group, condition) %>%
-  summarise_at(vars(s_1, s_2), mean, na.rm=T) %>% 
-  mutate(change_diff=s_2-s_1,
-         change_rel=s_2/s_1,
-         change_reldiff=(s_2-s_1)/s_1) %>% 
+  summarise_at(vars(correct_final_alley_s_1, correct_final_alley_s_2,
+                    memory_score_s_1, memory_score_s_2,
+                    memory_score_ego_s_1, memory_score_ego_s_2), mean, na.rm=T) %>% 
+  mutate(change_acc=(correct_final_alley_s_2-correct_final_alley_s_1)/correct_final_alley_s_1,
+         change_ms=(memory_score_s_2-memory_score_s_1)/memory_score_s_1,
+         change_mse=(memory_score_ego_s_2-memory_score_ego_s_1)/memory_score_ego_s_1) %>% 
   ungroup() %>% 
   droplevels()
 
@@ -144,6 +146,17 @@ con_list_group_session <- list(
   "YCH_v_OCH_t1" = c(1, -1, 0, 0, 0, 0),
   "YCH_v_YAD_t1" = c(1, 0, -1, 0, 0, 0),
   "OCH_v_YAD_t1" = c(0, 1, -1, 0, 0, 0)) 
+
+con_list_group_session2 <- list(
+  "t1_v_t2_YCH" = c(1, 0, 0, -1, 0, 0),
+  "t1_v_t2_OCH" = c(0, 1, 0, 0, -1, 0),
+  "t1_v_t2_YAD" = c(0, 0, 1, 0, 0, -1),
+  "YCH_v_OCH_t1" = c(1, -1, 0, 0, 0, 0),
+  "YCH_v_YAD_t1" = c(1, 0, -1, 0, 0, 0),
+  "OCH_v_YAD_t1" = c(0, 1, -1, 0, 0, 0),
+  "YCH_v_OCH_t2" = c(0, 0, 0, 1, -1, 0),
+  "YCH_v_YAD_t2" = c(0, 0, 0, 1, 0, -1),
+  "OCH_v_YAD_t2" = c(0, 0, 0, 0, 1, -1)) 
 
 con_list_group_condition <- list(
   "a_vs_e_YCH" = c(1, 0, 0, -1, 0, 0),
@@ -306,7 +319,7 @@ plot(learn.path_var1, resid(., type="p") ~ fitted(.), abline=0)
 qqnorm(resid(learn.path_var1))
 qqline(resid(learn.path_var1))
 
-## ---- stats_learning_ple
+## ---- stats_learning_pler
 # re-fit final model with REML
 learn.path_final <-lme(path_length_error ~ group*block_f*trial_in_cond_c + cov_pl + sex,
                        random=~1 | id, 
@@ -326,6 +339,49 @@ con <- contrast(emm, method=con_list_group_block, adjust="bonferroni")
 con
 # confint(c, adjust="bonferroni")
 rm(learn.path_final, emm, con)
+## ---- 
+
+# ######################################################### #
+
+# --- EXCESS PATH LENGTH -- #
+## 1) standard lme model without variance estimation 
+learn.excess_path_base <- lme(path_length_excess ~ group*block_f*trial_in_cond_c + cov_pl + sex,
+                              random=~1 | id, 
+                              na.action=na.omit, data=data_l, method="ML")
+
+## 2) advanced lme models with variance estimation 
+learn.excess_path_var1 <- update(learn.excess_path_base, weights=varIdent(form=~1 | group))
+learn.excess_path_var2 <- update(learn.excess_path_base, weights=varComb(varIdent(form=~1 | group),
+                                                           varIdent(form=~1 | block_f)))
+anova(learn.excess_path_base, learn.excess_path_var1, learn.excess_path_var2, test=T) 
+# chose model 2
+
+# diagnostics: ok 
+plot(learn.excess_path_var2, resid(., type="p") ~ fitted(.), abline=0)
+qqnorm(resid(learn.excess_path_var2))
+qqline(resid(learn.excess_path_var2))
+
+## ---- stats_learning_plex
+# re-fit final model with REML
+learn.excess_path_final <-lme(path_length_excess ~ group*block_f*trial_in_cond_c + cov_pl + sex,
+                              random=~1 | id, 
+                              weights=varComb(varIdent(form=~1 | group),
+                                              varIdent(form=~1 | block_f)),
+                              na.action=na.omit, data=data_l, method="REML")
+
+# random effects
+learn.excess_path_final$modelStruct$reStruct 
+
+# estimated variances 
+learn.excess_path_final$modelStruct$varStruct
+
+# statistics on fixed effects 
+anova.lme(learn.excess_path_final, type="marginal", adjustSigma=T)
+emm <- emmeans(learn.excess_path_final, ~ group * block_f)
+con <- contrast(emm, method=con_list_group_block, adjust="bonferroni")
+con
+# confint(c, adjust="bonferroni")
+rm(learn.excess_path_final, emm, con)
 ## ---- 
 
 # ######################################################### #
@@ -430,19 +486,19 @@ ggplot(data_l, aes(x=factor(trial_in_cond), y=rotation_degrees)) + geom_boxplot(
 
 ## ---- stats_probe_acc
 # full binomial model (with reduced random effects due to failed convergence)
-probe.acc <- mixed(correct_final_alley ~ group*session*condition + sex +
-                   (session*condition||id), data=data, expand_re=T,
-                   family=binomial(link="logit"), method="LRT",
-                   control=glmerControl(optimizer="bobyqa", optCtrl=list(maxfun=1e6)))
-
-# random effects
-VarCorr(probe.acc$full_model)
-
-# statistics for fixed effects
-probe.acc
-emmeans(probe.acc, pairwise ~ group, type="response", adjust="bonferroni")$contrasts
-emmeans(probe.acc, pairwise ~ session, type="response")$contrasts
-emmeans(probe.acc, pairwise ~ condition, type="response")$contrasts
+# probe.acc <- mixed(correct_final_alley ~ group*session*condition + sex +
+#                    (session*condition||id), data=data, expand_re=T,
+#                    family=binomial(link="logit"), method="LRT",
+#                    control=glmerControl(optimizer="bobyqa", optCtrl=list(maxfun=1e6)))
+# 
+# # random effects
+# VarCorr(probe.acc$full_model)
+# 
+# # statistics for fixed effects
+# probe.acc
+# emmeans(probe.acc, pairwise ~ group, type="response", adjust="bonferroni")$contrasts
+# emmeans(probe.acc, pairwise ~ session, type="response")$contrasts
+# emmeans(probe.acc, pairwise ~ condition, type="response")$contrasts
 ## ---- 
 
 # check model: ok 
@@ -506,10 +562,10 @@ rm(temp)
 ## ---- stats_probe_acc_change
 # robust ANOVA (from WRS/WRS2 by Mair & Wilcox)
 # sum contrasts set by default (I think)
-bwtrim(change_reldiff ~ group*condition, id=id, data=data_prepost, tr=0.2)
+bwtrim(change_acc ~ group*condition, id=id, data=data_prepost, tr=0.2)
 # using one-way post-test lincon() 
 # because there is no dedicated post-test for bwtrim() and there are no interactions
-lincon(change_reldiff ~ group, data=data_prepost, tr=0.2, alpha=0.05, method="bonferroni")
+lincon(change_acc ~ group, data=data_prepost, tr=0.2, alpha=0.05, method="bonferroni")
 ## ---- 
 # ::: MEANING: Evidence in favor of consolidation differences between children and adults ::: #
 
@@ -568,60 +624,128 @@ emmeans(probe.fd_correct_final, pairwise ~ group, adjust="bonferroni")$contrasts
 emmeans(probe.fd_correct_final, pairwise ~ session)$contrasts
 rm(probe.fd_correct_final)
 ## ----
+
 # ######################################################### #
 
-
-# -- FINAL DISTANCE IN ALL TRIALS TO LOCAL ENVIRONMENT -- #
+# -- MEMORY SCORE IN ALL TRIALS -- # 
 ## 1) standard lme model without variance estimation 
-probe.fd_local <- lme(final_local_distance ~ group*session*condition,
-                      random=list(id=pdDiag(~ condition + session)),
-                      na.action=na.omit, data=data, method="ML")
+probe.memory <- lme(memory_score ~ group*session*condition,
+                    random=list(id=pdDiag(~ condition + session)), 
+                    data=data, method="ML")
+anova(probe.memory)
 
-# diagnostics: non-normality, largest heterogeneity between groups, then sessions, then conditions 
-plot(probe.fd_local, resid(., type="p") ~ fitted(.))
-plot(probe.fd_local, group ~ resid(., type="p"))
-plot(probe.fd_local, condition ~ resid(., type="p"))
-plot(probe.fd_local, session ~ resid(., type="p"))
-qqnorm(resid(probe.fd_correct_1))
-qqline(resid(probe.fd_correct_1))
-
+# diagnostics: non-normality, largest heterogeneity between groups, less between condition & session 
+plot(probe.memory, resid(., type="p") ~ fitted(.))
+plot(probe.memory, group ~ resid(., type="p"))
+plot(probe.memory, condition ~ resid(., type="p"))
+plot(probe.memory, session ~ resid(., type="p"))
+qqnorm(resid(probe.memory))
+qqline(resid(probe.memory))
 
 ## 2) advanced lme models with variance estimation
-probe.fd_local_var1 <- update(probe.fd_local, weights=varIdent(form=~1 | group))
-probe.fd_local_var2 <- update(probe.fd_local, weights=varComb(varIdent(form=~1 | group),
-                                                              varIdent(form=~1 | session)))
-# probe.fd_local_var3 <- update(probe.fd_local, weights=varComb(varIdent(form=~1 | group),
-#                                                               varIdent(form=~1 | condition)))
-# probe.fd_local_var4 <- update(probe.fd_local, weights=weights=varComb(varIdent(form=~1 | group),
-#                                                               varIdent(form=~1 | session),
-#                                                               varIdent(form=~1 | condition)))
-anova(probe.fd_local, probe.fd_local_var1, probe.fd_local_var2, test=T) 
-# chose model 2 
+probe.memory_var1 <- update(probe.memory, weights=varIdent(form=~1 | group))
+probe.memory_var2 <- update(probe.memory, weights=varComb(varIdent(form=~1 | group),
+                                                          varIdent(form=~1 | condition)))
+probe.memory_var3 <- update(probe.memory, weights=varComb(varIdent(form=~1 | group),
+                                                          varIdent(form=~1 | session)))
+probe.memory_var4 <- update(probe.memory, weights=varComb(varIdent(form=~1 | group),
+                                                          varIdent(form=~1 | session),
+                                                          varIdent(form=~1 | condition)))
+anova(probe.memory, probe.memory_var1, probe.memory_var2, probe.memory_var3, probe.memory_var4, test=T) 
+# chose model 4
 
-# diagnostics
-plot(probe.fd_local_var2, resid(., type="p") ~ fitted(.), abline=0)
-qqnorm(resid(probe.fd_local_var2))
-qqline(resid(probe.fd_local_var2))
+# diagnostics: ok 
+plot(probe.memory_var4, resid(., type="p") ~ fitted(.), abline=0)
+qqnorm(resid(probe.memory_var4))
+qqline(resid(probe.memory_var4))
 
-## ---- stats_probe_fd_loc_in_all
+## ---- stats_probe_ms
 # re-fit final model with with REML
-probe.fd_local_final <- lme(final_local_distance ~ group*session*condition,
-                            random=list(id=pdDiag(~ condition + session)),
-                            weights=varComb(varIdent(form=~1 | group),
-                                            varIdent(form=~1 | session)),
-                            na.action=na.omit, data=data, method="REML")
+probe.memory_final <- lme(memory_score ~ group*session*condition,
+                          random=list(id=pdDiag(~ condition + session)), 
+                          weights=varComb(varIdent(form=~1 | group),
+                                          varIdent(form=~1 | session),
+                                          varIdent(form=~1 | condition)),
+                          data=data, method="REML")
 
 # random effects
-probe.fd_local_final$modelStruct$reStruct 
+probe.memory_final$modelStruct$reStruct 
 
 # estimated variances 
-probe.fd_local_final$modelStruct$varStruct
+probe.memory_final$modelStruct$varStruct
 
 # statistics on fixed effects 
-anova(probe.fd_local_final, type="marginal", adjustSigma=T)
-emmeans(probe.fd_local_final, pairwise ~ group, adjust="bonferroni")$contrasts
-emmeans(probe.fd_local_final, pairwise ~ session)$contrasts
-rm(probe.fd_local_final)
+anova(probe.memory_final, type="marginal", adjustSigma=T)
+emmeans(probe.memory_final, pairwise ~ group, adjust="bonferroni")$contrasts
+emmeans(probe.memory_final, pairwise ~ session)$contrasts
+emmeans(probe.memory_final, pairwise ~ condition)$contrasts
+rm(probe.memory_final)
+## ----
+
+# ######################################################### #
+
+# -- CHANGE IN MEMORY SCORE -- #
+# ::: METHOD: one aggregated value per person, therefore (robust) ANOVA ::: #  
+
+## ---- stats_probe_ms_change
+# robust ANOVA (from WRS/WRS2 by Mair & Wilcox)
+# sum contrasts set by default (I think)
+bwtrim(change_ms ~ group*condition, id=id, data=data_prepost, tr=0.2)
+# using one-way post-test lincon() 
+# because there is no dedicated post-test for bwtrim() and there are no interactions
+lincon(change_ms ~ group, data=data_prepost, tr=0.2, alpha=0.05, method="bonferroni")
+## ---- 
+# ::: MEANING: Evidence in favor of consolidation differences between children and adults ::: #
+
+# ######################################################### #
+
+# -- MEMORY SCORE IN CORRECT TRIALS -- # 
+## 1) standard lme model without variance estimation 
+probe.mem_correct <- lme(memory_score ~ group*session*condition,
+                         random=list(id=pdDiag(~ condition + session)), 
+                         data=data_c, method="ML")
+anova(probe.mem_correct)
+
+# diagnostics: non-normality, largest heterogeneity between groups, less between condition & session 
+plot(probe.mem_correct, resid(., type="p") ~ fitted(.))
+plot(probe.mem_correct, group ~ resid(., type="p"))
+plot(probe.mem_correct, condition ~ resid(., type="p"))
+plot(probe.mem_correct, session ~ resid(., type="p"))
+qqnorm(resid(probe.mem_correct))
+qqline(resid(probe.mem_correct))
+
+## 2) advanced lme models with variance estimation
+probe.mem_correct_var1 <- update(probe.mem_correct, weights=varIdent(form=~1 | group))
+# probe.mem_correct_var2 <- update(probe.mem_correct, weights=varComb(varIdent(form=~1 | group),
+#                                                           varIdent(form=~1 | condition)))
+# probe.mem_correct_var3 <- update(probe.mem_correct, weights=varComb(varIdent(form=~1 | group),
+#                                                           varIdent(form=~1 | session)))
+anova(probe.mem_correct, probe.mem_correct_var1, test=T) 
+# chose model 4
+
+# diagnostics: ok 
+plot(probe.mem_correct_var1, resid(., type="p") ~ fitted(.), abline=0)
+qqnorm(resid(probe.mem_correct_var1))
+qqline(resid(probe.mem_correct_var1))
+
+## ---- stats_probe_ms_in_corr
+# re-fit final model with with REML
+probe.mem_correct_final <- lme(memory_score ~ group*session*condition,
+                               random=list(id=pdDiag(~ session)), 
+                               weights=varComb(varIdent(form=~1 | group)),
+                               data=data_c, method="REML")
+
+# random effects
+probe.mem_correct_final$modelStruct$reStruct 
+
+# estimated variances 
+probe.mem_correct_final$modelStruct$varStruct
+
+# statistics on fixed effects 
+anova(probe.mem_correct_final, type="marginal", adjustSigma=T)
+emmeans(probe.mem_correct_final, pairwise ~ group, adjust="bonferroni")$contrasts
+emmeans(probe.mem_correct_final, pairwise ~ session)$contrasts
+rm(probe.mem_correct_final)
 ## ----
 
 # ######################################################### #
@@ -671,7 +795,66 @@ ggplot(data %>% filter(condition=="allo_ret", start_i %% 2 == 1), aes(x=final_di
 ggplot(data %>% filter(condition=="allo_ret", start_i %% 2 == 1), aes(x=group, y=final_distance_ego)) + geom_boxplot() + facet_grid(~ condition + session)
 ggplot(data, aes(x=group, y=final_distance)) + geom_boxplot() + facet_grid(~ condition + session)
 
-# ::: MEANING: No significant interactions (in alignment with accuracy analysis) but group and session main effects ::: #
+# ######################################################### #
+
+# -- EGOCENTRIC MEMORY SCORE (in allocentric probe trials) -- # 
+## 1) standard lme model without variance estimation 
+probe.mem_ego <- lme(memory_score_ego ~ group*session,
+                     random=~1 | id,
+                     data=data %>% filter(condition=="allo_ret", start_i %% 2 == 1), 
+                     method="ML")
+
+# diagnostics: non-normality, low heterogeneity 
+plot(probe.mem_ego, resid(., type="p") ~ fitted(.))
+plot(probe.mem_ego, group ~ resid(., type="p"))
+plot(probe.mem_ego, session ~ resid(., type="p"))
+qqnorm(resid(probe.mem_ego))
+qqline(resid(probe.mem_ego))
+
+
+## 2) advanced lme models with variance estimation
+probe.mem_ego_var1 <- update(probe.mem_ego, weights=varIdent(form=~1 | group))
+probe.mem_ego_var2 <- update(probe.mem_ego, weights=varIdent(form=~1 | group))
+probe.mem_ego_var3 <- update(probe.mem_ego, weights=varComb(varIdent(form=~1 | group),
+                                                            varIdent(form=~1 | session)))
+anova(probe.mem_ego, probe.mem_ego_var1, probe.mem_ego_var2, probe.mem_ego_var3, test=T) 
+# chose model base 
+
+## ---- stats_probe_ms_ego_in_allo
+# re-fit final model with with REML
+probe.mem_ego_final <- lme(memory_score_ego ~ group*session,
+                           random=~1 | id,
+                           data=data %>% filter(condition=="allo_ret", start_i %% 2 == 1), 
+                           method="REML")
+
+# random effects
+probe.mem_ego_final$modelStruct$reStruct 
+
+# estimated variances 
+probe.mem_ego_final$modelStruct$varStruct
+
+# statistics on fixed effects 
+anova(probe.mem_ego_final, type="marginal", adjustSigma=T)
+emm1 <- emmeans(probe.mem_ego_final, ~ group * session)
+con1 <- contrast(emm1, con_list_group_session2, adjust="bonferroni")
+con1
+rm(probe.mem_ego_final, emm1, con1)
+## ----
+# helper plots 
+ggplot(data %>% filter(condition=="allo_ret", start_i %% 2 == 1), aes(x=memory_score_ego)) + geom_histogram()
+ggplot(data %>% filter(condition=="allo_ret", start_i %% 2 == 1), aes(x=group, y=memory_score_ego)) + geom_boxplot() + facet_grid(~ condition + session)
+
+# ######################################################### #
+
+# -- CHANGE IN EGOCENTRIC MEMORY SCORE -- #
+# ::: METHOD: one aggregated value per person, therefore (robust) ANOVA ::: #  
+
+## ---- stats_probe_ms_ego_change
+# robust ANOVA (from WRS/WRS2 by Mair & Wilcox)
+# using one-way post-test lincon() 
+lincon(change_mse ~ group, data=data_prepost %>% filter(condition=="allo_ret"), tr=0.2, alpha=0.05, method="bonferroni")
+## ---- 
+# ::: MEANING: Evidence in favor of consolidation differences between children and adults ::: #
 
 # ######################################################### #
 
@@ -773,7 +956,7 @@ plot(probe.path_error_var2, resid(., type="p") ~ fitted(.), abline=0)
 qqnorm(resid(probe.path_error_var2))
 qqline(resid(probe.path_error_var2))
 
-## ---- stats_probe_ple
+## ---- stats_probe_pler
 # re-fit final model with REML
 probe.path_error_final <- lme(path_length_error ~ group*session*condition + cov_pl + sex,
                               random=list(id=pdDiag(~ condition + session)),
@@ -804,90 +987,125 @@ ggplot(data, aes(x=group, y=path_length_error)) + geom_boxplot() + facet_grid(~ 
 
 # ######################################################### #
 
-
-# -- PATH DISTANCE TO GOAL ERROR -- # 
+# -- PATH LENGTH ERROR TO CHOSEN TARGET -- # 
 ## 1) standard lme model without variance estimation 
-probe.path <- lme(path_distance ~ group*session*condition + cov_pl + sex,
-                  random=list(id=pdDiag(~ condition + session)),
-                  na.action=na.omit, data=data, method="ML")
+probe.ch_path_error <- lme(chosen_path_length_error ~ group*session*condition + cov_pl + sex,
+                           random=list(id=pdDiag(~ condition + session)),
+                           na.action=na.omit, data=data, method="ML")
 
-# diagnostics: some non-normality, largest heterogeneity in group, condition, then session
-plot(probe.path, resid(., type="p") ~ fitted(.), abline=0)
-plot(probe.path, group ~ resid(., type="p"))
-plot(probe.path, condition ~ resid(., type="p"))
-plot(probe.path, session ~ resid(., type="p"))
-qqnorm(resid(probe.path))
-qqline(resid(probe.path))
+# diagnostics: non-normality, largest heterogeneity between groups & conditions, then sessions
+# TBD exclude outliers! or compute differently 
+plot(probe.ch_path_error, resid(., type="p") ~ fitted(.), abline=0)
+plot(probe.ch_path_error, group ~ resid(., type="p"))
+plot(probe.ch_path_error, session ~ resid(., type="p"))
+plot(probe.ch_path_error, condition ~ resid(., type="p"))
+qqnorm(resid(probe.ch_path_error))
+qqline(resid(probe.ch_path_error))
 
-## 2) advanced lme models with variance estimation
-probe.path_var1 <- update(probe.path, weights=varIdent(form=~1 | group))
-probe.path_var2 <- update(probe.path, weights=varComb(varIdent(form=~1 | group),
-                                                                 varIdent(form=~1 | condition)))
-probe.path_var3 <- update(probe.path, weights=varComb(varIdent(form=~1 | group),
-                                                                 varIdent(form=~1 | condition),
-                                                                 varIdent(form=~1 | session)))
-anova(probe.path, probe.path_var1, probe.path_var2, probe.path_var3) 
+
+## 2) advanced lme models withv ariance estimation
+probe.ch_path_error_var1 <- update(probe.ch_path_error, weights=varIdent(form=~1 | group))
+probe.ch_path_error_var2 <- update(probe.ch_path_error, weights=varComb(varIdent(form=~1 | group),
+                                                                        varIdent(form=~1 | condition)))
+probe.ch_path_error_var3 <- update(probe.ch_path_error, weights=varComb(varIdent(form=~1 | group),
+                                                                        varIdent(form=~1 | session),
+                                                                        varIdent(form=~1 | condition)))
+anova(probe.ch_path_error, probe.ch_path_error_var1, probe.ch_path_error_var2, probe.ch_path_error_var3) 
 # chose model 3 
 
-# diagnostics: ok 
-plot(probe.path_var3, resid(., type="p") ~ fitted(.), abline=0)
-qqnorm(resid(probe.path_var3))
-qqline(resid(probe.path_var3))
+# diagnostics: not good! 
+plot(probe.ch_path_error_var3, resid(., type="p") ~ fitted(.), abline=0)
+qqnorm(resid(probe.ch_path_error_var3))
+qqline(resid(probe.ch_path_error_var3))
 
-## ---- stats_probe_pd
+## ---- stats_probe_chpler
 # re-fit final model with REML
-probe.path_final <- update(probe.path_var3, method="REML")
+probe.ch_path_error_final <- lme(chosen_path_length_error ~ group*session*condition + cov_pl + sex,
+                              random=list(id=pdDiag(~ condition + session)),
+                              weights=varComb(varIdent(form=~1 | group),
+                                              varIdent(form=~1 | session),
+                                              varIdent(form=~1 | condition)),
+                              na.action=na.omit, data=data, method="REML")
+
+# random effects
+probe.ch_path_error_final$modelStruct$reStruct 
+
+# estimated variances 
+probe.ch_path_error_final$modelStruct$varStruct
 
 # statistics on fixed effects 
-anova(probe.path_final, type="marginal", adjustSigma=T)
-emmeans(probe.path_final, pairwise ~ group | session, adjust="bonferroni")$contrasts
-emmeans(probe.path_final, pairwise ~ session | group, adjust="bonferroni")$contrasts
-emmeans(probe.path_final, pairwise ~ session | condition, adjust="bonferroni")$contrasts
-emmeans(probe.path_final, pairwise ~ condition | session, adjust="bonferroni")$contrasts
-
+anova(probe.ch_path_error_final, type="marginal", adjustSigma=T)
+emmeans(probe.ch_path_error_final, pairwise ~ group * session * condition)
+rm(probe.ch_path_error_final)
+## ----
 # helper plots 
-ggplot(data, aes(x=path_distance)) + geom_histogram()
-ggplot(data, aes(x=group, y=path_distance)) + geom_boxplot() + facet_grid(~ condition + session)
-ggplot(data, aes(x=group, y=ego_path_distance)) + geom_boxplot() + facet_grid(~ condition + session)
-
-## ---- 
+ggplot(data, aes(x=chosen_path_length_error)) + geom_histogram()
+ggplot(data, aes(x=group, y=chosen_path_length_error)) + geom_boxplot() + facet_grid(~ condition + session) + coord_cartesian(ylim=c(0,1000))
+ggplot(data, aes(x=group, y=chosen_path_length_error)) + geom_boxplot() + facet_grid(~ condition) + coord_cartesian(ylim=c(0,300))
 
 # ######################################################### #
 
-# -- PATH DISTANCE TO EGOCENTRIC ERROR (only for allocentric probe with outer start) -- # 
+# -- EXCESS PATH LENGTH TO CHOSEN TARGET -- # 
 ## 1) standard lme model without variance estimation 
-probe.path_ego <- lme(ego_path_distance ~ group*session + cov_pl + sex,
-                      random=list(id=pdDiag(~ session)),
-                      na.action=na.omit, data=data %>% filter(condition=="allo_ret", start_i %% 2 == 1), method="ML")
+probe.ch_excess_path <- lme(chosen_path_length_excess ~ group*session*condition + cov_pl + sex,
+                           random=list(id=pdDiag(~ condition + session)),
+                           na.action=na.omit, data=data, method="ML")
 
-# diagnostics: normality ok, low heterogeneity
-plot(probe.path_ego, resid(., type="p") ~ fitted(.), abline=0)
-plot(probe.path_ego, group ~ resid(., type="p"))
-plot(probe.path_ego, session ~ resid(., type="p"))
-qqnorm(resid(probe.path_ego))
-qqline(resid(probe.path_ego))
+# diagnostics: non-normality, largest heterogeneity between groups & conditions, then sessions
+plot(probe.ch_excess_path, resid(., type="p") ~ fitted(.), abline=0)
+plot(probe.ch_excess_path, group ~ resid(., type="p"))
+plot(probe.ch_excess_path, session ~ resid(., type="p"))
+plot(probe.ch_excess_path, condition ~ resid(., type="p"))
+qqnorm(resid(probe.ch_excess_path))
+qqline(resid(probe.ch_excess_path))
 
-## 2) advanced lme models with variance estimation
-probe.path_ego_var1 <- update(probe.path_ego, weights=varIdent(form=~1 | group))
-probe.path_ego_var2 <- update(probe.path_ego, weights=varIdent(form=~1 | session))
-probe.path_ego_var3 <- update(probe.path_ego, weights=varComb(varIdent(form=~1 | group),
-                                                              varIdent(form=~1 | session)))
-anova(probe.path_ego, probe.path_ego_var1, probe.path_ego_var2, probe.path_ego_var3) 
-# chose model base (or model 2)
 
-## ---- stats_probe_pd_ego_in_allo
+## 2) advanced lme models withv ariance estimation
+probe.ch_excess_path_var1 <- update(probe.ch_excess_path, weights=varIdent(form=~1 | group))
+probe.ch_excess_path_var2 <- update(probe.ch_excess_path, weights=varComb(varIdent(form=~1 | group),
+                                                                         varIdent(form=~1 | condition)))
+# probe.ch_excess_path_var3 <- update(probe.ch_excess_path, weights=varComb(varIdent(form=~1 | group),
+#                                                                          varIdent(form=~1 | session),
+#                                                                          varIdent(form=~1 | condition)))
+anova(probe.ch_excess_path, probe.ch_excess_path_var1, probe.ch_excess_path_var2) 
+# chose model 2 
+
+# diagnostics: not good! 
+plot(probe.ch_excess_path_var2, resid(., type="p") ~ fitted(.), abline=0)
+qqnorm(resid(probe.ch_excess_path_var2))
+qqline(resid(probe.ch_excess_path_var2))
+
+## ---- stats_probe_chplex
 # re-fit final model with REML
-probe.path_ego_final <- update(probe.path_ego, method="REML")
+probe.ch_excess_path_final <- lme(chosen_path_length_excess ~ group*session*condition + cov_pl + sex,
+                                  random=list(id=pdDiag(~ condition)),
+                                  weights=varComb(varIdent(form=~1 | group),
+                                                  varIdent(form=~1 | condition)),
+                                  na.action=na.omit, data=data, method="REML")
+
+# random effects
+probe.ch_excess_path_final$modelStruct$reStruct 
+
+# estimated variances 
+probe.ch_excess_path_final$modelStruct$varStruct
 
 # statistics on fixed effects 
-anova(probe.path_ego_final, type="marginal", adjustSigma=T)
-emmeans(probe.path_ego_final, pairwise ~ group | session, adjust="bonferroni")$contrasts
-emmeans(probe.path_ego_final, pairwise ~ session | group, adjust="bonferroni")$contrasts
-
-# helper plots
-ggplot(data %>% filter(condition=="allo_ret",  start_i %% 2 == 1), aes(x=ego_path_distance)) + geom_histogram()
-ggplot(data %>% filter(condition=="allo_ret",  start_i %% 2 == 1), aes(x=group, y=ego_path_distance)) + geom_boxplot() + facet_wrap(~session)
+anova(probe.ch_excess_path_final, type="marginal", adjustSigma=T)
+emm1 <- emmeans(probe.ch_excess_path_final, ~ group * session)
+con1 <- contrast(emm1, con_list_group_session2, adjust="bonferroni")
+con1
+emm2 <- emmeans(probe.ch_excess_path_final, ~ group * condition)
+con2 <- contrast(emm2, con_list_group_condition, adjust="bonferroni")
+con2
+emm3 <- emmeans(probe.ch_excess_path_final, ~ session * condition)
+con3 <- contrast(emm3, con_list_session_condition, adjust="bonferroni")
+con3
+rm(probe.ch_excess_path_final, emm1, emm2, emm3, con1, con2, con3)
 ## ----
+# helper plots 
+ggplot(data, aes(x=chosen_path_length_excess)) + geom_histogram()
+ggplot(data, aes(x=group, y=chosen_path_length_excess)) + geom_boxplot() + facet_grid(~ condition + session) + coord_cartesian(ylim=c(0,3))
+ggplot(data, aes(x=group, y=chosen_path_length_excess)) + geom_boxplot() + facet_grid(~ condition) 
 
 # ######################################################### #
 

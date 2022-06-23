@@ -33,7 +33,9 @@ sm_data <- sm_data %>%
          start=factor(start_s),
          chosen_alley=factor(chosen_alley_s),
          obj_at_chosen_loc=factor(obj_at_chosen_loc, levels=c("01-Fussball", "02-Globus", "03-Geige", "04-Stuhl")),
-         search_strategy=factor(search_strategy, levels=c("direct","detour","reorient"))) %>% 
+         search_strategy=factor(search_strategy, levels=c("direct","detour","reorient")),
+         path_length_excess=path_length - ideal_path_length,
+         chosen_path_length_excess=path_length - ideal_chosen_path_length) %>% 
   select(-goal_s, -start_s, -chosen_alley_s)
 # if no renaming of variables: use mutate_at(cols, factor)
 
