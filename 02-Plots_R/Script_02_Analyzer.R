@@ -473,6 +473,45 @@ ggplot(data_l, aes(x=factor(trial_in_cond), y=rotation_degrees)) + geom_boxplot(
 ggplot(data_l, aes(x=factor(trial_in_cond), y=rotation_turns_by_path_length)) + geom_boxplot() + coord_cartesian(ylim=c(0,3)) + facet_wrap(~block_f)
 ggplot(data_l, aes(x=factor(trial_in_cond), y=rotation_degrees)) + geom_boxplot() + coord_cartesian(ylim=c(0,2000)) + facet_wrap(~block_f)
 
+# ######################################################### #
+
+# -- ROTATION TURNS -- # 
+## 1) standard lme model without variance estimation 
+learn.rot_t_base <- lme(rotation_turns ~ group*block_f*trial_in_cond_c + cov_r + sex,
+                        random=~1 | id, 
+                        na.action=na.omit, data=data_l, method="ML")
+
+## 2) advanced lme models with variance estimation 
+learn.rot_t_var1 <- update(learn.rot_t_base, weights=varIdent(form=~1 | group))
+learn.rot_t_var2 <- update(learn.rot_t_base, weights=varComb(varIdent(form=~1 | group),
+                                                             varIdent(form=~1 | block_f)))
+anova(learn.rot_t_base, learn.rot_t_var1, learn.rot_t_var2, test=T) 
+# chose model 2
+
+# diagnostics: ok 
+plot(learn.rot_t_var2, resid(., type="p") ~ fitted(.), abline=0)
+qqnorm(resid(learn.rot_t_var2))
+qqline(resid(learn.rot_t_var2))
+
+## ---- stats_learning_rpl
+# re-fit final model with REML
+learn.rot_final <- lme(rotation_turns ~ group*block_f*trial_in_cond_c + cov_r + sex,
+                       random=~1 | id, 
+                       weights=varComb(varIdent(form=~1 | group),
+                                       varIdent(form=~1 | block_f)),
+                       na.action=na.omit, data=data_l, method="REML")
+
+# random effects
+learn.rot_final$modelStruct$reStruct 
+
+# estimated variances 
+learn.rot_final$modelStruct$varStruct
+
+# statistics on fixed effects 
+anova.lme(learn.rot_final, type="marginal", adjustSigma=T)
+rm(learn.rot_final)
+## ---- 
+
 
 # ######################################################### #
 # ######################################################### #
@@ -486,19 +525,19 @@ ggplot(data_l, aes(x=factor(trial_in_cond), y=rotation_degrees)) + geom_boxplot(
 
 ## ---- stats_probe_acc
 # full binomial model (with reduced random effects due to failed convergence)
-# probe.acc <- mixed(correct_final_alley ~ group*session*condition + sex +
-#                    (session*condition||id), data=data, expand_re=T,
-#                    family=binomial(link="logit"), method="LRT",
-#                    control=glmerControl(optimizer="bobyqa", optCtrl=list(maxfun=1e6)))
-# 
-# # random effects
-# VarCorr(probe.acc$full_model)
-# 
-# # statistics for fixed effects
-# probe.acc
-# emmeans(probe.acc, pairwise ~ group, type="response", adjust="bonferroni")$contrasts
-# emmeans(probe.acc, pairwise ~ session, type="response")$contrasts
-# emmeans(probe.acc, pairwise ~ condition, type="response")$contrasts
+probe.acc <- mixed(correct_final_alley ~ group*session*condition + sex +
+                   (session*condition||id), data=data, expand_re=T,
+                   family=binomial(link="logit"), method="LRT",
+                   control=glmerControl(optimizer="bobyqa", optCtrl=list(maxfun=1e6)))
+
+# random effects
+VarCorr(probe.acc$full_model)
+
+# statistics for fixed effects
+probe.acc
+emmeans(probe.acc, pairwise ~ group, type="response", adjust="bonferroni")$contrasts
+emmeans(probe.acc, pairwise ~ session, type="response")$contrasts
+emmeans(probe.acc, pairwise ~ condition, type="response")$contrasts
 ## ---- 
 
 # check model: ok 
