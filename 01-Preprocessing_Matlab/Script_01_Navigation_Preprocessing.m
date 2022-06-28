@@ -1,4 +1,4 @@
-git clear; close all; clc; format long;
+clear; close all; clc; format long;
 addpath(genpath(pwd)) % add subfolder functions to path
 
 %% Starmaze Data Processing
