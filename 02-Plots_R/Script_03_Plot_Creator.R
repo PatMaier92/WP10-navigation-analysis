@@ -677,9 +677,36 @@ landmark_data <- pt_data %>%
          perc=n/n_per_group,
          condition="landmarks")
 
+landmark_comp_data <- pt_data %>% 
+  filter(condition=="landmarks") %>% 
+  select(id, group, starts_with("landmarks_obj")) %>% 
+  pivot_longer(cols=starts_with("landmarks_obj"),
+               values_to="landmarks") %>% 
+  select(-name) %>% 
+  group_by(group) %>% 
+  count(landmarks) %>% 
+  complete(landmarks, fill=list(n=0)) %>% 
+  mutate(n_per_group=sum(n),
+         perc=n/n_per_group*100*5)
+
 landmark_details <- bar_plot(landmark_data, "group", "perc", "category", "condition", mylabels, NULL, NULL, "% response (per group)", "bottom", landmark_colors, c("black", "black", "black"), isPalette=F, stackReverse=T)
 
 landmark_avg <- box_plot(pt_data %>% filter(condition=="landmarks"), "group", "score", "group", "condition","none", NULL, NULL, "score", mylabels, "bottom", group_colors, group_colors_o)
+
+landmark_comparison <- ggplot(landmark_comp_data, aes(x=perc, y=landmarks, fill=group, color=group)) + 
+  geom_col(position=position_dodge()) + 
+  geom_vline(xintercept=100, color="red", linetype="dashed") + 
+  scale_fill_manual(values=group_colors) + 
+  scale_color_manual(values=group_colors_o) + 
+  scale_y_discrete(limits=rev) + 
+  theme_classic() + 
+  labs(title="Comparison of landmark recognition rate",
+       x="% response (per group)",
+       y=NULL) + 
+  theme(legend.position="top", legend.justification=c(0,0)) 
+
+# level of difficulty: Forest-Houses & Tower was easiest, followed by Mountain-Houses, single Forest and single Mountain were more difficult 
+# 6-7-yo often chosen an additional second tower instead of mountain/forest with/without houses
 
 
 # :::   GMDA positioning     ::: #

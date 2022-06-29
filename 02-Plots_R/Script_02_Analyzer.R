@@ -1492,15 +1492,13 @@ t1way(score ~ group, data=data, tr=0.2, nboot=1000)
 lincon(score ~ group, data=data, tr=0.2, method="bonferroni")
 ## ---- 
 
-# ######################################################### #
 
-## ---- stats_gmda_details
-# get data
+# detailed analysis
 file_name <- "../WP10_data/WP10_results/wp10_GMDA_data_220505.Rdata"
 load(file_name)
 rm(file_name)
 
-# check individual scores
+# individual scores
 CanOrg <- data_gmda %>% filter(gmda_measure=="SQRT(CanOrg)")
 CanAcc <- data_gmda %>% filter(gmda_measure=="CanAcc")
 DistAcc <- data_gmda %>% filter(gmda_measure=="DistAcc")
@@ -1532,10 +1530,11 @@ boxplot(GMDA)
 lincon(score ~ group, data=GMDA, tr=0.2, method="bonferroni")
 
 rm(data_gmda, GMDA, CanOrg, CanAcc, DistAcc, AngleAcc, boxplot)
-## ---- 
+
 
 # ######################################################### #
 # ######################################################### #
 # ######################################################### #
+
 
 rm(list=ls(pattern="x"))
