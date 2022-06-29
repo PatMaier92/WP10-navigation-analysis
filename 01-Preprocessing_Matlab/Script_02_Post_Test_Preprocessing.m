@@ -102,6 +102,7 @@ for id=participant_start:participant_end
         
         %% performance analysis
         if k==1 % SHAPE RECOGNITION 
+            % score
             if trial_data.suc_1{k,1}=="True"
                 points=1;
             elseif trial_data.suc_1{k,1}=="na"
@@ -109,6 +110,7 @@ for id=participant_start:participant_end
             else
                 points=0;
             end
+            pt(p).trial(k).score=points;
             
             % save item info
             if trial_data.suc_1{k,1}=="na"
@@ -116,15 +118,9 @@ for id=participant_start:participant_end
             else
                 pt(p).trial(k).obj_1=trial_data.obj_1{k,1};
             end
-            
-            % save score
-            pt(p).trial(k).score=points;
             % fprintf('Shape recognition done for %d, file no %d.\n', id, k);
             
-        elseif k==2 % LANDMARK RECOGNITION 
-            % setup
-            corr_list={ 'Mountain-House', 'Forest-House', 'Tower', 'Forest', 'Mountain' };
-            
+        elseif k==2 % LANDMARK RECOGNITION      
             % get chosen items 
             obj_1=trial_data.obj_1{k,1}(4:end); obj_1=strsplit(obj_1, '_'); 
             obj_2=trial_data.obj_2{k,1}(4:end); obj_2=strsplit(obj_2, '_');
@@ -133,18 +129,8 @@ for id=participant_start:participant_end
             obj_5=trial_data.obj_5{k,1}(4:end); obj_5=strsplit(obj_5, '_');
             obj_list=[obj_1; obj_2; obj_3; obj_4; obj_5];
             
-            % score 1 point per correct item
-            log_corr=contains(obj_list(:,2),'corr');
-            points=sum(log_corr);
-            
-            % score 0.5 points per similar but semantically distinct items
-            % remove correct items from list (to determine semantic distinctness) 
-            corr_list(ismember(corr_list,obj_list(log_corr,1))) = [];
-            % re-calculate score
-            points=points+(sum(ismember(obj_list(:,1),corr_list) & contains(obj_list(:,2),'sim'))/2);         
-            
-            % save average
-            pt(p).trial(k).score=points/5;
+            % score
+            pt(p).trial(k).score=sum(contains(obj_list(:,2),'corr'))/size(obj_list,1);
             
             % save item info 
             pt(p).trial(k).obj_1=trial_data.obj_1{k,1};
@@ -155,21 +141,16 @@ for id=participant_start:participant_end
             % fprintf('Landmark recognition done for %d, file no %d.\n', id, k);
             
         elseif k==3 % GOAL RECOGNITION
-            % setup
-            corr_list={ trial_data.obj_MA{k,1}, trial_data.obj_MC{k,1}, trial_data.obj_MI{k,1} };
-            
             % get chosen items
+            corr_list={ trial_data.obj_MA{k,1}, trial_data.obj_MC{k,1}, trial_data.obj_MI{k,1} };
             obj_1=trial_data.obj_1{k,1};   
             obj_2=trial_data.obj_2{k,1};
             obj_3=trial_data.obj_3{k,1};
             obj_list={ obj_1; obj_2; obj_3 };
             
-            % score 1 point per correct item
-            points=sum(contains(obj_list, corr_list));
+            % score 
+            pt(p).trial(k).score=sum(contains(obj_list, corr_list))/size(obj_list,1);
 
-            % save average
-            pt(p).trial(k).score=points/3; 
-            
             % save item information
             pt(p).trial(k).obj_1=obj_1;
             pt(p).trial(k).obj_2=obj_2;
@@ -180,7 +161,7 @@ for id=participant_start:participant_end
             pt(p).trial(k).score=999;
         end
 
-        clear points obj* *corr*; 
+        clear points obj* corr*; 
     end
     
     save(file_path, 'pt');
