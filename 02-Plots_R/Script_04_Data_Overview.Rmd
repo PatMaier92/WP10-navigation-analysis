@@ -76,12 +76,13 @@ Cross-sectional comparison between
 In learning trials, the goal is visible, i.e. the trial is always completed successfully except if the participant needs more than 120 seconds (time out). In egocentric and allocentric retrieval trials, the goal is not visible. Participants go to the place where they remember the goal being located and press a button. 
 
 * **Correct goal alley** (yes/no): Finding the correct goal alley (x-/y-coordinates in correct outer arm or intersection right in front). 
-* **Final distance** (metric): Distance between x-/y-coordinates of the chosen and the correct goal location. 
+* **Final distance & memory score** (metric): Final distance between x-/y-coordinates of the chosen and the correct goal location. Memory score normalizes the final distance value as a score from 0 to 1 (chance = 0.5) by comparing final distance to the final distance to 1000 randomly sampled locations.  
 $$\text{Final distance} = \sqrt{(x_{correct}-x_{chosen})^2 + (y_{correct}-y_{chosen})^2}$$
+$$\text{Memory score} = 1 - \text{percentage of random final distance values that are smaller than final distance}$$
 * **Time**: Time to complete trial in seconds.
-* **Path length (error)** (metric): Absolute deviation of travelled path length in relation to ideal path length. Calculated as summation of distance between x-/y-coordinates over time, then deviation of actual compared to ideal value (Caution: value can be misleading if chosen location is not correct location).
+* **Excess path length** (metric): Subtraction of ideal path length (to chosen location) from traveled path length. Traveled path length is calculated as summation of distance between x-/y-coordinates over time.
 $$\text{Path length} = \sum \sqrt{(x_{t}-x_{t+1})^2 + (y_{t}-y_{t+1})^2}$$
-$$\text{Path length error} = \frac {(path-path_{ideal})} {path_{ideal}}$$
+$$\text{Excess path length} = (path-path_{ideal})$$
 * **Distance to location (error)** (metric): Absolute deviation of the cumulative distance to a location (e.g. goal, egocentric location) in relation to the ideal cumulative distance to the location (on the shortest possible path). Calculated as summation of distance between the player's x-/y-coordinates and the location's x-/y-coordinates, then averaged by the number of x-/y data points. 
 $$\text{Distance to goal} = \frac {\sum \sqrt{(x_{t}-x_{goal})^2 + (y_{t}-y_{goal})^2}} {n_{t}}$$
 $$\text{Distance to goal error} = \frac {(distance-distance_{ideal})} {distance_{ideal}}$$
@@ -107,11 +108,11 @@ $$\text{Rotation} = \frac {\sum |(z_{t}-z_{t+1})|} {path} * \frac {1} {360} $$
 
 ```{r, warning=F, echo=F }
 
-line_t + line_pler + line_dge + line_rpl + 
+line_t + plot_spacer() + line_dg + line_rpl + line_r +
   plot_annotation("Navigation behaviour in learning trials (goal visible)") + 
   plot_layout(guides="collect") & theme(legend.position="top", legend.justification=c(0,0))
 
-rm(line_t,line_pler, line_dge, line_rpl, sm_trialwise)
+rm(line_t, line_plex, line_dg, line_rpl, line_r, sm_trialwise)
 ```
  
 ### **Time**
@@ -119,24 +120,24 @@ rm(line_t,line_pler, line_dge, line_rpl, sm_trialwise)
 ```{r, stats_learning_time }
 ```
 
-### **Path length error**
-
-```{r, stats_learning_pler }
-```
-
 ### **Excess path length**
 
 ```{r, stats_learning_plex }
 ```
 
-### **Distance to goal error**
+### **Distance to goal**
 
-```{r, stats_learning_dge }
+```{r, stats_learning_dg }
 ```
 
 ### **Rotation (by path length)**
 
 ```{r, stats_learning_rpl }
+```
+
+### **Rotation**
+
+```{r, stats_learning_r }
 ```
 
 \newpage 
@@ -200,51 +201,6 @@ rm(box_ego_delta_cfa, box_allo_delta_cfa)
 
 \newpage 
 
-**Egocentric goal alley (in allocentric probe trials with outer starts only)**
-
-```{r, warning=F, echo=F }
-
-box_allo_efa + labs(subtitle="Allocentric")  +
-  plot_annotation("Percentage where egocentric alley was chosen in allocentric probe trials") + 
-  plot_layout(guides="collect") & theme(legend.position="bottom", legend.justification=c(0,0))
-
-rm(box_allo_efa, sm_agg2)
-```
-
-```{r, warning=F}
-
-# How often did participants chose the egocentric alley?
-temp1 <- data %>% filter(condition=="allo_ret", start_i %% 2==1)
-table(temp1$correct_final_alley_ego, temp1$group)
-temp1 %>% group_by(group) %>% summarise(mean(correct_final_alley_ego))
-```
-
-```{r, warning=F}
-# If participants did not find the correct goal, how often did they chose the egocentric alley
-temp2 <- data %>% filter(condition=="allo_ret", start_i %% 2==1, correct_final_alley==0)
-table(temp2$correct_final_alley_ego, temp2$group)
-temp2 %>% group_by(group) %>% summarise(mean(correct_final_alley_ego, na.rm=T))
-```
-
-
-\newpage 
-
-**Final distance to goal (correct trials only)**
-
-```{r, warning=F, echo=F }
-
-box_ego_cor_fd + labs(subtitle="Egocentric") + box_allo_cor_fd + labs(subtitle="Allocentric") +
-  plot_annotation("Final distance in correctly solved probe trials") + 
-  plot_layout(guides="collect") & theme(legend.position="bottom", legend.justification=c(0,0))
-
-rm(box_ego_cor_fd, box_allo_cor_fd)
-```
-
-```{r, stats_probe_fd_in_corr }
-```
-
-\newpage 
-
 **Memory score (all trials)**
 
 ```{r, warning=F, echo=F }
@@ -265,7 +221,7 @@ box_ego_delta_ms + labs(subtitle="Egocentric") + box_allo_delta_ms + labs(subtit
   plot_annotation("Change in memory score in probe trials") + 
   plot_layout(guides="collect") & theme(legend.position="bottom", legend.justification=c(0,0))
 
-rm(box_ego_delta_ms, box_allo_delta_ma)
+rm(box_ego_delta_ms, box_allo_delta_ms)
 ```
 
 ```{r, stats_probe_ms_change }
@@ -273,37 +229,41 @@ rm(box_ego_delta_ms, box_allo_delta_ma)
 
 \newpage 
 
-**Final distance to egocentric (in allocentric probe trials with outer starts only)**
+**Memory score (correct trials)**
 
 ```{r, warning=F, echo=F }
 
-box_allo_fde + labs(subtitle="Allocentric") +
-  plot_annotation("Final distance to egocentric in allocentric probe trials") + 
+box_ego_cor_ms + labs(subtitle="Egocentric") + box_allo_cor_ms + labs(subtitle="Allocentric") +
+  plot_annotation("Memory score in all correct probe trials (spatial precision)") + 
   plot_layout(guides="collect") & theme(legend.position="bottom", legend.justification=c(0,0))
 
-rm(box_allo_fde)
+rm(box_ego_cor_ms, box_allo_cor_ms)
 ```
 
-```{r, stats_probe_fd_ego_in_allo }
+```{r, stats_probe_ms_in_corr }
 ```
 
 \newpage
 
-**Egocentric memory score (in allocentric probe trials with outer starts only)**
+**Egocentric goal alley (in allocentric probe trials with outer starts only)**
 
 ```{r, warning=F, echo=F }
 
-box_allo_mse + labs(subtitle="Allocentric") +
-  plot_annotation("Egocentric memory score in allocentric probe trials") + 
+box_allo_efa + labs(subtitle="Allocentric") + box_allo_incor_efa + box_allo_mse + box_allo_incor_mse + 
+  plot_annotation("Egocentric response in (all/only correct) allocentric probe trials") + 
   plot_layout(guides="collect") & theme(legend.position="bottom", legend.justification=c(0,0))
 
-rm(box_allo_mse)
+rm(box_allo_efa, sm_agg2, sm_agg3)
+```
+
+```{r, stats_probe_ego_acc}
 ```
 
 ```{r, stats_probe_ms_ego_in_allo }
 ```
 
-\newpage
+\newpage 
+
 
 ### Navigation behaviour: metric variables
 
@@ -319,22 +279,6 @@ rm(box_ego_t, box_allo_t)
 ```
 
 ```{r, stats_probe_time}
-```
-
-\newpage 
-
-**Path length error**
-
-```{r, warning=F, echo=F }
-
-box_ego_pler + labs(subtitle="Egocentric") + box_allo_pler + labs(subtitle="Allocentric") +
-  plot_annotation("Path length error in probe trials") + 
-  plot_layout(guides="collect") & theme(legend.position="bottom", legend.justification=c(0,0))
-
-rm(box_ego_pler, box_allo_pler)
-```
-
-```{r, stats_probe_pler}
 ```
 
 \newpage 
@@ -355,23 +299,40 @@ rm(box_ego_cplex, box_allo_cplex)
 
 \newpage 
 
-**Distance to goal error & distance to ego error** 
+**Distance to goal & distance to ego** 
 
 ```{r, warning=F, echo=F }
 
-box_ego_dge + labs(subtitle="Egocentric")  + 
-  box_allo_dge + labs(subtitle="Allocentric") + 
-  box_allo_dege + labs(subtitle="Allocentric") + 
-  plot_annotation("Distance to goal error & distance to ego error in probe trials") + 
+box_ego_dg + labs(subtitle="Egocentric")  + 
+  box_allo_dg + labs(subtitle="Allocentric") + 
+  box_allo_deg + labs(subtitle="Allocentric") + 
+  plot_annotation("Distance to goal & distance to ego in probe trials") + 
+  plot_layout(guides="collect") & theme(legend.position="bottom", legend.justification=c(0,0))
+
+rm(box_ego_dg, box_allo_dg, box_allo_deg)
+```
+
+```{r, stats_probe_dg}
+```
+
+```{r, stats_probe_dg_ego_in_allo}
+```
+
+\newpage 
+
+**Distance to chosen goal** 
+
+```{r, warning=F, echo=F }
+
+box_ego_dgch + labs(subtitle="Egocentric")  + 
+  box_allo_dgch + labs(subtitle="Allocentric") + 
+  plot_annotation("Distance to chosen goal") + 
   plot_layout(guides="collect") & theme(legend.position="bottom", legend.justification=c(0,0))
 
 rm(box_ego_dge, box_allo_dge, box_allo_dege)
 ```
 
-```{r, stats_probe_dge}
-```
-
-```{r, stats_probe_dge_ego_in_allo}
+```{r, stats_probe_chdg}
 ```
 
 \newpage 
@@ -474,7 +435,8 @@ rm(layout, layout_avg, landmark_details, landmark_avg, gmda_avg)
 
 ```{r, warning=F, echo=F }
 
-mc_t + mc_pl + mc_v + mc_r +
+#mc_t + mc_pl + mc_v + mc_r +
+mc_t + mc_v + mc_r +
   plot_annotation("Motor control practise task") +
   plot_layout(guides="collect") & theme(legend.position="bottom", legend.justification=c(0,0))
 

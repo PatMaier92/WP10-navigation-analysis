@@ -370,7 +370,7 @@ plot(learn.distance_var2, resid(., type="p") ~ fitted(.), abline=0)
 qqnorm(resid(learn.distance_var2))
 qqline(resid(learn.distance_var2))
 
-## ---- stats_learning_dge
+## ---- stats_learning_dg
 # re-fit final model with REML
 learn.distance_final <- lme(target_distance ~ group*block_f*trial_in_cond_c + cov_pl + sex,
                             random=~1 | id, 
@@ -459,7 +459,7 @@ plot(learn.rot_t_var2, resid(., type="p") ~ fitted(.), abline=0)
 qqnorm(resid(learn.rot_t_var2))
 qqline(resid(learn.rot_t_var2))
 
-## ---- stats_learning_rpl
+## ---- stats_learning_r
 # re-fit final model with REML
 learn.rot_final <- lme(rotation_turns ~ group*block_f*trial_in_cond_c + cov_r + sex,
                        random=~1 | id, 
@@ -931,7 +931,7 @@ plot(probe.distance_target_var2, resid(., type="p") ~ fitted(.), abline=0)
 qqnorm(resid(probe.distance_target_var2))
 qqline(resid(probe.distance_target_var2))
 
-## ---- stats_probe_dge
+## ---- stats_probe_dg
 # re-fit final model with REML
 probe.distance_target_final <- lme(target_distance ~ group*session*condition + cov_pl + sex,
                                    random=list(id=pdDiag(~ condition + session)),
@@ -991,7 +991,7 @@ plot(probe.distance_target_var2, resid(., type="p") ~ fitted(.), abline=0)
 qqnorm(resid(probe.distance_target_var2))
 qqline(resid(probe.distance_target_var2))
 
-## ---- stats_probe_dge
+## ---- stats_probe_chdg
 # re-fit final model with REML
 probe.distance_target_final <- lme(chosen_target_distance ~ group*session*condition + cov_pl + sex,
                                    random=list(id=pdDiag(~ condition + session)),
@@ -1045,7 +1045,7 @@ probe.distance_target_ego_var2 <- update(probe.distance_target_ego, weights=varC
 anova(probe.distance_target_ego, probe.distance_target_ego_var1, probe.distance_target_ego_var2) 
 # chose model base 
 
-## ---- stats_probe_dge_ego_in_allo 
+## ---- stats_probe_dg_ego_in_allo 
 # re-fit final model with REML
 ### TBD: problem mit emmeans, wenn Kovariate cov_pl im Modell ist (da 1 missing?)
 probe.distance_target_ego_final <- lme(ego_target_distance ~ group*session + sex,
