@@ -19,7 +19,7 @@ library(patchwork)
 
 ```{r load_data, include=F}
 
-date <- "220505_all"
+date <- "220704_all_strict"
 my_path <- "GMDA/Data/"
 load(paste(my_path, "wp10_GMDA_data_", date, ".Rdata", sep=""))
 
@@ -57,23 +57,18 @@ ggplot(data_gmda, aes(x=group, y=score, fill=group)) +
 
 ```{r load_protocols, include=F}
 
-date <- "220505"
 my_path <- "GMDA/Data/"
 
-protocol <- "all"
-load(paste(my_path, "wp10_GMDA_data_", date, "_", protocol, ".Rdata", sep=""))
+date_protocol <- "220505"
+load(paste(my_path, "wp10_GMDA_data_", date_protocol, ".Rdata", sep=""))
 protocol_all <- data_gmda %>% mutate(protocol="all")
 
-protocol <- "landmark"
-load(paste(my_path, "wp10_GMDA_data_", date, "_", protocol, ".Rdata", sep=""))
-protocol_lm <- data_gmda %>% mutate(protocol="landmark")
+date_protocol <- "220704_all_strict"
+load(paste(my_path, "wp10_GMDA_data_", date_protocol, ".Rdata", sep=""))
+protocol_all_strict <- data_gmda %>% mutate(protocol="strict")
 
-protocol <- "goals"
-load(paste(my_path, "wp10_GMDA_data_", date, "_", protocol, ".Rdata", sep=""))
-protocol_go <- data_gmda %>% mutate(protocol="goals")
-
-data <- bind_rows(protocol_all, protocol_lm, protocol_go)
-rm(data_gmda, protocol_all, protocol_lm, protocol_go)
+data <- bind_rows(protocol_all, protocol_all_strict)
+rm(data_gmda, protocol_all, protocol_all_strict)
 
 ```
 
@@ -83,23 +78,25 @@ d1 <- data %>%
   pivot_wider(id_cols=c(id, gmda_measure, group),
               names_prefix="score_",
               names_from=protocol,
-              values_from=score)
+              values_from=score) %>% 
+  ungroup()
 
-M <- d1 %>% ungroup() %>% filter(gmda_measure=="SQRT(CanOrg)") %>% 
-  select(score_all, score_landmark, score_goals) %>% cor()
+M <- d1 %>% filter(gmda_measure=="SQRT(CanOrg)") %>% 
+  select(score_all, score_strict) %>% cor()
 corrplot(M, method="number", title="SQRT(CanOrg)")
 
-M <- d1 %>% ungroup() %>% filter(gmda_measure=="CanAcc") %>% 
-  select(score_all, score_landmark, score_goals) %>% cor()
+M <- d1 %>% filter(gmda_measure=="CanAcc") %>% 
+  select(score_all, score_strict) %>% cor()
 corrplot(M, method="number", title="CanAcc")
 
-M <- d1 %>% ungroup() %>% filter(gmda_measure=="DistAcc") %>% 
-  select(score_all, score_landmark, score_goals) %>% cor()
+M <- d1 %>% filter(gmda_measure=="DistAcc") %>% 
+  select(score_all, score_strict) %>% cor()
 corrplot(M, method="number", title="DistAcc")
 
-M <- d1 %>% ungroup() %>% filter(gmda_measure=="AngleAcc") %>% 
-  select(score_all, score_landmark, score_goals) %>% cor()
+M <- d1  %>% filter(gmda_measure=="AngleAcc") %>% 
+  select(score_all, score_strict) %>% cor()
 corrplot(M, method="number", title="AngleAcc")
+rm(d1)
 ```
 
 ```{r plot_protocols2, echo=F, message=F, warning=F}
@@ -107,18 +104,15 @@ corrplot(M, method="number", title="AngleAcc")
 d2 <- data %>%
   pivot_wider(id_cols=c(id, protocol, group),
               names_from=gmda_measure,
-              values_from=c(score))
+              values_from=c(score)) %>%
+  ungroup()
 
-M <- d2 %>% ungroup() %>% filter(protocol=="all") %>% 
+M <- d2 %>% filter(protocol=="all") %>% 
   select(-c(id, group, protocol)) %>% cor()
 corrplot(M, method="number", title="Protocol all")
 
-M <- d2 %>% ungroup() %>% filter(protocol=="landmark") %>% 
+M <- d2 %>% filter(protocol=="strict") %>% 
   select(-c(id, group, protocol)) %>% cor()
-corrplot(M, method="number", title="Protocol landmarks")
-
-M <- d2 %>% ungroup() %>% filter(protocol=="goals") %>% 
-  select(-c(id, group, protocol)) %>% cor()
-corrplot(M, method="number", title="Protocol goals")
-
+corrplot(M, method="number", title="Protocol strict")
+rm(d2)
 ```

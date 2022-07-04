@@ -22,7 +22,7 @@ giveMeGoals <- function(data){
   ID = readline(prompt = "Enter id: ")
   
   temp <- data %>% 
-    filter(id==as.numeric(ID) & trial_num==4) %>% 
+    filter(id==as.numeric(ID) & trial==4) %>% 
     select(id, obj_MA, obj_MC, obj_MI)
   
   print(temp)
