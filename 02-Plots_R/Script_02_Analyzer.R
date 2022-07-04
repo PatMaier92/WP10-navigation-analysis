@@ -1308,7 +1308,7 @@ lincon(score ~ group, data=data, tr=0.2, method="bonferroni")
 
 
 # detailed analysis
-file_name <- "../WP10_data/WP10_results/wp10_GMDA_data_220505.Rdata"
+file_name <- "../WP10_data/WP10_results/wp10_GMDA_data_220704.Rdata"
 load(file_name)
 rm(file_name)
 
