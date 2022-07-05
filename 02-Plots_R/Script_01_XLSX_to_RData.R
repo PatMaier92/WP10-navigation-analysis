@@ -79,9 +79,9 @@ file_path <- paste("../WP10_data/WP10_results/WP10_GMDA_data_", date, ".Rdata", 
 load(file_path)
 rm(date, file_path)
 
-# calculate gmda average (currently: "SQRT(CanOrg)", "CanAcc", "DistAcc", "AngleAcc")
+# calculate gmda average (currently: "CanAcc", "DistAcc", "AngleAcc")
 gmda_data <- data_gmda %>% 
-  filter(!gmda_measure %in% c("r", "theta")) %>%   
+  filter(gmda_measure %in% c("CanAcc", "DistAcc", "AngleAcc")) %>%   
   group_by(id) %>% 
   summarize(score=mean(score, na.rm=T))
 rm(data_gmda)

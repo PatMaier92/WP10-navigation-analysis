@@ -26,7 +26,7 @@ file_name <- "../WP10_data/WP10_results/wp10_post_nav_data.RData"
 load(file_name)
 rm(file_name)
 
-file_name <- "../WP10_data/WP10_results/WP10_GMDA_data_220505.RData"  
+file_name <- "../WP10_data/WP10_results/WP10_GMDA_data_220705.RData"  
 load(file_name)
 rm(file_name)
 gmda_data <- data_gmda 
@@ -657,7 +657,6 @@ rm(scatter, scatter_data)
 ## ---- plots_post_tests
 
 # :::   layout recognition     :::#
-
 layout_data <- pt_data %>% 
   filter(condition=="layout") %>% 
   filter(!is.na(layout_obj_1)) %>% 
@@ -677,7 +676,6 @@ layout_avg <- bar_plot(layout_data_avg, "group", "perc", "group", "layout_obj_1"
 
 
 # :::   landmark recognition     ::: #
-
 landmark_data <- pt_data %>% 
   filter(condition=="landmarks") %>% 
   select(id, sex, group, starts_with("landmarks_obj")) %>% 
@@ -724,13 +722,11 @@ landmark_comparison <- ggplot(landmark_comp_data, aes(x=perc, y=landmarks, fill=
 
 
 # :::   GMDA positioning     ::: #
+gmda_data <- gmda_data %>%
+  filter(gmda_measure %in% c("CanAcc", "DistAcc", "AngleAcc")) %>%
+  mutate(gmda_measure=factor(gmda_measure, levels=c("CanAcc", "DistAcc", "AngleAcc")))
 
-# gmda_data <- gmda_data %>%
-#   filter(!Measure %in% c("r", "CanOrg")) %>% 
-#   mutate(group=fct_recode(group, YoungKids = "YK", OldKids = "OK", YoungAdults="YA"),
-#          Measure=factor(Measure, levels=c("SQRT(CanOrg)", "CanAcc", "DistAcc", "AngleAcc")))
-# 
-# gmda_details <- box_plot(gmda_data, "group", "Score", "group", "Measure","none", NULL, NULL, "GMDA score", mylabels, "bottom", group_colors, group_colors_o, facetOneLine=T)
+gmda_details <- box_plot(gmda_data, "group", "score", "group", "gmda_measure","none", NULL, NULL, "GMDA score", mylabels, "bottom", group_colors, group_colors_o, facetOneLine=T)
 
 gmda_avg <- box_plot(pt_data %>% filter(condition=="position"), "group", "score", "group", "condition","none", NULL, NULL, "score", mylabels, "bottom", group_colors, group_colors_o)
 ## ----

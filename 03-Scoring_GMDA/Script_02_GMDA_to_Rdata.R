@@ -78,10 +78,9 @@ temp_bdr <- bdr_data %>%
 
 data_gmda <- gmda_data %>% 
   select(!c(`Measure Type`, Rotation)) %>% 
-  filter(!Measure %in% c("Canonical Organization", "Rotational Bias", "Scaling Bias", "Num Landmarks Missing")) %>% 
+  filter(!Measure %in% c("SQRT(Canonical Organization)", "Canonical Organization", "Rotational Bias", "Scaling Bias", "Num Landmarks Missing")) %>% 
   mutate(Score=as.numeric(Score),
-         Measure=case_when(Measure=="SQRT(Canonical Organization)" ~ "SQRT(CanOrg)",
-                           Measure=="Canonical Accuracy" ~ "CanAcc",
+         Measure=case_when(Measure=="Canonical Accuracy" ~ "CanAcc",
                            Measure=="Distance Accuracy" ~ "DistAcc",
                            Measure=="Angle Accuracy" ~ "AngleAcc",
                            TRUE ~ "NA")) %>% 

@@ -1308,12 +1308,11 @@ lincon(score ~ group, data=data, tr=0.2, method="bonferroni")
 
 
 # detailed analysis
-file_name <- "../WP10_data/WP10_results/wp10_GMDA_data_220704.Rdata"
+file_name <- "../WP10_data/WP10_results/wp10_GMDA_data_220705.Rdata"
 load(file_name)
 rm(file_name)
 
 # individual scores
-CanOrg <- data_gmda %>% filter(gmda_measure=="SQRT(CanOrg)")
 CanAcc <- data_gmda %>% filter(gmda_measure=="CanAcc")
 DistAcc <- data_gmda %>% filter(gmda_measure=="DistAcc")
 AngleAcc <- data_gmda %>% filter(gmda_measure=="AngleAcc")
@@ -1323,9 +1322,6 @@ boxplot <- function(d){
     geom_boxplot(outlier.shape=NA) +
     geom_point()
 }
-
-boxplot(CanOrg)
-lincon(score ~ group, data=CanOrg, tr=0.2, method="bonferroni")
 
 boxplot(CanAcc)
 lincon(score ~ group, data=CanAcc, tr=0.2, method="bonferroni")
@@ -1337,13 +1333,13 @@ boxplot(AngleAcc)
 lincon(score ~ group, data=AngleAcc, tr=0.2, method="bonferroni")
 
 # composite score
-GMDA <- data_gmda %>% filter(gmda_measure %in% c("SQRT(CanOrg)", "CanAcc", "DistAcc", "AngleAcc")) %>%
+GMDA <- data_gmda %>% filter(gmda_measure %in% c("CanAcc", "DistAcc", "AngleAcc")) %>%
   group_by(id, group) %>% summarise(score=mean(score))
 
 boxplot(GMDA)
 lincon(score ~ group, data=GMDA, tr=0.2, method="bonferroni")
 
-rm(data_gmda, GMDA, CanOrg, CanAcc, DistAcc, AngleAcc, boxplot)
+rm(data_gmda, GMDA, CanAcc, DistAcc, AngleAcc, boxplot)
 
 
 # ######################################################### #
