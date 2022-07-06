@@ -722,14 +722,13 @@ landmark_comparison <- ggplot(landmark_comp_data, aes(x=perc, y=landmarks, fill=
 
 
 # :::   GMDA positioning     ::: #
+gmda_avg <- box_plot(pt_data %>% filter(condition=="position"), "group", "score", "group", "condition","none", NULL, NULL, "score", mylabels, "bottom", group_colors, group_colors_o)
+## ----
 gmda_data <- gmda_data %>%
   filter(gmda_measure %in% c("CanAcc", "DistAcc", "AngleAcc")) %>%
   mutate(gmda_measure=factor(gmda_measure, levels=c("CanAcc", "DistAcc", "AngleAcc")))
 
 gmda_details <- box_plot(gmda_data, "group", "score", "group", "gmda_measure","none", NULL, NULL, "GMDA score", mylabels, "bottom", group_colors, group_colors_o, facetOneLine=T)
-
-gmda_avg <- box_plot(pt_data %>% filter(condition=="position"), "group", "score", "group", "condition","none", NULL, NULL, "score", mylabels, "bottom", group_colors, group_colors_o)
-## ----
 
 
 ###############################################################################################################
