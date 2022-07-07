@@ -52,9 +52,17 @@ sm_orig <- sm_data
 sm_data <- sm_data %>% filter(exclude_trial_matlab==0)
 rm(file_name)
 
+nn_YK <- length(unique(sm_data$id[sm_data$group=="YoungKids"]))
+nn_OK <- length(unique(sm_data$id[sm_data$group=="OldKids"]))
+nn_AD <- length(unique(sm_data$id[sm_data$group=="YoungAdults"]))
+
 file_name <- "../WP10_data/WP10_results/wp10_post_nav_data.RData"
 load(file_name)
 rm(file_name)
+
+np_YK <- length(unique(pt_data$id[pt_data$group=="YoungKids"]))
+np_OK <- length(unique(pt_data$id[pt_data$group=="OldKids"]))
+np_AD <- length(unique(pt_data$id[pt_data$group=="YoungAdults"]))
 ```
 
 ```{r, analysis_data, include=FALSE}
@@ -66,9 +74,9 @@ rm(file_name)
 ## Current sample
 Cross-sectional comparison between
 
-* Young kids (6-7 yrs, n = `r length(unique(sm_data$id[sm_data$group=="YoungKids"]))`) 
-* Older kids (9-10 yrs, n = `r length(unique(sm_data$id[sm_data$group=="OldKids"]))`)
-* Young adults (18-35 yrs, n = `r length(unique(sm_data$id[sm_data$group=="YoungAdults"]))`)
+* Young kids (6-7 yrs, n = `r nn_YK`, non-navigational n = `r np_YK`) 
+* Older kids (9-10 yrs, n = `r nn_OK`, non-navigational n = `r np_OK`)
+* Young adults (18-35 yrs, n = `r nn_AD`, non-navigational n = `r np_AD`)
 
 
 ## Variables of interest
@@ -76,7 +84,7 @@ Cross-sectional comparison between
 In learning trials, the goal is visible, i.e. the trial is always completed successfully except if the participant needs more than 120 seconds (time out). In egocentric and allocentric retrieval trials, the goal is not visible. Participants go to the place where they remember the goal being located and press a button. 
 
 * **Correct goal alley** (yes/no): Finding the correct goal alley (x-/y-coordinates in correct outer arm or intersection right in front). 
-* **Final distance & memory score** (metric): Final distance between x-/y-coordinates of the chosen and the correct goal location. Memory score normalizes the final distance value as a score from 0 to 1 (chance = 0.5) by comparing final distance to the final distance to 1000 randomly sampled locations.  
+* **Final distance & memory score** (metric): Final distance between x-/y-coordinates of the chosen and the correct goal location. Memory score normalizes the final distance value as a score from 0 to 1 (chance level 0.5) by comparing final distance to the final distance of 1000 randomly sampled locations.  
 $$\text{Final distance} = \sqrt{(x_{correct}-x_{chosen})^2 + (y_{correct}-y_{chosen})^2}$$
 $$\text{Memory score} = 1 - \text{percentage of random final distance values that are smaller than final distance}$$
 * **Time**: Time to complete trial in seconds.
