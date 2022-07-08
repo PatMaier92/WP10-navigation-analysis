@@ -324,7 +324,7 @@ tic;
                 [xi_eg,yi_eg]=interpolateData(x_line_ego, y_line_ego, sm.participant(p).session(s).trial(k).ideal_ego_path_length);
                 
                 [xi_st,yi_st]=interpolateData(x_line_G, y_line_G, ideal_path_G);
- 
+                
 %                 % test plot
 %                 figure; plot(sm.coord.full_poly); hold on; 
 %                 plot(x, y, 'k-', x_line, y_line, 'k+', xi_al, yi_al, 'k-',...
@@ -395,13 +395,22 @@ tic;
                 % target distance 
                 [sm.participant(p).session(s).trial(k).target_distance, ~]=computeTargetDistance(x,y,...
                     sm.participant(p).session(s).trial(k).goal_x,sm.participant(p).session(s).trial(k).goal_y); 
-                % ideal target distance 
-                [ideal_distance_target, ~]=computeTargetDistance(xi_al,yi_al,...
-                    sm.participant(p).session(s).trial(k).goal_x,sm.participant(p).session(s).trial(k).goal_y); 
-                % target distance error 
-                sm.participant(p).session(s).trial(k).target_distance_error=computeDeviationToIdealValue(...
-                    sm.participant(p).session(s).trial(k).target_distance, ideal_distance_target);
-                clear ideal_distance_target; 
+                 % ideal target distance 
+                [sm.participant(p).session(s).trial(k).ideal_target_distance, ~]=computeTargetDistance(xi_al,yi_al,...
+                    sm.participant(p).session(s).trial(k).goal_x,sm.participant(p).session(s).trial(k).goal_y);               
+                % target distance deviation 
+                sm.participant(p).session(s).trial(k).target_distance_deviation=sm.participant(p).session(s).trial(k).target_distance - sm.participant(p).session(s).trial(k).ideal_target_distance; 
+                
+                % normalized target distance score 
+                sm.participant(p).session(s).trial(k).target_distance_score=computeDistanceScore(...
+                    sm.participant(p).session(s).trial(k).target_distance,x,y,...
+                    sm.coord.random_x,sm.coord.random_y); 
+                % normalized ideal target distance score
+                sm.participant(p).session(s).trial(k).ideal_target_distance_score=computeDistanceScore(...
+                    sm.participant(p).session(s).trial(k).ideal_target_distance,xi_al,yi_al,...
+                    sm.coord.random_x,sm.coord.random_y); 
+                % normalized target distance score deviation
+                sm.participant(p).session(s).trial(k).target_distance_score_deviation=sm.participant(p).session(s).trial(k).target_distance_score - sm.participant(p).session(s).trial(k).ideal_target_distance_score;            
                 
                 % fprintf('Standard path and distance analysis done for %d, session %d, file no %d.\n', id, s, k);
                 
@@ -429,15 +438,15 @@ tic;
                     % Exploratory: DYNAMIC TIME WARPING DISTANCE for PATH to CHOSEN target 
                     sm.participant(p).session(s).trial(k).chosen_dtw_path_distance=dtw([xi_ch,yi_ch]',[x,y]');
                     
-                    % AVERAGE DISTANCE to CHOSEN TARGET
-                    % target distance 
-                    [sm.participant(p).session(s).trial(k).chosen_target_distance, ~]=computeTargetDistance(x,y,x(end),y(end)); 
-                    % ideal target distance 
-                    [ideal_chosen_target_distance, ~]=computeTargetDistance(xi_ch,yi_ch,x(end),y(end)); 
-                    % target distance error 
-                    sm.participant(p).session(s).trial(k).chosen_target_distance_error=computeDeviationToIdealValue(...
-                        sm.participant(p).session(s).trial(k).chosen_target_distance, ideal_chosen_target_distance);  
-                    clear ideal_chosen_target_distance; 
+%                     % AVERAGE DISTANCE to CHOSEN TARGET
+%                     % target distance 
+%                     [sm.participant(p).session(s).trial(k).chosen_target_distance, ~]=computeTargetDistance(x,y,x(end),y(end)); 
+%                     % ideal target distance 
+%                     [ideal_chosen_target_distance, ~]=computeTargetDistance(xi_ch,yi_ch,x(end),y(end)); 
+%                     % target distance error 
+%                     sm.participant(p).session(s).trial(k).chosen_target_distance_error=computeDeviationToIdealValue(...
+%                         sm.participant(p).session(s).trial(k).chosen_target_distance, ideal_chosen_target_distance);  
+%                     clear ideal_chosen_target_distance; 
                 else
                     % dummy values
                     sm.participant(p).session(s).trial(k).final_distance=999;
@@ -445,8 +454,8 @@ tic;
 %                     sm.participant(p).session(s).trial(k).chosen_path_distance=999;
                     sm.participant(p).session(s).trial(k).chosen_path_length_error=999; 
                     sm.participant(p).session(s).trial(k).chosen_dtw_path_distance=999;
-                    sm.participant(p).session(s).trial(k).chosen_target_distance=999;
-                    sm.participant(p).session(s).trial(k).chosen_target_distance_error=999;
+%                     sm.participant(p).session(s).trial(k).chosen_target_distance=999;
+%                     sm.participant(p).session(s).trial(k).chosen_target_distance_error=999;
                 end
                 
                 % fprintf('Additional: Distance analysis to chosen target done for %d, session %d, file no %d.\n', id, s, k);
@@ -464,23 +473,23 @@ tic;
                         sm.participant(p).session(s).trial(k).final_distance_start, sm.participant(p).session(s).trial(k).goal_i,...
                         7);
                     
-                    % AVERAGE DISTANCE to target in START ALLEY
-                    % target distance 
-                    [sm.participant(p).session(s).trial(k).start_target_distance, ~]=computeTargetDistance(x,y,...
-                        sm.coord.goal_x_in_alleys(sm.participant(p).session(s).trial(k).goal_i, 4), sm.coord.goal_y_in_alleys(sm.participant(p).session(s).trial(k).goal_i, 4)); 
-                    % ideal target distance 
-                    [ideal_start_target_distance, ~]=computeTargetDistance(xi_st,yi_st,...
-                        sm.coord.goal_x_in_alleys(sm.participant(p).session(s).trial(k).goal_i, 4), sm.coord.goal_y_in_alleys(sm.participant(p).session(s).trial(k).goal_i, 4));
-                    % target distance error 
-                    sm.participant(p).session(s).trial(k).start_target_distance_error=computeDeviationToIdealValue(...
-                        sm.participant(p).session(s).trial(k).start_target_distance, ideal_start_target_distance); 
-                    clear ideal_start_target_distance;
+%                     % AVERAGE DISTANCE to target in START ALLEY
+%                     % target distance 
+%                     [sm.participant(p).session(s).trial(k).start_target_distance, ~]=computeTargetDistance(x,y,...
+%                         sm.coord.goal_x_in_alleys(sm.participant(p).session(s).trial(k).goal_i, 4), sm.coord.goal_y_in_alleys(sm.participant(p).session(s).trial(k).goal_i, 4)); 
+%                     % ideal target distance 
+%                     [ideal_start_target_distance, ~]=computeTargetDistance(xi_st,yi_st,...
+%                         sm.coord.goal_x_in_alleys(sm.participant(p).session(s).trial(k).goal_i, 4), sm.coord.goal_y_in_alleys(sm.participant(p).session(s).trial(k).goal_i, 4));
+%                     % target distance error 
+%                     sm.participant(p).session(s).trial(k).start_target_distance_error=computeDeviationToIdealValue(...
+%                         sm.participant(p).session(s).trial(k).start_target_distance, ideal_start_target_distance); 
+%                     clear ideal_start_target_distance;
                 else 
                     % dummy values
                     sm.participant(p).session(s).trial(k).final_distance_start=999;
                     sm.participant(p).session(s).trial(k).memory_score_start=999; 
-                    sm.participant(p).session(s).trial(k).start_target_distance=999;
-                    sm.participant(p).session(s).trial(k).start_target_distance_error=999; 
+%                     sm.participant(p).session(s).trial(k).start_target_distance=999;
+%                     sm.participant(p).session(s).trial(k).start_target_distance_error=999;
                 end 
                 
                 % egocentric behavior
@@ -503,25 +512,25 @@ tic;
                     % Exploratory: DYNAMIC TIME WARPING DISTANCE for PATH
                     sm.participant(p).session(s).trial(k).ego_dtw_path_distance=dtw([xi_eg,yi_eg]',[x,y]');
  
-                    % AVERAGE DISTANCE to EGOCENTRIC TARGET
-                    % target distance 
-                    [sm.participant(p).session(s).trial(k).ego_target_distance, ~]=computeTargetDistance(x,y,...
-                        sm.participant(p).session(s).trial(k).goal_x_ego, sm.participant(p).session(s).trial(k).goal_y_ego); 
-                    % ideal target distance 
-                    [ideal_ego_target_distance, ~]=computeTargetDistance(xi_eg,yi_eg,...
-                        sm.participant(p).session(s).trial(k).goal_x_ego, sm.participant(p).session(s).trial(k).goal_y_ego); 
-                    % target distance error 
-                    sm.participant(p).session(s).trial(k).ego_target_distance_error=computeDeviationToIdealValue(...
-                        sm.participant(p).session(s).trial(k).ego_target_distance, ideal_ego_target_distance); 
-                    clear ideal_ego_target_distance;
+%                     % AVERAGE DISTANCE to EGOCENTRIC TARGET
+%                     % target distance 
+%                     [sm.participant(p).session(s).trial(k).ego_target_distance, ~]=computeTargetDistance(x,y,...
+%                         sm.participant(p).session(s).trial(k).goal_x_ego, sm.participant(p).session(s).trial(k).goal_y_ego); 
+%                     % ideal target distance 
+%                     [ideal_ego_target_distance, ~]=computeTargetDistance(xi_eg,yi_eg,...
+%                         sm.participant(p).session(s).trial(k).goal_x_ego, sm.participant(p).session(s).trial(k).goal_y_ego); 
+%                     % target distance error 
+%                     sm.participant(p).session(s).trial(k).ego_target_distance_error=computeDeviationToIdealValue(...
+%                         sm.participant(p).session(s).trial(k).ego_target_distance, ideal_ego_target_distance); 
+%                     clear ideal_ego_target_distance;
                 else
                     % dummy values
                     sm.participant(p).session(s).trial(k).final_distance_ego=999;
                     sm.participant(p).session(s).trial(k).memory_score_ego=999;
 %                     sm.participant(p).session(s).trial(k).ego_path_distance=999;
                     sm.participant(p).session(s).trial(k).ego_dtw_path_distance=999;
-                    sm.participant(p).session(s).trial(k).ego_target_distance=999;
-                    sm.participant(p).session(s).trial(k).ego_target_distance_error=999;
+%                     sm.participant(p).session(s).trial(k).ego_target_distance=999;
+%                     sm.participant(p).session(s).trial(k).ego_target_distance_error=999;
                 end
                 
                 % fprintf('Additional: Distance analysis to egocentric target done for %d, session %d, file no %d.\n', id, s, k);
