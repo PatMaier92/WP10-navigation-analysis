@@ -359,7 +359,7 @@ tic;
                     sm.coord.alley_poly, sm.coord.rec_poly, sm.coord.tri_poly, sm.coord.alley_names, sm.coord.goal_names,...
                     sm.participant(p).session(s).trial(k).x_n, sm.participant(p).session(s).trial(k).y_n);
                  
-                % evaluate global accuracy of chosen location
+                % evaluate accuracy of chosen location
                 sm.participant(p).session(s).trial(k).correct_final_alley=sm.participant(p).session(s).trial(k).goal_alley==sm.participant(p).session(s).trial(k).chosen_alley_i; 
                 sm.participant(p).session(s).trial(k).correct_final_alley_ego=sm.participant(p).session(s).trial(k).ego_alley==sm.participant(p).session(s).trial(k).chosen_alley_i ...
                     && sm.participant(p).session(s).trial(k).correct_final_alley==0;        
@@ -375,15 +375,14 @@ tic;
                 % PATH LENGTH 
                 sm.participant(p).session(s).trial(k).path_length=computePathLength(x,y); 
                 
-                % PATH LENGTH ERROR to TARGET 
-                sm.participant(p).session(s).trial(k).path_length_error=computeDeviationToIdealValue(...
-                    sm.participant(p).session(s).trial(k).path_length, ...
-                    sm.participant(p).session(s).trial(k).ideal_path_length);
+                % EXCESS PATH LENGTH (to chosen target) 
+                sm.participant(p).session(s).trial(k).excess_path_length=...
+                    sm.participant(p).session(s).trial(k).path_length-sm.participant(p).session(s).trial(k).ideal_chosen_path_length;
                 
-                % VELOCITY 
+                % VELOCITY
                 sm.participant(p).session(s).trial(k).velocity=sm.participant(p).session(s).trial(k).path_length / ...
                     sm.participant(p).session(s).trial(k).time; 
-                
+  
                 % Exploratory: DYNAMIC TIME WARPING DISTANCE for PATH to TARGET
                 sm.participant(p).session(s).trial(k).dtw_path_distance=dtw([xi_al,yi_al]',[x,y]');
                 
@@ -421,12 +420,7 @@ tic;
                     sm.participant(p).session(s).trial(k).memory_score=computeMemoryScore(sm.coord.final_distance_distribution,...
                         sm.participant(p).session(s).trial(k).final_distance, sm.participant(p).session(s).trial(k).goal_i,...
                         sm.participant(p).session(s).trial(k).goal_alley);
-
-                    % PATH LENGTH ERROR to CHOSEN target 
-                    sm.participant(p).session(s).trial(k).chosen_path_length_error=computeDeviationToIdealValue(...
-                        sm.participant(p).session(s).trial(k).path_length, ...
-                        sm.participant(p).session(s).trial(k).ideal_chosen_path_length);
-                
+        
                     % Exploratory: DYNAMIC TIME WARPING DISTANCE for PATH to CHOSEN target 
                     sm.participant(p).session(s).trial(k).chosen_dtw_path_distance=dtw([xi_ch,yi_ch]',[x,y]');
                     
@@ -443,7 +437,6 @@ tic;
                     % dummy values
                     sm.participant(p).session(s).trial(k).final_distance=999;
                     sm.participant(p).session(s).trial(k).memory_score=999; 
-                    sm.participant(p).session(s).trial(k).chosen_path_length_error=999; 
                     sm.participant(p).session(s).trial(k).chosen_dtw_path_distance=999;
 %                     sm.participant(p).session(s).trial(k).chosen_target_distance=999;
 %                     sm.participant(p).session(s).trial(k).chosen_target_distance_error=999;
@@ -606,11 +599,10 @@ tic;
                 % PATH LENGTH to all targets
                 sm.participant(p).session(s).trial(k).path_length=computePathLength(x,y); 
                               
-                % PATH LENGTH ERROR to all target
-                sm.participant(p).session(s).trial(k).path_length_error=computeDeviationToIdealValue(...
-                    sm.participant(p).session(s).trial(k).path_length, ideal_motor_path_length);
-                clear ideal_motor_path_length;
-                 
+                % EXCESS PATH LENGTH (to chosen target) 
+                sm.participant(p).session(s).trial(k).excess_path_length=...
+                    sm.participant(p).session(s).trial(k).path_length-ideal_motor_path_length;
+
                 % VELOCITY
                 sm.participant(p).session(s).trial(k).velocity=sm.participant(p).session(s).trial(k).path_length/sm.participant(p).session(s).trial(k).time;
                 
