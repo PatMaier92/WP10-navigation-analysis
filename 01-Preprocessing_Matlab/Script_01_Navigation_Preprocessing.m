@@ -382,11 +382,7 @@ tic;
                 
                 % VELOCITY 
                 sm.participant(p).session(s).trial(k).velocity=sm.participant(p).session(s).trial(k).path_length / ...
-                    sm.participant(p).session(s).trial(k).time;
-                
-%                 % AVERAGE DISTANCE to PATH
-%                 [sm.participant(p).session(s).trial(k).path_distance, ~]=computePathDistance(...
-%                     xi_al, yi_al, x, y, sm.participant(p).session(s).trial(k).final_distance, true);  
+                    sm.participant(p).session(s).trial(k).time; 
                 
                 % Exploratory: DYNAMIC TIME WARPING DISTANCE for PATH to TARGET
                 sm.participant(p).session(s).trial(k).dtw_path_distance=dtw([xi_al,yi_al]',[x,y]');
@@ -431,10 +427,6 @@ tic;
                         sm.participant(p).session(s).trial(k).path_length, ...
                         sm.participant(p).session(s).trial(k).ideal_chosen_path_length);
                 
-%                     % AVERAGE DISTANCE to PATH to CHOSEN target 
-%                     [sm.participant(p).session(s).trial(k).chosen_path_distance, ~]=computePathDistance(...
-%                         xi_ch, yi_ch, x, y, 0, false);   
-
                     % Exploratory: DYNAMIC TIME WARPING DISTANCE for PATH to CHOSEN target 
                     sm.participant(p).session(s).trial(k).chosen_dtw_path_distance=dtw([xi_ch,yi_ch]',[x,y]');
                     
@@ -451,7 +443,6 @@ tic;
                     % dummy values
                     sm.participant(p).session(s).trial(k).final_distance=999;
                     sm.participant(p).session(s).trial(k).memory_score=999; 
-%                     sm.participant(p).session(s).trial(k).chosen_path_distance=999;
                     sm.participant(p).session(s).trial(k).chosen_path_length_error=999; 
                     sm.participant(p).session(s).trial(k).chosen_dtw_path_distance=999;
 %                     sm.participant(p).session(s).trial(k).chosen_target_distance=999;
@@ -503,11 +494,7 @@ tic;
                     % MEMORY SCORE to EGOCENTRIC target(final distance to ego in relation to distribution of final distance for random points)
                     sm.participant(p).session(s).trial(k).memory_score_ego=computeMemoryScore(sm.coord.final_distance_distribution,...
                         sm.participant(p).session(s).trial(k).final_distance_ego, sm.participant(p).session(s).trial(k).goal_i,...
-                        sm.participant(p).session(s).trial(k).ego_alley);
-
-%                     % AVERAGE DISTANCE to EGOCENTRIC PATH
-%                     [sm.participant(p).session(s).trial(k).ego_path_distance, ~]=computePathDistance(...
-%                         xi_eg, yi_eg, x, y, sm.participant(p).session(s).trial(k).final_distance_ego, true);     
+                        sm.participant(p).session(s).trial(k).ego_alley);   
 
                     % Exploratory: DYNAMIC TIME WARPING DISTANCE for PATH
                     sm.participant(p).session(s).trial(k).ego_dtw_path_distance=dtw([xi_eg,yi_eg]',[x,y]');
@@ -527,7 +514,6 @@ tic;
                     % dummy values
                     sm.participant(p).session(s).trial(k).final_distance_ego=999;
                     sm.participant(p).session(s).trial(k).memory_score_ego=999;
-%                     sm.participant(p).session(s).trial(k).ego_path_distance=999;
                     sm.participant(p).session(s).trial(k).ego_dtw_path_distance=999;
 %                     sm.participant(p).session(s).trial(k).ego_target_distance=999;
 %                     sm.participant(p).session(s).trial(k).ego_target_distance_error=999;
