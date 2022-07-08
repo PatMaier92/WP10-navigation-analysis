@@ -553,20 +553,19 @@ tic;
                     
                 % INITIAL ROTATION (in first start alley)
                 % same method as above 
-                % excludes trials with inner starts because different zone area size 
+                % get rotation index (different method for inner/outer starts)
                 if mod(sm.participant(p).session(s).trial(k).start_i,2)
-                    % get rotation index
                     [~, ~, ~, rot_index]=computeCoverage(sm.participant(p).session(s).trial(k).start_i,x,y,...
                         sm.coord.alley_poly, sm.coord.tri_poly, sm.participant(p).session(s).trial(k).time);
-                    % compute initial rotation in degrees and turns 
-                    [sm.participant(p).session(s).trial(k).initial_rotation_degrees,...
-                        sm.participant(p).session(s).trial(k).initial_rotation_turns]=computeRotationInZone(rot_index, r); 
-                    clear rot_index; 
                 else 
-                    sm.participant(p).session(s).trial(k).initial_rotation_degrees=999; 
-                    sm.participant(p).session(s).trial(k).initial_rotation_turns=999; 
+                    [~, ~, ~, rot_index]=computeCoveragePentagon(sm.participant(p).session(s).trial(k).start_i,x,y,...
+                        sm.coord.rec_poly, sm.coord.tri_poly, sm.participant(p).session(s).trial(k).time); 
                 end 
-                
+                % compute initial rotation in degrees and turns
+                [sm.participant(p).session(s).trial(k).initial_rotation_degrees,...
+                    sm.participant(p).session(s).trial(k).initial_rotation_turns]=computeRotationInZone(rot_index, r);
+                clear rot_index;
+                    
                 % fprintf('Rotation analysis done for %d, session %d, file no %d.\n', id, s, k);       
                 
                 %% zone analysis for exploration behavior             
