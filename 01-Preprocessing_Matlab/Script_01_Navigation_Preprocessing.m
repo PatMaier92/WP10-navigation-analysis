@@ -372,8 +372,8 @@ tic;
                 %% time analysis
                 % TIME
                 sm.participant(p).session(s).trial(k).time=computeTime(t(1),t(end));
-                % fprintf('Time analysis done for %d, session %d, file no %d.\n', id, s, k);           
-                               
+                % fprintf('Time analysis done for %d, session %d, file no %d.\n', id, s, k);   
+                                             
                 %% standard coordinate analysis using x-/y-coordinates
                 % PATH LENGTH 
                 sm.participant(p).session(s).trial(k).path_length=computePathLength(x,y); 
@@ -450,17 +450,23 @@ tic;
                 %% additional distance analysis for allocentric probe trials
                 % homing behavior
                 if sm.participant(p).session(s).trial(k).condition=="allo_ret"
-                    % FINAL DISTANCE to target in START ALLEY
+                    % FINAL DISTANCE to target in ORIGINAL START ALLEY
                     sm.participant(p).session(s).trial(k).final_distance_start=computeDistance(...
                         sm.coord.goal_x_in_alleys(sm.participant(p).session(s).trial(k).goal_i, 4), sm.participant(p).session(s).trial(k).x_n,...
                         sm.coord.goal_y_in_alleys(sm.participant(p).session(s).trial(k).goal_i, 4), sm.participant(p).session(s).trial(k).y_n);
                     
-                    % MEMORY SCORE to target in START ALLEY
+                    % MEMORY SCORE to target in ORIGINAL START ALLEY
                     sm.participant(p).session(s).trial(k).memory_score_start=computeMemoryScore(sm.coord.final_distance_distribution,...
                         sm.participant(p).session(s).trial(k).final_distance_start, sm.participant(p).session(s).trial(k).goal_i,...
                         7);
                     
-%                     % AVERAGE DISTANCE to target in START ALLEY
+                    % COVERAGE (rel. time in zone) in ORIGINAL START ALLEY
+                    % as indicator for homing behavior
+                    [~, sm.participant(p).session(s).trial(k).coverage_start,...
+                        sm.participant(p).session(s).trial(k).time_in_start, ~]=computeCoverage(7,x,y,...
+                        sm.coord.alley_poly, sm.coord.tri_poly, sm.participant(p).session(s).trial(k).time);
+                    
+%                     % AVERAGE DISTANCE to target in ORIGINAL START ALLEY
 %                     % target distance 
 %                     [sm.participant(p).session(s).trial(k).start_target_distance, ~]=computeTargetDistance(x,y,...
 %                         sm.coord.goal_x_in_alleys(sm.participant(p).session(s).trial(k).goal_i, 4), sm.coord.goal_y_in_alleys(sm.participant(p).session(s).trial(k).goal_i, 4)); 
@@ -475,6 +481,8 @@ tic;
                     % dummy values
                     sm.participant(p).session(s).trial(k).final_distance_start=999;
                     sm.participant(p).session(s).trial(k).memory_score_start=999; 
+                    sm.participant(p).session(s).trial(k).coverage_start=999;
+                    sm.participant(p).session(s).trial(k).time_in_start=999; 
 %                     sm.participant(p).session(s).trial(k).start_target_distance=999;
 %                     sm.participant(p).session(s).trial(k).start_target_distance_error=999;
                 end 
@@ -493,8 +501,15 @@ tic;
                         sm.participant(p).session(s).trial(k).ego_alley);   
 
                     % Exploratory: DYNAMIC TIME WARPING DISTANCE for PATH
-                    sm.participant(p).session(s).trial(k).ego_dtw_path_distance=dtw([xi_eg,yi_eg]',[x,y]');
+                    sm.participant(p).session(s).trial(k).dtw_path_distance_ego=dtw([xi_eg,yi_eg]',[x,y]');
  
+                    % COVERAGE (rel. time in zone) in EGO ALLEY
+                    % as indicator for egocentric behavior
+                    [~, sm.participant(p).session(s).trial(k).coverage_ego,...
+                        sm.participant(p).session(s).trial(k).time_in_ego, ~]=computeCoverage(...
+                        sm.participant(p).session(s).trial(k).ego_alley,x,y,...
+                        sm.coord.alley_poly, sm.coord.tri_poly, sm.participant(p).session(s).trial(k).time);
+                    
 %                     % AVERAGE DISTANCE to EGOCENTRIC TARGET
 %                     % target distance 
 %                     [sm.participant(p).session(s).trial(k).ego_target_distance, ~]=computeTargetDistance(x,y,...
@@ -510,7 +525,9 @@ tic;
                     % dummy values
                     sm.participant(p).session(s).trial(k).final_distance_ego=999;
                     sm.participant(p).session(s).trial(k).memory_score_ego=999;
-                    sm.participant(p).session(s).trial(k).ego_dtw_path_distance=999;
+                    sm.participant(p).session(s).trial(k).dtw_path_distance_ego=999;
+                    sm.participant(p).session(s).trial(k).coverage_ego=999; 
+                    sm.participant(p).session(s).trial(k).time_in_ego=999;
 %                     sm.participant(p).session(s).trial(k).ego_target_distance=999;
 %                     sm.participant(p).session(s).trial(k).ego_target_distance_error=999;
                 end
@@ -533,7 +550,23 @@ tic;
                 sm.participant(p).session(s).trial(k).rotation_turns=sum(rot)/360;
                 sm.participant(p).session(s).trial(k).rotation_turns_by_path_length=sum(rot)/360/sm.participant(p).session(s).trial(k).path_length; 
                 clear rot j temp;
-                     
+                    
+                % INITIAL ROTATION (in first start alley)
+                % same method as above 
+                % excludes trials with inner starts because different zone area size 
+                if mod(sm.participant(p).session(s).trial(k).start_i,2)
+                    % get rotation index
+                    [~, ~, ~, rot_index]=computeCoverage(sm.participant(p).session(s).trial(k).start_i,x,y,...
+                        sm.coord.alley_poly, sm.coord.tri_poly, sm.participant(p).session(s).trial(k).time);
+                    % compute initial rotation in degrees and turns 
+                    [sm.participant(p).session(s).trial(k).initial_rotation_degrees,...
+                        sm.participant(p).session(s).trial(k).initial_rotation_turns]=computeRotationInZone(rot_index, r); 
+                    clear rot_index; 
+                else 
+                    sm.participant(p).session(s).trial(k).initial_rotation_degrees=999; 
+                    sm.participant(p).session(s).trial(k).initial_rotation_turns=999; 
+                end 
+                
                 % fprintf('Rotation analysis done for %d, session %d, file no %d.\n', id, s, k);       
                 
                 %% zone analysis for exploration behavior             
@@ -626,7 +659,7 @@ tic;
                     target_distance(b+1)=temp_distance; 
                 end
                 sm.participant(p).session(s).trial(k).target_distance=mean(target_distance);
-                clear target_distance temp* events; 
+                clear target_distance temp* events b; 
                 
                 % TOTAL ROTATION
                 rot=zeros(1,length(r)-1); 
