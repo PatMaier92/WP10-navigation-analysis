@@ -18,7 +18,6 @@ data.pos_y=[];
 data.rot_x=[]; 
 data.rot_z=[]; 
 data.gameIsPaused=[]; 
-data.trialEvent=[]; 
 
 end
     

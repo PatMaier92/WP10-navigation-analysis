@@ -258,6 +258,9 @@ tic;
             x=data.pos_x; % coordinates
             y=data.pos_z; % coordinates
             r=data.rot_y; % yaw rotations
+            if s==3
+                events=data.trialEvent; 
+            end
             clear data; 
             
             % spatial normalization
@@ -605,6 +608,25 @@ tic;
 
                 % VELOCITY
                 sm.participant(p).session(s).trial(k).velocity=sm.participant(p).session(s).trial(k).path_length/sm.participant(p).session(s).trial(k).time;
+                
+                % AVERAGE DISTANCE to TARGET 
+                % target distance for all segments/goals 
+                target_distance=zeros(max(events),1); 
+                for b=0:max(events)-1 
+                    % next goal
+                    temp_goal_x=sm.coord.practise.goal_x(b+1); temp_goal_y=sm.coord.practise.goal_y(b+1); 
+                    
+                    % next path segment
+                    temp_x=x(events==b); temp_y=y(events==b); 
+
+                    % compute target distance of segment
+                    [temp_distance, ~]=computeTargetDistance(temp_x,temp_y,temp_goal_x,temp_goal_y);
+                    
+                    % sum 
+                    target_distance(b+1)=temp_distance; 
+                end
+                sm.participant(p).session(s).trial(k).target_distance=mean(target_distance);
+                clear target_distance temp* events; 
                 
                 % TOTAL ROTATION
                 rot=zeros(1,length(r)-1); 
