@@ -23,19 +23,14 @@ sm_data <- read_xlsx(file_path, col_names = T, na = "999")
 
 # tidy data 
 sm_data <- sm_data %>% 
-  mutate(sex=factor(sex),
-         group=factor(group, levels=c("YoungKids", "OldKids", "YoungAdults")),
-         session=factor(session),
-         feedback=factor(feedback),
+  mutate_at(c("sex", "session", "feedback", "goal_identity"), factor) %>% 
+  mutate(group=factor(group, levels=c("YoungKids", "OldKids", "YoungAdults")),
          condition=factor(condition, levels=c("main_learn", "main_ret", "allo_ret", "ego_ret", "practise")),
-         goal_identity=factor(goal_identity),
          goal=factor(goal_s),
          start=factor(start_s),
          chosen_alley=factor(chosen_alley_s),
          obj_at_chosen_loc=factor(obj_at_chosen_loc, levels=c("01-Fussball", "02-Globus", "03-Geige", "04-Stuhl")),
-         search_strategy=factor(search_strategy, levels=c("direct","detour","reorient")),
-         path_length_excess=path_length - ideal_path_length,
-         chosen_path_length_excess=path_length - ideal_chosen_path_length) %>% 
+         search_strategy=factor(search_strategy, levels=c("direct","detour","reorient"))) %>% 
   select(-goal_s, -start_s, -chosen_alley_s)
 # if no renaming of variables: use mutate_at(cols, factor)
 
