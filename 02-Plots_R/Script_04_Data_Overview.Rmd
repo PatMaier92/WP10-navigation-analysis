@@ -32,17 +32,14 @@ Navigating a star-shaped maze environment ("Starmaze") with three goal locations
 
 ```{r setup, include=FALSE, cache=FALSE}
 
-library(tidyverse)
-library(patchwork)
-library(ggrepel)
-# install.packages('tinytex')
-# tinytex::install_tinytex() # latex for pdf file creation
-
 knitr::read_chunk('Script_03_Plot_Creator.R')
 knitr::read_chunk('Script_02_Analyzer.R')
 ```
 
 ```{r, analysis_packages_and_sum_coding, include=FALSE, cache=FALSE}
+```
+
+```{r, plotting_packages, include=FALSE, cache=FALSE}
 ```
 
 ```{r, include=FALSE}
@@ -91,11 +88,12 @@ $$\text{Memory score} = 1 - \text{percentage of random final distance values tha
 * **Excess path length** (metric): Subtraction of ideal path length (to chosen location) from traveled path length. Traveled path length is calculated as summation of distance between x-/y-coordinates over time.
 $$\text{Path length} = \sum \sqrt{(x_{t}-x_{t+1})^2 + (y_{t}-y_{t+1})^2}$$
 $$\text{Excess path length} = (path-path_{ideal})$$
-* **Distance to location (error)** (metric): Absolute deviation of the cumulative distance to a location (e.g. goal, egocentric location) in relation to the ideal cumulative distance to the location (on the shortest possible path). Calculated as summation of distance between the player's x-/y-coordinates and the location's x-/y-coordinates, then averaged by the number of x-/y data points. 
+* **Excess distance to goal** (metric): Subtraction of the average cumulative distance to the goal location from the ideal average cumulative distance to the goal location (on the shortest possible path). Calculated as summation of distance between the player's x-/y-coordinates and the location's x-/y-coordinates, then averaged by the number of x-/y data points. 
 $$\text{Distance to goal} = \frac {\sum \sqrt{(x_{t}-x_{goal})^2 + (y_{t}-y_{goal})^2}} {n_{t}}$$
-$$\text{Distance to goal error} = \frac {(distance-distance_{ideal})} {distance_{ideal}}$$
-* **Rotation** (turns normalized by path length): Sum of absolute z-rotations over time (takes into account switch at 0/360°) divided by 360° (i.e. full turns) and divided by path length (reason: longer paths automatically involve more rotation in a Starmaze environment, therefore normalized rotation is more indicative of exploration/looking-around). 
-$$\text{Rotation} = \frac {\sum |(z_{t}-z_{t+1})|} {path} * \frac {1} {360} $$
+$$\text{Excess distance to goal} = (distance-distance_{ideal})$$
+* **Rotation**: Sum of absolute z-rotations over time divided by 360° (i.e. full turns). Takes into account switch at 0/360°. Variants: 1. rotation in initial area, 2. rotation divided by path length (reason: longer paths automatically involve more rotation in a Starmaze environment, therefore normalized rotation is more indicative of exploration/looking-around). 
+$$\text{Rotation in initial area} = \frac {\sum |(z_{t}-z_{t+1})|} {360} $$
+$$\text{Rotation by path length} = \frac {\sum |(z_{t}-z_{t+1})|} {path} * \frac {1} {360} $$
 * **Strategy classification**: Classification into three strategies: Direct to chosen goal, detour (entering more zones than necessary), or reorientation (re-entering same zones). 
 
 ![Examples for variables](./pics/Var_all.jpg){width=300px,height=500x}
@@ -116,11 +114,11 @@ $$\text{Rotation} = \frac {\sum |(z_{t}-z_{t+1})|} {path} * \frac {1} {360} $$
 
 ```{r, warning=F, echo=F }
 
-line_t + plot_spacer() + line_dg + line_rpl + line_r +
+line_t + line_p + line_d + line_ir + line_rp +
   plot_annotation("Navigation behaviour in learning trials (goal visible)") + 
   plot_layout(guides="collect") & theme(legend.position="top", legend.justification=c(0,0))
 
-rm(line_t, line_plex, line_dg, line_rpl, line_r, sm_trialwise)
+rm(line_t, line_p, line_d, line_ir, line_rp, sm_trialwise)
 ```
  
 ### **Time**
@@ -130,23 +128,24 @@ rm(line_t, line_plex, line_dg, line_rpl, line_r, sm_trialwise)
 
 ### **Excess path length**
 
-```{r, stats_learning_plex }
+```{r, stats_learning_excess_path }
 ```
 
 ### **Distance to goal**
 
-```{r, stats_learning_dg }
+```{r, stats_learning_distance_goal }
 ```
 
-### **Rotation (by path length)**
+### **Initial Rotation**
 
-```{r, stats_learning_rpl }
+```{r, stats_learning_initial_rotation }
 ```
 
-### **Rotation**
+### **Full rotation by path length**
 
-```{r, stats_learning_r }
+```{r, stats_learning_rotation_path }
 ```
+
 
 \newpage 
 
@@ -237,7 +236,7 @@ rm(box_ego_delta_ms, box_allo_delta_ms)
 
 \newpage 
 
-**Memory score (correct trials)**
+**Memory score in correct trials for spatial precision**
 
 ```{r, warning=F, echo=F }
 
@@ -253,7 +252,7 @@ rm(box_ego_cor_ms, box_allo_cor_ms)
 
 \newpage
 
-**Egocentric goal alley (in allocentric probe trials with outer starts only)**
+**In allocentric probe trials: How often did participants erroneously pick the egocentric goal alley** (only trials with outer starts)
 
 ```{r, warning=F, echo=F }
 
@@ -261,7 +260,7 @@ box_allo_efa + labs(subtitle="Allocentric") + box_allo_incor_efa + box_allo_mse 
   plot_annotation("Egocentric response in (all/only correct) allocentric probe trials") + 
   plot_layout(guides="collect") & theme(legend.position="bottom", legend.justification=c(0,0))
 
-rm(box_allo_efa, sm_agg2, sm_agg3)
+rm(box_allo_efa, box_allo_incor_efa, box_allo_mse, box_allo_incor_mse, sm_agg_allo_incorrect)
 ```
 
 ```{r, stats_probe_ego_acc}
@@ -295,81 +294,94 @@ rm(box_ego_t, box_allo_t)
 
 ```{r, warning=F, echo=F }
 
-box_ego_cplex + labs(subtitle="Egocentric") + box_allo_cplex + labs(subtitle="Allocentric") +
+box_ego_p + labs(subtitle="Egocentric") + box_allo_p + labs(subtitle="Allocentric") +
   plot_annotation("Excess path length in probe trials") + 
   plot_layout(guides="collect") & theme(legend.position="bottom", legend.justification=c(0,0))
 
-rm(box_ego_cplex, box_allo_cplex)
+rm(box_ego_p, box_allo_p)
 ```
 
-```{r, stats_probe_chplex }
-```
-
-\newpage 
-
-**Distance to goal & distance to ego** 
-
-```{r, warning=F, echo=F }
-
-box_ego_dg + labs(subtitle="Egocentric")  + 
-  box_allo_dg + labs(subtitle="Allocentric") + 
-  box_allo_deg + labs(subtitle="Allocentric") + 
-  plot_annotation("Distance to goal & distance to ego in probe trials") + 
-  plot_layout(guides="collect") & theme(legend.position="bottom", legend.justification=c(0,0))
-
-rm(box_ego_dg, box_allo_dg, box_allo_deg)
-```
-
-```{r, stats_probe_dg}
-```
-
-```{r, stats_probe_dg_ego_in_allo}
+```{r, stats_probe_excess_path }
 ```
 
 \newpage 
 
-**Distance to chosen goal** 
+**Excess average distance to goal** 
 
 ```{r, warning=F, echo=F }
 
-box_ego_dgch + labs(subtitle="Egocentric")  + 
-  box_allo_dgch + labs(subtitle="Allocentric") + 
-  plot_annotation("Distance to chosen goal") + 
+box_ego_d + labs(subtitle="Egocentric") + box_allo_d + labs(subtitle="Allocentric") +
+  plot_annotation("Excess average distance to goal in probe trials") + 
   plot_layout(guides="collect") & theme(legend.position="bottom", legend.justification=c(0,0))
 
-rm(box_ego_dge, box_allo_dge, box_allo_dege)
+rm(box_ego_d, box_allo_d)
 ```
 
-```{r, stats_probe_chdg}
+```{r, stats_probe_distance}
 ```
 
 \newpage 
 
-**Rotation and rotation by path length**
+**Initial rotation**
 
 ```{r, warning=F, echo=F }
 
-box_ego_r + labs(subtitle="Egocentric") + box_allo_r + labs(subtitle="Allocentric") +
-  plot_annotation("Rotation (full turns) in probe trials") + 
+box_ego_ir + labs(subtitle="Egocentric") + box_allo_ir + labs(subtitle="Allocentric") +
+  plot_annotation("Initial rotation (full turns) in probe trials") + 
   plot_layout(guides="collect") & theme(legend.position="bottom", legend.justification=c(0,0))
 
-rm(box_ego_r, box_allo_r)
+rm(box_ego_ir, box_allo_ir)
 ```
+
+```{r, stats_probe_init_rotation}
+```
+
+**Rotation by path length**
 
 ```{r, warning=F, echo=F }
 
-box_ego_rpl + labs(subtitle="Egocentric") + box_allo_rpl + labs(subtitle="Allocentric") +
+box_ego_rp + labs(subtitle="Egocentric") + box_allo_rp + labs(subtitle="Allocentric") +
   plot_annotation("Relative rotation (full turns, normalized by path length) in probe trials") + 
   plot_layout(guides="collect") & theme(legend.position="bottom", legend.justification=c(0,0))
 
-rm(box_ego_rpl, box_allo_rpl)
-rm(list=ls(pattern="agg"), sm_change)
+rm(box_ego_rp, box_allo_rp)
 ```
 
-```{r, stats_probe_rpl}
+```{r, stats_probe_rotation_path}
 ```
 
 \newpage 
+
+**In allocentric probe trials: Did participants enter the egocentric area** (only trials with outer starts)
+
+```{r, warning=F, echo=F }
+
+box_allo_cov_ego + box_allo_time_ego + 
+  plot_annotation("Egocentric navigation behavior in allocentric probe trials") + 
+  plot_layout(guides="collect") & theme(legend.position="bottom", legend.justification=c(0,0))
+
+rm(box_allo_cov_ego, box_allo_time_ego)
+```
+```{r, stats_probe_cov_ego_in_allo}
+```
+
+\newpage
+
+**In allocentric probe trials: Did participants enter the original start area (homing)**
+
+```{r, warning=F, echo=F }
+
+box_allo_cov_start + box_allo_time_start + 
+  plot_annotation("Homing navigation behavior in allocentric probe trials") + 
+  plot_layout(guides="collect") & theme(legend.position="bottom", legend.justification=c(0,0))
+
+rm(box_allo_cov_start, box_allo_time_start)
+```
+
+```{r, stats_probe_cov_start_in_allo}
+```
+
+\newpage
 
 ### Navigation behaviour: strategy use data 
 
@@ -443,8 +455,7 @@ rm(layout, layout_avg, landmark_details, landmark_avg, gmda_avg)
 
 ```{r, warning=F, echo=F }
 
-#mc_t + mc_pl + mc_v + mc_r +
-mc_t + mc_v + mc_r +
+mc_t +  mc_v + mc_p + mc_d + mc_r +
   plot_annotation("Motor control practise task") +
   plot_layout(guides="collect") & theme(legend.position="bottom", legend.justification=c(0,0))
 

@@ -4,13 +4,14 @@
 
 # ::: get packages ::: #
 
+## ---- plotting_packages
+#library(Rmisc) # ggf. für summarySEwithin
 library(tidyverse)
 library(patchwork)
 library(ggrepel)
 library(gghalves)
 library(corrplot)
-# library(wesanderson) 
-# decent palettes: GrandBudapest1 IsleofDogs2 BottleRocket2 Royal2 Darjeeling2 Chevalier1 GrandBudapest2 
+## ---- 
 
 # ######################################################### #
 
@@ -63,31 +64,23 @@ strategy_colors <- c("direct"="#E4534D", "detour"="#ED8E8A", "reorient"="#F9DAD9
 landmark_colors <- rev(RColorBrewer::brewer.pal(3,"Blues"))
 
 # variable labels
+l_correct_alley <- "accuracy in %"
+l_final_distance <- "final distance"
+l_memory_score <- "memory score"
+l_ego_alley <- "egocentric in %"
+l_final_distance_ego <- "final distance to ego"
+l_memory_score_ego <- "ego memory score"
 l_time <- "time in seconds"
 l_velocity <- "velocity"
-l_correct_alley <- "accuracy in %"
-l_ego_alley <- "egocentric in %"
-l_final_distance <- "final distance"
-l_final_distance_ego <- "final distance to ego"
-l_memory_score <- "memory score"
-l_memory_score_ego <- "ego memory score"
-l_edit_distance <- "path zone error"
-l_edit_distance_chosen <- "path zone error (chosen)"
-l_path_length_excess <- "excess path length"
-l_path_length_excess_chosen <- "excess path length (chosen)"
-l_dtw_path_distance <- "DTW path distance error"
-l_dtw_path_distance_ego <- "DTW path distance error to ego"
-l_dtw_path_distance_chosen <- "DTW path distance error (chosen)"
+l_excess_path_length <- "excess path length"
+l_dtw_path_distance <- "DTW path distance (raw)"
 l_target_distance <- "distance to goal"
-l_target_distance_error <- "distance to goal error"
-l_target_distance_ego <- "distance to ego"
-l_target_distance_error_ego <- "distance to ego error"
-l_target_distance_chosen <- "distance to chosen goal"
-l_target_distance_error_chosen <- "distance to chosen goal error"
-l_target_distance_start <- "distance to start"
-l_target_distance_error_start <- "distance to start error"
-l_rotation <- "rotation / 360"
-l_rotation_by_path <- "rotation / 360/ path length"
+l_excess_target_distance <- "excess distance to goal"
+l_coverage <- "coverage in %"
+l_time_in_zone <- "time in zone in seconds"
+l_rotation <- "rotation/360"
+l_initial_rotation <- "initial rotation/360"
+l_rotation_by_path <- "rotation/360/path length"
 l_search_strategy <- "usage in %"
 ## ----
 
@@ -103,7 +96,7 @@ l_search_strategy <- "usage in %"
 line_plot <- function(data, xvar, yvar, colorvar, subtitle, ylabel, facetlabels, legendPos, mycolors) {
   p <- ggplot(data, aes(x=get(xvar), y=get(yvar), group=get(colorvar), colour=get(colorvar))) +
     stat_summary(fun="mean", geom="line", size=1) +
-    stat_summary(fun.data="mean_se", geom="errorbar", width=0.2) +
+    stat_summary(fun.data="mean_cl_normal", geom="errorbar", width=0.2) +
     stat_summary(fun="mean", geom="point", colour="black", size=0.75) +
     scale_x_continuous(breaks=c(1,2,3,4,5,6,7,8), labels=c(1,2,3,5,7,9,11,13)) +
     scale_colour_manual(labels=facetlabels, values=mycolors) +
@@ -119,29 +112,6 @@ line_plot <- function(data, xvar, yvar, colorvar, subtitle, ylabel, facetlabels,
   
   return(p)
 }
-
-
-# function for trial-wise bar plots 
-trial_plot <- function(data, xvar, yvar, fillby, facetvar, title, ylabel, facetlabels, legendPos, ticknum, mycolors) {
-  p <- ggplot(data, aes(x=get(xvar), y=get(yvar), fill=get(fillby))) +
-    geom_bar(stat="identity",width=.85, colour="black") + 
-    geom_vline(xintercept=c(13.5, 26.5, 39.5), color="red", linetype="dashed") + 
-    scale_x_continuous(breaks=seq(1,max(data[[xvar]]),round(max(data[[xvar]])/ticknum)), expand=c(0.005,0.005)) +
-    scale_fill_manual(labels=facetlabels, values=mycolors) + 
-    coord_cartesian(clip="off") +
-    facet_wrap(facetvar, labeller=facetlabels, nrow=3,strip.position="right") +
-    theme_classic() + 
-    theme(legend.position=legendPos,
-          legend.title=element_blank(),
-          legend.key.size=unit(0.5, 'cm'),
-          legend.justification=c(0, 0)) +
-    labs(title=title,
-         x="trial",
-         y=ylabel)
-  
-  return(p)
-}
-
 
 # function for aggregated box plots with individual values 
 box_plot <- function(data, xvar, yvar, fillby, facetr, facetc, subtitle, xlabel, ylabel, mylabels, legendPos, mycolors, mycolors2, facetOneLine=F, mcVariant=F, mc_outlier="none"){
@@ -356,15 +326,17 @@ is_outlier <- function(x) {
 
 sm_practise <- sm_data %>% 
   filter(condition=="practise") %>% 
-  select(id, sex, group, condition, duration, time, velocity, path_length_excess, rotation_degrees) %>% 
+  select(id, sex, group, condition, duration, time, velocity, excess_path_length, target_distance, rotation_degrees) %>% 
   mutate(out_time = ifelse(is_outlier(time), id, as.numeric(NA)),
          out_velocity = ifelse(is_outlier(velocity), id, as.numeric(NA)),
-         #out_path = ifelse(is_outlier(path_length_excess), id, as.numeric(NA)),
+         out_path = ifelse(is_outlier(excess_path_length), id, as.numeric(NA)),
+         out_distance = ifelse(is_outlier(target_distance), id, as.numeric(NA)),
          out_rot = ifelse(is_outlier(rotation_degrees), id, as.numeric(NA)))
 
 mc_t <- box_plot(sm_practise, "group", "time", "group", "none", "none", NULL, NULL, l_time, mylabels, "top", group_colors, group_colors_o, mcVariant=T, mc_outlier="out_time")
-#mc_pl <- box_plot(sm_practise, "group", "path_length_excess", "group", "none", "none", NULL, NULL, l_path_length_excess, mylabels, "top", group_colors, group_colors_o, mcVariant=T, mc_outlier="out_path")
 mc_v <- box_plot(sm_practise, "group", "velocity", "group", "none", "none", NULL, NULL, l_velocity, mylabels, "top", group_colors, group_colors_o, mcVariant=T, mc_outlier="out_velocity")
+mc_p <- box_plot(sm_practise, "group", "excess_path_length", "group", "none", "none", NULL, NULL, l_excess_path_length, mylabels, "top", group_colors, group_colors_o, mcVariant=T, mc_outlier="out_path")
+mc_d <- box_plot(sm_practise, "group", "target_distance", "group", "none", "none", NULL, NULL, l_target_distance, mylabels, "top", group_colors, group_colors_o, mcVariant=T, mc_outlier="out_distance")
 mc_r <- box_plot(sm_practise, "group", "rotation_degrees", "group", "none", "none", NULL, NULL, l_rotation, mylabels, "top", group_colors, group_colors_o, mcVariant=T, mc_outlier="out_velocity")
 ## ----
 rm(sm_practise, is_outlier)
@@ -413,22 +385,19 @@ rm(ex1_data, ex2_data, sm_orig, plot_excluded)
 
 
 ## ---- plots_measures_comparison
-corr1_data <- sm_data %>%
+corr_data <- sm_data %>%
   select(correct_final_alley, final_distance, memory_score, 
-         final_distance_ego, memory_score_ego,
-         time, velocity, path_length_excess, chosen_path_length_excess,
-         path_edit_distance, chosen_path_edit_distance,
-         dtw_path_distance, chosen_dtw_path_distance, ego_dtw_path_distance,
-         target_distance, target_distance_error, 
-         chosen_target_distance, chosen_target_distance_error,
-         ego_target_distance, ego_target_distance_error,
-         start_target_distance, start_target_distance_error) %>% 
+         correct_final_alley_ego, final_distance_ego, memory_score_ego,
+         time, velocity, excess_path_length,
+         dtw_path_distance, target_distance, target_distance_deviation, 
+         coverage_ego, time_in_ego, coverage_start, time_in_start,
+         rotation_turns, initial_rotation_turns, rotation_turns_by_path_length) %>% 
   drop_na() %>% 
   cor()
 
-corr_variables <- corrplot(corr1_data, method="number", tl.col="black", tl.srt=45)
+corr_variables <- corrplot(corr_data, method="number", tl.col="black", tl.srt=45)
 ## ----
-rm(corr1_data, corr_variables)
+rm(corr_data, corr_variables)
 
 
 # ######################################################### #
@@ -440,15 +409,14 @@ rm(corr1_data, corr_variables)
 sm_trialwise <- sm_data %>%
   filter(session==1, condition=="main_learn") %>%
   group_by(id, group, trial_in_cond) %>% 
-  summarise_at(c("time", "path_length_excess", "target_distance", "target_distance_error",
-                 "rotation_turns_by_path_length", "rotation_degrees"), mean, na.rm=T)
+  summarise_at(c("time", "excess_path_length", "target_distance_deviation",
+                 "rotation_turns_by_path_length", "initial_rotation_turns"), mean, na.rm=T)
 
 line_t <- line_plot(sm_trialwise, "trial_in_cond", "time", "group", NULL, l_time, mylabels, "bottom", group_colors)
-line_plex <- line_plot(sm_trialwise, "trial_in_cond", "path_length_excess", "group", NULL, l_path_length_excess, mylabels, "bottom", group_colors)
-line_dg <- line_plot(sm_trialwise, "trial_in_cond", "target_distance", "group", NULL, l_target_distance, mylabels, "bottom", group_colors)
-line_dge <- line_plot(sm_trialwise, "trial_in_cond", "target_distance_error", "group", NULL, l_target_distance_error, mylabels, "bottom", group_colors)
-line_rpl <- line_plot(sm_trialwise, "trial_in_cond", "rotation_turns_by_path_length", "group", NULL, l_rotation_by_path, mylabels, "bottom", group_colors)
-line_r <- line_plot(sm_trialwise, "trial_in_cond", "rotation_degrees", "group", NULL, l_rotation, mylabels, "bottom", group_colors)
+line_p <- line_plot(sm_trialwise, "trial_in_cond", "excess_path_length", "group", NULL, l_excess_path_length, mylabels, "bottom", group_colors)
+line_d <- line_plot(sm_trialwise, "trial_in_cond", "target_distance_deviation", "group", NULL, l_excess_target_distance, mylabels, "bottom", group_colors)
+line_rp <- line_plot(sm_trialwise, "trial_in_cond", "rotation_turns_by_path_length", "group", NULL, l_rotation_by_path, mylabels, "bottom", group_colors)
+line_ir <- line_plot(sm_trialwise, "trial_in_cond", "initial_rotation_turns", "group", NULL, l_initial_rotation, mylabels, "bottom", group_colors)
 ## ----
 rm(sm_trialwise)
 
@@ -458,107 +426,70 @@ rm(sm_trialwise)
 
 ## ---- plots_aggregated
 sm_agg <- sm_data %>%
-  filter(session!=3, condition!="main_ret") %>% 
+  filter(condition %in% c("ego_ret", "allo_ret")) %>% 
   group_by(id, group, session, condition) %>% 
-  summarise_at(c("correct_final_alley", "final_distance", "memory_score",
-                 "velocity", "time", "path_length_excess", "chosen_path_length_excess",
-                 "dtw_path_distance", "chosen_dtw_path_distance",
-                 "target_distance", "target_distance_error", 
-                 "chosen_target_distance", "chosen_target_distance_error",
-                 "rotation_turns", "rotation_turns_by_path_length"), mean, na.rm=T)
-
-sm_agg2 <- sm_data %>%
-  filter(condition=="allo_ret", start_i %% 2==1) %>% 
-  group_by(id, group, session, condition) %>% 
-  summarise_at(c("correct_final_alley_ego", "final_distance_ego", "memory_score_ego", 
-                 "ego_dtw_path_distance", "ego_target_distance", "ego_target_distance_error"), mean, na.rm=T)
-
-sm_agg3 <- sm_data %>%
-  filter(condition=="allo_ret", start_i %% 2==1, correct_final_alley==0) %>% 
-  group_by(id, group, session, condition) %>% 
-  summarise_at(c("correct_final_alley_ego", "final_distance_ego", "memory_score_ego"), mean, na.rm=T)
+  summarise_at(c("correct_final_alley", "memory_score",
+                 "time", "excess_path_length", 
+                 "dtw_path_distance", "target_distance", "target_distance_deviation", 
+                 "initial_rotation_turns", "rotation_turns_by_path_length"), mean, na.rm=T)
 
 sm_agg_correct <- sm_data %>%
   filter(condition %in% c("ego_ret", "allo_ret") & correct_final_alley==1) %>% 
   group_by(id, group, session, condition) %>% 
-  summarise_at(c("time", "final_distance", "memory_score"), mean, na.rm=T)
+  summarise_at(c("memory_score"), mean, na.rm=T)
 
-sm_agg_collapsed <- sm_data %>%
-  filter(condition %in% c("ego_ret", "allo_ret")) %>% 
-  group_by(id, group, condition) %>% 
-  summarise_at(c("path_length_excess", "chosen_path_length_excess",
-                 "target_distance", "target_distance_error", "ego_target_distance", "ego_target_distance_error"), mean, na.rm=T) %>% 
-  mutate(session="collapsed")
+sm_agg_allo <- sm_data %>%
+  filter(condition=="allo_ret") %>% 
+  group_by(id, group, session, condition) %>% 
+  summarise_at(c("correct_final_alley_ego", "memory_score_ego", 
+                 "coverage_ego", "time_in_ego", "coverage_start", "time_in_start"), mean, na.rm=T)
 
-
-# learning trials
-box_learn_t <- box_plot(sm_agg %>% filter(condition=="main_learn"), "group", "time", "group", "condition", "none", NULL, NULL, l_time, mylabels, "top", group_colors, group_colors_o)
-box_learn_plex <- box_plot(sm_agg %>% filter(condition=="main_learn"), "group", "path_length_excess", "group", "condition", "none", NULL, NULL, l_path_length_excess, mylabels, "top", group_colors, group_colors_o)
-box_learn_dg <- box_plot(sm_agg %>% filter(condition=="main_learn"), "group", "target_distance", "group", "condition", "none", NULL, NULL, l_target_distance, mylabels, "top", group_colors, group_colors_o)
-box_learn_dge <- box_plot(sm_agg %>% filter(condition=="main_learn"), "group", "target_distance_error", "group", "condition", "none", NULL, NULL, l_target_distance_error, mylabels, "top", group_colors, group_colors_o)
-box_learn_r <- box_plot(sm_agg %>% filter(condition=="main_learn"), "group", "rotation_turns", "group", "condition", "none", NULL, NULL, l_rotation, mylabels, "top", group_colors, group_colors_o)
-box_learn_rpl <- box_plot(sm_agg %>% filter(condition=="main_learn"), "group", "rotation_turns_by_path_length", "group", "condition", "none", NULL, NULL, l_rotation_by_path, mylabels, "top", group_colors, group_colors_o)
+sm_agg_allo_incorrect <- sm_data %>%
+  filter(condition=="allo_ret", start_i %% 2==1, correct_final_alley==0) %>% 
+  group_by(id, group, session, condition) %>% 
+  summarise_at(c("correct_final_alley_ego", "memory_score_ego"), mean, na.rm=T)
 
 
 # egocentric probe trials
 box_ego_cfa <- box_plot(sm_agg %>% filter(condition=="ego_ret"), "group", "correct_final_alley", "group", "session", "none", NULL, NULL, l_correct_alley, mylabels, "top", group_colors, group_colors_o)
-box_ego_fd <- box_plot(sm_agg %>% filter(condition=="ego_ret"), "group", "final_distance", "group", "session", "none", NULL, NULL, l_final_distance, mylabels, "top", group_colors, group_colors_o)
 box_ego_ms <- box_plot(sm_agg %>% filter(condition=="ego_ret"), "group", "memory_score", "group", "session", "none", NULL, NULL, l_memory_score, mylabels, "top", group_colors, group_colors_o) + geom_hline(yintercept=0.5, linetype="dashed", color="red") 
 box_ego_t <- box_plot(sm_agg %>% filter(condition=="ego_ret"), "group", "time", "group", "session", "none", NULL, NULL, l_time, mylabels, "top", group_colors, group_colors_o)
-box_ego_cplex <- box_plot(sm_agg %>% filter(condition=="ego_ret"), "group", "chosen_path_length_excess", "group", "session", "none", NULL, NULL, l_path_length_excess_chosen, mylabels, "top", group_colors, group_colors_o)
+box_ego_p <- box_plot(sm_agg %>% filter(condition=="ego_ret"), "group", "excess_path_length", "group", "session", "none", NULL, NULL, l_excess_path_length, mylabels, "top", group_colors, group_colors_o)
 box_ego_dtw <- box_plot(sm_agg %>% filter(condition=="ego_ret"), "group", "dtw_path_distance", "group", "session", "none", NULL, NULL, l_dtw_path_distance, mylabels, "top", group_colors, group_colors_o)
-box_ego_cdtw <- box_plot(sm_agg %>% filter(condition=="ego_ret"), "group", "chosen_dtw_path_distance", "group", "session", "none", NULL, NULL, l_dtw_path_distance_chosen, mylabels, "top", group_colors, group_colors_o)
-box_ego_dg <- box_plot(sm_agg %>% filter(condition=="ego_ret"), "group", "target_distance", "group", "session", "none", NULL, NULL, l_target_distance, mylabels, "top", group_colors, group_colors_o)
-box_ego_dge <- box_plot(sm_agg %>% filter(condition=="ego_ret"), "group", "target_distance_error", "group", "session", "none", NULL, NULL, l_target_distance_error, mylabels, "top", group_colors, group_colors_o)
-box_ego_dgch <- box_plot(sm_agg %>% filter(condition=="ego_ret"), "group", "chosen_target_distance", "group", "session", "none", NULL, NULL, l_target_distance_chosen, mylabels, "top", group_colors, group_colors_o)
-box_ego_r <- box_plot(sm_agg %>% filter(condition=="ego_ret"), "group", "rotation_turns", "group", "session", "none", NULL, NULL, l_rotation, mylabels, "top", group_colors, group_colors_o)
-box_ego_rpl <- box_plot(sm_agg %>% filter(condition=="ego_ret"), "group", "rotation_turns_by_path_length", "group", "session", "none", NULL, NULL, l_rotation_by_path, mylabels, "top", group_colors, group_colors_o)
+box_ego_d <- box_plot(sm_agg %>% filter(condition=="ego_ret"), "group", "target_distance_deviation", "group", "session", "none", NULL, NULL, l_excess_target_distance, mylabels, "top", group_colors, group_colors_o) + coord_cartesian(ylim=c(-0.2,0.2)) + geom_hline(yintercept=0, linetype="dashed", color="red") 
+box_ego_ir <- box_plot(sm_agg %>% filter(condition=="ego_ret"), "group", "initial_rotation_turns", "group", "session", "none", NULL, NULL, l_initial_rotation, mylabels, "top", group_colors, group_colors_o)
+box_ego_rp <- box_plot(sm_agg %>% filter(condition=="ego_ret"), "group", "rotation_turns_by_path_length", "group", "session", "none", NULL, NULL, l_rotation_by_path, mylabels, "top", group_colors, group_colors_o)
 
 # correct egocentric probe trials 
-box_ego_cor_fd <- box_plot(sm_agg_correct %>% filter(condition=="ego_ret"), "group", "final_distance", "group", "session", "none", NULL, NULL, l_final_distance, mylabels, "top", group_colors, group_colors_o)
 box_ego_cor_ms <- box_plot(sm_agg_correct %>% filter(condition=="ego_ret"), "group", "memory_score", "group", "session", "none", NULL, NULL, l_memory_score, mylabels, "top", group_colors, group_colors_o) + coord_cartesian(ylim=c(0.75,1))
-
-# egocentric probe trials collapsed over sessions
-box_ego_12_cplex <- box_plot(sm_agg_collapsed %>% filter(condition=="ego_ret"), "group", "chosen_path_length_excess", "group", "none", "none", NULL, NULL, l_path_length_excess_chosen, mylabels, "top", group_colors, group_colors_o) + theme(axis.text.x=element_blank(), axis.ticks.x=element_blank())
-box_ego_12_dg <- box_plot(sm_agg_collapsed %>% filter(condition=="ego_ret"), "group", "target_distance", "group", "none", "none", NULL, NULL, l_target_distance, mylabels, "top", group_colors, group_colors_o) + theme(axis.text.x=element_blank(), axis.ticks.x=element_blank())
-box_ego_12_dge <- box_plot(sm_agg_collapsed %>% filter(condition=="ego_ret"), "group", "target_distance_error", "group", "none", "none", NULL, NULL, l_target_distance_error, mylabels, "top", group_colors, group_colors_o) + theme(axis.text.x=element_blank(), axis.ticks.x=element_blank())
 
 
 # allocentric probe trials
 box_allo_cfa <- box_plot(sm_agg %>% filter(condition=="allo_ret"), "group", "correct_final_alley", "group", "session", "none", NULL, NULL, l_correct_alley, mylabels, "top", group_colors, group_colors_o)
-box_allo_fd <- box_plot(sm_agg %>% filter(condition=="allo_ret"), "group", "final_distance", "group", "session", "none", NULL, NULL, l_final_distance, mylabels, "top", group_colors, group_colors_o)
 box_allo_ms <- box_plot(sm_agg %>% filter(condition=="allo_ret"), "group", "memory_score", "group", "session", "none", NULL, NULL, l_memory_score, mylabels, "top", group_colors, group_colors_o) + geom_hline(yintercept=0.5, linetype="dashed", color="red")
 box_allo_t <- box_plot(sm_agg %>% filter(condition=="allo_ret"), "group", "time", "group", "session", "none", NULL, NULL, l_time, mylabels, "top", group_colors, group_colors_o)
-box_allo_cplex <- box_plot(sm_agg %>% filter(condition=="allo_ret"), "group", "chosen_path_length_excess", "group", "session", "none", NULL, NULL, l_path_length_excess_chosen, mylabels, "top", group_colors, group_colors_o)
+box_allo_p <- box_plot(sm_agg %>% filter(condition=="allo_ret"), "group", "excess_path_length", "group", "session", "none", NULL, NULL, l_excess_path_length, mylabels, "top", group_colors, group_colors_o)
 box_allo_dtw <- box_plot(sm_agg %>% filter(condition=="allo_ret"), "group", "dtw_path_distance", "group", "session", "none", NULL, NULL, l_dtw_path_distance, mylabels, "top", group_colors, group_colors_o)
-box_allo_cdtw <- box_plot(sm_agg %>% filter(condition=="allo_ret"), "group", "chosen_dtw_path_distance", "group", "session", "none", NULL, NULL, l_dtw_path_distance_chosen, mylabels, "top", group_colors, group_colors_o)
-box_allo_dg <- box_plot(sm_agg %>% filter(condition=="allo_ret"), "group", "target_distance", "group", "session", "none", NULL, NULL, l_target_distance, mylabels, "top", group_colors, group_colors_o)
-box_allo_dge <- box_plot(sm_agg %>% filter(condition=="allo_ret"), "group", "target_distance_error", "group", "session", "none", NULL, NULL, l_target_distance_error, mylabels, "top", group_colors, group_colors_o)
-box_allo_dgch <- box_plot(sm_agg %>% filter(condition=="allo_ret"), "group", "chosen_target_distance", "group", "session", "none", NULL, NULL, l_target_distance_chosen, mylabels, "top", group_colors, group_colors_o)
-box_allo_r <- box_plot(sm_agg %>% filter(condition=="allo_ret"), "group", "rotation_turns", "group", "session", "none", NULL, NULL, l_rotation, mylabels, "top", group_colors, group_colors_o)
-box_allo_rpl <- box_plot(sm_agg %>% filter(condition=="allo_ret"), "group", "rotation_turns_by_path_length", "group", "session", "none", NULL, NULL, l_rotation_by_path, mylabels, "top", group_colors, group_colors_o)
-
-box_allo_efa <- box_plot(sm_agg2, "group", "correct_final_alley_ego", "group", "session", "none", NULL, NULL, l_ego_alley, mylabels, "top", group_colors, group_colors_o)
-box_allo_incor_efa <- box_plot(sm_agg3, "group", "correct_final_alley_ego", "group", "session", "none", NULL, NULL, l_ego_alley, mylabels, "top", group_colors, group_colors_o)
-box_allo_fde <- box_plot(sm_agg2, "group", "final_distance_ego", "group", "session", "none", NULL, NULL, l_final_distance_ego, mylabels, "top", group_colors, group_colors_o)
-box_allo_mse <- box_plot(sm_agg2, "group", "memory_score_ego", "group", "session", "none", NULL, NULL, l_memory_score_ego, mylabels, "top", group_colors, group_colors_o) + geom_hline(yintercept=0.5, linetype="dashed", color="red")
-box_allo_incor_mse <- box_plot(sm_agg3, "group", "memory_score_ego", "group", "session", "none", NULL, NULL, l_memory_score_ego, mylabels, "top", group_colors, group_colors_o) + geom_hline(yintercept=0.5, linetype="dashed", color="red")
-bbox_allo_dtwe <- box_plot(sm_agg2, "group", "ego_dtw_path_distance", "group", "session", "none", NULL, NULL, l_dtw_path_distance_ego, mylabels, "top", group_colors, group_colors_o)
-box_allo_deg <- box_plot(sm_agg2, "group", "ego_target_distance", "group", "session", "none", NULL, NULL, l_target_distance_ego, mylabels, "top", group_colors, group_colors_o)
-box_allo_dege <- box_plot(sm_agg2, "group", "ego_target_distance_error", "group", "session", "none", NULL, NULL, l_target_distance_error_ego, mylabels, "top", group_colors, group_colors_o)
+box_allo_d <- box_plot(sm_agg %>% filter(condition=="allo_ret"), "group", "target_distance_deviation", "group", "session", "none", NULL, NULL, l_excess_target_distance, mylabels, "top", group_colors, group_colors_o) + coord_cartesian(ylim=c(-0.2,0.2)) + geom_hline(yintercept=0, linetype="dashed", color="red")
+box_allo_ir <- box_plot(sm_agg %>% filter(condition=="allo_ret"), "group", "initial_rotation_turns", "group", "session", "none", NULL, NULL, l_initial_rotation, mylabels, "top", group_colors, group_colors_o)
+box_allo_rp <- box_plot(sm_agg %>% filter(condition=="allo_ret"), "group", "rotation_turns_by_path_length", "group", "session", "none", NULL, NULL, l_rotation_by_path, mylabels, "top", group_colors, group_colors_o)
 
 # correct allocentric probe trials 
-box_allo_cor_fd <- box_plot(sm_agg_correct %>% filter(condition=="allo_ret"), "group", "final_distance", "group", "session", "none", NULL, NULL, l_final_distance, mylabels, "top", group_colors, group_colors_o)
 box_allo_cor_ms <- box_plot(sm_agg_correct %>% filter(condition=="allo_ret"), "group", "memory_score", "group", "session", "none", NULL, NULL, l_memory_score, mylabels, "top", group_colors, group_colors_o) + coord_cartesian(ylim=c(0.75,1))
 
-# allocentric probe trials collapsed over sessions
-box_allo_12_cplex <- box_plot(sm_agg_collapsed %>% filter(condition=="allo_ret"), "group", "chosen_path_length_excess", "group", "none", "none", NULL, NULL, l_path_length_excess_chosen, mylabels, "top", group_colors, group_colors_o) + theme(axis.text.x=element_blank(), axis.ticks.x=element_blank())
-box_allo_12_dg <- box_plot(sm_agg_collapsed %>% filter(condition=="allo_ret"), "group", "target_distance", "group", "none", "none", NULL, NULL, l_target_distance, mylabels, "top", group_colors, group_colors_o) + theme(axis.text.x=element_blank(), axis.ticks.x=element_blank())
-box_allo_12_dge <- box_plot(sm_agg_collapsed %>% filter(condition=="allo_ret"), "group", "target_distance_error", "group", "none", "none", NULL, NULL, l_target_distance_error, mylabels, "top", group_colors, group_colors_o) + theme(axis.text.x=element_blank(), axis.ticks.x=element_blank())
-box_allo_12_deg <- box_plot(sm_agg_collapsed %>% filter(condition=="allo_ret"), "group", "ego_target_distance", "group", "none", "none", NULL, NULL, l_target_distance_ego, mylabels, "top", group_colors, group_colors_o) + theme(axis.text.x=element_blank(), axis.ticks.x=element_blank())
-box_allo_12_dege <- box_plot(sm_agg_collapsed %>% filter(condition=="allo_ret"), "group", "ego_target_distance_error", "group", "none", "none", NULL, NULL, l_target_distance_error_ego, mylabels, "top", group_colors, group_colors_o) + theme(axis.text.x=element_blank(), axis.ticks.x=element_blank())
+# exploratory: egocentric behavior in allocentric probe trials 
+box_allo_efa <- box_plot(sm_agg_allo, "group", "correct_final_alley_ego", "group", "session", "none", NULL, NULL, l_ego_alley, mylabels, "top", group_colors, group_colors_o)
+box_allo_incor_efa <- box_plot(sm_agg_allo_incorrect, "group", "correct_final_alley_ego", "group", "session", "none", NULL, NULL, l_ego_alley, mylabels, "top", group_colors, group_colors_o)
+box_allo_mse <- box_plot(sm_agg_allo, "group", "memory_score_ego", "group", "session", "none", NULL, NULL, l_memory_score_ego, mylabels, "top", group_colors, group_colors_o) + geom_hline(yintercept=0.5, linetype="dashed", color="red")
+box_allo_incor_mse <- box_plot(sm_agg_allo_incorrect, "group", "memory_score_ego", "group", "session", "none", NULL, NULL, l_memory_score_ego, mylabels, "top", group_colors, group_colors_o) + geom_hline(yintercept=0.5, linetype="dashed", color="red")
+box_allo_cov_ego <- box_plot(sm_agg_allo, "group", "coverage_ego", "group", "session", "none", NULL, NULL, l_coverage, mylabels, "top", group_colors, group_colors_o)
+box_allo_time_ego <- box_plot(sm_agg_allo, "group", "time_in_ego", "group", "session", "none", NULL, NULL, l_time_in_zone, mylabels, "top", group_colors, group_colors_o)
+
+# exploratory: homing behavior in allocentric probe trials 
+box_allo_cov_start <- box_plot(sm_agg_allo, "group", "coverage_start", "group", "session", "none", NULL, NULL, l_coverage, mylabels, "top", group_colors, group_colors_o)
+box_allo_time_start <- box_plot(sm_agg_allo, "group", "time_in_start", "group", "session", "none", NULL, NULL, l_time_in_zone, mylabels, "top", group_colors, group_colors_o)
 ## ----
-rm(sm_agg, sm_agg_correct)
+rm(sm_agg, sm_agg_correct, sm_agg_allo, sm_agg_allo_incorrect)
 
 
 ## ---- plots_aggregated_change
@@ -570,24 +501,34 @@ ratio <- function(d1, d2) {
 sm_change <- sm_data %>%
   filter(condition %in% c("ego_ret", "allo_ret"))  %>%
   group_by(id, group, session, condition) %>% 
-  summarise_at(c("correct_final_alley", "final_distance", "memory_score", "memory_score_ego"), mean, na.rm=T) %>% 
+  summarise_at(c("correct_final_alley", "memory_score"), mean, na.rm=T) %>% 
   pivot_wider(names_from=session,
               values_from=-c(id, group, session, condition)) %>% 
   group_by(id, group, condition) %>%
   mutate(cfa_ratio=ratio(correct_final_alley_1, correct_final_alley_2),
-         fd_ratio=ratio(final_distance_1, final_distance_2),
          ms_ratio=ratio(memory_score_1, memory_score_2),
-         mse_ratio=ratio(memory_score_ego_1, memory_score_ego_2),
+         session="Consolidation")
+
+sm_change_correct <- sm_data %>%
+  filter(condition %in% c("ego_ret", "allo_ret"), correct_final_alley==1)  %>%
+  group_by(id, group, session, condition) %>% 
+  summarise_at(c("memory_score"), mean, na.rm=T) %>% 
+  pivot_wider(names_from=session, 
+              names_glue="memory_score_{session}",
+              values_from=-c(id, group, session, condition)) %>% 
+  group_by(id, group, condition) %>%
+  mutate(ms_ratio=ratio(memory_score_1, memory_score_2),
          session="Consolidation")
 
 # egocentric probe trials
 box_ego_delta_cfa <- change_box_plot(sm_change %>% filter(condition=="ego_ret"), "group", "cfa_ratio", "group", "session", NULL, mylabels, "none", group_colors, group_colors_o, ylabel=l_correct_alley)
 box_ego_delta_ms <- change_box_plot(sm_change %>% filter(condition=="ego_ret"), "group", "ms_ratio", "group", "session", NULL, mylabels, "none", group_colors, group_colors_o, ylabel=l_memory_score)
+box_ego_delta_cor_ms <- change_box_plot(sm_change_correct %>% filter(condition=="ego_ret"), "group", "ms_ratio", "group", "session", NULL, mylabels, "none", group_colors, group_colors_o, ylabel=l_memory_score)
 
 # allocentric probe trials
 box_allo_delta_cfa <- change_box_plot(sm_change %>% filter(condition=="allo_ret"), "group", "cfa_ratio", "group", "session", NULL, mylabels, "none", group_colors, group_colors_o, ylabel=l_correct_alley)
 box_allo_delta_ms <- change_box_plot(sm_change %>% filter(condition=="allo_ret"), "group", "ms_ratio", "group", "session", NULL, mylabels, "none", group_colors, group_colors_o, ylabel=l_memory_score)
-box_allo_delta_mse <- change_box_plot(sm_change %>% filter(condition=="allo_ret"), "group", "mse_ratio", "group", "session", NULL, mylabels, "none", group_colors, group_colors_o, ylabel=l_memory_score_ego)
+box_allo_delta_cor_ms <- change_box_plot(sm_change_correct %>% filter(condition=="allo_ret"), "group", "ms_ratio", "group", "session", NULL, mylabels, "none", group_colors, group_colors_o, ylabel=l_memory_score)
 ## ----
 rm(sm_change, sm_change_correct, ratio)
 
