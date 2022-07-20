@@ -124,26 +124,6 @@ rm(covariates)
 ## ---- 
 
 ## ---- contrast_matrices 
-con_list_group_block <- list(
-  "b1_v_b2_YCH" = c(1, 0, 0, -1, 0, 0, 0, 0, 0),
-  "b1_v_b3_YCH" = c(1, 0, 0, 0, 0, 0, -1, 0, 0),
-  "b2_v_b3_YCH" = c(0, 0, 0, 1, 0, 0, -1, 0, 0),
-  "b1_v_b2_OCH" = c(0, 1, 0, 0, -1, 0, 0, 0, 0),
-  "b1_v_b3_OCH" = c(0, 1, 0, 0, 0, 0, 0, -1, 0),
-  "b2_v_b3_OCH" = c(0, 0, 0, 0, 1, 0, 0, -1, 0),
-  "b1_v_b2_YAD" = c(0, 0, 1, 0, 0, -1, 0, 0, 0),
-  "b1_v_b3_YAD" = c(0, 0, 1, 0, 0, 0, 0, 0, -1),
-  "b2_v_b3_YAD" = c(0, 0, 0, 0, 0, 1, 0, 0, -1),
-  "YCH_v_OCH_b1" = c(1, -1, 0, 0, 0, 0, 0, 0, 0),
-  "YCH_v_YAD_b1" = c(1, 0, -1, 0, 0, 0, 0, 0, 0),
-  "OCH_v_YAD_b1" = c(0, 1, -1, 0, 0, 0, 0, 0, 0),
-  "YCH_v_OCH_b2" = c(0, 0, 0, 1, -1, 0, 0, 0, 0),
-  "YCH_v_YAD_b2" = c(0, 0, 0, 1, 0, -1, 0, 0, 0),
-  "OCH_v_YAD_b2" = c(0, 0, 0, 0, 1, -1, 0, 0, 0),
-  "YCH_v_OCH_b3" = c(0, 0, 0, 0, 0, 0, 1, -1, 0),
-  "YCH_v_YAD_b3" = c(0, 0, 0, 0, 0, 0, 1, 0, -1),
-  "OCH_v_YAD_b3" = c(0, 0, 0, 0, 0, 0, 0, 1, -1))
-
 con_list_group_session <- list(
   "t1_v_t2_YCH" = c(1, 0, 0, -1, 0, 0),
   "t1_v_t2_OCH" = c(0, 1, 0, 0, -1, 0),
@@ -270,30 +250,27 @@ lincon(rotation_degrees ~ group, data=data_p, tr=0.2, alpha=0.05, method="bonfer
 # ::: METHOD: per person 8 trials * 3 blocks (= 24 trials) with continuous outcome, therefore lmm model ::: #
 # watch out for convergence (stepwise reduction of random effects), normality of residuals, homoscedasticity and outliers # 
 # 1) standard lmer model 
-learn.time_base <- lme(time ~ group*block_f*trial_in_cond_c + cov_t + sex,
+learn.time_base <- lme(time ~ group*trial_in_cond_c + block_f + cov_t + sex,
                        random=~1 | id, 
                        na.action=na.omit, data=data_l, method="ML")
 
 # 2) advanced lme models with variance estimation 
 learn.time_var1 <- update(learn.time_base, weights=varIdent(form=~1 | group))
-learn.time_var2 <- update(learn.time_base, weights=varComb(varIdent(form=~1 | group),
-                                                           varIdent(form=~1 | block_f)))
-anova.lme(learn.time_base, learn.time_var1, learn.time_var2)
-# chose model 2
+anova.lme(learn.time_base, learn.time_var1)
+# chose model 1
 
-# diagnostics: naja 
-plot(learn.time_var2, resid(., type="p") ~ fitted(.), abline=0)
-plot(learn.time_var2, group ~ resid(., type="p"))
-plot(learn.time_var2, block_f ~ resid(., type="p"))
-qqnorm(resid(learn.time_var2))
-qqline(resid(learn.time_var2))
+# diagnostics: ok but not great 
+plot(learn.time_var1, resid(., type="p") ~ fitted(.), abline=0)
+plot(learn.time_var1, group ~ resid(., type="p"))
+qqnorm(resid(learn.time_var1))
+qqline(resid(learn.time_var1))
+rm(learn.time_base, learn.time_var1)
 
 ## ---- stats_learning_time
 # re-fit final model with REML
-learn.time_final <- lme(time ~ group*block_f*trial_in_cond_c + cov_t + sex,
+learn.time_final <- lme(time ~ group*trial_in_cond_c + block_f + cov_t + sex,
                         random=~1 | id, 
-                        weights=varComb(varIdent(form=~1 | group),
-                                        varIdent(form=~1 | block_f)),
+                        weights=varIdent(form=~1 | group),
                         na.action=na.omit, data=data_l, method="REML")
 
 # random effects
@@ -311,8 +288,8 @@ learn.time_final$modelStruct$varStruct
 
 # statistics on fixed effects 
 anova.lme(learn.time_final, type="marginal", adjustSigma=T)
-emtrends(learn.time_final, pairwise ~ block_f, var="trial_in_cond_c", adjust="bonferroni")$contrasts
 emmeans(learn.time_final, pairwise ~ group, adjust="bonferroni")$contrasts
+emmeans(learn.time_final, pairwise ~ block_f, adjust="bonferroni")$contrasts
 rm(learn.time_final)
 ## ---- 
 
@@ -320,28 +297,26 @@ rm(learn.time_final)
 
 # --- EXCESS PATH LENGTH -- #
 ## 1) standard lme model without variance estimation 
-learn.excess_path_base <- lme(excess_path_length ~ group*block_f*trial_in_cond_c + cov_p + sex,
+learn.excess_path_base <- lme(excess_path_length ~ group*trial_in_cond_c + block_f + cov_p + sex,
                               random=~1 | id, 
                               na.action=na.omit, data=data_l, method="ML")
 
 ## 2) advanced lme models with variance estimation 
 learn.excess_path_var1 <- update(learn.excess_path_base, weights=varIdent(form=~1 | group))
-learn.excess_path_var2 <- update(learn.excess_path_base, weights=varComb(varIdent(form=~1 | group),
-                                                           varIdent(form=~1 | block_f)))
-anova(learn.excess_path_base, learn.excess_path_var1, learn.excess_path_var2, test=T) 
-# chose model 2
+anova(learn.excess_path_base, learn.excess_path_var1, test=T) 
+# chose model 1
 
-# diagnostics: ok 
-plot(learn.excess_path_var2, resid(., type="p") ~ fitted(.), abline=0)
-qqnorm(resid(learn.excess_path_var2))
-qqline(resid(learn.excess_path_var2))
+# diagnostics: ok but not great 
+plot(learn.excess_path_var1, resid(., type="p") ~ fitted(.), abline=0)
+qqnorm(resid(learn.excess_path_var1))
+qqline(resid(learn.excess_path_var1))
+rm(learn.excess_path_base, learn.excess_path_var1)
 
 ## ---- stats_learning_excess_path
 # re-fit final model with REML
-learn.excess_path_final <-lme(excess_path_length ~ group*block_f*trial_in_cond_c + cov_p + sex,
+learn.excess_path_final <-lme(excess_path_length ~ group*trial_in_cond_c + block_f + cov_p + sex,
                               random=~1 | id, 
-                              weights=varComb(varIdent(form=~1 | group),
-                                              varIdent(form=~1 | block_f)),
+                              weights=varIdent(form=~1 | group),
                               na.action=na.omit, data=data_l, method="REML")
 
 # random effects
@@ -352,39 +327,36 @@ learn.excess_path_final$modelStruct$varStruct
 
 # statistics on fixed effects 
 anova.lme(learn.excess_path_final, type="marginal", adjustSigma=T)
-emm <- emmeans(learn.excess_path_final, ~ group * block_f)
-con <- contrast(emm, method=con_list_group_block, adjust="bonferroni")
-con
-# confint(c, adjust="bonferroni")
-rm(learn.excess_path_final, emm, con)
+emtrends(learn.excess_path_final, pairwise ~ group, var="trial_in_cond_c", adjust="bonferroni")
+emmeans(learn.excess_path_final, pairwise ~ group, adjust="bonferroni")$contrasts
+emmeans(learn.excess_path_final, pairwise ~ block_f, adjust="bonferroni")$contrasts
+rm(learn.excess_path_final)
 ## ---- 
 
 # ######################################################### #
 
 # -- DISTANCE TO GOAL -- #
 ## 1) standard lme model without variance estimation 
-learn.distance_base <- lme(target_distance ~ group*block_f*trial_in_cond_c + cov_d + sex,
+learn.distance_base <- lme(target_distance ~ group*trial_in_cond_c + block_f + cov_d + sex,
                            random=~1 | id, 
                            na.action=na.omit, data=data_l, method="ML")
 
 ## 2) advanced lme models with variance estimation 
 learn.distance_var1 <- update(learn.distance_base, weights=varIdent(form=~1 | group))
-learn.distance_var2 <- update(learn.distance_base, weights=varComb(varIdent(form=~1 | group),
-                                                                   varIdent(form=~1 | block_f)))
-anova(learn.distance_base, learn.distance_var1, learn.distance_var2, test=T) 
-# chose model 2
+anova(learn.distance_base, learn.distance_var1, test=T) 
+# chose model 1
 
-# diagnostics: ok 
-plot(learn.distance_var2, resid(., type="p") ~ fitted(.), abline=0)
-qqnorm(resid(learn.distance_var2))
-qqline(resid(learn.distance_var2))
+# diagnostics: great! 
+plot(learn.distance_var1, resid(., type="p") ~ fitted(.), abline=0)
+qqnorm(resid(learn.distance_var1))
+qqline(resid(learn.distance_var1))
+rm(learn.distance_base, learn.distance_var1)
 
 ## ---- stats_learning_distance_goal
 # re-fit final model with REML
-learn.distance_final <- lme(target_distance ~ group*block_f*trial_in_cond_c + cov_d + sex,
+learn.distance_final <- lme(target_distance ~ group*trial_in_cond_c + block_f + cov_d + sex,
                             random=~1 | id, 
-                            weights=varComb(varIdent(form=~1 | group),
-                                            varIdent(form=~1 | block_f)),
+                            weights=varIdent(form=~1 | group),
                             na.action=na.omit, data=data_l, method="REML")
 
 # random effects
@@ -396,85 +368,35 @@ learn.distance_final$modelStruct$varStruct
 # statistics on fixed effects 
 anova.lme(learn.distance_final, type="marginal", adjustSigma=T)
 emmeans(learn.distance_final, pairwise ~ group, adjust="bonferroni")$contrasts 
+emmeans(learn.distance_final, pairwise ~ block_f, adjust="bonferroni")$contrasts 
 rm(learn.distance_final)
 ## ---- 
-ggplot(data_l, aes(x=factor(trial_in_cond), y=target_distance)) + geom_boxplot() + facet_wrap(~group)
-ggplot(data_l, aes(x=group, y=target_distance)) + geom_boxplot()
-
-# ######################################################### #
-
-# -- ROTATION (BY PATH LENGTH) -- # 
-## 1) standard lme model without variance estimation 
-learn.rot_base <- lme(rotation_turns_by_path_length ~ group*block_f*trial_in_cond_c + cov_r + sex,
-                      random=~1 | id, 
-                      na.action=na.omit, data=data_l, method="ML")
-
-## 2) advanced lme models with variance estimation 
-learn.rot_var1 <- update(learn.rot_base, weights=varIdent(form=~1 | group))
-learn.rot_var2 <- update(learn.rot_base, weights=varComb(varIdent(form=~1 | group),
-                                                         varIdent(form=~1 | block_f)))
-anova(learn.rot_base, learn.rot_var1, learn.rot_var2, test=T) 
-# chose model 2
-
-# diagnostics: ok 
-plot(learn.rot_var2, resid(., type="p") ~ fitted(.), abline=0)
-qqnorm(resid(learn.rot_var2))
-qqline(resid(learn.rot_var2))
-
-## ---- stats_learning_rotation_path
-# re-fit final model with REML
-learn.rot_final <- lme(rotation_turns_by_path_length ~ group*block_f*trial_in_cond_c + cov_r + sex,
-                       random=~1 | id, 
-                       weights=varComb(varIdent(form=~1 | group),
-                                       varIdent(form=~1 | block_f)),
-                       na.action=na.omit, data=data_l, method="REML")
-
-
-# random effects
-learn.rot_final$modelStruct$reStruct 
-
-# estimated variances 
-learn.rot_final$modelStruct$varStruct
-
-# statistics on fixed effects 
-anova.lme(learn.rot_final, type="marginal", adjustSigma=T)
-emtrends(learn.rot_final, pairwise ~ group, var="trial_in_cond_c", adjust="bonferroni")
-emtrends(learn.rot_final, pairwise ~ block_f, var="trial_in_cond_c", adjust="bonferroni")
-rm(learn.rot_final)
-## ---- 
-# helper plots
-ggplot(data_l, aes(x=factor(trial_in_cond), y=rotation_turns_by_path_length)) + geom_boxplot() + coord_cartesian(ylim=c(0,3)) + facet_wrap(~group)
-ggplot(data_l, aes(x=factor(trial_in_cond), y=rotation_degrees)) + geom_boxplot() + coord_cartesian(ylim=c(0,2000)) + facet_wrap(~group)
-ggplot(data_l, aes(x=factor(trial_in_cond), y=rotation_turns_by_path_length)) + geom_boxplot() + coord_cartesian(ylim=c(0,3)) + facet_wrap(~block_f)
-ggplot(data_l, aes(x=factor(trial_in_cond), y=rotation_degrees)) + geom_boxplot() + coord_cartesian(ylim=c(0,2000)) + facet_wrap(~block_f)
 
 # ######################################################### #
 
 # -- INITIAL ROTATION -- # 
 ## 1) standard lme model without variance estimation 
-learn.rot_i_base <- lme(initial_rotation_turns ~ group*block_f*trial_in_cond_c + cov_r + sex,
+learn.rot_i_base <- lme(initial_rotation_turns ~ group*trial_in_cond_c + block_f + cov_r + sex,
                         random=~1 | id, 
                         na.action=na.omit, data=data_l, method="ML")
 
 ## 2) advanced lme models with variance estimation 
 learn.rot_i_var1 <- update(learn.rot_i_base, weights=varIdent(form=~1 | group))
-learn.rot_i_var2 <- update(learn.rot_i_base, weights=varComb(varIdent(form=~1 | group),
-                                                             varIdent(form=~1 | block_f)))
-anova(learn.rot_i_base, learn.rot_i_var1, learn.rot_i_var2, test=T) 
-# chose model 2
+anova(learn.rot_i_base, learn.rot_i_var1, test=T) 
+# chose model 1
 
-# diagnostics: ok 
-plot(learn.rot_i_var2, resid(., type="p") ~ fitted(.), abline=0)
-qqnorm(resid(learn.rot_i_var2))
-qqline(resid(learn.rot_i_var2))
+# diagnostics: ok but not great 
+plot(learn.rot_i_var1, resid(., type="p") ~ fitted(.), abline=0)
+qqnorm(resid(learn.rot_i_var1))
+qqline(resid(learn.rot_i_var1))
+rm(learn.rot_i_base, learn.rot_i_var1)
 
 ## ---- stats_learning_initial_rotation
 # re-fit final model with REML
-learn.rot_i_final <- lme(initial_rotation_turns ~ group*block_f*trial_in_cond_c + cov_r + sex,
-                       random=~1 | id, 
-                       weights=varComb(varIdent(form=~1 | group),
-                                       varIdent(form=~1 | block_f)),
-                       na.action=na.omit, data=data_l, method="REML")
+learn.rot_i_final <- lme(initial_rotation_turns ~ group*trial_in_cond_c + block_f + cov_r + sex,
+                         random=~1 | id, 
+                         weights=varIdent(form=~1 | group),
+                         na.action=na.omit, data=data_l, method="REML")
 
 # random effects
 learn.rot_i_final$modelStruct$reStruct 
@@ -484,10 +406,51 @@ learn.rot_i_final$modelStruct$varStruct
 
 # statistics on fixed effects 
 anova.lme(learn.rot_i_final, type="marginal", adjustSigma=T)
-# TBD: contrasts
 emtrends(learn.rot_i_final, pairwise ~ group, var="trial_in_cond_c", adjust="bonferroni")
 rm(learn.rot_i_final)
 ## ---- 
+
+# ######################################################### #
+
+# -- ROTATION (BY PATH LENGTH) -- # 
+## 1) standard lme model without variance estimation 
+learn.rot_p_base <- lme(rotation_turns_by_path_length ~  group*trial_in_cond_c + block_f + cov_r + sex,
+                        random=~1 | id, 
+                        na.action=na.omit, data=data_l, method="ML")
+
+## 2) advanced lme models with variance estimation 
+learn.rot_p_var1 <- update(learn.rot_p_base, weights=varIdent(form=~1 | group))
+anova(learn.rot_p_base, learn.rot_p_var1, test=T) 
+# chose model 1
+
+# diagnostics: good!  
+plot(learn.rot_p_var1, resid(., type="p") ~ fitted(.), abline=0)
+qqnorm(resid(learn.rot_p_var1))
+qqline(resid(learn.rot_p_var1))
+rm(learn.rot_p_base, learn.rot_p_var1)
+
+## ---- stats_learning_rotation_path
+# re-fit final model with REML
+learn.rot_p_final <- lme(rotation_turns_by_path_length ~  group*trial_in_cond_c + block_f + cov_r + sex,
+                         random=~1 | id, 
+                         weights=varIdent(form=~1 | group),
+                         na.action=na.omit, data=data_l, method="REML")
+
+# random effects
+learn.rot_p_final$modelStruct$reStruct 
+
+# estimated variances 
+learn.rot_p_final$modelStruct$varStruct
+
+# statistics on fixed effects 
+anova.lme(learn.rot_p_final, type="marginal", adjustSigma=T)
+emtrends(learn.rot_p_final, pairwise ~ group, var="trial_in_cond_c", adjust="bonferroni")
+emmeans(learn.rot_p_final, pairwise ~ block_f, adjust="bonferroni")$contrasts 
+rm(learn.rot_p_final)
+## ---- 
+# helper plots
+ggplot(data_l, aes(x=factor(trial_in_cond), y=rotation_turns_by_path_length)) + geom_boxplot() + coord_cartesian(ylim=c(0,3)) + facet_wrap(~group)
+ggplot(data_l, aes(x=factor(trial_in_cond), y=rotation_degrees)) + geom_boxplot() + coord_cartesian(ylim=c(0,2000)) + facet_wrap(~group)
 
 
 # ######################################################### #
