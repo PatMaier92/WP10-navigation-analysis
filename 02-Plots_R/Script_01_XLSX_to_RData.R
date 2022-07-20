@@ -26,6 +26,7 @@ sm_data <- sm_data %>%
   mutate_at(c("sex", "session", "feedback", "goal_identity"), factor) %>% 
   mutate(group=factor(group, levels=c("YoungKids", "OldKids", "YoungAdults")),
          condition=factor(condition, levels=c("main_learn", "main_ret", "allo_ret", "ego_ret", "practise")),
+         condition2=factor(case_when(condition %in% c("allo_ret", "ego_ret") ~ "learn", condition=="main_learn" ~ "probe", T ~ "other")),
          goal=factor(goal_s),
          start=factor(start_s),
          chosen_alley=factor(chosen_alley_s),
@@ -36,13 +37,14 @@ sm_data <- sm_data %>%
 
 assign_trial <- function(i, s, b, c, t){
   temp <- sm_data %>%
-    filter(session==s,  block==b, condition==c, id==i)
+    filter(session==s,  block==b, condition2==c, id==i)
   orig_trial <- sort(unique(temp %>% pull(trial)))
   index <- which(orig_trial==t)
   return (index)
 }
 sm_data <- sm_data %>% 
-  mutate(trial_in_cond=pmap_dbl(list(id, session, block, condition, trial), assign_trial))
+  mutate(trial_in_block=pmap_dbl(list(id, session, block, condition2, trial), assign_trial)) %>% 
+  select(-condition2)
 
 
 # save as RData

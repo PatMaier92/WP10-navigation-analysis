@@ -71,39 +71,34 @@ covariates <- data_p %>%
 data_l <- sm_data %>%
   filter(exclude_trial_matlab==0) %>% 
   filter(condition %in% c("main_learn")) %>% 
-  mutate(trial_in_cond_f=factor(trial_in_cond),
-         trial_in_cond_0=trial_in_cond-1,
-         trial_in_cond_c=trial_in_cond-4.5,
-         block_f=factor(block)) %>% 
-full_join(covariates, by="id") %>% 
+  mutate(block_f=factor(block),
+         trial_in_block_c=trial_in_block-mean(trial_in_block)) %>%  # alternativ: zero-centering
+  full_join(covariates, by="id") %>% 
   droplevels()
 
 # probe 
 data <- sm_data %>% 
   filter(exclude_trial_matlab==0) %>% 
   filter(condition %in% c("allo_ret", "ego_ret")) %>%
-  mutate(goal_f=factor(goal_i)) %>% 
+  mutate(goal_f=factor(goal_i), 
+         block_f=factor(block),
+         trial_in_block_c=trial_in_block-mean(trial_in_block)) %>%  # alternativ: zero-centering
   full_join(covariates, by="id") %>% 
-  droplevels()
-
-data_1 <- data %>% 
-  filter(session==1) %>% 
-  droplevels()
-
-data_allo <- data %>% 
-  filter(condition=="allo_ret") %>% 
   droplevels()
 
 # probe correct trials 
 data_c <- data %>% 
   filter(correct_final_alley==1) %>% 
+  mutate(trial_in_block_c=trial_in_block-mean(trial_in_block)) %>%  # alternativ: zero-centering
   droplevels()
 
-data_c_1 <- data_c %>% 
-  filter(session==1) %>% 
+# probe allo trials
+data_allo <- data %>% 
+  filter(condition=="allo_ret", ego_alley!=7) %>% 
+  mutate(trial_in_block_c=trial_in_block-mean(trial_in_block)) %>%  # alternativ: zero-centering
   droplevels()
 
-# change 
+# probe aggregated change 
 data_prepost <- data %>% 
   select(id, sex, group, session, trial, condition, correct_final_alley, memory_score, memory_score_ego) %>%
   pivot_wider(id_cols=c(id, sex, trial, group, condition),
@@ -250,7 +245,7 @@ lincon(rotation_degrees ~ group, data=data_p, tr=0.2, alpha=0.05, method="bonfer
 # ::: METHOD: per person 8 trials * 3 blocks (= 24 trials) with continuous outcome, therefore lmm model ::: #
 # watch out for convergence (stepwise reduction of random effects), normality of residuals, homoscedasticity and outliers # 
 # 1) standard lmer model 
-learn.time_base <- lme(time ~ group*trial_in_cond_c + block_f + cov_t + sex,
+learn.time_base <- lme(time ~ group*trial_in_block_c + block_f + cov_t + sex,
                        random=~1 | id, 
                        na.action=na.omit, data=data_l, method="ML")
 
@@ -268,7 +263,7 @@ rm(learn.time_base, learn.time_var1)
 
 ## ---- stats_learning_time
 # re-fit final model with REML
-learn.time_final <- lme(time ~ group*trial_in_cond_c + block_f + cov_t + sex,
+learn.time_final <- lme(time ~ group*trial_in_block_c + block_f + cov_t + sex,
                         random=~1 | id, 
                         weights=varIdent(form=~1 | group),
                         na.action=na.omit, data=data_l, method="REML")
@@ -297,7 +292,7 @@ rm(learn.time_final)
 
 # --- EXCESS PATH LENGTH -- #
 ## 1) standard lme model without variance estimation 
-learn.excess_path_base <- lme(excess_path_length ~ group*trial_in_cond_c + block_f + cov_p + sex,
+learn.excess_path_base <- lme(excess_path_length ~ group*trial_in_block_c + block_f + cov_p + sex,
                               random=~1 | id, 
                               na.action=na.omit, data=data_l, method="ML")
 
@@ -314,7 +309,7 @@ rm(learn.excess_path_base, learn.excess_path_var1)
 
 ## ---- stats_learning_excess_path
 # re-fit final model with REML
-learn.excess_path_final <-lme(excess_path_length ~ group*trial_in_cond_c + block_f + cov_p + sex,
+learn.excess_path_final <-lme(excess_path_length ~ group*trial_in_block_c + block_f + cov_p + sex,
                               random=~1 | id, 
                               weights=varIdent(form=~1 | group),
                               na.action=na.omit, data=data_l, method="REML")
@@ -327,7 +322,7 @@ learn.excess_path_final$modelStruct$varStruct
 
 # statistics on fixed effects 
 anova.lme(learn.excess_path_final, type="marginal", adjustSigma=T)
-emtrends(learn.excess_path_final, pairwise ~ group, var="trial_in_cond_c", adjust="bonferroni")
+emtrends(learn.excess_path_final, pairwise ~ group, var="trial_in_block_c", adjust="bonferroni")
 emmeans(learn.excess_path_final, pairwise ~ group, adjust="bonferroni")$contrasts
 emmeans(learn.excess_path_final, pairwise ~ block_f, adjust="bonferroni")$contrasts
 rm(learn.excess_path_final)
@@ -337,7 +332,7 @@ rm(learn.excess_path_final)
 
 # -- DISTANCE TO GOAL -- #
 ## 1) standard lme model without variance estimation 
-learn.distance_base <- lme(target_distance ~ group*trial_in_cond_c + block_f + cov_d + sex,
+learn.distance_base <- lme(target_distance ~ group*trial_in_block_c + block_f + cov_d + sex,
                            random=~1 | id, 
                            na.action=na.omit, data=data_l, method="ML")
 
@@ -354,7 +349,7 @@ rm(learn.distance_base, learn.distance_var1)
 
 ## ---- stats_learning_distance_goal
 # re-fit final model with REML
-learn.distance_final <- lme(target_distance ~ group*trial_in_cond_c + block_f + cov_d + sex,
+learn.distance_final <- lme(target_distance ~ group*trial_in_block_c + block_f + cov_d + sex,
                             random=~1 | id, 
                             weights=varIdent(form=~1 | group),
                             na.action=na.omit, data=data_l, method="REML")
@@ -376,7 +371,7 @@ rm(learn.distance_final)
 
 # -- INITIAL ROTATION -- # 
 ## 1) standard lme model without variance estimation 
-learn.rot_i_base <- lme(initial_rotation_turns ~ group*trial_in_cond_c + block_f + cov_r + sex,
+learn.rot_i_base <- lme(initial_rotation_turns ~ group*trial_in_block_c + block_f + cov_r + sex,
                         random=~1 | id, 
                         na.action=na.omit, data=data_l, method="ML")
 
@@ -393,7 +388,7 @@ rm(learn.rot_i_base, learn.rot_i_var1)
 
 ## ---- stats_learning_initial_rotation
 # re-fit final model with REML
-learn.rot_i_final <- lme(initial_rotation_turns ~ group*trial_in_cond_c + block_f + cov_r + sex,
+learn.rot_i_final <- lme(initial_rotation_turns ~ group*trial_in_block_c + block_f + cov_r + sex,
                          random=~1 | id, 
                          weights=varIdent(form=~1 | group),
                          na.action=na.omit, data=data_l, method="REML")
@@ -406,7 +401,7 @@ learn.rot_i_final$modelStruct$varStruct
 
 # statistics on fixed effects 
 anova.lme(learn.rot_i_final, type="marginal", adjustSigma=T)
-emtrends(learn.rot_i_final, pairwise ~ group, var="trial_in_cond_c", adjust="bonferroni")
+emtrends(learn.rot_i_final, pairwise ~ group, var="trial_in_block_c", adjust="bonferroni")
 rm(learn.rot_i_final)
 ## ---- 
 
@@ -414,7 +409,7 @@ rm(learn.rot_i_final)
 
 # -- ROTATION (BY PATH LENGTH) -- # 
 ## 1) standard lme model without variance estimation 
-learn.rot_p_base <- lme(rotation_turns_by_path_length ~  group*trial_in_cond_c + block_f + cov_r + sex,
+learn.rot_p_base <- lme(rotation_turns_by_path_length ~  group*trial_in_block_c + block_f + cov_r + sex,
                         random=~1 | id, 
                         na.action=na.omit, data=data_l, method="ML")
 
@@ -431,7 +426,7 @@ rm(learn.rot_p_base, learn.rot_p_var1)
 
 ## ---- stats_learning_rotation_path
 # re-fit final model with REML
-learn.rot_p_final <- lme(rotation_turns_by_path_length ~  group*trial_in_cond_c + block_f + cov_r + sex,
+learn.rot_p_final <- lme(rotation_turns_by_path_length ~  group*trial_in_block_c + block_f + cov_r + sex,
                          random=~1 | id, 
                          weights=varIdent(form=~1 | group),
                          na.action=na.omit, data=data_l, method="REML")
@@ -444,13 +439,13 @@ learn.rot_p_final$modelStruct$varStruct
 
 # statistics on fixed effects 
 anova.lme(learn.rot_p_final, type="marginal", adjustSigma=T)
-emtrends(learn.rot_p_final, pairwise ~ group, var="trial_in_cond_c", adjust="bonferroni")
+emtrends(learn.rot_p_final, pairwise ~ group, var="trial_in_block_c", adjust="bonferroni") 
 emmeans(learn.rot_p_final, pairwise ~ block_f, adjust="bonferroni")$contrasts 
 rm(learn.rot_p_final)
 ## ---- 
 # helper plots
-ggplot(data_l, aes(x=factor(trial_in_cond), y=rotation_turns_by_path_length)) + geom_boxplot() + coord_cartesian(ylim=c(0,3)) + facet_wrap(~group)
-ggplot(data_l, aes(x=factor(trial_in_cond), y=rotation_degrees)) + geom_boxplot() + coord_cartesian(ylim=c(0,2000)) + facet_wrap(~group)
+ggplot(data_l, aes(x=factor(trial_in_block), y=rotation_turns_by_path_length)) + geom_boxplot() + coord_cartesian(ylim=c(0,3)) + facet_wrap(~group)
+ggplot(data_l, aes(x=factor(trial_in_block), y=rotation_degrees)) + geom_boxplot() + coord_cartesian(ylim=c(0,2000)) + facet_wrap(~group)
 
 
 # ######################################################### #
@@ -465,8 +460,8 @@ ggplot(data_l, aes(x=factor(trial_in_cond), y=rotation_degrees)) + geom_boxplot(
 
 ## ---- stats_probe_acc
 # full binomial model (with reduced random effects due to failed convergence)
-probe.acc <- mixed(correct_final_alley ~ group*session*condition + sex +
-                   (session*condition||id), data=data, expand_re=T,
+probe.acc <- mixed(correct_final_alley ~ group*session*condition + block_f + trial_in_block_c + sex + 
+                     (session*condition||id), data=data, expand_re=T,
                    family=binomial(link="logit"), method="LRT",
                    control=glmerControl(optimizer="bobyqa", optCtrl=list(maxfun=1e6)))
 
@@ -478,6 +473,7 @@ probe.acc
 emmeans(probe.acc, pairwise ~ group, type="response", adjust="bonferroni")$contrasts
 emmeans(probe.acc, pairwise ~ session, type="response")$contrasts
 emmeans(probe.acc, pairwise ~ condition, type="response")$contrasts
+emmeans(probe.acc, pairwise ~ block_f, type="response", adjust="bonferroni")$contrasts
 ## ---- 
 
 # check model: ok 
@@ -565,10 +561,9 @@ pairwise_fisher_test(table(t2$correct_final_alley_ego, t2$group), p.adjust.metho
 # Disadvantages are that no non-gaussian distributions and potentially anti-conservative p-values (no Satterthwaite/Kenward-Roger df correction) ::: 
 
 ## 1) standard lme model without variance estimation 
-probe.memory <- lme(memory_score ~ group*session*condition,
+probe.memory <- lme(memory_score ~ group*session*condition + block_f + trial_in_block_c + sex,
                     random=list(id=pdDiag(~ condition + session)), 
                     data=data, method="ML")
-anova(probe.memory)
 
 # diagnostics: non-normality, largest heterogeneity between groups, less between condition & session 
 plot(probe.memory, resid(., type="p") ~ fitted(.))
@@ -590,14 +585,14 @@ probe.memory_var4 <- update(probe.memory, weights=varComb(varIdent(form=~1 | gro
 anova(probe.memory, probe.memory_var1, probe.memory_var2, probe.memory_var3, probe.memory_var4, test=T) 
 # chose model 4
 
-# diagnostics: ok 
+# diagnostics: ok but not great
 plot(probe.memory_var4, resid(., type="p") ~ fitted(.), abline=0)
 qqnorm(resid(probe.memory_var4))
 qqline(resid(probe.memory_var4))
 
 ## ---- stats_probe_ms
 # re-fit final model with with REML
-probe.memory_final <- lme(memory_score ~ group*session*condition,
+probe.memory_final <- lme(memory_score ~ group*session*condition + block_f + trial_in_block_c + sex,
                           random=list(id=pdDiag(~ condition + session)), 
                           weights=varComb(varIdent(form=~1 | group),
                                           varIdent(form=~1 | session),
@@ -615,6 +610,7 @@ anova(probe.memory_final, type="marginal", adjustSigma=T)
 emmeans(probe.memory_final, pairwise ~ group, adjust="bonferroni")$contrasts
 emmeans(probe.memory_final, pairwise ~ session)$contrasts
 emmeans(probe.memory_final, pairwise ~ condition)$contrasts
+emmeans(probe.memory_final, pairwise ~ block_f)$contrasts
 rm(probe.memory_final)
 ## ----
 
@@ -637,10 +633,9 @@ lincon(change_ms ~ group, data=data_prepost, tr=0.2, alpha=0.05, method="bonferr
 
 # -- MEMORY SCORE IN CORRECT TRIALS -- # 
 ## 1) standard lme model without variance estimation 
-probe.mem_correct <- lme(memory_score ~ group*session*condition,
+probe.mem_correct <- lme(memory_score ~ group*session*condition + block_f + trial_in_block_c + sex,
                          random=list(id=pdDiag(~ condition + session)), 
                          data=data_c, method="ML")
-anova(probe.mem_correct)
 
 # diagnostics: non-normality, largest heterogeneity between groups, less between condition & session 
 plot(probe.mem_correct, resid(., type="p") ~ fitted(.))
@@ -652,23 +647,24 @@ qqline(resid(probe.mem_correct))
 
 ## 2) advanced lme models with variance estimation
 probe.mem_correct_var1 <- update(probe.mem_correct, weights=varIdent(form=~1 | group))
-# probe.mem_correct_var2 <- update(probe.mem_correct, weights=varComb(varIdent(form=~1 | group),
-#                                                           varIdent(form=~1 | condition)))
-# probe.mem_correct_var3 <- update(probe.mem_correct, weights=varComb(varIdent(form=~1 | group),
-#                                                           varIdent(form=~1 | session)))
-anova(probe.mem_correct, probe.mem_correct_var1, test=T) 
-# chose model 1
+probe.mem_correct_var2 <- update(probe.mem_correct, weights=varComb(varIdent(form=~1 | group),
+                                                                    varIdent(form=~1 | session)))
+probe.mem_correct_var3 <- update(probe.mem_correct, weights=varComb(varIdent(form=~1 | group),
+                                                                    varIdent(form=~1 | condition)))
+anova(probe.mem_correct, probe.mem_correct_var1, probe.mem_correct_var2, probe.mem_correct_var3, test=T) 
+# chose model 2
 
 # diagnostics: ok 
-plot(probe.mem_correct_var1, resid(., type="p") ~ fitted(.), abline=0)
-qqnorm(resid(probe.mem_correct_var1))
-qqline(resid(probe.mem_correct_var1))
+plot(probe.mem_correct_var2, resid(., type="p") ~ fitted(.), abline=0)
+qqnorm(resid(probe.mem_correct_var2))
+qqline(resid(probe.mem_correct_var2))
 
 ## ---- stats_probe_ms_in_corr
 # re-fit final model with with REML
-probe.mem_correct_final <- lme(memory_score ~ group*session*condition,
+probe.mem_correct_final <- lme(memory_score ~ group*session*condition + block_f + trial_in_block_c + sex,
                                random=list(id=pdDiag(~ session)), 
-                               weights=varComb(varIdent(form=~1 | group)),
+                               weights=varComb(varIdent(form=~1 | group),
+                                               varIdent(form=~1 | session)),
                                data=data_c, method="REML")
 
 # random effects
@@ -681,6 +677,7 @@ probe.mem_correct_final$modelStruct$varStruct
 anova(probe.mem_correct_final, type="marginal", adjustSigma=T)
 emmeans(probe.mem_correct_final, pairwise ~ group, adjust="bonferroni")$contrasts
 emmeans(probe.mem_correct_final, pairwise ~ session)$contrasts
+emmeans(probe.mem_correct_final, pairwise ~ block_f)$contrasts
 rm(probe.mem_correct_final)
 ## ----
 
@@ -688,7 +685,7 @@ rm(probe.mem_correct_final)
 
 # -- EGOCENTRIC MEMORY SCORE (in allocentric probe trials) ONLY INCORRECT TRIALS -- # 
 ## 1) standard lme model without variance estimation 
-probe.mem_ego <- lme(memory_score_ego ~ group*session,
+probe.mem_ego <- lme(memory_score_ego ~ group*session + block_f + trial_in_block_c + sex,
                      random=~1 | id,
                      data=data_allo %>% filter(correct_final_alley==0), na.action=na.omit, method="ML")
 
@@ -698,7 +695,6 @@ plot(probe.mem_ego, group ~ resid(., type="p"))
 plot(probe.mem_ego, session ~ resid(., type="p"))
 qqnorm(resid(probe.mem_ego))
 qqline(resid(probe.mem_ego))
-
 
 ## 2) advanced lme models with variance estimation
 probe.mem_ego_var1 <- update(probe.mem_ego, weights=varIdent(form=~1 | group))
@@ -710,7 +706,7 @@ anova(probe.mem_ego, probe.mem_ego_var1, probe.mem_ego_var2, probe.mem_ego_var3,
 
 ## ---- stats_probe_ms_ego_in_allo
 # re-fit final model with with REML
-probe.mem_ego_final <- lme(memory_score_ego ~ group*session,
+probe.mem_ego_final <- lme(memory_score_ego ~ group*session + block_f + trial_in_block_c + sex,
                            random=~1 | id,
                            data=data_allo %>% filter(correct_final_alley==0),  na.action=na.omit, method="REML")
 
@@ -739,7 +735,7 @@ ggplot(data_allo %>% filter(correct_final_alley==0), aes(x=group, y=memory_score
 # Disadvantages are that no non-gaussian distributions and potentially anti-conservative p-values (no Satterthwaite/Kenward-Roger df correction) ::: 
 
 ## 1) standard lme model without variance estimation 
-probe.time <- lme(time ~ group*session*condition + cov_t + sex,
+probe.time <- lme(time ~ group*session*condition + block_f + trial_in_block_c + cov_t + sex,
                   random=list(id=pdDiag(~ condition + session)),
                   na.action=na.omit, data=data, method="ML")
 
@@ -771,7 +767,7 @@ qqline(resid(probe.time_var4))
 
 ## ---- stats_probe_time
 # re-fit final model with with REML
-probe.time_final <-  lme(time ~ group*session*condition + cov_t + sex,
+probe.time_final <-  lme(time ~ group*session*condition + block_f + trial_in_block_c + cov_t + sex,
                          random=list(id=pdDiag(~ condition + session)),
                          weights=varComb(varIdent(form=~1 | group),
                                          varIdent(form=~1 | condition)),
@@ -805,7 +801,7 @@ ggplot(data, aes(x=group, y=time)) + geom_boxplot() + facet_grid(~ condition)
 
 # -- EXCESS PATH LENGTH TO CHOSEN TARGET -- # 
 ## 1) standard lme model without variance estimation 
-probe.excess_path <- lme(excess_path_length ~ group*session*condition + cov_p + sex,
+probe.excess_path <- lme(excess_path_length ~ group*session*condition + block_f + trial_in_block_c + cov_p + sex,
                            random=list(id=pdDiag(~ condition + session)),
                            na.action=na.omit, data=data, method="ML")
 
@@ -835,7 +831,7 @@ qqline(resid(probe.excess_path_var2))
 
 ## ---- stats_probe_excess_path
 # re-fit final model with REML
-probe.excess_path_final <- lme(excess_path_length ~ group*session*condition + cov_p + sex,
+probe.excess_path_final <- lme(excess_path_length ~ group*session*condition + block_f + trial_in_block_c + cov_p + sex,
                                   random=list(id=pdDiag(~ condition)),
                                   weights=varComb(varIdent(form=~1 | group),
                                                   varIdent(form=~1 | condition)),
@@ -869,7 +865,7 @@ ggplot(data, aes(x=group, y=excess_path_length)) + geom_boxplot() + facet_grid(~
 
 # -- DISTANCE TO GOAL -- # 
 ## 1) standard lme model without variance estimation 
-probe.distance_target <- lme(target_distance_deviation ~ group*session*condition + cov_d + sex,
+probe.distance_target <- lme(target_distance_deviation ~ group*session*condition + block_f + trial_in_block_c + cov_d + sex,
                              random=list(id=pdDiag(~ condition + session)),
                              na.action=na.omit, data=data, method="ML")
 
@@ -889,19 +885,20 @@ probe.distance_target_var3 <- update(probe.distance_target, weights=varComb(varI
                                                                             varIdent(form=~1 | condition),
                                                                             varIdent(form=~1 | session)))
 anova(probe.distance_target, probe.distance_target_var1, probe.distance_target_var2, probe.distance_target_var3) 
-# chose model 2
+# chose model 3
 
 # diagnostics: great 
-plot(probe.distance_target_var2, resid(., type="p") ~ fitted(.), abline=0)
-qqnorm(resid(probe.distance_target_var2))
-qqline(resid(probe.distance_target_var2))
+plot(probe.distance_target_var3, resid(., type="p") ~ fitted(.), abline=0)
+qqnorm(resid(probe.distance_target_var3))
+qqline(resid(probe.distance_target_var3))
 
 ## ---- stats_probe_distance
 # re-fit final model with REML
-probe.distance_target_final <- lme(target_distance_deviation ~ group*session*condition + cov_d + sex,
+probe.distance_target_final <- lme(target_distance_deviation ~ group*session*condition + block_f + trial_in_block_c + cov_d + sex,
                                    random=list(id=pdDiag(~ condition + session)),
                                    weights=varComb(varIdent(form=~1 | group),
-                                                   varIdent(form=~1 | condition)), 
+                                                   varIdent(form=~1 | condition),
+                                                   varIdent(form=~1 | session)),
                                    na.action=na.omit, data=data, method="REML")
 
 # random effects
@@ -923,7 +920,7 @@ rm(probe.distance_target_final, con1, emm1)
 
 # -- INITIAL ROTATION -- # 
 ## 1) standard lme model without variance estimation 
-probe.rot_i <- lme(initial_rotation_turns ~ group*session*condition + cov_r + sex,
+probe.rot_i <- lme(initial_rotation_turns ~ group*session*condition + block_f + trial_in_block_c + cov_r + sex,
                    random=list(id=pdDiag(~ condition + session)),
                    na.action=na.omit, data=data, method="ML")
 
@@ -953,7 +950,7 @@ qqline(resid(probe.rot_i_var3))
 
 ## ---- stats_probe_init_rotation
 # re-fit final model with REML
-probe.rot_i_final <- lme(initial_rotation_turns ~ group*session*condition + cov_r + sex,
+probe.rot_i_final <- lme(initial_rotation_turns ~ group*session*condition + block_f + trial_in_block_c + cov_r + sex,
                          random=list(id=pdDiag(~ condition + session)),
                          weights=varComb(varIdent(form=~1 | condition),
                                          varIdent(form=~1 | group),
@@ -980,7 +977,7 @@ ggplot(data, aes(x=group, y=initial_rotation_turns)) + geom_boxplot() + facet_wr
 
 # -- ROTATION BY PATH LENGTH -- # 
 ## 1) standard lme model without variance estimation 
-probe.rot <- lme(rotation_turns_by_path_length ~ group*session*condition + cov_r + sex,
+probe.rot <- lme(rotation_turns_by_path_length ~ group*session*condition + block_f + trial_in_block_c + cov_r + sex,
                  random=list(id=pdDiag(~ condition + session)),
                  na.action=na.omit, data=data, method="ML")
 
@@ -1001,7 +998,7 @@ probe.rot_var3 <- update(probe.rot, weights=varComb(varIdent(form=~1 | condition
                                                     varIdent(form=~1 | group),
                                                     varIdent(form=~1 | session)))
 anova(probe.rot, probe.rot_var1, probe.rot_var2, probe.rot_var3) 
-# chose model 3 (or model 1)
+# chose model 3
 
 # diagnostics
 plot(probe.rot_var3, resid(., type="p") ~ fitted(.), abline=0)
@@ -1010,7 +1007,7 @@ qqline(resid(probe.rot_var3))
 
 ## ---- stats_probe_rotation_path
 # re-fit final model with REML
-probe.rot_final <-  lme(rotation_turns_by_path_length ~ group*session*condition + cov_r + sex,
+probe.rot_final <-  lme(rotation_turns_by_path_length ~ group*session*condition + block_f + trial_in_block_c + cov_r + sex,
                         random=list(id=pdDiag(~ condition + session)),
                         weights=varComb(varIdent(form=~1 | condition),
                                         varIdent(form=~1 | group),
@@ -1042,7 +1039,7 @@ ggplot(data, aes(x=group, y=rotation_turns_by_path_length)) + geom_boxplot() + f
 
 # -- ALLOCENTRIC: EGOCENTRIC BEHAVIOR -- # 
 # -- COVERAGE -- # 
-probe.cov_ego <- lme(coverage_ego ~ group*session,
+probe.cov_ego <- lme(coverage_ego ~ group*session + block_f + trial_in_block_c + sex,
                      random=~1 | id,
                      data=data_allo, na.action=na.omit, method="ML")
 
@@ -1056,15 +1053,14 @@ qqline(resid(probe.cov_ego))
 
 ## 2) advanced lme models with variance estimation
 probe.cov_ego_var1 <- update(probe.cov_ego, weights=varIdent(form=~1 | group))
-probe.cov_ego_var2 <- update(probe.cov_ego, weights=varIdent(form=~1 | group))
-probe.cov_ego_var3 <- update(probe.cov_ego, weights=varComb(varIdent(form=~1 | group),
+probe.cov_ego_var2 <- update(probe.cov_ego, weights=varComb(varIdent(form=~1 | group),
                                                             varIdent(form=~1 | session)))
-anova(probe.cov_ego, probe.cov_ego_var1, probe.cov_ego_var2, probe.cov_ego_var3, test=T) 
+anova(probe.cov_ego, probe.cov_ego_var1, probe.cov_ego_var2, test=T) 
 # chose model 1 
 
 ## ---- stats_probe_cov_ego_in_allo
 # re-fit final model with with REML
-probe.cov_ego_final <- lme(coverage_ego ~ group*session,
+probe.cov_ego_final <- lme(coverage_ego ~ group*session + block_f + trial_in_block_c + sex,
                            random=~1 | id,
                            weights=varIdent(form=~1 | group),
                            data=data_allo, na.action=na.omit, method="REML")
@@ -1080,21 +1076,22 @@ anova(probe.cov_ego_final, type="marginal", adjustSigma=T)
 emmeans(probe.cov_ego_final, pairwise ~ group, adjust="bonferroni")
 ## ----
 # helper plots 
-ggplot(data_allo, aes(x=coverage_ego)) + geom_histogram()
-ggplot(data_allo, aes(x=group, y=coverage_ego)) + geom_boxplot() + facet_wrap(~session, nrow=1)
+ggplot(data=data_allo, aes(x=coverage_ego)) + geom_histogram()
+ggplot(data=data_allo, aes(x=group, y=coverage_ego)) + geom_boxplot() + facet_wrap(~session, nrow=1)
 
 
 # -- TIME IN ZONE -- # 
 ggplot(data_allo, aes(x=time_in_ego)) + geom_histogram()
 ggplot(data_allo, aes(x=group, y=time_in_ego)) + geom_boxplot() + facet_wrap(~session, nrow=1) 
 
-probe.time_ego_final <- lme(time_in_ego ~ group*session,
+probe.time_ego_final <- lme(time_in_ego ~ group*session + block_f + trial_in_block_c + sex,
                             random=~1 | id,
                             data=data_allo, na.action=na.omit, method="REML")
 
 # statistics on fixed effects 
 anova(probe.time_ego_final, type="marginal", adjustSigma=T)
 emmeans(probe.time_ego_final, pairwise ~ group, adjust="bonferroni")
+emmeans(probe.time_ego_final, pairwise ~ sex)
 
 
 # simple aggregated model 
@@ -1107,7 +1104,7 @@ rm(t)
 
 # -- ALLOCENTRIC: HOMING BEHAVIOR -- # 
 # -- COVERAGE -- # 
-probe.cov_start <- lme(coverage_start ~ group*session,
+probe.cov_start <- lme(coverage_start ~ group*session + block_f + trial_in_block_c + sex,
                        random=~1 | id,
                        data=data_allo, na.action=na.omit, method="ML")
 
@@ -1121,17 +1118,17 @@ qqline(resid(probe.cov_start))
 
 ## 2) advanced lme models with variance estimation
 probe.cov_start_var1 <- update(probe.cov_start, weights=varIdent(form=~1 | group))
-probe.cov_start_var2 <- update(probe.cov_start, weights=varIdent(form=~1 | group))
-probe.cov_start_var3 <- update(probe.cov_start, weights=varComb(varIdent(form=~1 | group),
+probe.cov_start_var2 <- update(probe.cov_start, weights=varComb(varIdent(form=~1 | group),
                                                                 varIdent(form=~1 | session)))
-anova(probe.cov_start, probe.cov_start_var1, probe.cov_start_var2, probe.cov_start_var3, test=T) 
-# chose model 1 
+anova(probe.cov_start, probe.cov_start_var1, probe.cov_start_var2, test=T) 
+# chose model 2 
 
 ## ---- stats_probe_cov_start_in_allo
 # re-fit final model with with REML
-probe.cov_start_final <- lme(coverage_start ~ group*session,
+probe.cov_start_final <- lme(coverage_start ~ group*session + block_f + trial_in_block_c + sex,
                              random=~1 | id,
-                             weights=varIdent(form=~1 | group),
+                             weights=varComb(varIdent(form=~1 | group),
+                                             varIdent(form=~1 | session)),
                              data=data_allo, na.action=na.omit, method="REML")
 
 # random effects
@@ -1143,6 +1140,8 @@ probe.cov_start_final$modelStruct$varStruct
 # statistics on fixed effects 
 anova(probe.cov_start_final, type="marginal", adjustSigma=T)
 emmeans(probe.cov_start_final, pairwise ~ group, adjust="bonferroni")
+emmeans(probe.cov_start_final, pairwise ~ block_f, adjust="bonferroni")
+emmeans(probe.cov_start_final, pairwise ~ sex)
 ## ---- 
 # helper plots
 ggplot(data_allo, aes(x=coverage_start)) + geom_histogram()
@@ -1153,13 +1152,14 @@ ggplot(data_allo, aes(x=group, y=coverage_start)) + geom_boxplot() + facet_wrap(
 ggplot(data_allo, aes(x=time_in_start)) + geom_histogram()
 ggplot(data_allo, aes(x=group, y=time_in_start)) + geom_boxplot() + facet_wrap(~session, nrow=1) 
 
-probe.time_start_final <- lme(time_in_start ~ group*session,
+probe.time_start_final <- lme(time_in_start ~ group*session + block_f + trial_in_block_c + sex,
                               random=~1 | id,
                               data=data_allo, na.action=na.omit, method="REML")
 
 # statistics on fixed effects 
 anova(probe.time_start_final, type="marginal", adjustSigma=T)
 emmeans(probe.time_start_final, pairwise ~ group, adjust="bonferroni")
+emmeans(probe.time_start_final, pairwise ~ sex)
 
 
 # simple aggregated model 
@@ -1198,34 +1198,10 @@ rm(t)
 # ######################################################### #
 
 ### EXPLORATIV: different goals
-robe.goals_acc <- mixed(correct_final_alley ~ group*session*condition*goal_f +  
-                           (session+goal_f||id), data=data, expand_re=T,
-                         family=binomial(link="logit"), method="LRT",
-                         control=glmerControl(optimizer="bobyqa", optCtrl=list(maxfun=1e6)))
-
-probe.goals_acc
-emmeans(probe.goals_acc, pairwise ~ goal_f | group | session, type="response", adjust="bonferroni")
-emmeans(probe.goals_acc, pairwise ~ condition * session, type="response", adjust="bonferroni")
-emmeans(probe.goals_acc, pairwise ~ condition | group, type="response", adjust="bonferroni")
-emmeans(probe.goals_acc, pairwise ~ goal_f | group | condition, type="response", adjust="bonferroni") # TBD: with planned contrasts 
-
 
 # group:session:goal_f: no differences between goals 1/2 and 3 for young adults (for both sessions), but for young children (for both sessions), and partially for old children (mostly session 1, less for session 2)
 # session:condition: ego > allo only in session 1 (ego is better), both decline over time 
 # group:condition: on whether ego > allo: only older children, probably ceiling effect in adults and floor effect in young children; in both condition general age effect on performance
-
-
-probe.goals_acc_1 <- mixed(correct_final_alley ~ group*condition*goal_f +  
-                             (goal_f||id), data=data_1, expand_re=T,
-                           family=binomial(link="logit"), method="LRT",
-                           control=glmerControl(optimizer="bobyqa", optCtrl=list(maxfun=1e6)))
-
-afex_plot(probe.goals_acc_1, "goal_f", "group", "condition", id = "id",
-          data_geom = ggbeeswarm::geom_quasirandom)
-
-probe.goals_acc_1
-emmeans(probe.goals_acc_1, pairwise ~ condition | group, type="response", adjust="bonferroni")
-emmeans(probe.goals_acc_1, pairwise ~ goal_f | group | condition, type="response", adjust="bonferroni")
 
 
 # ######################################################### #

@@ -408,15 +408,15 @@ rm(corr_data, corr_variables)
 # learning trials
 sm_trialwise <- sm_data %>%
   filter(session==1, condition=="main_learn") %>%
-  group_by(id, group, trial_in_cond) %>% 
+  group_by(id, group, trial_in_block) %>% 
   summarise_at(c("time", "excess_path_length", "target_distance_deviation",
                  "rotation_turns_by_path_length", "initial_rotation_turns"), mean, na.rm=T)
 
-line_t <- line_plot(sm_trialwise, "trial_in_cond", "time", "group", NULL, l_time, mylabels, "bottom", group_colors)
-line_p <- line_plot(sm_trialwise, "trial_in_cond", "excess_path_length", "group", NULL, l_excess_path_length, mylabels, "bottom", group_colors)
-line_d <- line_plot(sm_trialwise, "trial_in_cond", "target_distance_deviation", "group", NULL, l_excess_target_distance, mylabels, "bottom", group_colors)
-line_rp <- line_plot(sm_trialwise, "trial_in_cond", "rotation_turns_by_path_length", "group", NULL, l_rotation_by_path, mylabels, "bottom", group_colors)
-line_ir <- line_plot(sm_trialwise, "trial_in_cond", "initial_rotation_turns", "group", NULL, l_initial_rotation, mylabels, "bottom", group_colors)
+line_t <- line_plot(sm_trialwise, "trial_in_block", "time", "group", NULL, l_time, mylabels, "bottom", group_colors)
+line_p <- line_plot(sm_trialwise, "trial_in_block", "excess_path_length", "group", NULL, l_excess_path_length, mylabels, "bottom", group_colors)
+line_d <- line_plot(sm_trialwise, "trial_in_block", "target_distance_deviation", "group", NULL, l_excess_target_distance, mylabels, "bottom", group_colors)
+line_rp <- line_plot(sm_trialwise, "trial_in_block", "rotation_turns_by_path_length", "group", NULL, l_rotation_by_path, mylabels, "bottom", group_colors)
+line_ir <- line_plot(sm_trialwise, "trial_in_block", "initial_rotation_turns", "group", NULL, l_initial_rotation, mylabels, "bottom", group_colors)
 ## ----
 rm(sm_trialwise)
 
@@ -439,7 +439,7 @@ sm_agg_correct <- sm_data %>%
   summarise_at(c("memory_score"), mean, na.rm=T)
 
 sm_agg_allo <- sm_data %>%
-  filter(condition=="allo_ret") %>% 
+  filter(condition=="allo_ret", ego_alley!=7) %>% 
   group_by(id, group, session, condition) %>% 
   summarise_at(c("correct_final_alley_ego", "memory_score_ego", 
                  "coverage_ego", "time_in_ego", "coverage_start", "time_in_start"), mean, na.rm=T)
