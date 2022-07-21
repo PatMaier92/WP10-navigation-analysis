@@ -55,17 +55,17 @@ rm(file_name)
 # practise motor control
 data_p <- sm_data %>%
   filter(condition %in% c("practise")) %>%  
-  select(id, group, sex, time, velocity, excess_path_length, target_distance, rotation_degrees) %>% 
+  select(id, group, sex, time, velocity, excess_path_length, target_distance, rotation_turns) %>% 
   droplevels()
 
 covariates <- data_p %>% 
-  select(id, time, velocity, excess_path_length, target_distance, rotation_degrees) %>% 
+  select(id, time, velocity, excess_path_length, target_distance, rotation_turns) %>% 
   mutate(cov_t=time-mean(time, na.rm=T),
          cov_v=velocity-mean(velocity, na.rm=T),
          cov_p=excess_path_length-mean(excess_path_length, na.rm=T),
          cov_d=target_distance-mean(target_distance, na.rm=T),
-         cov_r=rotation_degrees-mean(rotation_degrees, na.rm=T)) %>% 
-  select(-time, -velocity, -excess_path_length, -target_distance, -rotation_degrees)
+         cov_r=rotation_turns-mean(rotation_turns, na.rm=T)) %>% 
+  select(-time, -velocity, -excess_path_length, -target_distance, -rotation_turns)
 
 # learning
 data_l <- sm_data %>%
@@ -96,6 +96,18 @@ data_c <- data %>%
 data_allo <- data %>% 
   filter(condition=="allo_ret", ego_alley!=7) %>% 
   mutate(trial_in_block_c=trial_in_block-mean(trial_in_block)) %>%  # alternativ: zero-centering
+  droplevels()
+
+data_allo2 <- data %>%
+  filter(condition=="allo_ret", ego_alley!=7) %>% 
+  select(id, sex, group, session, condition, trial, goal_f, block_f, 
+         starts_with("memory_score_"), starts_with("coverage_"), starts_with("time_in_")) %>% 
+  select(-ends_with("pentagon"), -ends_with("alleys")) %>% 
+  pivot_longer(cols=c(ends_with("ego"), ends_with("start"), ends_with("base")),
+               names_to=c("variable", "cond"),
+               names_pattern='(.*)_(\\w+)') %>% 
+  pivot_wider(names_from=variable, values_from=value) %>% 
+  mutate(cond=factor(cond, levels=c("base", "ego", "start"))) %>% 
   droplevels()
 
 # probe aggregated change 
@@ -161,6 +173,26 @@ con_list_session_condition <- list(
   "t1_v_t2_a" = c(1, -1, 0, 0),
   "t1_v_t2_e" = c(0, 0, 1, -1),
   "a_vs_e_t1" = c(1, 0, -1, 0)) 
+
+con_list_group_cond <- list(
+  "YCH_v_OCH_base"   = c(1, -1, 0, 0, 0, 0, 0, 0, 0), 
+  "YCH_v_YAD_base"   = c(1, 0, -1, 0, 0, 0, 0, 0, 0), 
+  "OCH_v_YAD_base"   = c(0, 1, -1, 0, 0, 0, 0, 0, 0), 
+  "YCH_v_OCH_ego"    = c(0, 0, 0, 1, -1, 0, 0, 0, 0), 
+  "YCH_v_YAD_ego"    = c(0, 0, 0, 1, 0, -1, 0, 0, 0), 
+  "OCH_v_YAD_ego"    = c(0, 0, 0, 0, 1, -1, 0, 0, 0), 
+  "YCH_v_OCH_start"  = c(0, 0, 0, 0, 0, 0, 1, -1, 0), 
+  "YCH_v_YAD_start"  = c(0, 0, 0, 0, 0, 0, 1, 0, -1), 
+  "OCH_v_YAD_start"  = c(0, 0, 0, 0, 0, 0, 0, 1, -1), 
+  "base_v_ego_YCH"   = c(1, 0, 0, -1, 0, 0, 0, 0, 0),
+  "base_v_start_YCH" = c(1, 0, 0, 0, 0, 0, -1, 0, 0),
+  "ego_v_start_YCH"  = c(0, 0, 0, 1, 0, 0, -1, 0, 0),
+  "base_v_ego_OCH"   = c(0, 1, 0, 0, -1, 0, 0, 0, 0),
+  "base_v_start_OCH" = c(0, 1, 0, 0, 0, 0, 0, -1, 0),
+  "ego_v_start_OCH"  = c(0, 0, 0, 0, 1, 0, 0, -1, 0),
+  "base_v_ego_YAD"   = c(0, 0, 1, 0, 0, -1, 0, 0, 0),
+  "base_v_start_YAD" = c(0, 0, 1, 0, 0, 0, 0, 0, -1),
+  "ego_v_start_YAD"  = c(0, 0, 0, 0, 0, 1, 0, 0, -1))
 ## ----
 
 
@@ -230,8 +262,8 @@ t1way(target_distance ~ group, data=data_p, tr=0.2, alpha=0.05, nboot=1000)
 lincon(target_distance ~ group, data=data_p, tr=0.2, alpha=0.05, method="bonferroni")
 
 # rotation: GROUPS DIFFER SIGNIFICANTLY  
-t1way(rotation_degrees ~ group, data=data_p, tr=0.2, alpha=0.05, nboot=1000)
-lincon(rotation_degrees ~ group, data=data_p, tr=0.2, alpha=0.05, method="bonferroni")
+t1way(rotation_turns ~ group, data=data_p, tr=0.2, alpha=0.05, nboot=1000)
+lincon(rotation_turns ~ group, data=data_p, tr=0.2, alpha=0.05, method="bonferroni")
 ## ---- 
 
 
@@ -369,6 +401,46 @@ rm(learn.distance_final)
 
 # ######################################################### #
 
+# -- COVERAGE outer alleys vs inner pentagon -- #
+# 1) standard lmer model 
+learn.coverage_alleys_base <- lme(coverage_alleys ~ group*trial_in_block_c + block_f + sex,
+                                  random=~1 | id, 
+                                  na.action=na.omit, data=data_l, method="ML")
+
+# 2) advanced lme models with variance estimation 
+learn.coverage_alleys_var1 <- update(learn.coverage_alleys_base, weights=varIdent(form=~1 | group))
+anova.lme(learn.coverage_alleys_base, learn.coverage_alleys_var1)
+# chose model 1
+
+# diagnostics: good! 
+plot(learn.coverage_alleys_var1, resid(., type="p") ~ fitted(.), abline=0)
+plot(learn.coverage_alleys_var1, group ~ resid(., type="p"))
+qqnorm(resid(learn.coverage_alleys_var1))
+qqline(resid(learn.coverage_alleys_var1))
+rm(learn.coverage_alleys_base, learn.coverage_alleys_var1)
+
+## ---- stats_learning_coverage
+# re-fit final model with REML
+learn.coverage_alleys_final <- lme(coverage_alleys ~ group*trial_in_block_c + block_f + sex,
+                                   random=~1 | id, 
+                                   weights=varIdent(form=~1 | group),
+                                   na.action=na.omit, data=data_l, method="REML")
+
+# random effects
+learn.coverage_alleys_final$modelStruct$reStruct 
+
+# estimated variances 
+learn.coverage_alleys_final$modelStruct$varStruct
+
+# statistics on fixed effects 
+anova.lme(learn.coverage_alleys_final, type="marginal", adjustSigma=T)
+emmeans(learn.coverage_alleys_final, pairwise ~ group, adjust="bonferroni")$contrasts
+emmeans(learn.coverage_alleys_final, pairwise ~ block_f, adjust="bonferroni")$contrasts
+rm(learn.coverage_alleys_final)
+## ---- 
+
+# ######################################################### #
+
 # -- INITIAL ROTATION -- # 
 ## 1) standard lme model without variance estimation 
 learn.rot_i_base <- lme(initial_rotation_turns ~ group*trial_in_block_c + block_f + cov_r + sex,
@@ -445,7 +517,7 @@ rm(learn.rot_p_final)
 ## ---- 
 # helper plots
 ggplot(data_l, aes(x=factor(trial_in_block), y=rotation_turns_by_path_length)) + geom_boxplot() + coord_cartesian(ylim=c(0,3)) + facet_wrap(~group)
-ggplot(data_l, aes(x=factor(trial_in_block), y=rotation_degrees)) + geom_boxplot() + coord_cartesian(ylim=c(0,2000)) + facet_wrap(~group)
+ggplot(data_l, aes(x=factor(trial_in_block), y=rotation_turns)) + geom_boxplot() + coord_cartesian(ylim=c(0,2000)) + facet_wrap(~group)
 
 
 # ######################################################### #
@@ -918,6 +990,62 @@ rm(probe.distance_target_final, con1, emm1)
 
 # ######################################################### #
 
+# -- COVERAGE outer alleys vs inner pentagon -- #
+## 1) standard lme model without variance estimation 
+probe.coverage_alleys <- lme(coverage_alleys ~ group*session*condition + block_f + trial_in_block_c + sex,
+                             random=list(id=pdDiag(~ condition + session)),
+                             na.action=na.omit, data=data, method="ML")
+
+# diagnostics: great! 
+plot(probe.coverage_alleys, resid(., type="p") ~ fitted(.), abline=0)
+plot(probe.coverage_alleys, group ~ resid(., type="p"))
+plot(probe.coverage_alleys, session ~ resid(., type="p"))
+plot(probe.coverage_alleys, condition ~ resid(., type="p"))
+qqnorm(resid(probe.coverage_alleys))
+qqline(resid(probe.coverage_alleys))
+
+
+## 2) advanced lme models withv ariance estimation
+probe.coverage_alleys_var1 <- update(probe.coverage_alleys, weights=varIdent(form=~1 | group))
+probe.coverage_alleys_var2 <- update(probe.coverage_alleys, weights=varComb(varIdent(form=~1 | group),
+                                                                            varIdent(form=~1 | condition)))
+probe.coverage_alleys_var3 <- update(probe.coverage_alleys, weights=varComb(varIdent(form=~1 | group),
+                                                                         varIdent(form=~1 | session),
+                                                                         varIdent(form=~1 | condition)))
+anova(probe.coverage_alleys, probe.coverage_alleys_var1, probe.coverage_alleys_var2, probe.coverage_alleys_var3) 
+# chose model 2 
+
+# diagnostics: great! 
+plot(probe.coverage_alleys_var2, resid(., type="p") ~ fitted(.), abline=0)
+qqnorm(resid(probe.coverage_alleys_var2))
+qqline(resid(probe.coverage_alleys_var2))
+
+## ---- stats_probe_coverage
+# re-fit final model with REML
+probe.coverage_alleys_final <- lme(coverage_alleys ~ group*session*condition + block_f + trial_in_block_c + sex,
+                                   random=list(id=pdDiag(~ condition)),
+                                   weights=varComb(varIdent(form=~1 | group),
+                                                   varIdent(form=~1 | condition)),
+                                   na.action=na.omit, data=data, method="REML")
+
+# random effects
+probe.coverage_alleys_final$modelStruct$reStruct 
+
+# estimated variances 
+probe.coverage_alleys_final$modelStruct$varStruct
+
+# statistics on fixed effects 
+anova(probe.coverage_alleys_final, type="marginal", adjustSigma=T)
+emmeans(probe.coverage_alleys_final, pairwise ~ block_f)
+emm1 <- emmeans(probe.coverage_alleys_final, ~ session * condition)
+con1 <- contrast(emm1, con_list_session_condition, adjust="bonferroni")
+con1
+rm(probe.coverage_alleys_final, emm1, con1)
+## ----
+ggplot(data, aes(x=session, y=coverage_alleys)) + geom_boxplot() + facet_grid(~ condition) 
+
+# ######################################################### #
+
 # -- INITIAL ROTATION -- # 
 ## 1) standard lme model without variance estimation 
 probe.rot_i <- lme(initial_rotation_turns ~ group*session*condition + block_f + trial_in_block_c + cov_r + sex,
@@ -1035,139 +1163,120 @@ ggplot(data, aes(x=rotation_turns_by_path_length)) + geom_histogram()
 ggplot(data, aes(x=group, y=rotation_turns_by_path_length)) + geom_boxplot() + facet_wrap(~condition + session, nrow=1) + coord_cartesian(ylim=c(0,3))
 ggplot(data, aes(x=group, y=rotation_turns_by_path_length)) + geom_boxplot() + facet_wrap(~ condition, nrow=1) + coord_cartesian(ylim=c(0,3))
 
+
+# ######################################################### #
 # ######################################################### #
 
-# -- ALLOCENTRIC: EGOCENTRIC BEHAVIOR -- # 
+
+# -- EXPLORATION BEHAVIOR IN ALLOCENTRIC -- # 
+
 # -- COVERAGE -- # 
-probe.cov_ego <- lme(coverage_ego ~ group*session + block_f + trial_in_block_c + sex,
-                     random=~1 | id,
-                     data=data_allo, na.action=na.omit, method="ML")
+probe.cov_allo <- lme(coverage ~ group*session*cond + block_f + sex,
+                      random=~1 | id,
+                      data=data_allo2, na.action=na.omit, method="ML")
 
 # diagnostics: non-normality, low heterogeneity 
-plot(probe.cov_ego, resid(., type="p") ~ fitted(.))
-plot(probe.cov_ego, group ~ resid(., type="p"))
-plot(probe.cov_ego, session ~ resid(., type="p"))
-qqnorm(resid(probe.cov_ego))
-qqline(resid(probe.cov_ego))
+plot(probe.cov_allo, resid(., type="p") ~ fitted(.))
+plot(probe.cov_allo, group ~ resid(., type="p"))
+plot(probe.cov_allo, session ~ resid(., type="p"))
+plot(probe.cov_allo, cond ~ resid(., type="p"))
+qqnorm(resid(probe.cov_allo))
+qqline(resid(probe.cov_allo))
 
 
 ## 2) advanced lme models with variance estimation
-probe.cov_ego_var1 <- update(probe.cov_ego, weights=varIdent(form=~1 | group))
-probe.cov_ego_var2 <- update(probe.cov_ego, weights=varComb(varIdent(form=~1 | group),
-                                                            varIdent(form=~1 | session)))
-anova(probe.cov_ego, probe.cov_ego_var1, probe.cov_ego_var2, test=T) 
-# chose model 1 
+probe.cov_allo_var1 <- update(probe.cov_allo, weights=varIdent(form=~1 | group))
+probe.cov_allo_var2 <- update(probe.cov_allo, weights=varComb(varIdent(form=~1 | group),
+                                                              varIdent(form=~1 | cond)))
+# probe.cov_allo_var3 <- update(probe.cov_allo, weights=varComb(varIdent(form=~1 | group),
+#                                                               varIdent(form=~1 | cond),
+#                                                               varIdent(form=~1 | session)))
+anova(probe.cov_allo, probe.cov_allo_var1, probe.cov_allo_var2, test=T) 
+# chose model 1 (due to non-convergence of model 2) 
+rm(probe.cov_allo, probe.cov_allo_var1, probe.cov_allo_var2)
 
-## ---- stats_probe_cov_ego_in_allo
+## ---- stats_probe_coverage_in_allo
 # re-fit final model with with REML
-probe.cov_ego_final <- lme(coverage_ego ~ group*session + block_f + trial_in_block_c + sex,
-                           random=~1 | id,
-                           weights=varIdent(form=~1 | group),
-                           data=data_allo, na.action=na.omit, method="REML")
+probe.cov_allo_final <- lme(coverage ~ group*session*cond + block_f + sex,
+                            random=~1 | id,
+                            weights=varComb(varIdent(form=~1 | group)),
+                            data=data_allo2, na.action=na.omit, method="REML")
 
 # random effects
-probe.cov_ego_final$modelStruct$reStruct 
+probe.cov_allo_final$modelStruct$reStruct 
 
 # estimated variances 
-probe.cov_ego_final$modelStruct$varStruct
+probe.cov_allo_final$modelStruct$varStruct
 
 # statistics on fixed effects 
-anova(probe.cov_ego_final, type="marginal", adjustSigma=T)
-emmeans(probe.cov_ego_final, pairwise ~ group, adjust="bonferroni")
+anova(probe.cov_allo_final, type="marginal", adjustSigma=T)
+emm <- emmeans(probe.cov_allo_final, ~ group * cond)
+con <- contrast(emm, con_list_group_cond, adjust="bonferroni")
+con
+emmeans(probe.cov_allo_final, pairwise ~ session)
+emmeans(probe.cov_allo_final, pairwise ~ sex)
+rm(probe.cov_allo_final)
 ## ----
 # helper plots 
-ggplot(data=data_allo, aes(x=coverage_ego)) + geom_histogram()
-ggplot(data=data_allo, aes(x=group, y=coverage_ego)) + geom_boxplot() + facet_wrap(~session, nrow=1)
-
-
-# -- TIME IN ZONE -- # 
-ggplot(data_allo, aes(x=time_in_ego)) + geom_histogram()
-ggplot(data_allo, aes(x=group, y=time_in_ego)) + geom_boxplot() + facet_wrap(~session, nrow=1) 
-
-probe.time_ego_final <- lme(time_in_ego ~ group*session + block_f + trial_in_block_c + sex,
-                            random=~1 | id,
-                            data=data_allo, na.action=na.omit, method="REML")
-
-# statistics on fixed effects 
-anova(probe.time_ego_final, type="marginal", adjustSigma=T)
-emmeans(probe.time_ego_final, pairwise ~ group, adjust="bonferroni")
-emmeans(probe.time_ego_final, pairwise ~ sex)
-
-
-# simple aggregated model 
-t <- data_allo %>% group_by(id, group) %>% summarize_at(c("coverage_ego", "time_in_ego"), mean, na.rm=T)
-lincon(coverage_ego ~ group, data=t, tr=0.2, method="bonferroni")
-lincon(time_in_ego ~ group, data=t, tr=0.2, method="bonferroni")
-rm(t)
+ggplot(data=data_allo2, aes(x=coverage)) + geom_histogram()
+ggplot(data=data_allo2, aes(x=group, y=coverage, fill=cond)) + geom_boxplot() + facet_wrap(~session)
 
 # ######################################################### #
 
-# -- ALLOCENTRIC: HOMING BEHAVIOR -- # 
-# -- COVERAGE -- # 
-probe.cov_start <- lme(coverage_start ~ group*session + block_f + trial_in_block_c + sex,
+# -- TIME IN ZONE -- # 
+probe.time_allo <- lme(time_in ~ group*session*cond + block_f + sex,
                        random=~1 | id,
-                       data=data_allo, na.action=na.omit, method="ML")
+                       data=data_allo2, na.action=na.omit, method="ML")
 
 # diagnostics: non-normality, low heterogeneity 
-plot(probe.cov_start, resid(., type="p") ~ fitted(.))
-plot(probe.cov_start, group ~ resid(., type="p"))
-plot(probe.cov_start, session ~ resid(., type="p"))
-qqnorm(resid(probe.cov_start))
-qqline(resid(probe.cov_start))
+plot(probe.time_allo, resid(., type="p") ~ fitted(.))
+plot(probe.time_allo, group ~ resid(., type="p"))
+plot(probe.time_allo, session ~ resid(., type="p"))
+plot(probe.time_allo, cond ~ resid(., type="p"))
+qqnorm(resid(probe.time_allo))
+qqline(resid(probe.time_allo))
 
 
 ## 2) advanced lme models with variance estimation
-probe.cov_start_var1 <- update(probe.cov_start, weights=varIdent(form=~1 | group))
-probe.cov_start_var2 <- update(probe.cov_start, weights=varComb(varIdent(form=~1 | group),
+probe.time_allo_var1 <- update(probe.time_allo, weights=varIdent(form=~1 | group))
+probe.time_allo_var2 <- update(probe.time_allo, weights=varComb(varIdent(form=~1 | group),
+                                                                varIdent(form=~1 | cond)))
+probe.time_allo_var3 <- update(probe.time_allo, weights=varComb(varIdent(form=~1 | group),
+                                                                varIdent(form=~1 | cond),
                                                                 varIdent(form=~1 | session)))
-anova(probe.cov_start, probe.cov_start_var1, probe.cov_start_var2, test=T) 
-# chose model 2 
+anova(probe.time_allo, probe.time_allo_var1, probe.time_allo_var2, probe.time_allo_var3, test=T) 
+# chose model 1 (due to non-convergence of model 2) 
+rm(probe.time_allo, probe.time_allo_var1, probe.time_allo_var2, probe.time_allo_var3)
 
-## ---- stats_probe_cov_start_in_allo
+## ---- stats_probe_time_in_allo
 # re-fit final model with with REML
-probe.cov_start_final <- lme(coverage_start ~ group*session + block_f + trial_in_block_c + sex,
+probe.time_allo_final <- lme(time_in ~ group*session*cond + block_f + sex,
                              random=~1 | id,
                              weights=varComb(varIdent(form=~1 | group),
-                                             varIdent(form=~1 | session)),
-                             data=data_allo, na.action=na.omit, method="REML")
+                                             varIdent(form=~1 | cond)),
+                             data=data_allo2, na.action=na.omit, method="REML")
 
 # random effects
-probe.cov_start_final$modelStruct$reStruct 
+probe.time_allo_final$modelStruct$reStruct 
 
 # estimated variances 
-probe.cov_start_final$modelStruct$varStruct
+probe.time_allo_final$modelStruct$varStruct
 
 # statistics on fixed effects 
-anova(probe.cov_start_final, type="marginal", adjustSigma=T)
-emmeans(probe.cov_start_final, pairwise ~ group, adjust="bonferroni")
-emmeans(probe.cov_start_final, pairwise ~ block_f, adjust="bonferroni")
-emmeans(probe.cov_start_final, pairwise ~ sex)
-## ---- 
-# helper plots
-ggplot(data_allo, aes(x=coverage_start)) + geom_histogram()
-ggplot(data_allo, aes(x=group, y=coverage_start)) + geom_boxplot() + facet_wrap(~session, nrow=1)
+anova(probe.time_allo_final, type="marginal", adjustSigma=T)
+emm <- emmeans(probe.time_allo_final, ~ group * cond)
+con <- contrast(emm, con_list_group_cond, adjust="bonferroni")
+con
+emmeans(probe.time_allo_final, pairwise ~ session)
+emmeans(probe.time_allo_final, pairwise ~ sex)
+rm(probe.time_allo_final)
+## ----
+# helper plots 
+ggplot(data=data_allo2, aes(x=time_in)) + geom_histogram()
+ggplot(data=data_allo2, aes(x=group, y=time_in, fill=cond)) + geom_boxplot() + facet_wrap(~session)
 
 
-# -- TIME IN ZONE -- # 
-ggplot(data_allo, aes(x=time_in_start)) + geom_histogram()
-ggplot(data_allo, aes(x=group, y=time_in_start)) + geom_boxplot() + facet_wrap(~session, nrow=1) 
-
-probe.time_start_final <- lme(time_in_start ~ group*session + block_f + trial_in_block_c + sex,
-                              random=~1 | id,
-                              data=data_allo, na.action=na.omit, method="REML")
-
-# statistics on fixed effects 
-anova(probe.time_start_final, type="marginal", adjustSigma=T)
-emmeans(probe.time_start_final, pairwise ~ group, adjust="bonferroni")
-emmeans(probe.time_start_final, pairwise ~ sex)
-
-
-# simple aggregated model 
-t <- data_allo %>% group_by(id, group) %>% summarize_at(c("coverage_start", "time_in_start"), mean, na.rm=T)
-lincon(coverage_start ~ group, data=t, tr=0.2, method="bonferroni")
-lincon(time_in_start ~ group, data=t, tr=0.2, method="bonferroni")
-rm(t)
-
+# ######################################################### #
 # ######################################################### #
 
 ## ---- stats_probe_path_strategy

@@ -114,9 +114,9 @@ $$\text{Rotation by path length} = \frac {\sum |(z_{t}-z_{t+1})|} {path} * \frac
 
 ```{r, warning=F, echo=F }
 
-line_t + line_p + line_d + line_ir + line_rp +
+line_t + line_p + line_d + line_ca + line_ir + line_rp +
   plot_annotation("Navigation behaviour in learning trials (goal visible)") + 
-  plot_layout(guides="collect") & theme(legend.position="top", legend.justification=c(0,0))
+  plot_layout(guides="collect", nrow=2) & theme(legend.position="top", legend.justification=c(0,0))
 
 rm(line_t, line_p, line_d, line_ir, line_rp, sm_trialwise)
 ```
@@ -134,6 +134,11 @@ rm(line_t, line_p, line_d, line_ir, line_rp, sm_trialwise)
 ### **Distance to goal**
 
 ```{r, stats_learning_distance_goal }
+```
+
+### **Coverage in outer alleys vs. inner pentagon*
+
+```{r, stats_learning_coverage }
 ```
 
 ### **Initial Rotation**
@@ -256,11 +261,15 @@ rm(box_ego_cor_ms, box_allo_cor_ms)
 
 ```{r, warning=F, echo=F }
 
-box_allo_efa + labs(subtitle="Allocentric") + box_allo_incor_efa + box_allo_mse + box_allo_incor_mse + 
-  plot_annotation("Egocentric response in (all/only correct) allocentric probe trials") + 
-  plot_layout(guides="collect") & theme(legend.position="bottom", legend.justification=c(0,0))
+box_allo_msa + (box_allo_incor_mse + labs(subtitle="Incorrect allocentric probe trials"))
 
-rm(box_allo_efa, box_allo_incor_efa, box_allo_mse, box_allo_incor_mse, sm_agg_allo_incorrect)
+rm(box_allo_msa, box_allo_incor_mse)
+
+# box_allo_efa + labs(subtitle="Allocentric") + box_allo_incor_efa + box_allo_mse + box_allo_incor_mse + 
+#   plot_annotation("Egocentric response in (all/only correct) allocentric probe trials") + 
+#   plot_layout(guides="collect") & theme(legend.position="bottom", legend.justification=c(0,0))
+# 
+# rm(box_allo_efa, box_allo_incor_efa, box_allo_mse, box_allo_incor_mse, sm_agg_allo_incorrect)
 ```
 
 ```{r, stats_probe_ego_acc}
@@ -322,6 +331,22 @@ rm(box_ego_d, box_allo_d)
 
 \newpage 
 
+**coverage in outer alleys versus inner pentagon** 
+
+```{r, warning=F, echo=F }
+
+box_ego_ca + labs(subtitle="Egocentric") + box_allo_ca + labs(subtitle="Allocentric") +
+  plot_annotation("Coverage in outer alleys (versus inner pentaton)") + 
+  plot_layout(guides="collect") & theme(legend.position="bottom", legend.justification=c(0,0))
+
+rm(box_ego_ca, box_ego_ca)
+```
+
+```{r, stats_probe_coverage}
+```
+
+\newpage
+
 **Initial rotation**
 
 ```{r, warning=F, echo=F }
@@ -352,33 +377,17 @@ rm(box_ego_rp, box_allo_rp)
 
 \newpage 
 
-**In allocentric probe trials: Did participants enter the egocentric area** (only trials with outer starts)
+**Exploration allocentric probe trials: What percentage of time did participants spend in areas indicating an egocentric or homing strategy** (only trials where egocentric alley is not original start alley and where egocentric alley can be determined)
 
 ```{r, warning=F, echo=F }
 
-box_allo_cov_ego + box_allo_time_ego + 
-  plot_annotation("Egocentric navigation behavior in allocentric probe trials") + 
+box_allo_cov +  
+  plot_annotation("Exploration of behavior in allocentric probe trials") + 
   plot_layout(guides="collect") & theme(legend.position="bottom", legend.justification=c(0,0))
 
-rm(box_allo_cov_ego, box_allo_time_ego)
+rm(box_allo_cov)
 ```
-```{r, stats_probe_cov_ego_in_allo}
-```
-
-\newpage
-
-**In allocentric probe trials: Did participants enter the original start area (homing)**
-
-```{r, warning=F, echo=F }
-
-box_allo_cov_start + box_allo_time_start + 
-  plot_annotation("Homing navigation behavior in allocentric probe trials") + 
-  plot_layout(guides="collect") & theme(legend.position="bottom", legend.justification=c(0,0))
-
-rm(box_allo_cov_start, box_allo_time_start)
-```
-
-```{r, stats_probe_cov_start_in_allo}
+```{r, stats_probe_coverage_in_allo}
 ```
 
 \newpage
@@ -468,9 +477,11 @@ mc_t +  mc_v + mc_p + mc_d + mc_r +
 
 ```{r, warning=F, echo=F }
 
-ex1 + ex2 +
+ex2 +
   plot_annotation("Overview of excluded trial data") + 
   plot_layout(guides="collect") & theme(legend.position="bottom", legend.justification=c(0,0))
+
+rm(ex1, ex2)
 
 ```
 
