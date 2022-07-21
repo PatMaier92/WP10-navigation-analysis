@@ -304,13 +304,11 @@ tic;
                 % Caveat: default values for egocentric from inner starts
                 % Requires Matlab 2021a for 'shortestpath' function and
                 % 'interparc' function by John D'Errico (Matlab File Exchanger)
-                [x_line, y_line, origin_x_line, origin_y_line, x_line_chosen, y_line_chosen, x_line_ego, y_line_ego,...
-                    ~, ~, ~, ~, ~, ~, ~, ~, ~, ~,...
-                    sm.participant(p).session(s).trial(k).goal_x_ego, sm.participant(p).session(s).trial(k).goal_y_ego,...
-                    sm.participant(p).session(s).trial(k).ego_alley,...
-                    sm.participant(p).session(s).trial(k).ideal_path_length, sm.participant(p).session(s).trial(k).ideal_chosen_path_length,...
-                    sm.participant(p).session(s).trial(k).ideal_ego_path_length,...
-                    ~, ~, ~, ~, ~]=computeStartDependentIdealVariables(...
+                [x_line, y_line, origin_x_line, origin_y_line, x_line_chosen, y_line_chosen,...
+                    x_line_ego, y_line_ego,~, ~, ~, ~, ~, ~, ~, ~, ~, ~, sm.participant(p).session(s).trial(k).goal_x_ego,...
+                    sm.participant(p).session(s).trial(k).goal_y_ego, sm.participant(p).session(s).trial(k).ego_alley,...
+                    sm.participant(p).session(s).trial(k).ideal_path_length,...
+                    sm.participant(p).session(s).trial(k).ideal_chosen_path_length, ~, ~, ~, ~, ~, ~]=computeStartDependentIdealVariables(...
                     sm.coord.graph, sm.coord.graph_x, sm.coord.graph_y,...
                     sm.participant(p).session(s).trial(k).start_i, sm.participant(p).session(s).trial(k).goal_i,...
                     sm.participant(p).session(s).trial(k).x_n, sm.participant(p).session(s).trial(k).y_n,...
@@ -322,9 +320,9 @@ tic;
                 % using 'interparc' function by John D'Errico (Matlab File Exchanger)
                 [xi_al,yi_al]=interpolateData(x_line, y_line, sm.participant(p).session(s).trial(k).ideal_path_length);
                 
-                [xi_ch,yi_ch]=interpolateData(x_line_chosen, y_line_chosen, sm.participant(p).session(s).trial(k).ideal_chosen_path_length);
-                
-                [xi_eg,yi_eg]=interpolateData(x_line_ego, y_line_ego, sm.participant(p).session(s).trial(k).ideal_ego_path_length);
+%                 [xi_ch,yi_ch]=interpolateData(x_line_chosen, y_line_chosen, sm.participant(p).session(s).trial(k).ideal_chosen_path_length);
+%                 
+%                 [xi_eg,yi_eg]=interpolateData(x_line_ego, y_line_ego, sm.participant(p).session(s).trial(k).ideal_ego_path_length);
                 
 %                 % test plot
 %                 figure; plot(sm.coord.full_poly); hold on; 
@@ -340,14 +338,6 @@ tic;
                     sm.coord.rec_x, sm.coord.rec_y, sm.coord.tri_x, sm.coord.tri_y, 10);
                 
                 [ideal_seq_10_chosen]=computeZoneSequence(x_line_chosen, y_line_chosen, sm.coord.alley_full_x, sm.coord.alley_full_y,...
-                    sm.coord.alley_half_out_x, sm.coord.alley_half_out_y, sm.coord.alley_half_in_x, sm.coord.alley_half_in_y,...
-                    sm.coord.rec_x, sm.coord.rec_y, sm.coord.tri_x, sm.coord.tri_y, 10);
-                 
-                [ideal_seq_10_ego]=computeZoneSequence(x_line_ego, y_line_ego, sm.coord.alley_full_x, sm.coord.alley_full_y,...
-                    sm.coord.alley_half_out_x, sm.coord.alley_half_out_y, sm.coord.alley_half_in_x, sm.coord.alley_half_in_y,...
-                    sm.coord.rec_x, sm.coord.rec_y, sm.coord.tri_x, sm.coord.tri_y, 10);
-                
-                [ideal_seq_10_origin]=computeZoneSequence(origin_x_line, origin_y_line, sm.coord.alley_full_x, sm.coord.alley_full_y,...
                     sm.coord.alley_half_out_x, sm.coord.alley_half_out_y, sm.coord.alley_half_in_x, sm.coord.alley_half_in_y,...
                     sm.coord.rec_x, sm.coord.rec_y, sm.coord.tri_x, sm.coord.tri_y, 10);
                                
@@ -436,7 +426,6 @@ tic;
                 %% additional distance analysis for allocentric probe trials
                 % excludes trials where egocentric alley == original start alley 
                 if sm.participant(p).session(s).trial(k).condition=="allo_ret" && sm.participant(p).session(s).trial(k).ego_alley~=7 
-                    
                     % % HOMING behavior % % 
                     % FINAL DISTANCE to target in ORIGINAL START ALLEY
                     sm.participant(p).session(s).trial(k).final_distance_start=computeDistance(...
@@ -453,7 +442,6 @@ tic;
                     [~, sm.participant(p).session(s).trial(k).coverage_start,...
                         sm.participant(p).session(s).trial(k).time_in_start, ~]=computeCoverage(7,x,y,...
                         sm.coord.alley_poly, sm.coord.tri_poly, sm.participant(p).session(s).trial(k).time);         
-                    
                     
                     % % EGOCENTRIC behavior % %
                     % excludes trials without egocentric alley (inner start alley)
@@ -481,7 +469,6 @@ tic;
                         sm.participant(p).session(s).trial(k).coverage_ego=999;
                         sm.participant(p).session(s).trial(k).time_in_ego=999;
                     end 
-                    
                     
                     % % BASELINE behavior % % 
                     % get baseline alley integer
@@ -515,8 +502,7 @@ tic;
                     % COVERAGE (rel. time in zone) in BASELINE ALLEY 
                     sm.participant(p).session(s).trial(k).coverage_base=mean(cov); 
                     sm.participant(p).session(s).trial(k).time_in_base=mean(tz); 
-                    clear base* fd ms cov tz; 
-                    
+                    clear base* fd ms cov tz;    
                 else
                     % default values
                     sm.participant(p).session(s).trial(k).final_distance_start=999;
@@ -547,7 +533,6 @@ tic;
                     end 
                     rot(j-1)=temp;
                 end
-                sm.participant(p).session(s).trial(k).rotation_degrees=sum(rot);  
                 sm.participant(p).session(s).trial(k).rotation_turns=sum(rot)/360;
                 sm.participant(p).session(s).trial(k).rotation_turns_by_path_length=sum(rot)/360/sm.participant(p).session(s).trial(k).path_length; 
                 clear rot j temp;
@@ -562,9 +547,8 @@ tic;
                     [~, ~, ~, rot_index]=computeCoveragePentagon(sm.participant(p).session(s).trial(k).start_i,x,y,...
                         sm.coord.rec_poly, sm.coord.tri_poly, sm.participant(p).session(s).trial(k).time); 
                 end 
-                % compute initial rotation in degrees and turns
-                [sm.participant(p).session(s).trial(k).initial_rotation_degrees,...
-                    sm.participant(p).session(s).trial(k).initial_rotation_turns]=computeRotationInZone(rot_index, r);
+                % compute initial rotation 
+                [~, sm.participant(p).session(s).trial(k).initial_rotation_turns]=computeRotationInZone(rot_index, r);
                 clear rot_index;
                     
                 % fprintf('Rotation analysis done for %d, session %d, file no %d.\n', id, s, k);       
@@ -606,7 +590,7 @@ tic;
                     sm.participant(p).session(s).trial(k).exclude_trial_matlab=1; 
                     fprintf('Trial %d marked for exclusion due to timeout.\n',k);
                 elseif (sm.participant(p).session(s).trial(k).path_length<=0.1 ...
-                        || sm.participant(p).session(s).trial(k).rotation_degrees==0 ...
+                        || sm.participant(p).session(s).trial(k).rotation_turns==0 ...
                         || sm.participant(p).session(s).trial(k).time<3)
                         sm.participant(p).session(s).trial(k).exclude_trial_matlab=1;
                         fprintf('Trial %d marked for exclusion due lack of movement or trial time < 3 sec.\n',k);
@@ -670,7 +654,6 @@ tic;
                     end 
                     rot(j-1)=temp;
                 end
-                sm.participant(p).session(s).trial(k).rotation_degrees=sum(rot);  
                 sm.participant(p).session(s).trial(k).rotation_turns=sum(rot)/360;
                 sm.participant(p).session(s).trial(k).rotation_turns_by_path_length=sum(rot)/360/sm.participant(p).session(s).trial(k).path_length; 
                 clear rot j temp;
