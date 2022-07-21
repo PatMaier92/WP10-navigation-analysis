@@ -294,7 +294,7 @@ tic;
                 sm.participant(p).session(s).trial(k).goal_alley]=setTrialGoalLocation(char(string(trial_data.trial_goal(k,1))),...
                 sm.coord.goal_x,sm.coord.goal_y,sm.coord.goal_names,sm.coord.alley_names);
             
-            start_name=char(trial_data.trial_player(k,1)); sm.participant(p).session(s).trial(k).start_s=start_name(end); clear start_name; 
+            start_name=char(trial_data.trial_player(k,1)); sm.participant(p).session(s).trial(k).start_s=string(start_name(end)); clear start_name; 
             [sm.participant(p).session(s).trial(k).start_i]=setTrialStartLocation(sm.participant(p).session(s).trial(k).start_s,sm.coord.start_names);
             
             %% For all normal navigation trials (i.e., not motor control task)
@@ -359,8 +359,7 @@ tic;
                 
                 %% time analysis
                 % TIME
-                sm.participant(p).session(s).trial(k).time=computeTime(t(1),t(end));
-                % fprintf('Time analysis done for %d, session %d, file no %d.\n', id, s, k);   
+                sm.participant(p).session(s).trial(k).time=computeTime(t(1),t(end));  
                                              
                 %% standard coordinate analysis using x-/y-coordinates
                 % PATH LENGTH 
@@ -398,13 +397,21 @@ tic;
 %                 % normalized target distance score deviation
 %                 sm.participant(p).session(s).trial(k).target_distance_score_deviation=sm.participant(p).session(s).trial(k).target_distance_score - sm.participant(p).session(s).trial(k).ideal_target_distance_score;            
                 
-                % COVERAGE & TIME IN ZONES 
-                % tbd
+                % COVERAGE & TIME in pentagon versus alleys   
+                % inner pentagon (including triangle intersections) 
+                pent_index=inpolygon(x,y,sm.coord.central_poly.Vertices(:,1),sm.coord.central_poly.Vertices(:,2));
+                sm.participant(p).session(s).trial(k).coverage_pentagon=numel(x(pent_index))/length(x);
+                sm.participant(p).session(s).trial(k).time_in_pentagon=...
+                    sm.participant(p).session(s).trial(k).time*sm.participant(p).session(s).trial(k).coverage_pentagon;
+                clear pent_index; 
+                % outer alleys (excluding triangle intersections)
+                sm.participant(p).session(s).trial(k).coverage_alleys=1-sm.participant(p).session(s).trial(k).coverage_pentagon; 
+                sm.participant(p).session(s).trial(k).time_in_alleys=...
+                    sm.participant(p).session(s).trial(k).time*sm.participant(p).session(s).trial(k).coverage_alleys;
+              
+                % fprintf('Standard time, path, distance & coverage analysis done for %d, session %d, file no %d.\n', id, s, k);
                 
-                
-                % fprintf('Standard path and distance analysis done for %d, session %d, file no %d.\n', id, s, k);
-                
-                %% additional distance analysis for probe trials  
+                %% additional analysis for probe trials  
                 if sm.participant(p).session(s).trial(k).feedback=="false"  
                     % FINAL DISTANCE to TARGET 
                     sm.participant(p).session(s).trial(k).final_distance=computeDistance(...
@@ -421,7 +428,7 @@ tic;
                     sm.participant(p).session(s).trial(k).memory_score=999; 
                 end
                 
-                % fprintf('Additional: Distance analysis to chosen target done for %d, session %d, file no %d.\n', id, s, k);
+                % fprintf('Additional analysis to chosen target done for %d, session %d, file no %d.\n', id, s, k);
           
                 %% additional distance analysis for allocentric probe trials
                 % excludes trials where egocentric alley == original start alley 
@@ -519,7 +526,7 @@ tic;
                     sm.participant(p).session(s).trial(k).time_in_base=999; 
                 end
                 
-                % fprintf('Additional: Distance analysis to egocentric target done for %d, session %d, file no %d.\n', id, s, k);
+                % fprintf('Additional analysis for allocentric probe trials done for %d, session %d, file no %d.\n', id, s, k);
                       
                 %% rotation analysis
                 % TOTAL ROTATION
@@ -581,7 +588,7 @@ tic;
                     zones_explored, zones_entered,...
                     sm.participant(p).session(s).trial(k).chosen_path_edit_distance); 
                 
-                % fprintf('Exploration analysis done for %d, session %d, file no %d.\n', id, s, k);
+                % fprintf('Zone analysis done for %d, session %d, file no %d.\n', id, s, k);
                 
                 %% set marker for excluded trials
                 % criteria: timeout, or no movement/very short trial time (i.e. path_length=0, rotation=0, or time < 3)

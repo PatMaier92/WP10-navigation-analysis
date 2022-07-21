@@ -13,7 +13,7 @@ function [goal_x,goal_y,goal_int,goal_str,alley_int]=setTrialGoalLocation(trial_
 % and x-/y-coordinates.
 
 % string
-goal_str=trial_goal(end);
+goal_str=string(trial_goal(end));
 
 % integer
 goal_int=find(contains(goal_names, goal_str));

@@ -18,34 +18,55 @@ end
 data=sm.participant; clear sm; 
 
 % process data (from structure to table) 
-temp=[];
-[~,p]=size(data);
+p=size(data,2);
 for i=1:p
-    for j=1:length(data(i).session)
-        [r,~]=size(struct2table(data(i).session(j).trial));
+    for s=1:length(data(i).session)
+        % save temporary session data
+        session_data=data(i).session(s).trial;
+        
+        % get general information
+        r=size(session_data,2);
         g_data=table(repmat(data(i).id,r,1), string(repmat(data(i).group,r,1)), string(repmat(data(i).sex,r,1)), ...
-            repmat(data(i).session(j).session_num,r,1), repmat(data(i).session(j).session_duration,r,1),...
-            'VariableNames',{'id' 'group' 'sex' 'session' 'duration'}); 
-        if j==3
-            t_data=struct2table(data(i).session(j).trial(2)); 
-            t_data.goal_s=[]; t_data.start_s=[];  g_data(1,:)=[]; 
-            gt_data=[g_data t_data];
-            temp=outerjoin(temp,gt_data,'MergeKeys',true);
-        else
-            t_data=struct2table(data(i).session(j).trial);
-            gt_data=[g_data t_data]; 
-            temp=vertcat(temp,gt_data);
+            repmat(data(i).session(s).session_num,r,1), repmat(data(i).session(s).session_duration,r,1),...
+            'VariableNames',{'id' 'group' 'sex' 'session' 'duration'});
+        
+        % remove empty row in practise data
+        if s==3
+            session_data=session_data(2); session_data.goal_s="P"; session_data.start_s="P";
+            g_data(1,:)=[];
         end
-        clear *_data r;
+        
+        % normalize missing values in data (otherwise struct2table creates messy 0x0 cells!)
+        fields = fieldnames(session_data);
+        for j=1:size(session_data, 2)
+            for k=1:numel(fields)
+                if isempty(session_data(j).(fields{k}))
+                    session_data(j).(fields{k})=999;
+                end
+            end
+        end
+        
+        % covert data to table
+        t_data=struct2table(session_data);
+        gt_data=[g_data t_data];
+        
+        % merge data
+        if i==1 && s==1
+            data_table=gt_data;
+        else
+            data_table=outerjoin(data_table,gt_data,'MergeKeys',true);
+        end
+        
+        clear *_data r j k;
     end
 end
 
 % sort order 
-temp=sortrows(temp,{'id','session','trial'});
+data_table=sortrows(data_table,{'id','session','trial'});
 
 % write data 
 format='yymmdd'; date=datestr(now, format); 
 file_name2=['wp10_navigation_data_' date '.xlsx']; 
-writetable(temp,fullfile(file_path,file_name2));
+writetable(data_table,fullfile(file_path,file_name2));
 
 end
