@@ -372,10 +372,7 @@ tic;
                 % VELOCITY
                 sm.participant(p).session(s).trial(k).velocity=sm.participant(p).session(s).trial(k).path_length / ...
                     sm.participant(p).session(s).trial(k).time; 
-  
-%                 % Exploratory: DYNAMIC TIME WARPING DISTANCE for PATH to TARGET
-%                 sm.participant(p).session(s).trial(k).dtw_path_distance=dtw([xi_al,yi_al]',[x,y]');
-                
+                 
                 % AVERAGE DISTANCE to TARGET 
                 % target distance 
                 [sm.participant(p).session(s).trial(k).target_distance, ~]=computeTargetDistance(x,y,...
@@ -386,30 +383,14 @@ tic;
                 % target distance deviation 
                 sm.participant(p).session(s).trial(k).target_distance_deviation=sm.participant(p).session(s).trial(k).target_distance - sm.participant(p).session(s).trial(k).ideal_target_distance; 
                 
-%                 % normalized target distance score 
-%                 sm.participant(p).session(s).trial(k).target_distance_score=computeDistanceScore(...
-%                     sm.participant(p).session(s).trial(k).target_distance,x,y,...
-%                     sm.coord.random_x,sm.coord.random_y); 
-%                 % normalized ideal target distance score
-%                 sm.participant(p).session(s).trial(k).ideal_target_distance_score=computeDistanceScore(...
-%                     sm.participant(p).session(s).trial(k).ideal_target_distance,xi_al,yi_al,...
-%                     sm.coord.random_x,sm.coord.random_y); 
-%                 % normalized target distance score deviation
-%                 sm.participant(p).session(s).trial(k).target_distance_score_deviation=sm.participant(p).session(s).trial(k).target_distance_score - sm.participant(p).session(s).trial(k).ideal_target_distance_score;            
-                
-                % COVERAGE & TIME in pentagon versus alleys   
-                % inner pentagon (including triangle intersections) 
+                % PRESENCE (rel. time in zones)
+                % in inner pentagon (including triangle intersections) 
                 pent_index=inpolygon(x,y,sm.coord.central_poly.Vertices(:,1),sm.coord.central_poly.Vertices(:,2));
-                sm.participant(p).session(s).trial(k).coverage_pentagon=numel(x(pent_index))/length(x);
-                sm.participant(p).session(s).trial(k).time_in_pentagon=...
-                    sm.participant(p).session(s).trial(k).time*sm.participant(p).session(s).trial(k).coverage_pentagon;
-                clear pent_index; 
-                % outer alleys (excluding triangle intersections)
-                sm.participant(p).session(s).trial(k).coverage_alleys=1-sm.participant(p).session(s).trial(k).coverage_pentagon; 
-                sm.participant(p).session(s).trial(k).time_in_alleys=...
-                    sm.participant(p).session(s).trial(k).time*sm.participant(p).session(s).trial(k).coverage_alleys;
-              
-                % fprintf('Standard time, path, distance & coverage analysis done for %d, session %d, file no %d.\n', id, s, k);
+                sm.participant(p).session(s).trial(k).presence_pentagon=numel(x(pent_index))/length(x); clear pent_index; 
+                % in outer alleys (excluding triangle intersections)
+                sm.participant(p).session(s).trial(k).presence_alleys=1-sm.participant(p).session(s).trial(k).presence_pentagon; 
+
+                % fprintf('Standard time, path, distance & presence analysis done for %d, session %d, file no %d.\n', id, s, k);
                 
                 %% additional analysis for probe trials  
                 if sm.participant(p).session(s).trial(k).feedback=="false"  
@@ -435,19 +416,17 @@ tic;
                 if sm.participant(p).session(s).trial(k).condition=="allo_ret" && sm.participant(p).session(s).trial(k).ego_alley~=7 
                     % % HOMING behavior % % 
                     % FINAL DISTANCE to target in ORIGINAL START ALLEY
-                    sm.participant(p).session(s).trial(k).final_distance_start=computeDistance(...
+                    sm.participant(p).session(s).trial(k).final_distance_home=computeDistance(...
                         sm.coord.goal_x_in_alleys(sm.participant(p).session(s).trial(k).goal_i, 4), sm.participant(p).session(s).trial(k).x_n,...
                         sm.coord.goal_y_in_alleys(sm.participant(p).session(s).trial(k).goal_i, 4), sm.participant(p).session(s).trial(k).y_n);
                     
                     % MEMORY SCORE to target in ORIGINAL START ALLEY
-                    sm.participant(p).session(s).trial(k).memory_score_start=computeMemoryScore(sm.coord.final_distance_distribution,...
-                        sm.participant(p).session(s).trial(k).final_distance_start, sm.participant(p).session(s).trial(k).goal_i,...
+                    sm.participant(p).session(s).trial(k).memory_score_home=computeMemoryScore(sm.coord.final_distance_distribution,...
+                        sm.participant(p).session(s).trial(k).final_distance_home, sm.participant(p).session(s).trial(k).goal_i,...
                         7);     
                     
-                    % COVERAGE (rel. time in zone) in ORIGINAL START ALLEY
-                    % as indicator for homing behavior
-                    [~, sm.participant(p).session(s).trial(k).coverage_start,...
-                        sm.participant(p).session(s).trial(k).time_in_start, ~]=computeCoverage(7,x,y,...
+                    % PRESENCE (rel. time in zone) in ORIGINAL START ALLEY
+                    [~, sm.participant(p).session(s).trial(k).presence_home, ~, ~]=computePresence(7,x,y,...
                         sm.coord.alley_poly, sm.coord.tri_poly, sm.participant(p).session(s).trial(k).time);         
                     
                     % % EGOCENTRIC behavior % %
@@ -463,31 +442,28 @@ tic;
                             sm.participant(p).session(s).trial(k).final_distance_ego, sm.participant(p).session(s).trial(k).goal_i,...
                             sm.participant(p).session(s).trial(k).ego_alley);
                         
-                        % COVERAGE (rel. time in zone) in EGO ALLEY
+                        % PRESENCE (rel. time in zone) in EGO ALLEY
                         % as indicator for egocentric behavior
-                        [~, sm.participant(p).session(s).trial(k).coverage_ego,...
-                            sm.participant(p).session(s).trial(k).time_in_ego, ~]=computeCoverage(...
+                        [~, sm.participant(p).session(s).trial(k).presence_ego, ~, ~]=computePresence(...
                             sm.participant(p).session(s).trial(k).ego_alley,x,y,...
                             sm.coord.alley_poly, sm.coord.tri_poly, sm.participant(p).session(s).trial(k).time);
                     else 
                         % default values 
                         sm.participant(p).session(s).trial(k).final_distance_ego=999;
                         sm.participant(p).session(s).trial(k).memory_score_ego=999;
-                        sm.participant(p).session(s).trial(k).coverage_ego=999;
-                        sm.participant(p).session(s).trial(k).time_in_ego=999;
+                        sm.participant(p).session(s).trial(k).presence_ego=999;
                     end 
                     
                     % % BASELINE behavior % % 
                     % get baseline alley integer
                     base_alleys=setBaseAlley(...
                         sm.participant(p).session(s).trial(k).start_i,...
-                        sm.participant(p).session(s).trial(k).chosen_alley_i,...
+                        sm.participant(p).session(s).trial(k).goal_alley,...
                         sm.participant(p).session(s).trial(k).ego_alley);
                     base_i=(base_alleys+1)/2; 
                     
                     % compute values 
-                    fd=zeros(numel(base_alleys),1); ms=zeros(numel(base_alleys),1); 
-                    cov=zeros(numel(base_alleys),1); tz=zeros(numel(base_alleys),1);
+                    fd=zeros(numel(base_alleys),1); ms=zeros(numel(base_alleys),1); pres=zeros(numel(base_alleys),1); 
                     for a=1:numel(base_alleys)
                         fd(a)=computeDistance(sm.coord.goal_x_in_alleys(sm.participant(p).session(s).trial(k).goal_i, base_i(a)), sm.participant(p).session(s).trial(k).x_n,...
                             sm.coord.goal_y_in_alleys(sm.participant(p).session(s).trial(k).goal_i, base_i(a)), sm.participant(p).session(s).trial(k).y_n);
@@ -496,34 +472,29 @@ tic;
                             fd(a), sm.participant(p).session(s).trial(k).goal_i,...
                             base_alleys(a));
                         
-                        [~, cov(a), tz(a), ~]=computeCoverage(...
-                            base_alleys(a),x,y,sm.coord.alley_poly,...
+                        [~, pres(a), ~, ~]=computePresence(base_alleys(a),x,y,sm.coord.alley_poly,...
                             sm.coord.tri_poly, sm.participant(p).session(s).trial(k).time);
                     end
-                    % FINAL DISTANCE to BASELINE ALLEY
+                    % FINAL DISTANCE to BASELINE ALLEY(S)
                     sm.participant(p).session(s).trial(k).final_distance_base=mean(fd);
                     
-                    % MEMORY SCORE to BASELINE ALLEY
+                    % MEMORY SCORE to BASELINE ALLEY(S)
                     sm.participant(p).session(s).trial(k).memory_score_base=mean(ms); 
                     
-                    % COVERAGE (rel. time in zone) in BASELINE ALLEY 
-                    sm.participant(p).session(s).trial(k).coverage_base=mean(cov); 
-                    sm.participant(p).session(s).trial(k).time_in_base=mean(tz); 
-                    clear base* fd ms cov tz;    
+                    % PRESENCE (rel. time in zone) in BASELINE ALLEY(S) 
+                    sm.participant(p).session(s).trial(k).presence_base=mean(pres); 
+                    clear base* fd ms pres;    
                 else
                     % default values
-                    sm.participant(p).session(s).trial(k).final_distance_start=999;
-                    sm.participant(p).session(s).trial(k).memory_score_start=999; 
-                    sm.participant(p).session(s).trial(k).coverage_start=999;
-                    sm.participant(p).session(s).trial(k).time_in_start=999;
+                    sm.participant(p).session(s).trial(k).final_distance_home=999;
+                    sm.participant(p).session(s).trial(k).memory_score_home=999; 
+                    sm.participant(p).session(s).trial(k).presence_home=999;
                     sm.participant(p).session(s).trial(k).final_distance_ego=999;
                     sm.participant(p).session(s).trial(k).memory_score_ego=999;
-                    sm.participant(p).session(s).trial(k).coverage_ego=999; 
-                    sm.participant(p).session(s).trial(k).time_in_ego=999;
+                    sm.participant(p).session(s).trial(k).presence_ego=999; 
                     sm.participant(p).session(s).trial(k).final_distance_base=999;
                     sm.participant(p).session(s).trial(k).memory_score_base=999;
-                    sm.participant(p).session(s).trial(k).coverage_base=999;
-                    sm.participant(p).session(s).trial(k).time_in_base=999; 
+                    sm.participant(p).session(s).trial(k).presence_base=999;
                 end
                 
                 % fprintf('Additional analysis for allocentric probe trials done for %d, session %d, file no %d.\n', id, s, k);
@@ -548,10 +519,10 @@ tic;
                 % same method as above 
                 % get rotation index (different method for inner/outer starts)
                 if mod(sm.participant(p).session(s).trial(k).start_i,2)
-                    [~, ~, ~, rot_index]=computeCoverage(sm.participant(p).session(s).trial(k).start_i,x,y,...
+                    [~, ~, ~, rot_index]=computePresence(sm.participant(p).session(s).trial(k).start_i,x,y,...
                         sm.coord.alley_poly, sm.coord.tri_poly, sm.participant(p).session(s).trial(k).time);
                 else 
-                    [~, ~, ~, rot_index]=computeCoveragePentagon(sm.participant(p).session(s).trial(k).start_i,x,y,...
+                    [~, ~, ~, rot_index]=computePresencePentagon(sm.participant(p).session(s).trial(k).start_i,x,y,...
                         sm.coord.rec_poly, sm.coord.tri_poly, sm.participant(p).session(s).trial(k).time); 
                 end 
                 % compute initial rotation 

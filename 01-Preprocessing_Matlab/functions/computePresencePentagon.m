@@ -1,7 +1,7 @@
-function [abs_coverage, rel_coverage, abs_time_in_zone, index]=computeCoveragePentagon(alley_int,...
+function [abs_presence, rel_presence, abs_time_in_zone, index]=computePresencePentagon(alley_int,...
     x, y, rec_poly, tri_poly, time)
-% computeCoveragePentagon: Compute absolute and relative coverage in zone.
-% This is a variant of computeCoverage, specifically for inner zones. 
+% computePresencePentagon: Compute absolute and relative presence in zone.
+% This is a variant of computePresence, specifically for inner zones. 
 % 
 % Input: 
 % alley_int is zone identifier (integer) 
@@ -10,7 +10,7 @@ function [abs_coverage, rel_coverage, abs_time_in_zone, index]=computeCoveragePe
 % time is total time (float)
 % 
 % Returns:
-% abs_coverage (integer), rel_coverage (float), 
+% abs_presence (integer), rel_presence (float), 
 % abs_time_in_zone(float), index (boolean vector)
 
 % convert alley_int (from [2 4 6 8 10] to [1 2 3 4 5])
@@ -29,8 +29,8 @@ index=inpolygon(x,y,target_poly.Vertices(:,1),target_poly.Vertices(:,2));
 % plot(x(index), y(index), 'rx');
 
 % compute values
-abs_coverage=numel(x(index));
-rel_coverage=abs_coverage/length(x);
-abs_time_in_zone=time*rel_coverage;
+abs_presence=numel(x(index));
+rel_presence=abs_presence/length(x);
+abs_time_in_zone=time*rel_presence;
                 
 end
