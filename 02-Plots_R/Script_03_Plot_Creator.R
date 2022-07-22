@@ -74,9 +74,6 @@ l_memory_score_ego <- "ego memory score"
 l_time <- "time in seconds"
 l_velocity <- "velocity"
 l_excess_path_length <- "excess path length"
-l_dtw_path_distance <- "DTW path distance (raw)"
-l_target_distance <- "distance to goal"
-l_excess_target_distance <- "excess distance to goal"
 l_presence <- "presence in %"
 l_time_in_zone <- "time in zone in seconds"
 l_rotation <- "rotation/360"
@@ -327,17 +324,15 @@ is_outlier <- function(x) {
 
 sm_practise <- sm_data %>% 
   filter(condition=="practise") %>% 
-  select(id, sex, group, condition, duration, time, velocity, excess_path_length, target_distance, rotation_turns) %>% 
+  select(id, sex, group, condition, duration, time, velocity, excess_path_length, rotation_turns) %>% 
   mutate(out_time = ifelse(is_outlier(time), id, as.numeric(NA)),
          out_velocity = ifelse(is_outlier(velocity), id, as.numeric(NA)),
          out_path = ifelse(is_outlier(excess_path_length), id, as.numeric(NA)),
-         out_distance = ifelse(is_outlier(target_distance), id, as.numeric(NA)),
          out_rot = ifelse(is_outlier(rotation_turns), id, as.numeric(NA)))
 
 mc_t <- box_plot(sm_practise, "group", "time", "group", "none", "none", NULL, NULL, l_time, mylabels, "top", group_colors, group_colors_o, mcVariant=T, mc_outlier="out_time")
 mc_v <- box_plot(sm_practise, "group", "velocity", "group", "none", "none", NULL, NULL, l_velocity, mylabels, "top", group_colors, group_colors_o, mcVariant=T, mc_outlier="out_velocity")
 mc_p <- box_plot(sm_practise, "group", "excess_path_length", "group", "none", "none", NULL, NULL, l_excess_path_length, mylabels, "top", group_colors, group_colors_o, mcVariant=T, mc_outlier="out_path")
-mc_d <- box_plot(sm_practise, "group", "target_distance", "group", "none", "none", NULL, NULL, l_target_distance, mylabels, "top", group_colors, group_colors_o, mcVariant=T, mc_outlier="out_distance")
 mc_r <- box_plot(sm_practise, "group", "rotation_turns", "group", "none", "none", NULL, NULL, l_rotation, mylabels, "top", group_colors, group_colors_o, mcVariant=T, mc_outlier="out_velocity")
 ## ----
 rm(sm_practise, is_outlier)
@@ -373,8 +368,8 @@ ex2_data <- sm_orig %>%
 
 ex2 <- ggplot(ex2_data, aes(x=n, fill=group, color=group)) + 
   geom_histogram(binwidth=1) + 
-  scale_fill_manual(labels=mylabels, values=group_colors) + 
-  scale_color_manual(labels=mylabels, values=group_colors_o) + 
+  # scale_fill_manual(labels=mylabels, values=group_colors) + 
+  # scale_color_manual(labels=mylabels, values=group_colors_o) + 
   theme_classic() + 
   theme(legend.position=c(0.8,0.8),
         legend.key.size = unit(0.5, 'cm')) + 
@@ -390,7 +385,6 @@ corr_data <- sm_data %>%
   select(correct_final_alley, final_distance, memory_score, 
          correct_final_alley_ego, final_distance_ego, memory_score_ego,
          time, velocity, excess_path_length,
-         target_distance, target_distance_deviation, 
          coverage_alleys, time_in_alleys, 
          coverage_ego, time_in_ego, coverage_start, time_in_start,
          rotation_turns, initial_rotation_turns, rotation_turns_by_path_length) %>% 
@@ -411,8 +405,7 @@ rm(corr_data, corr_variables)
 sm_trialwise <- sm_data %>%
   filter(session==1, condition=="main_learn") %>%
   group_by(id, group, trial_in_block) %>% 
-  summarise_at(c("time", "excess_path_length", "target_distance_deviation", 
-                 "coverage_alleys", "time_in_alleys",
+  summarise_at(c("time", "excess_path_length", "coverage_alleys", "time_in_alleys",
                  "rotation_turns_by_path_length", "initial_rotation_turns"), mean, na.rm=T)
 
 line_t <- line_plot(sm_trialwise, "trial_in_block", "time", "group", NULL, l_time, mylabels, "bottom", group_colors)
@@ -433,7 +426,6 @@ sm_agg <- sm_data %>%
   group_by(id, group, session, condition) %>% 
   summarise_at(c("correct_final_alley", "memory_score",
                  "time", "excess_path_length", 
-                 "target_distance", "target_distance_deviation", 
                  "coverage_alleys", "time_in_alleys",
                  "initial_rotation_turns", "rotation_turns_by_path_length"), mean, na.rm=T)
 
@@ -453,11 +445,6 @@ sm_agg_allo <- sm_data %>%
   mutate(cond=factor(cond, levels=c("base", "ego", "start"))) %>% 
   group_by(id, group, session, condition, cond) %>% 
   summarise_at(c("memory_score", "coverage", "time_in"), mean, na.rm=T)
-
-sm_agg_allo_incorrect <- sm_data %>%
-  filter(condition=="allo_ret", start_i %% 2==1, correct_final_alley==0) %>% 
-  group_by(id, group, session, condition) %>% 
-  summarise_at(c("correct_final_alley_ego", "memory_score_ego"), mean, na.rm=T)
 
 
 # egocentric probe trials
@@ -486,8 +473,6 @@ box_allo_rp <- box_plot(sm_agg %>% filter(condition=="allo_ret"), "group", "rota
 box_allo_cor_ms <- box_plot(sm_agg_correct %>% filter(condition=="allo_ret"), "group", "memory_score", "group", "session", "none", NULL, NULL, l_memory_score, mylabels, "top", group_colors, group_colors_o) + coord_cartesian(ylim=c(0.75,1))
 
 # exploratory: egocentric & homing behavior in allocentric probe trials 
-box_allo_incor_efa <- box_plot(sm_agg_allo_incorrect, "group", "correct_final_alley_ego", "group", "session", "none", NULL, NULL, l_ego_alley, mylabels, "top", group_colors, group_colors_o)
-box_allo_incor_mse <- box_plot(sm_agg_allo_incorrect, "group", "memory_score_ego", "group", "session", "none", NULL, NULL, l_memory_score_ego, mylabels, "top", group_colors, group_colors_o) + geom_hline(yintercept=0.5, linetype="dashed", color="red")
 box_allo_msa <- box_plot(sm_agg_allo, "group", "memory_score", "cond", "session", "none", NULL, NULL, l_memory_score, mylabels, "top", type_colors, type_colors_o) + 
   theme(legend.position="top", legend.justification=c(0,0), legend.title=element_blank())
 box_allo_pres <- box_plot(sm_agg_allo, "group", "coverage", "cond", "session", "none", NULL, NULL, l_presence, mylabels, "top", type_colors, type_colors_o) + 
