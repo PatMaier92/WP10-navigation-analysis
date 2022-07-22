@@ -1424,6 +1424,137 @@ rm(data_gmda, GMDA, CanAcc, DistAcc, AngleAcc, boxplot)
 
 # ######################################################### #
 # ######################################################### #
+
+# -- CORRELATIONS -- # 
+# allocentric & egocentric performance 
+corr <- data %>% 
+  group_by(id, sex, group, condition) %>% 
+  summarise(memory_score=mean(memory_score, na.rm=T)) %>% 
+  pivot_wider(names_from=condition,
+              names_prefix="memory_",
+              values_from=memory_score)
+
+ggplot(corr, aes(x=memory_allo_ret, y=memory_ego_ret)) + 
+  geom_point() + geom_smooth(method="lm") +
+  facet_wrap(~group, nrow=1)
+
+cor.test(corr$memory_allo_ret, corr$memory_ego_ret, method="spearman")
+pbcor(corr$memory_allo_ret, corr$memory_ego_ret)
+
+
+# allocentric/egocentric & gender
+ggplot(corr, aes(x=sex, y=memory_allo_ret)) +
+  stat_summary(fun.data=mean_cl_normal) + 
+  facet_wrap(~group, nrow=1)
+
+ggplot(corr, aes(x=sex, y=memory_ego_ret)) +
+  stat_summary(fun.data=mean_cl_normal) + 
+  facet_wrap(~group, nrow=1)
+
+
+# allocentric/egocentric & layout score
+temp <- pt_data %>% 
+  filter(condition=="layout") %>% 
+  select(id, score) %>% 
+  rename(layout_score=score)
+joint <- data %>% 
+  group_by(id, group, condition) %>% 
+  summarise(memory_score=mean(memory_score, na.rm=T)) %>% 
+  left_join(temp, by="id") %>% 
+  drop_na(layout_score)
+rm(temp)
+
+ggplot(joint, aes(x=factor(layout_score), y=memory_score)) +
+  stat_summary(fun.data=mean_cl_normal) + 
+  facet_grid(~ condition) +
+  coord_cartesian(ylim=c(0.5,1))
+
+m0 <- lm(memory_score ~ 1, data=joint)
+m1 <- lm(memory_score ~ layout_score, data=joint)
+m2 <- lm(memory_score ~ layout_score + condition, data=joint)
+m3 <- lm(memory_score ~ layout_score*condition, data=joint)
+anova(m0, m1, m2, m3)
+m4 <- lm(memory_score ~ layout_score + group, data=joint)
+m5 <- lm(memory_score ~ layout_score*group, data=joint)
+anova(m0, m1, m4, m5)
+# predictors for memory_score: layout_score, group, no interaction
+
+
+# allocentric/egocentric & landmark score
+temp <- pt_data %>% 
+  filter(condition=="landmarks") %>% 
+  select(id, score) %>% 
+  rename(landmark_score=score)
+joint <- data %>% 
+  group_by(id, group, condition) %>% 
+  summarise(memory_score=mean(memory_score, na.rm=T)) %>% 
+  left_join(temp, by="id") %>% 
+  drop_na(landmark_score)
+
+ggplot(joint, aes(x=landmark_score, y=memory_allo_ret)) + 
+  geom_point() + geom_smooth(method="lm") +
+  facet_wrap(~group, nrow=1)
+
+cor.test(joint$memory_allo_ret, joint$landmark_score, method="spearman")
+pbcor(joint$memory_allo_ret, joint$landmark_score)
+
+ggplot(joint, aes(x=landmark_score, y=memory_allo_ret)) + 
+  geom_point() + geom_smooth(method="lm") +
+  facet_wrap(~group, nrow=1)
+
+cor.test(joint$memory_ego_ret, joint$landmark_score, method="spearman")
+pbcor(joint$memory_ego_ret, joint$landmark_score)
+
+m0 <- lm(memory_score ~ 1, data=joint)
+m1 <- lm(memory_score ~ landmark_score, data=joint)
+m2 <- lm(memory_score ~ landmark_score + condition, data=joint)
+m3 <- lm(memory_score ~ landmark_score*condition, data=joint)
+anova(m0, m1, m2, m3)
+m4 <- lm(memory_score ~ landmark_score + group, data=joint)
+m5 <- lm(memory_score ~ landmark_score*group, data=joint)
+anova(m0, m1, m4, m5)
+# predictors for memory_score: landmark_score, group, no interaction
+
+
+# allocentric/egocentric & gmda score
+temp <- pt_data %>% 
+  filter(condition=="position") %>% 
+  select(id, score) %>% 
+  rename(gmda_score=score)
+joint <- data %>% 
+  group_by(id, group, condition) %>% 
+  summarise(memory_score=mean(memory_score, na.rm=T)) %>% 
+  left_join(temp, by="id") %>% 
+  drop_na(gmda_score)
+rm(temp)
+
+ggplot(joint, aes(x=gmda_score, y=memory_allo_ret)) + 
+  geom_point() + geom_smooth(method="lm") +
+  facet_wrap(~group, nrow=1)
+
+cor.test(joint$memory_allo_ret, joint$gmda_score, method="spearman")
+pbcor(joint$memory_allo_ret, joint$gmda_score)
+
+ggplot(joint, aes(x=gmda_score, y=memory_ego_ret)) + 
+  geom_point() + geom_smooth(method="lm") +
+  facet_wrap(~group, nrow=1)
+
+cor.test(joint$memory_ego_ret, joint$gmda_score, method="spearman")
+pbcor(joint$memory_ego_ret, joint$gmda_score)
+
+m0 <- lm(memory_score ~ 1, data=joint)
+m1 <- lm(memory_score ~ gmda_score, data=joint)
+m2 <- lm(memory_score ~ gmda_score + condition, data=joint)
+m3 <- lm(memory_score ~ gmda_score*condition, data=joint)
+anova(m0, m1, m2, m3)
+m4 <- lm(memory_score ~ gmda_score + group, data=joint)
+m5 <- lm(memory_score ~ gmda_score*group, data=joint)
+anova(m0, m1, m4, m5)
+# predictors for memory_score: gmda_score, group, no interaction
+
+
+# ######################################################### #
+# ######################################################### #
 # ######################################################### #
 
 
