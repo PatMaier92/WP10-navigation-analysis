@@ -376,10 +376,7 @@ box_allo_msa +
 rm(box_allo_msa)
 ```
 
-```{r, stats_probe_ego_acc}
-```
-
-```{r, stats_probe_ms_ego_in_allo }
+```{r, stats_probe_memory_in_allo }
 ```
 
 \newpage 
@@ -457,7 +454,7 @@ rm(layout, layout_avg, landmark_details, landmark_avg, gmda_avg)
 
 ```{r, warning=F, echo=F }
 
-mc_t +  mc_v + mc_p + mc_d + mc_r +
+mc_t +  mc_v + mc_p + mc_r +
   plot_annotation("Motor control practise task") +
   plot_layout(guides="collect") & theme(legend.position="bottom", legend.justification=c(0,0))
 
