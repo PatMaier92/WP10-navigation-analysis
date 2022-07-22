@@ -5,7 +5,7 @@
 # ::: get packages ::: #
 
 ## ---- plotting_packages
-#library(Rmisc) # ggf. für summarySEwithin
+#library(Rmisc) # ggf. f?r summarySEwithin
 library(tidyverse)
 library(patchwork)
 library(ggrepel)
@@ -77,7 +77,7 @@ l_excess_path_length <- "excess path length"
 l_dtw_path_distance <- "DTW path distance (raw)"
 l_target_distance <- "distance to goal"
 l_excess_target_distance <- "excess distance to goal"
-l_coverage <- "coverage in %"
+l_presence <- "presence in %"
 l_time_in_zone <- "time in zone in seconds"
 l_rotation <- "rotation/360"
 l_initial_rotation <- "initial rotation/360"
@@ -417,9 +417,7 @@ sm_trialwise <- sm_data %>%
 
 line_t <- line_plot(sm_trialwise, "trial_in_block", "time", "group", NULL, l_time, mylabels, "bottom", group_colors)
 line_p <- line_plot(sm_trialwise, "trial_in_block", "excess_path_length", "group", NULL, l_excess_path_length, mylabels, "bottom", group_colors)
-line_d <- line_plot(sm_trialwise, "trial_in_block", "target_distance_deviation", "group", NULL, l_excess_target_distance, mylabels, "bottom", group_colors)
-line_ca <- line_plot(sm_trialwise, "trial_in_block", "coverage_alleys", "group", NULL, l_coverage, mylabels, "bottom", group_colors)
-line_ta <- line_plot(sm_trialwise, "trial_in_block", "time_in_alleys", "group", NULL, l_time_in_zone, mylabels, "bottom", group_colors)
+line_pa <- line_plot(sm_trialwise, "trial_in_block", "coverage_alleys", "group", NULL, l_presence, mylabels, "bottom", group_colors)
 line_rp <- line_plot(sm_trialwise, "trial_in_block", "rotation_turns_by_path_length", "group", NULL, l_rotation_by_path, mylabels, "bottom", group_colors)
 line_ir <- line_plot(sm_trialwise, "trial_in_block", "initial_rotation_turns", "group", NULL, l_initial_rotation, mylabels, "bottom", group_colors)
 ## ----
@@ -467,8 +465,7 @@ box_ego_cfa <- box_plot(sm_agg %>% filter(condition=="ego_ret"), "group", "corre
 box_ego_ms <- box_plot(sm_agg %>% filter(condition=="ego_ret"), "group", "memory_score", "group", "session", "none", NULL, NULL, l_memory_score, mylabels, "top", group_colors, group_colors_o) + geom_hline(yintercept=0.5, linetype="dashed", color="red") 
 box_ego_t <- box_plot(sm_agg %>% filter(condition=="ego_ret"), "group", "time", "group", "session", "none", NULL, NULL, l_time, mylabels, "top", group_colors, group_colors_o)
 box_ego_p <- box_plot(sm_agg %>% filter(condition=="ego_ret"), "group", "excess_path_length", "group", "session", "none", NULL, NULL, l_excess_path_length, mylabels, "top", group_colors, group_colors_o)
-box_ego_d <- box_plot(sm_agg %>% filter(condition=="ego_ret"), "group", "target_distance_deviation", "group", "session", "none", NULL, NULL, l_excess_target_distance, mylabels, "top", group_colors, group_colors_o) + coord_cartesian(ylim=c(-0.2,0.2)) + geom_hline(yintercept=0, linetype="dashed", color="red") 
-box_ego_ca <- box_plot(sm_agg %>% filter(condition=="ego_ret"), "group", "coverage_alleys", "group", "session", "none", NULL, NULL, l_coverage, mylabels, "top", group_colors, group_colors_o)
+box_ego_pa <- box_plot(sm_agg %>% filter(condition=="ego_ret"), "group", "coverage_alleys", "group", "session", "none", NULL, NULL, l_presence, mylabels, "top", group_colors, group_colors_o)
 box_ego_ir <- box_plot(sm_agg %>% filter(condition=="ego_ret"), "group", "initial_rotation_turns", "group", "session", "none", NULL, NULL, l_initial_rotation, mylabels, "top", group_colors, group_colors_o)
 box_ego_rp <- box_plot(sm_agg %>% filter(condition=="ego_ret"), "group", "rotation_turns_by_path_length", "group", "session", "none", NULL, NULL, l_rotation_by_path, mylabels, "top", group_colors, group_colors_o)
 
@@ -481,8 +478,7 @@ box_allo_cfa <- box_plot(sm_agg %>% filter(condition=="allo_ret"), "group", "cor
 box_allo_ms <- box_plot(sm_agg %>% filter(condition=="allo_ret"), "group", "memory_score", "group", "session", "none", NULL, NULL, l_memory_score, mylabels, "top", group_colors, group_colors_o) + geom_hline(yintercept=0.5, linetype="dashed", color="red")
 box_allo_t <- box_plot(sm_agg %>% filter(condition=="allo_ret"), "group", "time", "group", "session", "none", NULL, NULL, l_time, mylabels, "top", group_colors, group_colors_o)
 box_allo_p <- box_plot(sm_agg %>% filter(condition=="allo_ret"), "group", "excess_path_length", "group", "session", "none", NULL, NULL, l_excess_path_length, mylabels, "top", group_colors, group_colors_o)
-box_allo_d <- box_plot(sm_agg %>% filter(condition=="allo_ret"), "group", "target_distance_deviation", "group", "session", "none", NULL, NULL, l_excess_target_distance, mylabels, "top", group_colors, group_colors_o) + coord_cartesian(ylim=c(-0.2,0.2)) + geom_hline(yintercept=0, linetype="dashed", color="red")
-box_allo_ca <- box_plot(sm_agg %>% filter(condition=="allo_ret"), "group", "coverage_alleys", "group", "session", "none", NULL, NULL, l_coverage, mylabels, "top", group_colors, group_colors_o)
+box_allo_pa <- box_plot(sm_agg %>% filter(condition=="allo_ret"), "group", "coverage_alleys", "group", "session", "none", NULL, NULL, l_presence, mylabels, "top", group_colors, group_colors_o)
 box_allo_ir <- box_plot(sm_agg %>% filter(condition=="allo_ret"), "group", "initial_rotation_turns", "group", "session", "none", NULL, NULL, l_initial_rotation, mylabels, "top", group_colors, group_colors_o)
 box_allo_rp <- box_plot(sm_agg %>% filter(condition=="allo_ret"), "group", "rotation_turns_by_path_length", "group", "session", "none", NULL, NULL, l_rotation_by_path, mylabels, "top", group_colors, group_colors_o)
 
@@ -492,9 +488,9 @@ box_allo_cor_ms <- box_plot(sm_agg_correct %>% filter(condition=="allo_ret"), "g
 # exploratory: egocentric & homing behavior in allocentric probe trials 
 box_allo_incor_efa <- box_plot(sm_agg_allo_incorrect, "group", "correct_final_alley_ego", "group", "session", "none", NULL, NULL, l_ego_alley, mylabels, "top", group_colors, group_colors_o)
 box_allo_incor_mse <- box_plot(sm_agg_allo_incorrect, "group", "memory_score_ego", "group", "session", "none", NULL, NULL, l_memory_score_ego, mylabels, "top", group_colors, group_colors_o) + geom_hline(yintercept=0.5, linetype="dashed", color="red")
-box_allo_msa <- box_plot(sm_agg_allo, "group", "memory_score", "cond", "session", "none", "Allocentric probe trials", NULL, l_memory_score, mylabels, "top", type_colors, type_colors_o) + 
+box_allo_msa <- box_plot(sm_agg_allo, "group", "memory_score", "cond", "session", "none", NULL, NULL, l_memory_score, mylabels, "top", type_colors, type_colors_o) + 
   theme(legend.position="top", legend.justification=c(0,0), legend.title=element_blank())
-box_allo_cov <- box_plot(sm_agg_allo, "group", "coverage", "cond", "session", "none", "Allocentric probe trials", NULL, l_coverage, mylabels, "top", type_colors, type_colors_o) + 
+box_allo_pres <- box_plot(sm_agg_allo, "group", "coverage", "cond", "session", "none", NULL, NULL, l_presence, mylabels, "top", type_colors, type_colors_o) + 
   theme(legend.position="top", legend.justification=c(0,0), legend.title=element_blank()) + coord_cartesian(ylim=c(0,0.4))
 ## ----
 rm(sm_agg, sm_agg_correct, sm_agg_allo, sm_agg_allo_incorrect)
