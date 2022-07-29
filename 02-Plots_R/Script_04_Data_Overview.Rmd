@@ -2,7 +2,6 @@
 title: "Preliminary Descriptives & Plots of Starmaze Data"
 author: "Patrizia Maier"
 date: "`r format(Sys.time(), '%d %B, %Y')`"
-output: pdf_document
 ---
 
 ## Task
@@ -16,12 +15,12 @@ Navigating a star-shaped maze environment ("Starmaze") with three goal locations
 *Day 2*
 
 * Practise trials: joystick control (2 trials) and task explanation (5 trials).
-* Navigation to and remembering of three goal locations. Baseline retrieval in egocentric (observer-dependent, i.e. from same starting point but without landmark cues) and allocentric (observer-independent, i.e. from new starting points) (15 trials * 3 goal locations = 45 trials).
+* Navigation to and remembering of three goal locations. Training trials where goal is visible. Probe trials where goal is not visible with two conditions: egocentric (observer-dependent, i.e. from same starting point but without landmark cues) and allocentric (observer-independent, i.e. from new starting points) (15 trials * 3 goal locations = 45 trials).
 
 *Day 14*
 
-* Retrieval in egocentric and allocentric condition (5 trials * 3 locations = 15 trials).
-* Post-navigation memory test: Recognize maze shape, landmarks and goal objects, position landmarks and goal object (4 trials).
+* Egocentric and allocentric probe trials (4 trials * 3 locations = 12 trials (plus 3 * simple probe trials which are not analyzed)).
+* Non-navigation memory test: Recognize maze shape, recognize landmarks and goal objects, position landmarks and goal object (4 trials).
 
 ![Example view from task](./pics/Starmaze_01.png){width=500px}
 
@@ -34,6 +33,7 @@ Navigating a star-shaped maze environment ("Starmaze") with three goal locations
 
 knitr::read_chunk('Script_03_Plot_Creator.R')
 knitr::read_chunk('Script_02_Analyzer.R')
+knitr::opts_chunk$set(warning=FALSE, message=FALSE) 
 ```
 
 ```{r, analysis_packages_and_sum_coding, include=FALSE, cache=FALSE}
@@ -68,35 +68,45 @@ np_AD <- length(unique(pt_data$id[pt_data$group=="YoungAdults"]))
 ```{r, contrast_matrices, include=FALSE}
 ```
 
-## Current sample
+## Sample
 Cross-sectional comparison between
 
 * Young kids (6-7 yrs, n = `r nn_YK`, non-navigational n = `r np_YK`) 
 * Older kids (9-10 yrs, n = `r nn_OK`, non-navigational n = `r np_OK`)
 * Young adults (18-35 yrs, n = `r nn_AD`, non-navigational n = `r np_AD`)
 
-
 ## Variables of interest
 
-In learning trials, the goal is visible, i.e. the trial is always completed successfully except if the participant needs more than 120 seconds (time out). In egocentric and allocentric retrieval trials, the goal is not visible. Participants go to the place where they remember the goal being located and press a button. 
+In training trials, the goal is visible, i.e. the trial is always completed successfully. In probe trials, the goal is not visible. Participants go to the place where they remember the goal being located and press a button. 
 
-* **Correct goal alley** (yes/no): Finding the correct goal alley, defined as the correct outer arm or intersection right in front. 
-* **Final distance & memory score** (metric): Final distance between x-/y-coordinates of the chosen and the correct goal location. Memory score normalizes the final distance value as a score from 0 to 1 (chance level 0.5) by comparing final distance to the final distance of 1000 randomly sampled and uniformly distributed locations in the maze.  
-$$\text{Final distance} = \sqrt{(x_{correct}-x_{chosen})^2 + (y_{correct}-y_{chosen})^2}$$
-$$\text{Memory score} = 1 - \text{percentage of random final distance values that are smaller than final distance}$$
+*Memory accuracy*: 
+
+* **Memory score** (metric): Euclidean distance between x-/y-coordinates of the chosen and the correct goal location. Memory score normalizes the Euclidean distance value as a score from 0 to 1 (chance level 0.5) by comparing final distance to the final distance of 1000 randomly sampled and uniformly distributed locations in the maze (Jacobs 2016; Bellmund 2019)
+$$\text{Euclidean distance} = \sqrt{(x_{correct}-x_{chosen})^2 + (y_{correct}-y_{chosen})^2}$$
+$$\text{Memory score} = 1 - \text{percentage of random Euclidean distance values that are smaller than Euclidean distance}$$
+* **Correct trial** (yes/no): Finding the correct goal alley, defined as the correct outer alley or intersection right in front.
+
+*Navigation behavior*: 
+
 * **Time**: Time to complete the trial in seconds.
-* **Excess path length** (metric): The travelled path length minus the ideal path length to the chosen location. The path lengths are calculated as summation of distance between x-/y-coordinates over time.
+* **Excess path length** (metric): The travelled path length minus the ideal path length to the chosen location. The path lengths are calculated as summation of Euclidean distances between x-/y-coordinates over time (Suthana 2012; Jacobs 2016; Bellmund 2019)
 $$\text{(Ideal) path length} = \sum \sqrt{(x_{t}-x_{t+1})^2 + (y_{t}-y_{t+1})^2}$$
 $$\text{Excess path length} = (path-path_{ideal})$$
-* **Presence in zone** (metric): Proportion of time/data points spend in a defined area.
-$$\text{Presence in zone} = \frac {n(xy_{in zone})} {n(xy)} $$
-* **Rotation**: The sum of absolute z-rotations over time divided by 360° (i.e. full turns). Takes into account the switch at 0/360°. Variants are 1. rotation in the initial area, 2. rotation normalized by path length (because longer paths automatically involve more rotation in a Starmaze environment). 
+* **Presence in zone** (metric): Proportion of time/data points spend in a defined zone (tbd: add reference Water maze literature). 
+$$\text{Presence in zone} = \frac {n(xy_{zone})} {n(xy)} $$
+* **Rotation**: The sum of absolute z-rotations over time divided by 360° (i.e. full turns; the calculation takes into account the switch at 0/360°). Variants of this measure are 1. Rotation in the initial area (start alley plus first intersecion), 2. Rotation normalized by path length (because longer paths automatically involve more rotation in the Starmaze environment). This measure is supposed to reflect intentional visual exploration. 
 $$\text{Rotation in initial area} = \frac {\sum |(z_{t}-z_{t+1})|} {360} $$
 $$\text{Rotation by path length} = \frac {\sum |(z_{t}-z_{t+1})|} {path} * \frac {1} {360} $$
-* **Strategy classification**: Classification into three strategies: Direct to chosen goal, detour (entering more zones than necessary), or reorientation (re-entering same zones). 
 
-![Visualization for variables](./pics/Var_all.jpg){width=300px,height=500x}
+![Visualization of variables of interest](./pics/Var_all.jpg){width=300px,height=500x}
 
+## Statistical analysis
+
+All linear mixed models (LMM) were computed using the mixed() function from the afex package (Singmann et al., 2022), which is based on lmer() from the lme4 package (Bates et al., 2015). The diagnostic plots showed non-normality, outliers and heteroscedastic variances (especially larger variance in children compared to adults). To account for this, we computed additional models 1. excluding outliers (defined as above/below the upper/lower quantile plus/minus 1.5 * IQR, similar to Bellmund et al., 2019) and 2. models with heterogeneous variances with lme() from the nlme package (Pinheiro & Bates, 2022). The results did not change substantially, which is why we decided to use the most simple LMM approach. 
+
+For evaluating the general fit, we calculated a (pseudo) R^2^ for each model according to Nakagawa and Schielzeth's (2013) approach with the r2beta() function from the r2glmm package (Jaeger, 2017). However, R^2^ for LMM should be interpreted with caution and do not directly correspond to a traditional R^2^. We computed degrees of freedom for the LMM with Sattherthwaites method using the lmerTest package (Kuznetsova et al., 2017; via afex package). For all significant main effects and interactions, we computed post-hoc planned contrasts with the emmeans package (Lenth, 2022), using Bonferroni-corrections for multiple comparisons.
+
+Aggregated values were analyzed with robust ANOVAs from the WRS2 package (Mair & Wilcox, 2020). 
 
 ``` {r, plot_settings, include=FALSE}
 ```
@@ -106,49 +116,181 @@ $$\text{Rotation by path length} = \frac {\sum |(z_{t}-z_{t+1})|} {path} * \frac
 
 \newpage
 
-## Memory encoding: Learning curves at Day 1
+## Results 
+
+### Learning curves in training trials at Day 2 
 
 ```{r, plots_learning_trialwise, include=F }
 ```
 
-```{r, warning=F, echo=F }
+#### **Time**
 
-line_t + line_p + line_pa + line_ir + line_rp +
-  plot_annotation("Navigation behaviour in learning trials (goal visible)") + 
-  plot_layout(guides="collect", nrow=2) & theme(legend.position="top", legend.justification=c(0,0))
-
-rm(line_t, line_p, line_pa, line_ir, line_rp, sm_trialwise)
-```
- 
-### **Time**
-
-```{r, stats_learning_time }
+```{r,echo=F, fig.height=3, fig.width=3 }
+line_t 
+rm(line_t)
 ```
 
-### **Excess path length**
-
-```{r, stats_learning_excess_path }
+```{r, stats_learn_time_simple }
 ```
 
-### **Presence in outer alleys (vs. inner pentagon)**
+Model R^2
 
-```{r, stats_learning_presence }
+```{r }
+r2beta(learn.time_s$full_model, method='nsj', partial=F)
 ```
 
-### **Initial Rotation**
+Results: The time per trial decreased across trials (main effect *trial_in_block_c*) but there were no group differences in the slope of the decrease (no interaction *group x trial_in_block_c interaction*). The groups differed in time per trial (main effect *group*). More specifically 6-7-year-old children were slower than 9-10-year-old children and adults, there were no differences between 9-10-year-old children and adults. 
+Covariates: significant influence of time covariate from joystick practise trial (cov_t) and block, no influence of sex. 
 
-```{r, stats_learning_initial_rotation }
+```{r }
+learn.time_s$anova_table
 ```
 
-### **Full rotation by path length**
-
-```{r, stats_learning_rotation_path }
+```{r }
+emmeans(learn.time_s$full_model, pairwise ~ group, lmer.df="satterthwaite", adjust="bonferroni")$contrasts
 ```
 
+```{r, include=F}
+rm(learn.time_s)
+```
+
+\newpage
+
+#### **Excess path length**
+
+```{r, echo=F, fig.height=3, fig.width=3 }
+line_p 
+rm(line_p)
+```
+
+```{r, stats_learn_excess_path_simple }
+```
+
+Model R^2
+
+```{r }
+r2beta(learn.excess_path_s$full_model, method='nsj', partial=F)
+```
+
+Results: The excess path length decreased across trials (main effect *trial_in_block_c*) but there were no group differences in the slope of the decrease (no interaction *group x trial_in_block_c* ). The groups differed in excess path length (main effect *group*). More specifically younger participants had longer excess paths, meaning they took less direct routes, compare to older participants (all groups differed from each other). 
+Covariates: significant influence of path covariate from joystick practise trial (cov_p) and block, no influence of sex. 
+
+```{r }
+learn.excess_path_s$anova_table
+```
+
+```{r }
+emmeans(learn.excess_path_s$full_model, pairwise ~ group, lmer.df="satterthwaite", adjust="bonferroni")$contrasts
+```
+
+```{r, include=F}
+rm(learn.excess_path_s)
+```
+
+\newpage
+
+#### **Presence in outer alleys (vs. inner ring)**
+
+```{r, echo=F, fig.height=3, fig.width=3 }
+line_pa + coord_cartesian(ylim=c(0.4, 0.6)) + labs(caption="y-axis adjusted for better visibility")
+rm(line_pa)
+```
+
+```{r, stats_learn_presence_simple }
+```
+
+Model R^2
+
+```{r }
+r2beta(learn.presence_alleys_s$full_model, method='nsj', partial=F)
+```
+
+Results: Presence in the five outer alleys (relative to the inner ring) increased across trials, i.e. participant preferentially stayed in the outer alleys compared to the inner ring (main effect *trial_in_block_c*) but there were no group differences in the slope of the increase (no interaction *group x trial_in_block_c*). The groups differed in their relative presence in the outer alleys (main effect *group*). More specifically 6-7-year-old children spend relatively less time in the outer alleys (and more in the inner ring) than 9-10-year-old children and adults. There were no differences between 9-10-year-old children and adults.
+Covariates: significant influence of block, no influence of sex. 
+
+```{r }
+learn.presence_alleys_s$anova_table
+```
+
+```{r }
+emmeans(learn.presence_alleys_s$full_model, pairwise ~ group, lmer.df="satterthwaite", adjust="bonferroni")$contrasts
+```
+
+```{r, include=F}
+rm(learn.presence_alleys_s)
+```
+
+\newpage
+
+#### **Initial Rotation**
+
+```{r,echo=F, fig.height=3, fig.width=3 }
+line_ir
+rm(line_ir)
+```
+
+```{r, stats_learn_initial_rotation_simple }
+```
+
+Model R^2
+
+```{r }
+r2beta(learn.initial_rot_s$full_model, method='nsj', partial=F)
+```
+
+Results: Rotation in the initial area did not change generally across trials (no main effect *trial_in_block_c*) but there was an interaction *group x trial_in_block_c*. More specifically, adults had a stronger decrease in initial rotation across trials compared to 6-7-year-old children (who displayed no change). The slopes did not differ for any other group comparisons. 
+Covariates: no significant influence of rotation covariate from joystick practise trial (cov_r), no influence of block and sex. 
+
+```{r }
+learn.initial_rot_s$anova_table
+```
+
+```{r }
+emtrends(learn.initial_rot_s$full_model, pairwise ~ group, var="trial_in_block_c", lmer.df="satterthwaite", adjust="bonferroni")
+```
+
+```{r, include=F}
+rm(learn.initial_rot_s)
+```
+
+\newpage
+
+#### **Full rotation by path length**
+
+```{r, echo=F, fig.height=3, fig.width=3 }
+line_rp 
+rm(line_rp)
+```
+
+```{r, stats_learn_rotation_path_simple }
+```
+
+Model R^2
+
+```{r }
+r2beta(learn.rotation_path_s$full_model, method='nsj', partial=F)
+```
+
+Results: There was an interaction *group x trial_in_block_c* for the overall rotation (normalized by path length). More specifically, adults had a stronger decrease in rotation (normalized by path length) across trials compared to 6-7-year-old children and 9-10-year old children. The slopes did not differ between the two children groups. 
+Covariates: no significant influence of rotation covariate from joystick practise trial (cov_r), no influence of block and sex. 
+
+```{r }
+learn.rotation_path_s$anova_table
+```
+
+```{r }
+emtrends(learn.rotation_path_s$full_model, pairwise ~ group, var="trial_in_block_c", lmer.df="satterthwaite", adjust="bonferroni")
+```
+
+```{r, include=F}
+rm(learn.rotation_path_s)
+```
 
 \newpage 
 
-## Immediate (Day 1) vs. consolidated retrieval (Day 13): Egocentric and allocentric condition 
+### Probe trials at Day 2 & Day 14
+
+Egocentric and allocentric condition. The goals are NOT visible.
 
 ```{r, plots_aggregated, include=F }
 ```
@@ -159,100 +301,18 @@ rm(line_t, line_p, line_pa, line_ir, line_rp, sm_trialwise)
 ```{r, plots_probe_locations, include=F }
 ```
 
-### Navigation behaviour
-
-**Time**
-
-```{r, warning=F, echo=F, fig.height=4 }
-
-box_ego_t + labs(subtitle="Egocentric") + box_allo_t + labs(subtitle="Allocentric") +
-  plot_annotation("Time in probe trials") + 
-  plot_layout(guides="collect") & theme(legend.position="bottom", legend.justification=c(0,0))
-
-rm(box_ego_t, box_allo_t)
-```
-
-```{r, stats_probe_time}
-```
-
-\newpage 
-
-**Excess path length**
-
-```{r, warning=F, echo=F, fig.height=4 }
-
-box_ego_p + labs(subtitle="Egocentric") + box_allo_p + labs(subtitle="Allocentric") +
-  plot_annotation("Excess path length in probe trials") + 
-  plot_layout(guides="collect") & theme(legend.position="bottom", legend.justification=c(0,0))
-
-rm(box_ego_p, box_allo_p)
-```
-
-```{r, stats_probe_excess_path }
-```
-
-\newpage 
-
-**Presence in outer alleys (vs. inner pentagon)** 
-
-```{r, warning=F, echo=F, fig.height=4 }
-
-box_ego_pa + labs(subtitle="Egocentric") + box_allo_pa + labs(subtitle="Allocentric") +
-  plot_annotation("Presence in outer alleys (vs. inner pentaton)") + 
-  plot_layout(guides="collect") & theme(legend.position="bottom", legend.justification=c(0,0))
-
-rm(box_ego_pa, box_ego_pa)
-```
-
-```{r, stats_probe_presence}
-```
-
-\newpage
-
-**Initial rotation**
-
-```{r, warning=F, echo=F, fig.height=4 }
-
-box_ego_ir + labs(subtitle="Egocentric") + box_allo_ir + labs(subtitle="Allocentric") +
-  plot_annotation("Initial rotation (full turns) in probe trials") + 
-  plot_layout(guides="collect") & theme(legend.position="bottom", legend.justification=c(0,0))
-
-rm(box_ego_ir, box_allo_ir)
-```
-
-```{r, stats_probe_init_rotation}
-```
-
-\newpage
-
-**Rotation by path length**
-
-```{r, warning=F, echo=F, fig.height=4 }
-
-box_ego_rp + labs(subtitle="Egocentric") + box_allo_rp + labs(subtitle="Allocentric") +
-  plot_annotation("Relative rotation (full turns, normalized by path length) in probe trials") + 
-  plot_layout(guides="collect") & theme(legend.position="bottom", legend.justification=c(0,0))
-
-rm(box_ego_rp, box_allo_rp)
-```
-
-```{r, stats_probe_rotation_path}
-```
-
-\newpage 
-
-### Accuracy 
+### Memory accuracy 
 
 **Raw data**
 
-```{r, warning=F, echo=F, fig.height=5 }
+```{r,echo=F, fig.height=5 }
 
 dots_ego 
 
 rm(dots_ego)
 ```
 
-```{r, warning=F, echo=F, fig.height=5 }
+```{r,echo=F, fig.height=5 }
 
 dots_allo 
 
@@ -261,217 +321,548 @@ rm(dots_allo)
 
 \newpage 
 
-**Correct final alley**
-
-```{r, warning=F, echo=F, fig.height=4 }
-
-box_ego_cfa + labs(subtitle="Egocentric") + box_allo_cfa + labs(subtitle="Allocentric") +
-  plot_annotation("Accuracy in probe trials") + 
-  plot_layout(guides="collect") & theme(legend.position="bottom", legend.justification=c(0,0))
-
-rm(box_ego_cfa, box_allo_cfa)
-```
-
-```{r, stats_probe_acc }
-```
-
-```{r, warning=F, echo=F, fig.height=4 }
-
-box_ego_delta_cfa + labs(subtitle="Egocentric") + box_allo_delta_cfa + labs(subtitle="Allocentric")  +
-  plot_annotation("Change in accuracy in probe trials") + 
-  plot_layout(guides="collect") & theme(legend.position="bottom", legend.justification=c(0,0))
-
-rm(box_ego_delta_cfa, box_allo_delta_cfa)
-```
-
-```{r, stats_probe_acc_change }
-```
-
-\newpage 
-
 **Memory score (all trials)**
 
-```{r, warning=F, echo=F, fig.height=4 }
+```{r, echo=F, fig.height=3, fig.height=4 }
 
 box_ego_ms + labs(subtitle="Egocentric") + box_allo_ms + labs(subtitle="Allocentric") +
-  plot_annotation("Memory score in all probe trials") + 
   plot_layout(guides="collect") & theme(legend.position="bottom", legend.justification=c(0,0))
 
 rm(box_ego_ms, box_allo_ms)
 ```
 
-```{r, stats_probe_ms, fig.height=4 }
+```{r, stats_probe_ms_simple }
 ```
 
-```{r, warning=F, echo=F }
+Model R^2
+
+```{r }
+r2beta(probe.memory_s$full_model, method='nsj', partial=F)
+```
+
+Results: Memory accuracy in egocentric and allocentric probe trials at session 1 and session 2 
+
+* no interactions, especially no group * session interaction!
+* group main effect: younger participants had worse memory accuracy than older participants (all groups differ from each other) 
+* session main effect: memory accuracy declines over 2-week period 
+* condition main effect: slightly better memory accuracy in egocentric compared to allocentric 
+* covariates: block significant, trial_in_block and sex not significant 
+
+```{r }
+probe.memory_s$anova_table
+```
+
+```{r }
+emmeans(probe.memory_s$full_model, pairwise ~ group, lmer.df="satterthwaite", adjust="bonferroni")$contrasts
+emmeans(probe.memory_s$full_model, pairwise ~ condition, lmer.df="satterthwaite", adjust="bonferroni")$contrasts
+emmeans(probe.memory_s$full_model, pairwise ~ session, lmer.df="satterthwaite", adjust="bonferroni")$contrasts
+```
+
+```{r, include=F}
+rm(probe.memory_s)
+```
+
+```{r,echo=F, fig.height=3, fig.height=4 }
 
 box_ego_delta_ms + labs(subtitle="Egocentric") + box_allo_delta_ms + labs(subtitle="Allocentric")  +
-  plot_annotation("Change in memory score in probe trials") + 
   plot_layout(guides="collect") & theme(legend.position="bottom", legend.justification=c(0,0))
 
 rm(box_ego_delta_ms, box_allo_delta_ms)
 ```
 
-```{r, stats_probe_ms_change }
+```{r, stats_probe_ms_change_AOV }
+```
+
+```{r, stats_probe_ms_change_WRS2 }
+```
+
+No significant group effect in conventional ANOVA. 
+
+```{r }
+probe.change_ms_aov
+```
+
+BUT: Significant group effect in robust ANOVA from WRS2. Children's memory declines significantly more than adult's memory. 
+
+```{r }
+probe.change_ms_raov
+probe.change_ms_raov_post
+```
+
+The difference between results occurs probably due to a smaller standard error in the robust analysis, as the trim=0.2 removes outliers and does not require homoscedastic variances. Supposedly the robust analysis is more trustworthy, however, the session x group interaction in the LMM did not become significant either. How to interpret this? 
+
+```{r, echo=F }
+ggResidpanel::resid_auxpanel(residuals=residuals(probe.change_ms_aov),
+                             predicted=fitted(probe.change_ms_aov))
+```
+
+```{r, include=F}
+rm(probe.change_ms_aov, probe.change_ms_raov, probe.change_ms_raov_post)
 ```
 
 \newpage 
 
-**Memory score (correct trials) for spatial precision**
+**Memory score (only correct trials) for spatial precision**
 
-```{r, warning=F, echo=F, fig.height=4 }
+```{r,echo=F, fig.height=3, fig.height=4 }
 
-box_ego_cor_ms + labs(subtitle="Egocentric") + box_allo_cor_ms + labs(subtitle="Allocentric") +
-  plot_annotation("Memory score in all correct probe trials for spatial precision") + 
+box_ego_cor_ms + labs(subtitle="Egocentric",  caption="y-axis was adjusted for better visibility") +
+  box_allo_cor_ms + labs(subtitle="Allocentric") +
   plot_layout(guides="collect") & theme(legend.position="bottom", legend.justification=c(0,0))
 
 rm(box_ego_cor_ms, box_allo_cor_ms)
 ```
 
-```{r, stats_probe_ms_in_corr, fig.height=4 }
+```{r, stats_probe_ms_corr_simple }
 ```
 
-```{r, warning=F, echo=F }
+Model R^2
+
+```{r }
+r2beta(probe.memory_corr_s$full_model, method='nsj', partial=F)
+```
+
+Results: Spatial precision in correctly solved egocentric and allocentric probe trials at session 1 and session 2.
+
+Correct trial = remembered goal location in correct alley or intersection in front of correct alley
+
+* no interactions, especially no group * session interaction!
+* group main effect: younger participants had worse spatial precision than older participants (all groups differ from each other) 
+* session main effect: spatial precision declines over 2-week period 
+* covariates: block, trial_in_block significant, sex not significant 
+
+```{r }
+probe.memory_corr_s$anova_table
+```
+
+```{r }
+emmeans(probe.memory_corr_s$full_model, pairwise ~ group, lmer.df="satterthwaite", adjust="bonferroni")$contrasts
+emmeans(probe.memory_corr_s$full_model, pairwise ~ session, lmer.df="satterthwaite", adjust="bonferroni")$contrasts
+```
+
+```{r, include=F}
+rm(probe.memory_corr_s)
+```
+
+```{r, echo=F, fig.height=3, fig.height=4 }
 
 box_ego_delta_cor_ms + labs(subtitle="Egocentric") + box_allo_delta_cor_ms + labs(subtitle="Allocentric")  +
-  plot_annotation("Change in memory score in correct probe trials") + 
   plot_layout(guides="collect") & theme(legend.position="bottom", legend.justification=c(0,0))
 
 rm(box_ego_delta_cor_ms, box_allo_delta_cor_ms)
 ```
 
-```{r, stats_probe_ms_corr_change }
+```{r, stats_probe_ms_change_corr_AOV }
+```
+
+```{r, stats_probe_ms_change_corr_WRS2 }
+```
+
+No significant group effect in conventional ANOVA and robust ANOVA. 
+
+```{r }
+probe.change_ms_corr_aov
+```
+
+```{r }
+probe.change_ms_corr_raov
+```
+
+```{r, include=F}
+rm(probe.change_ms_corr_raov, probe.change_ms_corr_aov)
+```
+
+
+\newpage
+
+#### Navigation behaviour
+
+**Time**
+
+```{r, echo=F, fig.height=3, fig.height=4 }
+
+box_ego_t + labs(subtitle="Egocentric") + box_allo_t + labs(subtitle="Allocentric") +
+  plot_layout(guides="collect") & theme(legend.position="bottom", legend.justification=c(0,0))
+
+rm(box_ego_t, box_allo_t)
+```
+
+```{r, stats_probe_time_simple}
+```
+
+Model R^2
+
+```{r }
+r2beta(probe.time_s$full_model, method='nsj', partial=F)
+```
+
+Results: Time in egocentric and allocentric probe trials at session 1 and session 2 
+
+* group * session interaction (marginal, contrasts tbd) 
+* group * condition interaction (marginal, contrasts tbd)
+* condition * session interaction (marginal, contrasts tbd)
+* group effect: 6-7-year-old children significantly slower than adults  
+* strong condition effect: allocentric trials significantly slower than egocentric 
+* covariates: trial_in_block, block, cov_t and sex all significant 
+
+```{r }
+probe.time_s$anova_table
+```
+
+```{r }
+emmeans(probe.time_s$full_model, pairwise ~ group, lmer.df="satterthwaite", adjust="bonferroni")$contrasts
+emmeans(probe.time_s$full_model, pairwise ~ condition, lmer.df="satterthwaite", adjust="bonferroni")$contrasts
+```
+
+```{r, include=F}
+rm(probe.time_s)
+```
+
+
+\newpage 
+
+**Excess path length**
+
+```{r, echo=F, fig.height=3, fig.height=4 }
+
+box_ego_p + labs(subtitle="Egocentric") + box_allo_p + labs(subtitle="Allocentric") +
+  plot_layout(guides="collect") & theme(legend.position="bottom", legend.justification=c(0,0))
+
+rm(box_ego_p, box_allo_p)
+```
+
+```{r, stats_probe_excess_path_simple }
+```
+
+Model R^2
+
+```{r }
+r2beta(probe.excess_path_s$full_model, method='nsj', partial=F)
+```
+
+Results: Excess path length in egocentric and allocentric probe trials at session 1 and session 2 
+
+* group * session interaction (contrasts tbd) 
+* group * condition interaction (contrasts tbd)
+* condition * session interaction (contrasts tbd)
+* group effect: 6-7-year-old children significantly less direct paths than adult; 9-10-year-old children significantly less direct paths than adults
+* strong condition effect: allocentric trials significantly less direct paths than egocentric 
+* covariates: trial_in_block, block significant, cov_p and sex not significant 
+
+```{r }
+probe.excess_path_s$anova_table
+```
+
+```{r }
+emmeans(probe.excess_path_s$full_model, pairwise ~ group, lmer.df="satterthwaite", adjust="bonferroni")$contrasts
+emmeans(probe.excess_path_s$full_model, pairwise ~ condition, lmer.df="satterthwaite", adjust="bonferroni")$contrasts
+```
+
+```{r, include=F}
+rm(probe.excess_path_s)
+```
+
+\newpage 
+
+**Presence in outer alleys (vs. inner ring)** 
+
+```{r, echo=F, fig.height=3, fig.height=4 }
+
+box_ego_pa + labs(subtitle="Egocentric") + box_allo_pa + labs(subtitle="Allocentric") +
+  plot_layout(guides="collect") & theme(legend.position="bottom", legend.justification=c(0,0))
+
+rm(box_ego_pa, box_ego_pa)
+```
+
+```{r, stats_probe_presence_alleys_simple}
+```
+
+Model R^2
+
+```{r }
+r2beta(probe.presence_alleys_s$full_model, method='nsj', partial=F)
+```
+
+Results: Presence in outer alleys (vs. inner ring) in egocentric and allocentric probe trials at session 1 and session 2 
+
+* no group differences & group interactions
+* condition * session interaction: 1) in egocentric trials relatively more time spend in outer alleys (compared to inner ring), whereas in allocentric trials more time spend in inner ring (compared to outer alleys). 2) in egocentric trials no change across sessions, whereas in allocentric trials the presence in outer alleys decreases across sessions. 
+* covariates: block significant, trial_in_block and sex not significant 
+
+```{r }
+probe.presence_alleys_s$anova_table
+```
+
+```{r }
+emm <- emmeans(probe.presence_alleys_s$full_model, ~ session * condition, lmer.df="satterthwaite")
+emm
+contrast(emm, con_list_session_condition, adjust="bonferroni")
+```
+
+```{r, include=F}
+rm(probe.presence_alleys_s)
 ```
 
 \newpage
 
-### Exploration allocentric trials 
+**Initial rotation**
+
+```{r, echo=F, fig.height=3, fig.height=4 }
+
+box_ego_ir + labs(subtitle="Egocentric") + box_allo_ir + labs(subtitle="Allocentric") +
+  plot_layout(guides="collect") & theme(legend.position="bottom", legend.justification=c(0,0))
+
+rm(box_ego_ir, box_allo_ir)
+```
+
+```{r, stats_probe_initial_rotation_simple}
+```
+
+Model R^2
+
+```{r }
+r2beta(probe.initial_rot_s$full_model, method='nsj', partial=F)
+```
+
+Results: Initial rotation in egocentric and allocentric probe trials at session 1 and session 2 
+
+* group * session * condition interaction (contrasts tbd)
+* group * session interaction (contrasts tbd)
+* session * condition interaction (contrasts tbd)
+* group * session interaction (contrasts tbd)
+* session main effect (contrasts tbd)
+* condition main effect (contrasts tbd) 
+* covariates: block significant, trial_in_block, cov_r and sex not significant 
+
+```{r }
+probe.initial_rot_s$anova_table
+```
+
+```{r, include=F}
+rm(probe.initial_rot_s)
+```
+
+
+\newpage
+
+**Rotation by path length**
+
+```{r, echo=F, fig.height=3, fig.height=4 }
+
+box_ego_rp + labs(subtitle="Egocentric") + box_allo_rp + labs(subtitle="Allocentric") +
+  plot_layout(guides="collect") & theme(legend.position="bottom", legend.justification=c(0,0))
+
+rm(box_ego_rp, box_allo_rp)
+```
+
+```{r, stats_probe_rotation_path_simple}
+```
+
+Model R^2
+
+```{r }
+r2beta(probe.rotation_path_s$full_model, method='nsj', partial=F)
+```
+
+Results: Rotation (normalized by path length) in egocentric and allocentric probe trials at session 1 and session 2 
+
+* group * session interaction (contrasts tbd)
+* session * condition interaction (contrasts tbd)
+* group * session interaction (contrasts tbd)
+* session main effect (contrasts tbd)
+* condition main effect (contrasts tbd) 
+* covariates: block, trial_in_block significant, cov_r and sex not significant 
+
+```{r }
+probe.rotation_path_s$anova_table
+```
+
+```{r, include=F}
+rm(probe.rotation_path_s)
+```
+
+\newpage 
+
+### Explorative analyses of allocentric trials 
 
 #### Navigation behavior
 
-**How present were participants in specific zones that indicate an egocentric or homing strategy** (only trials where egocentric alley is not original start alley, egocentric response only for trials with defined egocentric location)
+**How present were participants in specific zones that indicate an egocentric or homing strategy** (only allocentric trials where egocentric alley is not original start alley, egocentric response was available only for trials with defined egocentric location)
 
-```{r, warning=F, echo=F, fig.height=4 }
+Presence in zones is supposed to indicate the participant's navigation strategy: 
 
-box_allo_pres +  
-  plot_annotation("Exploration of presence in allocentric probe trials") & theme(legend.position="bottom", legend.justification=c(0,0))
+1. egocentric strategy (entering the alley where the egocentric route leads)
+2. homing strategy (entering the original start alley). 
+3. baseline serves as a reference and is defined as entering those alley(s) that were not the start, goal, egocentric and homing alley (can be 1-3 alleys)
 
+Caution: this is exploratory and based on few trials! 
+
+```{r, echo=F, fig.height=4 }
+box_allo_pres + theme(legend.position="bottom", legend.justification=c(0,0))
 rm(box_allo_pres)
 ```
 
-```{r, stats_probe_presence_in_allo}
+```{r, stats_probe_presence_in_allo_simple}
+```
+
+Model R^2
+
+```{r }
+r2beta(probe.allo_presence_s$full_model, method='nsj', partial=F)
+```
+
+Results: Presence in % in specific areas in allocentric probe trials at session 1 and session 2 
+
+* group * cond interaction (tbd)
+* session main effect: presence in these zones generally increased in session 2 
+* covariates: block significant, sex not significant 
+
+```{r }
+probe.allo_presence_s$anova_table
+```
+
+```{r, include=F}
+# emm <- emmeans(probe.allo_presence_s$full_model, ~ group * cond, lmer.df="satterthwaite")
+# con <- contrast(emm, con_list_group_cond, adjust="bonferroni")
+# con
+# emmeans(probe.allo_presence_s$full_model, pairwise ~ session, lmer.df="satterthwaite")$contrasts
+```
+
+```{r, include=F}
+rm(probe.allo_presence_s)
 ```
 
 \newpage
 
 #### Accuracy
 
-**How often did participants erroneously pick locations that indicate an egocentric or homing strategy** (only trials where egocentric alley is not original start alley, egocentric response only for trials with defined egocentric location)
+**How often did participants erroneously pick locations that indicate an egocentric or homing strategy** (only allocentric trials where egocentric alley is not original start alley, egocentric response only for trials with defined egocentric location)
 
-```{r, warning=F, echo=F, fig.height=4 }
+Chosen goal alley supposed to indicate the participant's navigation strategy: 
 
-box_allo_msa +  
-  plot_annotation("Exploration of memory score in allocentric probe trials") & theme(legend.position="bottom", legend.justification=c(0,0))
+1. egocentric (alley where the egocentric route leads as goal alley)
+2. homing (picking original start alley as goal alley). 
+3. baseline serves as a reference and is defined as entering those alley(s) that were not the start, goal, egocentric and homing alley (can be 1-3 alleys -> problem: average of 2-3 alleys is giving downward-bias, maybe max() instead of mean() value for baseline?)
 
+Caution: this is exploratory and based on few trials! 
+
+```{r, echo=F, fig.height=4 }
+box_allo_msa + theme(legend.position="bottom", legend.justification=c(0,0))
 rm(box_allo_msa)
 ```
 
-```{r, stats_probe_memory_in_allo }
+```{r, stats_probe_memory_in_allo_simple }
 ```
 
+Model R^2
+
+```{r }
+r2beta(probe.allo_memory_s$full_model, method='nsj', partial=F)
+```
+
+Results: Chosen goal alley in allocentric probe trials at session 1 and session 2 
+
+* session * cond interaction (tbd) 
+* group * session interaction (tbd)
+* cond main effect (tbd)
+* group main effect (tbd)
+* session main effect (tbd)
+* session main effect: presence in these zones generally increased in session 2 
+* covariates: block significant, sex not significant 
+
+```{r }
+probe.allo_memory_s$anova_table
+```
+
+```{r, include=F }
+# emm <- emmeans(probe.allo_memory_s$full_model, ~ group * cond, lmer.df="satterthwaite")
+# con <- contrast(emm, con_list_group_cond, adjust="bonferroni")
+# con
+```
+
+```{r, include=F}
+rm(probe.allo_memory_s)
+```
 \newpage 
 
+### Non-navigational memory tasks
 
-### Navigation behaviour: strategy use data 
-
-```{r, plots_probe_strategy, include=F }
-```
-
-Strategies are a qualitative description of the trajectory, independent of accuracy. For example, direct strategy means that the participant went straight to the chosen goal location without any detours or reorienting, independent of whether the chosen goal location was correct or incorrect. 
-
-*Criteria for strategy assignment*:
-
-* **Direct**: Shortest path to chosen goal location without re-entry of zones. Not necessarily correct goal location. 
-* **Detour**: Non-direct path without re-entry of zones to chosen goal location. 
-* **Reoriented**: Non-direct path with re-entry of zones to chosen goal location. 
-
-![Examples for strategies](./pics/Overview_Strategies.jpg){width=300px}
-
-```{r, warning=F, echo=F, fig.height=4 }
-
-bar_ego_strategy + labs(subtitle="Egocentric") + bar_allo_strategy + labs(subtitle="Allocentric") +
-  plot_annotation("Search strategy") + 
-  plot_layout(guides="collect") & theme(legend.position="bottom", legend.justification=c(0,0))
-
-rm(bar_ego_strategy, bar_allo_strategy, sm_strategy)
-```
-
-\newpage 
-
-## Correlations 
-
-*TBD*
-
-\newpage
-
-## Post-navigational memory tasks
-
-![Non-navigational memory retrieval at Day 14 (4 trials)](./pics/Overview_Session2_PostTest.jpg){width=500px}
+![Task overview](./pics/Overview_Session2_PostTest.jpg){width=500px}
 
 ```{r, plots_post_tests, include=F }
 ```
 
-```{r, warning=F, echo=F, fig.height=5 }
+```{r, echo=F, fig.height=4, fig.width=6 }
 
 layout + landmark_avg + gmda_avg + 
-  plot_annotation("Post-navigational memory tests") + 
   plot_layout(width=c(0.4, 0.2, 0.2), guides="collect") & theme(legend.position="bottom", legend.justification=c(0,0))
 
 rm(layout, layout_avg, landmark_details, landmark_avg, gmda_avg)
 ```
 
-### **Layout**
+#### **Layout**
+
+Significant age-related differences between all three groups in layout recognition.
 
 ```{r, stats_layout }
 ```
 
-### **Landmarks**
+#### **Landmarks**
+
+No sigificant group differences in landmark recognition. 
+
 ```{r, stats_landmark }
 ```
 
-### **Positioning**
+#### **Positioning**
+
+Children in both groups performed significantly worse in positioning.
+
 ```{r, stats_gmda }
 ```
 
 \newpage 
 
-## Motor Control Task 
+### Correlations 
+
+```{r, stats_corr_allo_ego }
+```
+
+```{r, stats_corr_layout }
+```
+
+```{r, stats_corr_landmark }
+```
+
+```{r, stats_corr_gmda }
+```
+\newpage
+
+### Appendix
+
+#### Motor Control Task 
 
 ![Motor control practise task](./pics/Motor_Control.jpg){width=600px}
 
 ``` {r, plots_motor_control, include=FALSE}
 ```
 
-```{r, warning=F, echo=F }
+```{r, echo=F }
 
 mc_t +  mc_v + mc_p + mc_r +
-  plot_annotation("Motor control practise task") +
   plot_layout(guides="collect") & theme(legend.position="bottom", legend.justification=c(0,0))
-
 ```
 
-## Excluded trials 
+#### Excluded trials 
 
 ``` {r, plots_excluded, include=FALSE}
 ```
 
-```{r, warning=F, echo=F, fig.height=4, fig.width=4 }
+```{r, echo=F, fig.height=3, fig.width=3 }
 
 ex2 +
-  plot_annotation("Overview of excluded trial data") + 
   plot_layout(guides="collect") & theme(legend.position="bottom", legend.justification=c(0,0))
 
-rm(ex1, ex2)
+rm(ex2)
 
 ```
-

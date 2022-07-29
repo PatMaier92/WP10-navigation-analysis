@@ -368,8 +368,8 @@ ex2_data <- sm_orig %>%
 
 ex2 <- ggplot(ex2_data, aes(x=n, fill=group, color=group)) + 
   geom_histogram(binwidth=1) + 
-  # scale_fill_manual(labels=mylabels, values=group_colors) + 
-  # scale_color_manual(labels=mylabels, values=group_colors_o) + 
+  scale_fill_manual(labels=mylabels, values=group_colors) +
+  scale_color_manual(labels=mylabels, values=group_colors_o) +
   theme_classic() + 
   theme(legend.position=c(0.8,0.8),
         legend.key.size = unit(0.5, 'cm')) + 
