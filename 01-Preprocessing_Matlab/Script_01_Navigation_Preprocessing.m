@@ -477,12 +477,15 @@ tic;
                     end
                     % FINAL DISTANCE to BASELINE ALLEY(S)
                     sm.participant(p).session(s).trial(k).final_distance_base=mean(fd);
+                    sm.participant(p).session(s).trial(k).final_distance_base2=max(fd);
                     
                     % MEMORY SCORE to BASELINE ALLEY(S)
-                    sm.participant(p).session(s).trial(k).memory_score_base=mean(ms); 
+                    sm.participant(p).session(s).trial(k).memory_score_base=mean(ms);
+                    sm.participant(p).session(s).trial(k).memory_score_base2=max(ms);
                     
                     % PRESENCE (rel. time in zone) in BASELINE ALLEY(S) 
-                    sm.participant(p).session(s).trial(k).presence_base=mean(pres); 
+                    sm.participant(p).session(s).trial(k).presence_base=mean(pres);
+                    sm.participant(p).session(s).trial(k).presence_base2=max(pres);
                     clear base* fd ms pres;    
                 else
                     % default values
