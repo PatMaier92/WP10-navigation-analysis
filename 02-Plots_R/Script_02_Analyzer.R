@@ -151,26 +151,16 @@ rm(covariates)
 ## ---- 
 
 ## ---- contrast_matrices 
+con_list_session_condition <- list(
+  "a_v_e_t1"  = c(1, 0, -1, 0), 
+  "a_v_e_t2"  = c(0, 1, 0, -1), 
+  "t1_v_t2_a" = c(1, -1, 0, 0),
+  "t1_v_t2_e" = c(0, 0, 1, -1))
+
 con_list_group_session <- list(
-  "t1_v_t2_YCH" = c(1, 0, 0, -1, 0, 0),
-  "t1_v_t2_OCH" = c(0, 1, 0, 0, -1, 0),
-  "t1_v_t2_YAD" = c(0, 0, 1, 0, 0, -1),
-  "YCH_v_OCH_t1" = c(1, -1, 0, 0, 0, 0),
-  "YCH_v_YAD_t1" = c(1, 0, -1, 0, 0, 0),
-  "OCH_v_YAD_t1" = c(0, 1, -1, 0, 0, 0)) 
-
-con_list_group_session2 <- list(
-  "t1_v_t2_YCH" = c(1, 0, 0, -1, 0, 0),
-  "t1_v_t2_OCH" = c(0, 1, 0, 0, -1, 0),
-  "t1_v_t2_YAD" = c(0, 0, 1, 0, 0, -1),
-  "YCH_v_OCH_t1" = c(1, -1, 0, 0, 0, 0),
-  "YCH_v_YAD_t1" = c(1, 0, -1, 0, 0, 0),
-  "OCH_v_YAD_t1" = c(0, 1, -1, 0, 0, 0),
-  "YCH_v_OCH_t2" = c(0, 0, 0, 1, -1, 0),
-  "YCH_v_YAD_t2" = c(0, 0, 0, 1, 0, -1),
-  "OCH_v_YAD_t2" = c(0, 0, 0, 0, 1, -1)) 
-
-con_list_group_session3 <- list(
+  "t1_v_t2_YCH"  = c(1, 0, 0, -1, 0, 0),
+  "t1_v_t2_OCH"  = c(0, 1, 0, 0, -1, 0),
+  "t1_v_t2_YAD"  = c(0, 0, 1, 0, 0, -1),
   "YCH_v_OCH_t1" = c(1, -1, 0, 0, 0, 0),
   "YCH_v_YAD_t1" = c(1, 0, -1, 0, 0, 0),
   "OCH_v_YAD_t1" = c(0, 1, -1, 0, 0, 0),
@@ -179,9 +169,9 @@ con_list_group_session3 <- list(
   "OCH_v_YAD_t2" = c(0, 0, 0, 0, 1, -1)) 
 
 con_list_group_condition <- list(
-  "a_vs_e_YCH" = c(1, 0, 0, -1, 0, 0),
-  "a_vs_e_OCH" = c(0, 1, 0, 0, -1, 0),
-  "a_vs_e_YAD" = c(0, 0, 1, 0, 0, -1),
+  "a_v_e_YCH"   = c(1, 0, 0, -1, 0, 0),
+  "a_v_e_OCH"   = c(0, 1, 0, 0, -1, 0),
+  "a_v_e_YAD"   = c(0, 0, 1, 0, 0, -1),
   "YCH_v_OCH_a" = c(1, -1, 0, 0, 0, 0),
   "YCH_v_YAD_a" = c(1, 0, -1, 0, 0, 0),
   "OCH_v_YAD_a" = c(0, 1, -1, 0, 0, 0),
@@ -189,11 +179,31 @@ con_list_group_condition <- list(
   "YCH_v_YAD_e" = c(0, 0, 0, 1, 0, -1),
   "OCH_v_YAD_e" = c(0, 0, 0, 0, 1, -1)) 
 
-con_list_session_condition <- list(
-  "a_vs_e_t1" = c(1, 0, -1, 0), 
-  "a_vs_e_t2" = c(0, 1, 0, -1), 
-  "t1_v_t2_a" = c(1, -1, 0, 0),
-  "t1_v_t2_e" = c(0, 0, 1, -1)) 
+con_list_group_session_condition <- list(
+  "YCH_v_OCH_t1_a" = c(1, -1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0),
+  "YCH_v_YAD_t1_a" = c(1, 0, -1, 0, 0, 0, 0, 0, 0, 0, 0, 0),
+  "OCH_v_YAD_t1_a" = c(0, 1, -1, 0, 0, 0, 0, 0, 0, 0, 0, 0),
+  "YCH_v_OCH_t2_a" = c(0, 0, 0, 1, -1, 0, 0, 0, 0, 0, 0, 0),
+  "YCH_v_YAD_t2_a" = c(0, 0, 0, 1, 0, -1, 0, 0, 0, 0, 0, 0),
+  "OCH_v_YAD_t2_a" = c(0, 0, 0, 0, 1, -1, 0, 0, 0, 0, 0, 0),
+  "YCH_v_OCH_t1_e" = c(0, 0, 0, 0, 0, 0, 1, -1, 0, 0, 0, 0),
+  "YCH_v_YAD_t1_e" = c(0, 0, 0, 0, 0, 0, 1, 0, -1, 0, 0, 0),
+  "OCH_v_YAD_t1_e" = c(0, 0, 0, 0, 0, 0, 0, 1, -1, 0, 0, 0),
+  "YCH_v_OCH_t2_e" = c(0, 0, 0, 0, 0, 0, 0, 0, 0, 1, -1, 0),
+  "YCH_v_YAD_t2_e" = c(0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, -1),
+  "OCH_v_YAD_t2_e" = c(0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, -1),
+  "t1_v_t2_YCH_a"  = c(1, 0, 0, -1, 0, 0, 0, 0, 0, 0, 0, 0),
+  "t1_v_t2_OCH_a"  = c(0, 1, 0, 0, -1, 0, 0, 0, 0, 0, 0, 0),
+  "t1_v_t2_YAD_a"  = c(0, 0, 1, 0, 0, -1, 0, 0, 0, 0, 0, 0),
+  "t1_v_t2_YCH_e"  = c(0, 0, 0, 0, 0, 0, 1, 0, 0, -1, 0, 0),
+  "t1_v_t2_OCH_e"  = c(0, 0, 0, 0, 0, 0, 0, 1, 0, 0, -1, 0),
+  "t1_v_t2_YAD_e"  = c(0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, -1),
+  "a_v_e_t1_YCH"   = c(1, 0, 0, 0, 0, 0, -1, 0, 0, 0, 0, 0),
+  "a_v_e_t1_OCH"   = c(0, 1, 0, 0, 0, 0, 0, -1, 0, 0, 0, 0),
+  "a_v_e_t1_YAD"   = c(0, 0, 1, 0, 0, 0, 0, 0, -1, 0, 0, 0),
+  "a_v_e_t2_YCH"   = c(0, 0, 0, 1, 0, 0, 0, 0, 0, -1, 0, 0),
+  "a_v_e_t2_OCH"   = c(0, 0, 0, 0, 1, 0, 0, 0, 0, 0, -1, 0),
+  "a_v_e_t2_YAD"   = c(0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, -1)) 
 
 con_list_group_cond <- list(
   "YCH_v_OCH_base"   = c(1, -1, 0, 0, 0, 0, 0, 0, 0), 
@@ -916,16 +926,19 @@ probe.time_o
 anova.lme(probe.time_h, type="marginal")
 rm(probe.time_s, probe.time_o, probe.time_h)
 
-# emm1 <- emmeans(probe.time_final, ~ group * session)
+# emm1 <- emmeans(probe.time_s, ~ group * session, lmer.df="satterthwaite")
 # con1 <- contrast(emm1, con_list_group_session, adjust="bonferroni")
 # con1
-# emm2 <- emmeans(probe.time_final, ~ group * condition)
+# emm2 <- emmeans(probe.time_s, ~ group * condition, lmer.df="satterthwaite")
 # con2 <- contrast(emm2, con_list_group_condition, adjust="bonferroni")
 # con2
-# emm3 <- emmeans(probe.time_final, ~ session * condition)
+# emm3 <- emmeans(probe.time_s, ~ session * condition, lmer.df="satterthwaite")
 # con3 <- contrast(emm3, con_list_session_condition, adjust="bonferroni")
 # con3
-# rm(probe.time_final, con1, con2, con3, emm1, emm2, emm3)
+# # emm4 <- emmeans(probe.time_s, ~ group * session * condition, lmer.df="satterthwaite")
+# # con4 <- contrast(emm4, con_list_group_session_condition, adjust="bonferroni")
+# # con4
+# rm(probe.time_s, con1, con2, con3, con4, emm1, emm2, emm3, emm4)
 
 # helper plots
 ggplot(data, aes(x=time)) + geom_histogram()
@@ -997,16 +1010,19 @@ probe.excess_path_o
 anova.lme(probe.excess_path_h, type="marginal")
 rm(probe.excess_path_s, probe.excess_path_o, probe.excess_path_h)
 
-# emm1 <- emmeans(probe.excess_path_final, ~ group * session)
-# con1 <- contrast(emm1, con_list_group_session2, adjust="bonferroni")
-# con1
-# emm2 <- emmeans(probe.excess_path_final, ~ group * condition)
-# con2 <- contrast(emm2, con_list_group_condition, adjust="bonferroni")
-# con2
-# emm3 <- emmeans(probe.excess_path_final, ~ session * condition)
-# con3 <- contrast(emm3, con_list_session_condition, adjust="bonferroni")
-# con3
-# rm(probe.excess_path_final, emm1, emm2, emm3, con1, con2, con3)
+emm1 <- emmeans(probe.excess_path_s, ~ group * session, lmer.df="satterthwaite")
+con1 <- contrast(emm1, con_list_group_session, adjust="bonferroni")
+con1
+emm2 <- emmeans(probe.excess_path_s, ~ group * condition, lmer.df="satterthwaite")
+con2 <- contrast(emm2, con_list_group_condition, adjust="bonferroni")
+con2
+emm3 <- emmeans(probe.excess_path_s, ~ session * condition, lmer.df="satterthwaite")
+con3 <- contrast(emm3, con_list_session_condition, adjust="bonferroni")
+con3
+# emm4 <- emmeans(probe.excess_path_s, ~ group * session * condition, lmer.df="satterthwaite")
+# con4 <- contrast(emm4, con_list_group_session_condition, adjust="bonferroni")
+# con4
+rm(probe.excess_path_s, con1, con2, con3, con4, emm1, emm2, emm3, emm4)
 
 # helper plots 
 ggplot(data, aes(x=excess_path_length)) + geom_histogram()
@@ -1078,11 +1094,10 @@ probe.presence_alleys_o
 anova.lme(probe.presence_alleys_h, type="marginal")
 rm(probe.presence_alleys_s, probe.presence_alleys_o, probe.presence_alleys_h)
 
-# emmeans(probe.presence_alleys_final, pairwise ~ block_f)$contrasts
-# emm1 <- emmeans(probe.presence_alleys_final, ~ session * condition)
+# emm1 <- emmeans(probe.presence_alleys_s, ~ session * condition, lmer.df="satterthwaite")
 # con1 <- contrast(emm1, con_list_session_condition, adjust="bonferroni")
 # con1
-# rm(probe.presence_alleys_final, emm1, con1)
+# rm(probe.presence_alleys_s, emm1, con1)
 
 # helper plot
 ggplot(data, aes(x=session, y=presence_alleys)) + geom_boxplot() + facet_grid(~ condition) 
@@ -1152,6 +1167,11 @@ probe.initial_rot_s
 probe.initial_rot_o
 anova.lme(probe.initial_rot_h, type="marginal")
 rm(probe.initial_rot_s, probe.initial_rot_o, probe.initial_rot_h)
+
+# emm1 <- emmeans(probe.initial_rot_s, ~ group * session * condition, lmer.df="satterthwaite")
+# con1 <- contrast(emm1, con_list_group_session_condition, adjust="bonferroni")
+# con1
+# rm(probe.initial_rot_s, emm1, con1)
 
 # helper plots
 ggplot(data, aes(x=initial_rotation_turns)) + geom_histogram()
@@ -1224,13 +1244,19 @@ probe.rotation_path_o
 anova.lme(probe.rotation_path_h, type="marginal")
 rm(probe.rotation_path_s, probe.rotation_path_o, probe.rotation_path_h)
 
-# emm1 <- emmeans(probe.rot_final, ~ group * condition)
-# con1 <- contrast(emm1, con_list_group_condition, adjust="bonferroni")
+# emm1 <- emmeans(probe.rotation_path_s, ~ group * session, lmer.df="satterthwaite")
+# con1 <- contrast(emm1, con_list_group_session, adjust="bonferroni")
 # con1
-# emm2 <- emmeans(probe.rot_final, ~ session * condition)
-# con2 <- contrast(emm2, con_list_session_condition, adjust="bonferroni")
+# emm2 <- emmeans(probe.rotation_path_s, ~ group * condition, lmer.df="satterthwaite")
+# con2 <- contrast(emm2, con_list_group_condition, adjust="bonferroni")
 # con2
-# rm(probe.rot_final, con1, con2, emm1, emm2)
+# emm3 <- emmeans(probe.rotation_path_s, ~ session * condition, lmer.df="satterthwaite")
+# con3 <- contrast(emm3, con_list_session_condition, adjust="bonferroni")
+# con3
+# # emm4 <- emmeans(probe.rotation_path_s, ~ group * session * condition, lmer.df="satterthwaite")
+# # con4 <- contrast(emm4, con_list_group_session_condition, adjust="bonferroni")
+# # con4
+# rm(probe.rotation_path_s, con1, con2, con3, con4, emm1, emm2, emm3, emm4)
 
 # helper plots
 ggplot(data, aes(x=rotation_turns_by_path_length)) + geom_histogram()
