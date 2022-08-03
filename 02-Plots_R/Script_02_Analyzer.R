@@ -7,9 +7,9 @@
 ## ---- analysis_packages_and_sum_coding
 library(tidyverse)
 library(janitor)
-library(gt)
+#library(gt)
 library(flextable)
-library(xtable)
+#library(xtable)
 library(gtsummary)
 library(performance)
 library(rstatix)
@@ -26,6 +26,7 @@ library(emmeans)
 library(r2glmm)
 library(car)
 # library(DHARMa)
+library(papaja)
 # install.packages('tinytex')
 # tinytex::install_tinytex() # latex for pdf file creation
 
@@ -104,12 +105,24 @@ data_allo2 <- data %>%
   filter(condition=="allo_ret", ego_alley!=7) %>% 
   select(id, sex, group, session, condition, trial, goal_f, block_f, 
          starts_with("memory_score_"), starts_with("presence_"), starts_with("time_in_")) %>% 
-  select(-ends_with("pentagon"), -ends_with("alleys")) %>% 
+  select(-ends_with("pentagon"), -ends_with("alleys"), -ends_with("2")) %>% 
   pivot_longer(cols=c(ends_with("ego"), ends_with("home"), ends_with("base")), 
                names_to=c("variable", "cond"),
                names_pattern='(.*)_(\\w+)') %>% 
   pivot_wider(names_from=variable, values_from=value) %>% 
   mutate(cond=factor(cond, levels=c("base", "ego", "home"))) %>% 
+  droplevels()
+
+data_allo3 <- data %>%
+  filter(condition=="allo_ret", ego_alley!=7) %>% 
+  select(id, sex, group, session, condition, trial, goal_f, block_f, 
+         starts_with("memory_score_"), starts_with("presence_"), starts_with("time_in_")) %>% 
+  select(-ends_with("pentagon"), -ends_with("alleys"), -ends_with("base")) %>% 
+  pivot_longer(cols=c(ends_with("ego"), ends_with("home"), ends_with("base2")), 
+               names_to=c("variable", "cond"),
+               names_pattern='(.*)_(\\w+)') %>% 
+  pivot_wider(names_from=variable, values_from=value) %>% 
+  mutate(cond=factor(cond, levels=c("base2", "ego", "home"))) %>% 
   droplevels()
 
 # probe aggregated change 
@@ -212,18 +225,56 @@ con_list_group_cond <- list(
   "YCH_v_OCH_ego"    = c(0, 0, 0, 1, -1, 0, 0, 0, 0), 
   "YCH_v_YAD_ego"    = c(0, 0, 0, 1, 0, -1, 0, 0, 0), 
   "OCH_v_YAD_ego"    = c(0, 0, 0, 0, 1, -1, 0, 0, 0), 
-  "YCH_v_OCH_home"  = c(0, 0, 0, 0, 0, 0, 1, -1, 0), 
-  "YCH_v_YAD_home"  = c(0, 0, 0, 0, 0, 0, 1, 0, -1), 
-  "OCH_v_YAD_home"  = c(0, 0, 0, 0, 0, 0, 0, 1, -1), 
+  "YCH_v_OCH_home"   = c(0, 0, 0, 0, 0, 0, 1, -1, 0), 
+  "YCH_v_YAD_home"   = c(0, 0, 0, 0, 0, 0, 1, 0, -1), 
+  "OCH_v_YAD_home"   = c(0, 0, 0, 0, 0, 0, 0, 1, -1), 
   "base_v_ego_YCH"   = c(1, 0, 0, -1, 0, 0, 0, 0, 0),
-  "base_v_home_YCH" = c(1, 0, 0, 0, 0, 0, -1, 0, 0),
-  "ego_v_home_YCH"  = c(0, 0, 0, 1, 0, 0, -1, 0, 0),
+  "base_v_home_YCH"  = c(1, 0, 0, 0, 0, 0, -1, 0, 0),
+  "ego_v_home_YCH"   = c(0, 0, 0, 1, 0, 0, -1, 0, 0),
   "base_v_ego_OCH"   = c(0, 1, 0, 0, -1, 0, 0, 0, 0),
-  "base_v_home_OCH" = c(0, 1, 0, 0, 0, 0, 0, -1, 0),
-  "ego_v_home_OCH"  = c(0, 0, 0, 0, 1, 0, 0, -1, 0),
+  "base_v_home_OCH"  = c(0, 1, 0, 0, 0, 0, 0, -1, 0),
+  "ego_v_home_OCH"   = c(0, 0, 0, 0, 1, 0, 0, -1, 0),
   "base_v_ego_YAD"   = c(0, 0, 1, 0, 0, -1, 0, 0, 0),
-  "base_v_home_YAD" = c(0, 0, 1, 0, 0, 0, 0, 0, -1),
-  "ego_v_home_YAD"  = c(0, 0, 0, 0, 0, 1, 0, 0, -1))
+  "base_v_home_YAD"  = c(0, 0, 1, 0, 0, 0, 0, 0, -1),
+  "ego_v_home_YAD"   = c(0, 0, 0, 0, 0, 1, 0, 0, -1))
+
+con_list_group_session_cond <- list(
+  "b_v_e_YCH_t1" = c(1, 0, 0, 0, 0, 0, -1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0),
+  "b_v_h_YCH_t1" = c(1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, -1, 0, 0, 0, 0, 0),
+  "e_v_h_YCH_t1" = c(0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, -1, 0, 0, 0, 0, 0),
+  "b_v_e_OCH_t1" = c(0, 1, 0, 0, 0, 0, 0, -1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0),
+  "b_v_h_OCH_t1" = c(0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, -1, 0, 0, 0, 0),
+  "e_v_h_OCH_t1" = c(0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, -1, 0, 0, 0, 0),
+  "b_v_e_YAD_t1" = c(0, 0, 1, 0, 0, 0, 0, 0, -1, 0, 0, 0, 0, 0, 0, 0, 0, 0),
+  "b_v_h_YAD_t1" = c(0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, -1, 0, 0, 0),
+  "e_v_h_YAD_t1" = c(0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, -1, 0, 0, 0),
+  "b_v_e_YCH_t2" = c(0, 0, 0, 1, 0, 0, 0, 0, 0, -1, 0, 0, 0, 0, 0, 0, 0, 0),
+  "b_v_h_YCH_t2" = c(0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, -1, 0, 0),
+  "e_v_h_YCH_t2" = c(0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, -1, 0, 0),
+  "b_v_e_OCH_t2" = c(0, 0, 0, 0, 1, 0, 0, 0, 0, 0, -1, 0, 0, 0, 0, 0, 0, 0),
+  "b_v_h_OCH_t2" = c(0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, -1, 0),
+  "e_v_h_OCH_t2" = c(0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, -1, 0),
+  "b_v_e_YAD_t2" = c(0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, -1, 0, 0, 0, 0, 0, 0),
+  "b_v_h_YAD_t2" = c(0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, -1),
+  "e_v_h_YAD_t2" = c(0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, -1),
+  "YCH_v_OCH_b_t1" = c(1, -1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0),
+  "YCH_v_YAD_b_t1" = c(1, 0, -1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0),
+  "OCH_v_YAD_b_t1" = c(0, 1, -1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0),
+  "YCH_v_OCH_b_t2" = c(0, 0, 0, 1, -1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0),
+  "YCH_v_YAD_b_t2" = c(0, 0, 0, 1, 0, -1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0),
+  "OCH_v_YAD_b_t2" = c(0, 0, 0, 0, 1, -1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0),
+  "YCH_v_OCH_e_t1" = c(0, 0, 0, 0, 0, 0, 1, -1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0),
+  "YCH_v_YAD_e_t1" = c(0, 0, 0, 0, 0, 0, 1, 0, -1, 0, 0, 0, 0, 0, 0, 0, 0, 0),
+  "OCH_v_YAD_e_t1" = c(0, 0, 0, 0, 0, 0, 0, 1, -1, 0, 0, 0, 0, 0, 0, 0, 0, 0),
+  "YCH_v_OCH_e_t2" = c(0, 0, 0, 0, 0, 0, 0, 0, 0, 1, -1, 0, 0, 0, 0, 0, 0, 0),
+  "YCH_v_YAD_e_t2" = c(0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, -1, 0, 0, 0, 0, 0, 0),
+  "OCH_v_YAD_e_t2" = c(0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, -1, 0, 0, 0, 0, 0, 0),
+  "YCH_v_OCH_h_t1" = c(0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, -1, 0, 0, 0, 0),
+  "YCH_v_YAD_h_t1" = c(0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, -1, 0, 0, 0),
+  "OCH_v_YAD_h_t1" = c(0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, -1, 0, 0, 0),
+  "YCH_v_OCH_h_t2" = c(0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, -1, 0),
+  "YCH_v_YAD_h_t2" = c(0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, -1),
+  "OCH_v_YAD_h_t2" = c(0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, -1))
 ## ----
 
 
@@ -1318,11 +1369,8 @@ probe.allo_presence_s
 anova.lme(probe.allo_presence_h, type="marginal")
 rm(probe.allo_presence_s, probe.allo_presence_h)
 
-# emm <- emmeans(probe.pres_allo_final, ~ group * cond)
-# con <- contrast(emm, con_list_group_cond, adjust="bonferroni")
-# con
-# emmeans(probe.pres_allo_final, pairwise ~ session)$contrasts
-# emmeans(probe.pres_allo_final, pairwise ~ sex)$contrasts
+# emm <- emmeans(probe.allo_presence_s, ~ group * cond)
+# contrast(emm, con_list_group_cond, adjust="bonferroni")
 
 # helper plots 
 ggplot(data=data_allo2, aes(x=presence)) + geom_histogram()
@@ -1378,9 +1426,8 @@ probe.allo_memory_s
 anova.lme(probe.allo_memory_h, type="marginal")
 rm(probe.allo_memory_s, probe.allo_memory_h)
 
-# emmeans(probe.mem_allo_final, pairwise ~ session | cond, adjust="bonferroni")$contrasts
-# emmeans(probe.mem_allo_final, pairwise ~ cond | session, adjust="bonferroni")$contrasts
-# emmeans(probe.mem_allo_final, pairwise ~ cond, adjust="bonferroni")$contrasts
+# emm <- emmeans(probe.allo_memory_s3, ~ group*session*cond, lmer.df="satterthwaite")
+# contrast(emm, con_list_group_session_cond, adjust="bonferroni")
 
 # helper plots 
 ggplot(data=data_allo2, aes(x=memory_score)) + geom_histogram()

@@ -2,15 +2,20 @@
 title: "Preliminary Descriptives & Plots of Starmaze Data"
 author: "Patrizia Maier"
 date: "`r format(Sys.time(), '%d %B, %Y')`"
+output: 
+  bookdown::html_document2:
+    fig_caption: yes
+    global_numbering: TRUE
+    number_sections: TRUE
 ---
 
-## Task
+# Task
 
 Navigating a star-shaped maze environment ("Starmaze") with three goal locations.
 
 ![Map of the environment](./pics/Starmaze_Environment.jpg){width=400px}
 
-## Sessions
+# Sessions
 
 *Day 2*
 
@@ -68,14 +73,14 @@ np_AD <- length(unique(pt_data$id[pt_data$group=="YoungAdults"]))
 ```{r, contrast_matrices, include=FALSE}
 ```
 
-## Sample
+# Sample
 Cross-sectional comparison between
 
 * Young kids (6-7 yrs, n = `r nn_YK`, non-navigational n = `r np_YK`) 
 * Older kids (9-10 yrs, n = `r nn_OK`, non-navigational n = `r np_OK`)
 * Young adults (18-35 yrs, n = `r nn_AD`, non-navigational n = `r np_AD`)
 
-## Variables of interest
+# Variables of interest
 
 In training trials, the goal is visible, i.e. the trial is always completed successfully. In probe trials, the goal is not visible. Participants go to the place where they remember the goal being located and press a button. 
 
@@ -100,7 +105,7 @@ $$\text{Rotation by path length} = \frac {\sum |(z_{t}-z_{t+1})|} {path} * \frac
 
 ![Visualization of variables of interest](./pics/Var_all.jpg){width=300px,height=500x}
 
-## Statistical analysis
+# Statistical analysis
 
 All linear mixed models (LMM) were computed using the mixed() function from the afex package (Singmann et al., 2022), which is based on lmer() from the lme4 package (Bates et al., 2015). The diagnostic plots showed non-normality, outliers and heteroscedastic variances (especially larger variance in children compared to adults). To account for this, we computed additional models 1. excluding outliers (defined as above/below the upper/lower quantile plus/minus 1.5 * IQR, similar to Bellmund et al., 2019) and 2. models with heterogeneous variances with lme() from the nlme package (Pinheiro & Bates, 2022). The results did not change substantially, which is why we decided to use the most simple LMM approach. 
 
@@ -116,16 +121,16 @@ Aggregated values were analyzed with robust ANOVAs from the WRS2 package (Mair &
 
 \newpage
 
-## Results 
+# Results 
 
-### Learning curves in training trials at Day 2 
+## Training trials at Day 2 
 
 ```{r, plots_learning_trialwise, include=F }
 ```
 
-#### **Time**
+### **Time**
 
-```{r,echo=F, fig.height=3, fig.width=3 }
+```{r, echo=F, fig.height=3, fig.width=3, fig.cap="Trial curve for time in training." }
 line_t 
 rm(line_t)
 ```
@@ -133,32 +138,49 @@ rm(line_t)
 ```{r, stats_learn_time_simple }
 ```
 
-Model R^2
+```{r apa_learn_time, include=F}
+R2 <- r2beta(learn.time_s$full_model, method='nsj', partial=F) %>% mutate_all(apa_num)
 
-```{r }
-r2beta(learn.time_s$full_model, method='nsj', partial=F)
+apa_lmm <- apa_print(learn.time_s)
+apa_lmm <- apa_lmm$table %>% mutate(term=str_replace_all(term, c(" c| f"), ''))
+
+emm <- emmeans(learn.time_s, pairwise ~ group, lmer.df="satterthwaite", adjust="bonferroni")$contrasts
+apa_emm <- apa_print(emm) 
+apa_emm <- apa_emm$table %>% remove_rownames()
 ```
 
-Results: The time per trial decreased across trials (main effect *trial_in_block_c*) but there were no group differences in the slope of the decrease (no interaction *group x trial_in_block_c interaction*). The groups differed in time per trial (main effect *group*). More specifically 6-7-year-old children were slower than 9-10-year-old children and adults, there were no differences between 9-10-year-old children and adults. 
-Covariates: significant influence of time covariate from joystick practise trial (cov_t) and block, no influence of sex. 
+The model had a fit of $R2 = `r R2$Rsq`, [CI: `r R2$upper.CL`, `r R2$lower.CL`$].
 
-```{r }
-learn.time_s$anova_table
+The time per trial decreased across trials (main effect *trial in block*) but there were no group differences in the slope of the decrease (no interaction *group x trial in block interaction*). The groups differed in time per trial (main effect *group*). More specifically 6-7-year-old children were slower than 9-10-year-old children and adults, there were no differences between 9-10-year-old children and adults (Table\ \@ref(tab:table-learn-time1) & \@ref(tab:table-learn-time2)). 
+
+(ref:l-t-caption1) Fixed effects for time in training.
+
+```{r table-learn-time1, echo=F}
+apa_table(
+  apa_lmm,
+  caption="(ref:l-t-caption1)",
+  placement="h")
+# `r apa_lm$statistic$group`
 ```
 
-```{r }
-emmeans(learn.time_s$full_model, pairwise ~ group, lmer.df="satterthwaite", adjust="bonferroni")$contrasts
+(ref:l-t-caption2) Post-hoc contrasts for factor group.
+
+```{r table-learn-time2, echo=F}
+apa_table(
+  apa_emm,
+  caption="(ref:l-t-caption2)",
+  placement="h")
 ```
 
 ```{r, include=F}
-rm(learn.time_s)
+rm(learn.time_s, R2, apa_lmm, apa_emm, emm)
 ```
 
 \newpage
 
-#### **Excess path length**
+### **Excess path length**
 
-```{r, echo=F, fig.height=3, fig.width=3 }
+```{r, echo=F, fig.height=3, fig.width=3, fig.cap="Trial curve for excess path in training." }
 line_p 
 rm(line_p)
 ```
@@ -166,32 +188,48 @@ rm(line_p)
 ```{r, stats_learn_excess_path_simple }
 ```
 
-Model R^2
+```{r apa_learn_excess_path, include=F}
+R2 <- r2beta(learn.excess_path_s$full_model, method='nsj', partial=F) %>% mutate_all(apa_num)
 
-```{r }
-r2beta(learn.excess_path_s$full_model, method='nsj', partial=F)
+apa_lmm <- apa_print(learn.excess_path_s)
+apa_lmm <- apa_lmm$table %>% mutate(term=str_replace_all(term, c(" c| f"), ''))
+
+emm <- emmeans(learn.excess_path_s, pairwise ~ group, lmer.df="satterthwaite", adjust="bonferroni")$contrasts
+apa_emm <- apa_print(emm) 
+apa_emm <- apa_emm$table %>% remove_rownames()
 ```
 
-Results: The excess path length decreased across trials (main effect *trial_in_block_c*) but there were no group differences in the slope of the decrease (no interaction *group x trial_in_block_c* ). The groups differed in excess path length (main effect *group*). More specifically younger participants had longer excess paths, meaning they took less direct routes, compare to older participants (all groups differed from each other). 
-Covariates: significant influence of path covariate from joystick practise trial (cov_p) and block, no influence of sex. 
+The model had a fit of $R2 = `r R2$Rsq`, [CI: `r R2$upper.CL`, `r R2$lower.CL`$].
 
-```{r }
-learn.excess_path_s$anova_table
+The excess path length decreased across trials (main effect *trial in block*) but there were no group differences in the slope of the decrease (no interaction *group x trial in block* ). The groups differed in excess path length (main effect *group*). More specifically younger participants had longer excess paths, meaning they took less direct routes, compare to older participants (all groups differed from each other) (Table\ \@ref(tab:table-learn-excess1) & \@ref(tab:table-learn-excess2)). 
+
+(ref:l-ep-caption1) Fixed effects for excess path length in training.
+
+```{r table-learn-excess1, echo=F}
+apa_table(
+  apa_lmm,
+  caption="(ref:l-ep-caption1)",
+  placement="h")
 ```
 
-```{r }
-emmeans(learn.excess_path_s$full_model, pairwise ~ group, lmer.df="satterthwaite", adjust="bonferroni")$contrasts
+(ref:l-ep-caption2) Post-hoc contrasts for factor group.
+
+```{r table-learn-excess2, echo=F}
+apa_table(
+  apa_emm,
+  caption="(ref:l-ep-caption2)",
+  placement="h")
 ```
 
 ```{r, include=F}
-rm(learn.excess_path_s)
+rm(learn.excess_path_s, R2, apa_lmm, apa_emm, emm)
 ```
 
 \newpage
 
-#### **Presence in outer alleys (vs. inner ring)**
+### **Presence in outer alleys (vs. inner ring)**
 
-```{r, echo=F, fig.height=3, fig.width=3 }
+```{r, echo=F, fig.height=3, fig.width=3, fig.cap="Trial curve for relative presence in alleys in training." }
 line_pa + coord_cartesian(ylim=c(0.4, 0.6)) + labs(caption="y-axis adjusted for better visibility")
 rm(line_pa)
 ```
@@ -199,32 +237,48 @@ rm(line_pa)
 ```{r, stats_learn_presence_simple }
 ```
 
-Model R^2
+```{r apa_learn_presence, include=F}
+R2 <- r2beta(learn.presence_alleys_s$full_model, method='nsj', partial=F) %>% mutate_all(apa_num)
 
-```{r }
-r2beta(learn.presence_alleys_s$full_model, method='nsj', partial=F)
+apa_lmm <- apa_print(learn.presence_alleys_s)
+apa_lmm <- apa_lmm$table %>% mutate(term=str_replace_all(term, c(" c| f"), ''))
+
+emm <- emmeans(learn.presence_alleys_s, pairwise ~ group, lmer.df="satterthwaite", adjust="bonferroni")$contrasts
+apa_emm <- apa_print(emm) 
+apa_emm <- apa_emm$table %>% remove_rownames()
 ```
 
-Results: Presence in the five outer alleys (relative to the inner ring) increased across trials, i.e. participant preferentially stayed in the outer alleys compared to the inner ring (main effect *trial_in_block_c*) but there were no group differences in the slope of the increase (no interaction *group x trial_in_block_c*). The groups differed in their relative presence in the outer alleys (main effect *group*). More specifically 6-7-year-old children spend relatively less time in the outer alleys (and more in the inner ring) than 9-10-year-old children and adults. There were no differences between 9-10-year-old children and adults.
-Covariates: significant influence of block, no influence of sex. 
+The model had a fit of $R2 = `r R2$Rsq`, [CI: `r R2$upper.CL`, `r R2$lower.CL`$].
 
-```{r }
-learn.presence_alleys_s$anova_table
+Presence in the five outer alleys (relative to the inner ring) increased across trials, i.e. participant preferentially stayed in the outer alleys compared to the inner ring (main effect *trial in block*) but there were no group differences in the slope of the increase (no interaction *group x trial in block*). The groups differed in their relative presence in the outer alleys (main effect *group*). More specifically 6-7-year-old children spend relatively less time in the outer alleys (and more in the inner ring) than 9-10-year-old children and adults. There were no differences between 9-10-year-old children and adults (Table\ \@ref(tab:table-learn-presence1) & \@ref(tab:table-learn-presence2)). 
+
+(ref:l-pa-caption1) Fixed effects for presence in alleys in training.
+
+```{r table-learn-presence1, echo=F}
+apa_table(
+  apa_lmm,
+  caption="(ref:l-pa-caption1)",
+  placement="h")
 ```
 
-```{r }
-emmeans(learn.presence_alleys_s$full_model, pairwise ~ group, lmer.df="satterthwaite", adjust="bonferroni")$contrasts
+(ref:l-pa-caption2) Post-hoc contrasts for factor group.
+
+```{r table-learn-presence2, echo=F}
+apa_table(
+  apa_emm,
+  caption="(ref:l-pa-caption2)",
+  placement="h")
 ```
 
 ```{r, include=F}
-rm(learn.presence_alleys_s)
+rm(learn.presence_alleys_s, R2, apa_lmm, apa_emm, emm)
 ```
 
 \newpage
 
-#### **Initial Rotation**
+### **Initial Rotation**
 
-```{r,echo=F, fig.height=3, fig.width=3 }
+```{r,echo=F, fig.height=3, fig.width=3, fig.cap="Trial curve for initial rotation in training." }
 line_ir
 rm(line_ir)
 ```
@@ -232,32 +286,48 @@ rm(line_ir)
 ```{r, stats_learn_initial_rotation_simple }
 ```
 
-Model R^2
+```{r apa_learn_initial_rotation, include=F}
+R2 <- r2beta(learn.initial_rot_s$full_model, method='nsj', partial=F) %>% mutate_all(apa_num)
 
-```{r }
-r2beta(learn.initial_rot_s$full_model, method='nsj', partial=F)
+apa_lmm <- apa_print(learn.initial_rot_s)
+apa_lmm <- apa_lmm$table %>% mutate(term=str_replace_all(term, c(" c| f"), ''))
+
+emm <- emtrends(learn.initial_rot_s$full_model, pairwise ~ group, var="trial_in_block_c", lmer.df="satterthwaite", adjust="bonferroni")$contrasts
+apa_emm <- apa_print(emm)
+apa_emm <- apa_emm$table %>% remove_rownames()
 ```
 
-Results: Rotation in the initial area did not change generally across trials (no main effect *trial_in_block_c*) but there was an interaction *group x trial_in_block_c*. More specifically, adults had a stronger decrease in initial rotation across trials compared to 6-7-year-old children (who displayed no change). The slopes did not differ for any other group comparisons. 
-Covariates: no significant influence of rotation covariate from joystick practise trial (cov_r), no influence of block and sex. 
+The model had a fit of $R2 = `r R2$Rsq`, [CI: `r R2$upper.CL`, `r R2$lower.CL`$].
 
-```{r }
-learn.initial_rot_s$anova_table
+Rotation in the initial area did not change generally across trials (no main effect *trial in block*) but there was an interaction *group x trial in block*. More specifically, adults had a stronger decrease in initial rotation across trials compared to 6-7-year-old children (who displayed no change). The slopes did not differ for any other group comparisons (Table\ \@ref(tab:table-learn-init-rot1) & \@ref(tab:table-learn-init-rot2)). 
+
+(ref:l-ir-caption1) Post-hoc contrasts for group x trial in block interaction.
+
+```{r table-learn-init-rot1, echo=F}
+apa_table(
+  apa_lmm,
+  caption="(ref:l-ir-caption1)",
+  placement="h")
 ```
 
-```{r }
-emtrends(learn.initial_rot_s$full_model, pairwise ~ group, var="trial_in_block_c", lmer.df="satterthwaite", adjust="bonferroni")
+(ref:l-ir-caption2) Post-hoc contrasts for initial rotation in training.
+
+```{r table-learn-init-rot2, echo=F}
+apa_table(
+  apa_emm,
+  caption="(ref:l-ir-caption2)",
+  placement="h")
 ```
 
 ```{r, include=F}
-rm(learn.initial_rot_s)
+rm(learn.initial_rot_s, R2, apa_lmm, apa_emm, emm)
 ```
 
 \newpage
 
-#### **Full rotation by path length**
+### **Rotation normalized by path length**
 
-```{r, echo=F, fig.height=3, fig.width=3 }
+```{r, echo=F, fig.height=3, fig.width=3, fig.cap="Trial curve for normalized rotation in training." }
 line_rp 
 rm(line_rp)
 ```
@@ -265,30 +335,46 @@ rm(line_rp)
 ```{r, stats_learn_rotation_path_simple }
 ```
 
-Model R^2
+```{r apa_learn_rotation_path, include=F}
+R2 <- r2beta(learn.rotation_path_s$full_model, method='nsj', partial=F) %>% mutate_all(apa_num)
 
-```{r }
-r2beta(learn.rotation_path_s$full_model, method='nsj', partial=F)
+apa_lmm <- apa_print(learn.rotation_path_s)
+apa_lmm <- apa_lmm$table %>% mutate(term=str_replace_all(term, c(" c| f"), ''))
+
+emm <- emtrends(learn.rotation_path_s$full_model, pairwise ~ group, var="trial_in_block_c", lmer.df="satterthwaite", adjust="bonferroni")$contrasts
+apa_emm <- apa_print(emm)
+apa_emm <- apa_emm$table %>% remove_rownames()
 ```
 
-Results: There was an interaction *group x trial_in_block_c* for the overall rotation (normalized by path length). More specifically, adults had a stronger decrease in rotation (normalized by path length) across trials compared to 6-7-year-old children and 9-10-year old children. The slopes did not differ between the two children groups. 
-Covariates: no significant influence of rotation covariate from joystick practise trial (cov_r), no influence of block and sex. 
+The model had a fit of $R2 = `r R2$Rsq`, [CI: `r R2$upper.CL`, `r R2$lower.CL`$].
 
-```{r }
-learn.rotation_path_s$anova_table
+There was an interaction *group x trial in block* for the overall rotation (normalized by path length). More specifically, adults had a stronger decrease in rotation (normalized by path length) across trials compared to 6-7-year-old children and 9-10-year old children. The slopes did not differ between the two children groups (Table\ \@ref(tab:table-learn-rot1) & \@ref(tab:table-learn-rot2)). 
+
+(ref:l-r-caption1) Fixed effects for normalized rotation in training.
+
+```{r table-learn-rot1, echo=F}
+apa_table(
+  apa_lmm,
+  caption="(ref:l-r-caption1)",
+  placement="h")
 ```
 
-```{r }
-emtrends(learn.rotation_path_s$full_model, pairwise ~ group, var="trial_in_block_c", lmer.df="satterthwaite", adjust="bonferroni")
+(ref:l-r-caption2) Post-hoc contrasts for group x trial in block interaction.
+
+```{r table-learn-rot2, echo=F}
+apa_table(
+  apa_emm,
+  caption="(ref:l-r-caption2)",
+  placement="h")
 ```
 
 ```{r, include=F}
-rm(learn.rotation_path_s)
+rm(learn.rotation_path_s, R2, apa_lmm, apa_emm, emm)
 ```
 
 \newpage 
 
-### Probe trials at Day 2 & Day 14
+## Probe trials at Day 2 & Day 14
 
 Egocentric and allocentric condition. The goals are NOT visible.
 
@@ -303,16 +389,15 @@ Egocentric and allocentric condition. The goals are NOT visible.
 
 ### Memory accuracy 
 
-**Raw data**
 
-```{r,echo=F, fig.height=5 }
+```{r,echo=F, fig.height=5, fig.cap="Responses for egocentric probe." }
 
 dots_ego 
 
 rm(dots_ego)
 ```
 
-```{r,echo=F, fig.height=5 }
+```{r,echo=F, fig.height=5, fig.cap="Responses for allocentric probe." }
 
 dots_allo 
 
@@ -323,7 +408,7 @@ rm(dots_allo)
 
 **Memory score (all trials)**
 
-```{r, echo=F, fig.height=3, fig.height=4 }
+```{r, echo=F, fig.height=3, fig.height=4, fig.cap="Memory score for probe trials." }
 
 box_ego_ms + labs(subtitle="Egocentric") + box_allo_ms + labs(subtitle="Allocentric") +
   plot_layout(guides="collect") & theme(legend.position="bottom", legend.justification=c(0,0))
@@ -334,35 +419,74 @@ rm(box_ego_ms, box_allo_ms)
 ```{r, stats_probe_ms_simple }
 ```
 
-Model R^2
+```{r apa_probe_ms, include=F}
+R2 <- r2beta(probe.memory_s$full_model, method='nsj', partial=F) %>% mutate_all(apa_num)
 
-```{r }
-r2beta(probe.memory_s$full_model, method='nsj', partial=F)
+apa_lmm <- apa_print(probe.memory_s)
+apa_lmm <- apa_lmm$table %>% mutate(term=str_replace_all(term, c(" c| f"), ''))
+
+emm1 <- emmeans(probe.memory_s$full_model, pairwise ~ group, lmer.df="satterthwaite", adjust="bonferroni")$contrasts
+apa_emm1 <- apa_print(emm1)
+apa_emm1 <- apa_emm1$table %>% remove_rownames()
+
+emm2 <- emmeans(probe.memory_s$full_model, pairwise ~ session, lmer.df="satterthwaite", adjust="bonferroni")$contrasts
+apa_emm2 <- apa_print(emm2)
+apa_emm2 <- apa_emm2$table %>% remove_rownames()
+
+emm3 <- emmeans(probe.memory_s$full_model, pairwise ~ condition, lmer.df="satterthwaite", adjust="bonferroni")$contrasts
+apa_emm3 <- apa_print(emm3)
+apa_emm3 <- apa_emm3$table %>% remove_rownames()
 ```
 
-Results: Memory accuracy in egocentric and allocentric probe trials at session 1 and session 2 
+The model had a fit of $R2 = `r R2$Rsq`, [CI: `r R2$upper.CL`, `r R2$lower.CL`$].
 
-* no interactions, especially no group * session interaction!
-* group main effect: younger participants had worse memory accuracy than older participants (all groups differ from each other) 
-* session main effect: memory accuracy declines over 2-week period 
-* condition main effect: slightly better memory accuracy in egocentric compared to allocentric 
-* covariates: block significant, trial_in_block and sex not significant 
+* no interactions, especially no *group x session* interaction
+* *group* main effect: younger participants had worse memory accuracy than older participants (all groups differ from each other) 
+* *session* main effect: memory accuracy declines over 2-week period 
+* *condition* main effect: slightly better memory accuracy in egocentric compared to allocentric 
+(Table\ \@ref(tab:table-probe-ms1)). 
 
-```{r }
-probe.memory_s$anova_table
+(ref:p-ms-caption1) Fixed effects for memory score in probe.
+
+```{r table-probe-ms1, echo=F}
+apa_table(
+  apa_lmm,
+  caption="(ref:p-ms-caption1)",
+  placement="h")
 ```
 
-```{r }
-emmeans(probe.memory_s$full_model, pairwise ~ group, lmer.df="satterthwaite", adjust="bonferroni")$contrasts
-emmeans(probe.memory_s$full_model, pairwise ~ condition, lmer.df="satterthwaite", adjust="bonferroni")$contrasts
-emmeans(probe.memory_s$full_model, pairwise ~ session, lmer.df="satterthwaite", adjust="bonferroni")$contrasts
+(ref:p-ms-caption2) Post-hoc contrasts for factor group.
+
+```{r table-probe-ms2, echo=F}
+apa_table(
+  apa_emm1,
+  caption="(ref:p-ms-caption2)",
+  placement="h")
+```
+
+(ref:p-ms-caption3) Post-hoc contrasts for factor session.
+
+```{r table-probe-ms3, echo=F}
+apa_table(
+  apa_emm2,
+  caption="(ref:p-ms-caption3)",
+  placement="h")
+```
+
+(ref:p-ms-caption4) Post-hoc contrasts for factor condition.
+
+```{r table-probe-ms4, echo=F}
+apa_table(
+  apa_emm3,
+  caption="(ref:p-ms-caption4)",
+  placement="h")
 ```
 
 ```{r, include=F}
-rm(probe.memory_s)
+rm(probe.memory_s, R2, apa_lmm, apa_emm1, emm1, apa_emm2, emm2, apa_emm3, emm3)
 ```
 
-```{r,echo=F, fig.height=3, fig.height=4 }
+```{r,echo=F, fig.height=3, fig.height=4, fig.cap="Change in memory score for probe trials."  }
 
 box_ego_delta_ms + labs(subtitle="Egocentric") + box_allo_delta_ms + labs(subtitle="Allocentric")  +
   plot_layout(guides="collect") & theme(legend.position="bottom", legend.justification=c(0,0))
@@ -404,7 +528,7 @@ rm(probe.change_ms_aov, probe.change_ms_raov, probe.change_ms_raov_post)
 
 **Memory score (only correct trials) for spatial precision**
 
-```{r,echo=F, fig.height=3, fig.height=4 }
+```{r,echo=F, fig.height=3, fig.height=4, fig.cap="Spatial precision in correct probe trials." }
 
 box_ego_cor_ms + labs(subtitle="Egocentric",  caption="y-axis was adjusted for better visibility") +
   box_allo_cor_ms + labs(subtitle="Allocentric") +
@@ -416,35 +540,60 @@ rm(box_ego_cor_ms, box_allo_cor_ms)
 ```{r, stats_probe_ms_corr_simple }
 ```
 
-Model R^2
+```{r apa_probe_ms_corr, include=F}
+R2 <- r2beta(probe.memory_corr_s$full_model, method='nsj', partial=F) %>% mutate_all(apa_num)
 
-```{r }
-r2beta(probe.memory_corr_s$full_model, method='nsj', partial=F)
+apa_lmm <- apa_print(probe.memory_corr_s)
+apa_lmm <- apa_lmm$table %>% mutate(term=str_replace_all(term, c(" c| f"), ''))
+
+emm1 <- emmeans(probe.memory_corr_s$full_model, pairwise ~ group, lmer.df="satterthwaite", adjust="bonferroni")$contrasts
+apa_emm1 <- apa_print(emm1)
+apa_emm1 <- apa_emm1$table %>% remove_rownames()
+
+emm2 <- emmeans(probe.memory_corr_s$full_model, pairwise ~ session, lmer.df="satterthwaite", adjust="bonferroni")$contrasts
+apa_emm2 <- apa_print(emm2)
+apa_emm2 <- apa_emm2$table %>% remove_rownames()
 ```
 
-Results: Spatial precision in correctly solved egocentric and allocentric probe trials at session 1 and session 2.
+The model had a fit of $R2 = `r R2$Rsq`, [CI: `r R2$upper.CL`, `r R2$lower.CL`$].
 
-Correct trial = remembered goal location in correct alley or intersection in front of correct alley
+* no interactions, especially no *group x session* interaction
+* *group* main effect: younger participants had worse spatial precision than older participants (all groups differ from each other) 
+* *session* main effect: spatial precision declines over 2-week period 
+(Table\ \@ref(tab:table-probe-msc1)). 
 
-* no interactions, especially no group * session interaction!
-* group main effect: younger participants had worse spatial precision than older participants (all groups differ from each other) 
-* session main effect: spatial precision declines over 2-week period 
-* covariates: block, trial_in_block significant, sex not significant 
+(ref:p-msc-caption1) Fixed effects for memory score in correctly solved probe trials.
 
-```{r }
-probe.memory_corr_s$anova_table
+```{r table-probe-msc1, echo=F}
+apa_table(
+  apa_lmm,
+  caption="(ref:p-msc-caption1)",
+  placement="h")
 ```
 
-```{r }
-emmeans(probe.memory_corr_s$full_model, pairwise ~ group, lmer.df="satterthwaite", adjust="bonferroni")$contrasts
-emmeans(probe.memory_corr_s$full_model, pairwise ~ session, lmer.df="satterthwaite", adjust="bonferroni")$contrasts
+(ref:p-msc-caption2) Post-hoc contrasts for factor group.
+
+```{r table-probe-msc2, echo=F}
+apa_table(
+  apa_emm1,
+  caption="(ref:p-msc-caption2)",
+  placement="h")
+```
+
+(ref:p-ms-caption3) Post-hoc contrasts for factor session.
+
+```{r table-probe-msc3, echo=F}
+apa_table(
+  apa_emm2,
+  caption="(ref:p-ms-caption3)",
+  placement="h")
 ```
 
 ```{r, include=F}
-rm(probe.memory_corr_s)
+rm(probe.memory_corr_s, R2, apa_lmm, emm1, emm2, apa_emm1, apa_emm2)
 ```
 
-```{r, echo=F, fig.height=3, fig.height=4 }
+```{r, echo=F, fig.height=3, fig.height=4, fig.cap="Change in spatial precision in correct probe trials." }
 
 box_ego_delta_cor_ms + labs(subtitle="Egocentric") + box_allo_delta_cor_ms + labs(subtitle="Allocentric")  +
   plot_layout(guides="collect") & theme(legend.position="bottom", legend.justification=c(0,0))
@@ -472,14 +621,13 @@ probe.change_ms_corr_raov
 rm(probe.change_ms_corr_raov, probe.change_ms_corr_aov)
 ```
 
-
 \newpage
 
-#### Navigation behaviour
+### Navigation behaviour
 
 **Time**
 
-```{r, echo=F, fig.height=3, fig.height=4 }
+```{r, echo=F, fig.height=3, fig.height=4, fig.cap="Time in probe trials." }
 
 box_ego_t + labs(subtitle="Egocentric") + box_allo_t + labs(subtitle="Allocentric") +
   plot_layout(guides="collect") & theme(legend.position="bottom", legend.justification=c(0,0))
@@ -490,49 +638,83 @@ rm(box_ego_t, box_allo_t)
 ```{r, stats_probe_time_simple}
 ```
 
-Model R^2
 
-```{r }
-r2beta(probe.time_s$full_model, method='nsj', partial=F)
-```
+```{r apa_probe_time, include=F}
+R2 <- r2beta(probe.time_s$full_model, method='nsj', partial=F) %>% mutate_all(apa_num)
 
-Results: Time in egocentric and allocentric probe trials at session 1 and session 2
+apa_lmm <- apa_print(probe.time_s)
+apa_lmm <- apa_lmm$table %>% mutate(term=str_replace_all(term, c(" c| f"), ''))
 
-* group x session interaction: at T1 6-7-year-old children required significantly more time than young adults, at T2 there were no significant group differences; for all groups there were no significant changes in time across sessions.
-* group x condition interaction: in allocentric trials 6-7-year-old children required significantly more time than young adults, in egocentric trials there were no significant group differences; all groups required more time for allocentric compared to egocentric trials.
-* session x condition interaction: in both sessions participants required more time for allocentric compared to egocentric trials; in both conditions there were no significant changes in time across sessions.
-* covariates: trial_in_block, block, cov_t and sex all significant
-
-
-```{r }
-probe.time_s$anova_table
-```
-
-```{r }
 emm1 <- emmeans(probe.time_s, ~ group * session, lmer.df="satterthwaite")
-contrast(emm1, con_list_group_session, adjust="bonferroni")
-```
+con1 <- contrast(emm1, con_list_group_session, adjust="bonferroni")
+apa_emm1 <- apa_print(con1)
+apa_emm1 <- apa_emm1$table %>% remove_rownames()
 
-```{r }
 emm2 <- emmeans(probe.time_s, ~ group * condition, lmer.df="satterthwaite")
-contrast(emm2, con_list_group_condition, adjust="bonferroni")
+con2 <- contrast(emm2, con_list_group_condition, adjust="bonferroni")
+apa_emm2 <- apa_print(con2)
+apa_emm2 <- apa_emm2$table %>% remove_rownames()
+
+emm3 <- emmeans(probe.time_s, ~ session * condition, lmer.df="satterthwaite")
+con3 <- contrast(emm3, con_list_session_condition, adjust="bonferroni")
+apa_emm3 <- apa_print(con3)
+apa_emm3 <- apa_emm3$table %>% remove_rownames()
+
+rm(emm1, emm2, emm3, con1, con2, con3)
 ```
 
-```{r }
-emm3 <- emmeans(probe.time_s, ~ session * condition, lmer.df="satterthwaite")
-contrast(emm3, con_list_session_condition, adjust="bonferroni")
+The model had a fit of $R2 = `r R2$Rsq`, [CI: `r R2$upper.CL`, `r R2$lower.CL`$].
+
+* *group x session* interaction: at T1 6-7-year-old children required significantly more time than young adults, at T2 there were no significant group differences; for all groups there were no significant changes in time across sessions.
+* *group x condition* interaction: in allocentric trials 6-7-year-old children required significantly more time than young adults, in egocentric trials there were no significant group differences; all groups required more time for allocentric compared to egocentric trials.
+* *session x condition* interaction: in both sessions participants required more time for allocentric compared to egocentric trials; in both conditions there were no significant changes in time across sessions.
+(Table\ \@ref(tab:table-probe-time1)). 
+
+(ref:p-t-caption1) Fixed effects for time in probe trials.
+
+```{r table-probe-time1, echo=F}
+apa_table(
+  apa_lmm,
+  caption="(ref:p-t-caption1)",
+  placement="h")
+```
+
+(ref:p-t-caption2) Post-hoc contrasts for group x session interaction.
+
+```{r table-probe-time2, echo=F}
+apa_table(
+  apa_emm1,
+  caption="(ref:p-t-caption2)",
+  placement="h")
+```
+
+(ref:p-t-caption3) Post-hoc contrasts for group x condition interaction.
+
+```{r table-probe-time3, echo=F}
+apa_table(
+  apa_emm2,
+  caption="(ref:p-t-caption3)",
+  placement="h")
+```
+
+(ref:p-t-caption4) Post-hoc contrasts for session x condition interaction.
+
+```{r table-probe-time4, echo=F}
+apa_table(
+  apa_emm3,
+  caption="(ref:p-t-caption4)",
+  placement="h")
 ```
 
 ```{r, include=F}
-rm(probe.time_s, emm1, emm2, emm3)
+rm(probe.time_s, apa_lmm, apa_emm1, apa_emm2, apa_emm3)
 ```
-
 
 \newpage 
 
 **Excess path length**
 
-```{r, echo=F, fig.height=3, fig.height=4 }
+```{r, echo=F, fig.height=3, fig.height=4, fig.cap="Excess path in probe trials." }
 
 box_ego_p + labs(subtitle="Egocentric") + box_allo_p + labs(subtitle="Allocentric") +
   plot_layout(guides="collect") & theme(legend.position="bottom", legend.justification=c(0,0))
@@ -543,48 +725,82 @@ rm(box_ego_p, box_allo_p)
 ```{r, stats_probe_excess_path_simple }
 ```
 
-Model R^2
+```{r apa_probe_excess_path, include=F}
+R2 <- r2beta(probe.excess_path_s$full_model, method='nsj', partial=F) %>% mutate_all(apa_num)
 
-```{r }
-r2beta(probe.excess_path_s$full_model, method='nsj', partial=F)
-```
+apa_lmm <- apa_print(probe.excess_path_s)
+apa_lmm <- apa_lmm$table %>% mutate(term=str_replace_all(term, c(" c| f"), ''))
 
-Results: Excess path length in egocentric and allocentric probe trials at session 1 and session 2 
-
-* group x session interaction: at T1 younger participants took significantly longer paths than older participants, at T2 children took significantly longer paths than adults but did not differ from each other; for all groups there were no significant changes in excess path length across sessions.
-* group x condition interaction: in allocentric trials both groups of children took significantly longer paths than adults but did not differ from each other, in egocentric trials only 6-7-year-old children took significantly longer paths than adults; all groups took longer paths in allocentric compared to egocentric trials.
-* session x condition interaction: in both sessions participants took longer paths in allocentric compared to egocentric trials; in allocentric trials excess paths were longer in session 2 than in session 1, in egocentric trials excess path length did not change across sessions.
-* covariates: trial_in_block, block significant, cov_p and sex not significant
-
-
-```{r }
-probe.excess_path_s$anova_table
-```
-
-```{r }
 emm1 <- emmeans(probe.excess_path_s, ~ group * session, lmer.df="satterthwaite")
-contrast(emm1, con_list_group_session, adjust="bonferroni")
-```
+con1 <- contrast(emm1, con_list_group_session, adjust="bonferroni")
+apa_emm1 <- apa_print(con1)
+apa_emm1 <- apa_emm1$table %>% remove_rownames()
 
-```{r }
 emm2 <- emmeans(probe.excess_path_s, ~ group * condition, lmer.df="satterthwaite")
-contrast(emm2, con_list_group_condition, adjust="bonferroni")
+con2 <- contrast(emm2, con_list_group_condition, adjust="bonferroni")
+apa_emm2 <- apa_print(con2)
+apa_emm2 <- apa_emm2$table %>% remove_rownames()
+
+emm3 <- emmeans(probe.excess_path_s, ~ session * condition, lmer.df="satterthwaite")
+con3 <- contrast(emm3, con_list_session_condition, adjust="bonferroni")
+apa_emm3 <- apa_print(con3)
+apa_emm3 <- apa_emm3$table %>% remove_rownames()
+
+rm(emm1, emm2, emm3, con1, con2, con3)
 ```
 
-```{r }
-emm3 <- emmeans(probe.excess_path_s, ~ session * condition, lmer.df="satterthwaite")
-contrast(emm3, con_list_session_condition, adjust="bonferroni")
+The model had a fit of $R2 = `r R2$Rsq`, [CI: `r R2$upper.CL`, `r R2$lower.CL`$].
+
+* *group x session* interaction: at T1 younger participants took significantly longer paths than older participants, at T2 children took significantly longer paths than adults but did not differ from each other; for all groups there were no significant changes in excess path length across sessions.
+* *group x condition* interaction: in allocentric trials both groups of children took significantly longer paths than adults but did not differ from each other, in egocentric trials only 6-7-year-old children took significantly longer paths than adults; all groups took longer paths in allocentric compared to egocentric trials.
+* *session x condition* interaction: in both sessions participants took longer paths in allocentric compared to egocentric trials; in allocentric trials excess paths were longer in session 2 than in session 1, in egocentric trials excess path length did not change across sessions.
+(Table\ \@ref(tab:table-probe-excess1)). 
+
+(ref:p-ep-caption1) Fixed effects for excess path in probe trials.
+
+```{r table-probe-excess1, echo=F}
+apa_table(
+  apa_lmm,
+  caption="(ref:p-ep-caption1)",
+  placement="h")
+```
+
+(ref:p-ep-caption2) Post-hoc contrasts for group x session interaction.
+
+```{r table-probe-excess2, echo=F}
+apa_table(
+  apa_emm1,
+  caption="(ref:p-ep-caption2)",
+  placement="h")
+```
+
+(ref:p-ep-caption3) Post-hoc contrasts for group x condition interaction.
+
+```{r table-probe-excess3, echo=F}
+apa_table(
+  apa_emm2,
+  caption="(ref:p-ep-caption3)",
+  placement="h")
+```
+
+(ref:p-ep-caption4) Post-hoc contrasts for session x condition interaction.
+
+```{r table-probe-excess4, echo=F}
+apa_table(
+  apa_emm3,
+  caption="(ref:p-ep-caption4)",
+  placement="h")
 ```
 
 ```{r, include=F}
-rm(probe.excess_path_s, emm1, emm2, emm3)
+rm(probe.excess_path_s, apa_lmm, apa_emm1, apa_emm2, apa_emm3)
 ```
 
 \newpage 
 
 **Presence in outer alleys (vs. inner ring)** 
 
-```{r, echo=F, fig.height=3, fig.height=4 }
+```{r, echo=F, fig.height=3, fig.height=4, fig.cap="Relative presence in alleys in probe trials." }
 
 box_ego_pa + labs(subtitle="Egocentric") + box_allo_pa + labs(subtitle="Allocentric") +
   plot_layout(guides="collect") & theme(legend.position="bottom", legend.justification=c(0,0))
@@ -595,37 +811,53 @@ rm(box_ego_pa, box_ego_pa)
 ```{r, stats_probe_presence_alleys_simple}
 ```
 
-Model R^2
+```{r apa_probe_presence_alleys, include=F}
+R2 <- r2beta(probe.presence_alleys_s$full_model, method='nsj', partial=F) %>% mutate_all(apa_num)
 
-```{r }
-r2beta(probe.presence_alleys_s$full_model, method='nsj', partial=F)
+apa_lmm <- apa_print(probe.presence_alleys_s)
+apa_lmm <- apa_lmm$table %>% mutate(term=str_replace_all(term, c(" c| f"), ''))
+
+emm1 <- emmeans(probe.presence_alleys_s, ~ session * condition, lmer.df="satterthwaite")
+con1 <- contrast(emm1, con_list_session_condition, adjust="bonferroni")
+apa_emm1 <- apa_print(con1)
+apa_emm1 <- apa_emm1$table %>% remove_rownames()
+
+rm(emm1, con1)
 ```
 
-Results: Presence in outer alleys (vs. inner ring) in egocentric and allocentric probe trials at session 1 and session 2 
+The model had a fit of $R2 = `r R2$Rsq`, [CI: `r R2$upper.CL`, `r R2$lower.CL`$].
 
 * no group differences & group interactions
-* session x condition interaction: for both sessions in egocentric trials relatively more time spend in outer alleys (compared to inner ring), whereas in allocentric trials more time spend in inner ring (compared to outer alleys); in egocentric trials no change across sessions, whereas in allocentric trials the presence in outer alleys decreased across sessions.
-* covariates: block significant, trial_in_block and sex not significant
+* *session x condition* interaction: for both sessions in egocentric trials relatively more time spend in outer alleys (compared to inner ring), whereas in allocentric trials more time spend in inner ring (compared to outer alleys); in egocentric trials no change across sessions, whereas in allocentric trials the presence in outer alleys decreased across sessions.
+(Table\ \@ref(tab:table-probe-presence1)). 
 
+(ref:p-pa-caption1) Fixed effects for excess path in probe trials.
 
-```{r }
-probe.presence_alleys_s$anova_table
+```{r table-probe-presence1, echo=F}
+apa_table(
+  apa_lmm,
+  caption="(ref:p-pa-caption1)",
+  placement="h")
 ```
 
-```{r }
-emm1 <- emmeans(probe.presence_alleys_s$full_model, ~ session * condition, lmer.df="satterthwaite")
-contrast(emm1, con_list_session_condition, adjust="bonferroni")
+(ref:p-pa-caption2) Post-hoc contrasts for session x condition interaction.
+
+```{r table-probe-presence2, echo=F}
+apa_table(
+  apa_emm1,
+  caption="(ref:p-pa-caption2)",
+  placement="h")
 ```
 
 ```{r, include=F}
-rm(probe.presence_alleys_s, emm1)
+rm(probe.presence_alleys_s, apa_lmm, apa_emm1)
 ```
 
 \newpage
 
 **Initial rotation**
 
-```{r, echo=F, fig.height=3, fig.height=4 }
+```{r, echo=F, fig.height=3, fig.height=4, fig.cap="Initial rotation in probe trials." }
 
 box_ego_ir + labs(subtitle="Egocentric") + box_allo_ir + labs(subtitle="Allocentric") +
   plot_layout(guides="collect") & theme(legend.position="bottom", legend.justification=c(0,0))
@@ -633,39 +865,56 @@ box_ego_ir + labs(subtitle="Egocentric") + box_allo_ir + labs(subtitle="Allocent
 rm(box_ego_ir, box_allo_ir)
 ```
 
-```{r, stats_probe_initial_rotation_simple}
+```{r, stats_probe_initial_rotation_simple }
 ```
 
-Model R^2
 
-```{r }
-r2beta(probe.initial_rot_s$full_model, method='nsj', partial=F)
-```
+```{r apa_probe_initial_rotation, include=F }
+R2 <- r2beta(probe.initial_rot_s$full_model, method='nsj', partial=F) %>% mutate_all(apa_num)
 
-Results: Initial rotation in egocentric and allocentric probe trials at session 1 and session 2
+apa_lmm <- apa_print(probe.initial_rot_s)
+apa_lmm <- apa_lmm$table %>% mutate(term=str_replace_all(term, c(" c| f"), ''))
 
-* group x session x condition interaction: For allocentric trials at T2, both children groups had significantly lower initial rotation compared to adults (only trend p=0.06 for 6-7-year-old), whereas at T1 the initial rotation did not differ between groups. For egocentric trials initial rotation did not differ between groups in both sessions. For allocentric trials, initial rotation increased across sessions in 6-7-year-old children and young adults but stayed comparable in 9-10-year-old-children. For egocentric trials, initial rotation did not change across sessions for all groups. Generally initial rotation was higher in allocentric compared to egocentric trials across all groups and sessions.
-* covariates: block significant, trial_in_block, cov_r and sex not significant
-
-```{r }
-probe.initial_rot_s$anova_table
-```
-
-```{r }
 emm1 <- emmeans(probe.initial_rot_s, ~ group * session * condition, lmer.df="satterthwaite")
-contrast(emm1, con_list_group_session_condition, adjust="bonferroni")
+con1 <- contrast(emm1, con_list_group_session_condition, adjust="bonferroni")
+apa_emm1 <- apa_print(con1)
+apa_emm1 <- apa_emm1$table %>% remove_rownames()
+
+rm(emm1, con1)
+```
+
+The model had a fit of $R2 = `r R2$Rsq`, [CI: `r R2$upper.CL`, `r R2$lower.CL`$].
+
+* *group x session x condition* interaction: For allocentric trials at T2, both children groups had significantly lower initial rotation compared to adults (only trend p=0.06 for 6-7-year-old), whereas at T1 the initial rotation did not differ between groups. For egocentric trials initial rotation did not differ between groups in both sessions. For allocentric trials, initial rotation increased across sessions in 6-7-year-old children and young adults but stayed comparable in 9-10-year-old-children. For egocentric trials, initial rotation did not change across sessions for all groups. Generally initial rotation was higher in allocentric compared to egocentric trials across all groups and sessions.
+(Table\ \@ref(tab:table-probe-init-rot1)). 
+
+(ref:p-ir-caption1) Fixed effects for excess path in probe trials.
+
+```{r table-probe-init-rot1, echo=F}
+apa_table(
+  apa_lmm,
+  caption="(ref:p-ir-caption1)",
+  placement="h")
+```
+
+(ref:p-ir-caption2) Post-hoc contrasts for group x session x condition interaction.
+
+```{r table-probe-init-rot2, echo=F}
+apa_table(
+  apa_emm1,
+  caption="(ref:p-ir-caption2)",
+  placement="h")
 ```
 
 ```{r, include=F}
-rm(probe.initial_rot_s, emm1)
+rm(probe.excess_path_s, apa_lmm, apa_emm1)
 ```
-
 
 \newpage
 
 **Rotation by path length**
 
-```{r, echo=F, fig.height=3, fig.height=4 }
+```{r, echo=F, fig.height=3, fig.height=4, fig.cap="Normalized rotation in probe trials." }
 
 box_ego_rp + labs(subtitle="Egocentric") + box_allo_rp + labs(subtitle="Allocentric") +
   plot_layout(guides="collect") & theme(legend.position="bottom", legend.justification=c(0,0))
@@ -676,48 +925,82 @@ rm(box_ego_rp, box_allo_rp)
 ```{r, stats_probe_rotation_path_simple}
 ```
 
-Model R^2
+```{r apa_probe_rotation_path, include=F}
+R2 <- r2beta(probe.rotation_path_s$full_model, method='nsj', partial=F) %>% mutate_all(apa_num)
 
-```{r }
-r2beta(probe.rotation_path_s$full_model, method='nsj', partial=F)
-```
+apa_lmm <- apa_print(probe.rotation_path_s)
+apa_lmm <- apa_lmm$table %>% mutate(term=str_replace_all(term, c(" c| f"), ''))
 
-Results: Rotation (normalized by path length) in egocentric and allocentric probe trials at session 1 and session 2
-
-* group x session interaction: there were no differences in rotation (normalized by path length) between groups within both sessions; rotation (normalized by path length) increased from T1 to T2 for all groups.
-* group x condition interaction: in allocentric trials 6-7-year-old children rotated significantly less than adults, whereas rotation did not differ between groups in egocentric trials; all groups rotated more in allocentric compared to egocentric trials.
-* session x condition interaction: in both sessions participants rotated more in allocentric compared to egocentric trials; in allocentric trials rotation increased in session 2 compared to session 1, in egocentric trials rotation did not change across sessions.
-* covariates: block, trial_in_block significant, cov_r and sex not significant
- 
-
-```{r }
-probe.rotation_path_s$anova_table
-```
-
-```{r }
 emm1 <- emmeans(probe.rotation_path_s, ~ group * session, lmer.df="satterthwaite")
-contrast(emm1, con_list_group_session, adjust="bonferroni")
-```
+con1 <- contrast(emm1, con_list_group_session, adjust="bonferroni")
+apa_emm1 <- apa_print(con1)
+apa_emm1 <- apa_emm1$table %>% remove_rownames()
 
-```{r }
 emm2 <- emmeans(probe.rotation_path_s, ~ group * condition, lmer.df="satterthwaite")
-contrast(emm2, con_list_group_condition, adjust="bonferroni")
+con2 <- contrast(emm2, con_list_group_condition, adjust="bonferroni")
+apa_emm2 <- apa_print(con2)
+apa_emm2 <- apa_emm2$table %>% remove_rownames()
+
+emm3 <- emmeans(probe.rotation_path_s, ~ session * condition, lmer.df="satterthwaite")
+con3 <- contrast(emm3, con_list_session_condition, adjust="bonferroni")
+apa_emm3 <- apa_print(con3)
+apa_emm3 <- apa_emm3$table %>% remove_rownames()
+
+rm(emm1, emm2, emm3, con1, con2, con3)
 ```
 
-```{r }
-emm3 <- emmeans(probe.rotation_path_s, ~ session * condition, lmer.df="satterthwaite")
-contrast(emm3, con_list_session_condition, adjust="bonferroni")
+The model had a fit of $R2 = `r R2$Rsq`, [CI: `r R2$upper.CL`, `r R2$lower.CL`$].
+
+* *group x session* interaction: there were no differences in rotation (normalized by path length) between groups within both sessions; rotation (normalized by path length) increased from T1 to T2 for all groups.
+* *group x condition* interaction: in allocentric trials 6-7-year-old children rotated significantly less than adults, whereas rotation did not differ between groups in egocentric trials; all groups rotated more in allocentric compared to egocentric trials.
+* *session x condition* interaction: in both sessions participants rotated more in allocentric compared to egocentric trials; in allocentric trials rotation increased in session 2 compared to session 1, in egocentric trials rotation did not change across sessions.
+(Table\ \@ref(tab:table-probe-rot1)). 
+
+(ref:p-r-caption1) Fixed effects for normalized rotation in probe trials.
+
+```{r table-probe-rot1, echo=F}
+apa_table(
+  apa_lmm,
+  caption="(ref:p-r-caption1)",
+  placement="h")
+```
+
+(ref:p-r-caption2) Post-hoc contrasts for group x session interaction.
+
+```{r table-probe-rot2, echo=F}
+apa_table(
+  apa_emm1,
+  caption="(ref:p-r-caption2)",
+  placement="h")
+```
+
+(ref:p-r-caption3) Post-hoc contrasts for group x condition interaction.
+
+```{r table-probe-rot3, echo=F}
+apa_table(
+  apa_emm2,
+  caption="(ref:p-r-caption3)",
+  placement="h")
+```
+
+(ref:p-r-caption4) Post-hoc contrasts for session x condition interaction.
+
+```{r table-probe-rot4, echo=F}
+apa_table(
+  apa_emm3,
+  caption="(ref:p-r-caption4)",
+  placement="h")
 ```
 
 ```{r, include=F}
-rm(probe.rotation_path_s, emm1, emm2, emm3)
+rm(probe.rotation_path_s, apa_lmm, apa_emm1, apa_emm2, apa_emm3)
 ```
 
 \newpage 
 
-### Explorative analyses of allocentric trials 
+## Explorative analyses of allocentric trials 
 
-#### Navigation behavior
+### Navigation behavior
 
 **How present were participants in specific zones that indicate an egocentric or homing strategy** (only allocentric trials where egocentric alley is not original start alley, egocentric response was available only for trials with defined egocentric location)
 
@@ -766,7 +1049,7 @@ rm(probe.allo_presence_s)
 
 \newpage
 
-#### Accuracy
+### Accuracy
 
 **How often did participants erroneously pick locations that indicate an egocentric or homing strategy** (only allocentric trials where egocentric alley is not original start alley, egocentric response only for trials with defined egocentric location)
 
@@ -817,14 +1100,14 @@ rm(probe.allo_memory_s)
 ```
 \newpage 
 
-### Non-navigational memory tasks
+## Non-navigational memory tasks
 
 ![Task overview](./pics/Overview_Session2_PostTest.jpg){width=500px}
 
 ```{r, plots_post_tests, include=F }
 ```
 
-```{r, echo=F, fig.height=4, fig.width=6 }
+```{r, echo=F, fig.height=4, fig.width=6, fig.cap="Scores in non-navigational memory tests." }
 
 layout + landmark_avg + gmda_avg + 
   plot_layout(width=c(0.4, 0.2, 0.2), guides="collect") & theme(legend.position="bottom", legend.justification=c(0,0))
@@ -832,21 +1115,21 @@ layout + landmark_avg + gmda_avg +
 rm(layout, layout_avg, landmark_details, landmark_avg, gmda_avg)
 ```
 
-#### **Layout**
+### **Layout**
 
 Significant age-related differences between all three groups in layout recognition.
 
 ```{r, stats_layout }
 ```
 
-#### **Landmarks**
+### **Landmarks**
 
 No sigificant group differences in landmark recognition. 
 
 ```{r, stats_landmark }
 ```
 
-#### **Positioning**
+### **Positioning**
 
 Children in both groups performed significantly worse in positioning.
 
@@ -855,7 +1138,7 @@ Children in both groups performed significantly worse in positioning.
 
 \newpage 
 
-### Correlations 
+## Correlations 
 
 ```{r, stats_corr_allo_ego }
 ```
@@ -870,27 +1153,27 @@ Children in both groups performed significantly worse in positioning.
 ```
 \newpage
 
-### Appendix
+## Appendix
 
-#### Motor Control Task 
+### Motor Control Task 
 
 ![Motor control practise task](./pics/Motor_Control.jpg){width=600px}
 
 ``` {r, plots_motor_control, include=FALSE}
 ```
 
-```{r, echo=F }
+```{r, echo=F, fig.cap="Navigation behavior in practise trials." }
 
 mc_t +  mc_v + mc_p + mc_r +
   plot_layout(guides="collect") & theme(legend.position="bottom", legend.justification=c(0,0))
 ```
 
-#### Excluded trials 
+### Excluded trials 
 
 ``` {r, plots_excluded, include=FALSE}
 ```
 
-```{r, echo=F, fig.height=3, fig.width=3 }
+```{r, echo=F, fig.height=3, fig.width=3, fig.cap="Overview of excluded trials." }
 
 ex2 +
   plot_layout(guides="collect") & theme(legend.position="bottom", legend.justification=c(0,0))
