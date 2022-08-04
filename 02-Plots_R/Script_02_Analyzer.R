@@ -111,13 +111,14 @@ data_allo_ms <- data %>%
 data_allo_pr <- data %>%
   filter(condition=="allo_ret", ego_alley!=7) %>% 
   select(id, sex, group, session, condition, trial, goal_f, block_f, 
-         starts_with("presence")) %>% 
+         time, starts_with("presence")) %>% 
   select(-presence_alleys, -presence_pentagon) %>% 
   pivot_longer(cols=starts_with("presence"), 
                names_to=c("variable", "cond"),
                names_pattern='(.*)_(\\w+)') %>% 
   pivot_wider(names_from=variable, values_from=value) %>% 
-  mutate(cond=factor(cond, levels=c("start", "original", "ego", "other", "goal"))) %>% 
+  mutate(time_in_zone=time*presence,  
+         cond=factor(cond, levels=c("start", "original", "ego", "other", "goal"))) %>% 
   droplevels()
 
 # probe aggregated change 
@@ -1266,7 +1267,8 @@ ggplot(data, aes(x=group, y=rotation_turns_by_path_length)) + geom_boxplot() + f
 
 # aggregate data & ANOVA 
 data_agg_pr <- data_allo_pr %>% group_by(id, group, cond) %>% 
-  summarise(presence=mean(presence, na.rm=T)) %>% 
+  summarise(presence=mean(presence, na.rm=T), 
+            time_in_zone=mean(time_in_zone, na.rm=T)) %>% 
   filter(cond %in% c("original", "ego", "other")) %>% 
   droplevels()
 
