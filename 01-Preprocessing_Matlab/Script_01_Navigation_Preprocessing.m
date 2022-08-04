@@ -454,27 +454,40 @@ tic;
                         [~, sm.participant(p).session(s).trial(k).presence_start, ~, ~]=computePresence(...
                             sm.participant(p).session(s).trial(k).start_i,x,y,...
                             sm.coord.alley_poly, sm.coord.alley_poly, sm.participant(p).session(s).trial(k).time);
+                        [~, sm.participant(p).session(s).trial(k).presenceT_start, ~, ~]=computePresence(...
+                            sm.participant(p).session(s).trial(k).start_i,x,y,...
+                            sm.coord.alley_poly, sm.coord.tri_poly, sm.participant(p).session(s).trial(k).time);
                     else 
                         sm.participant(p).session(s).trial(k).presence_start=999;
+                        sm.participant(p).session(s).trial(k).presenceT_start=999;
                     end 
                     
                     % presence in ORIGINAL START ALLEY
                     [~, sm.participant(p).session(s).trial(k).presence_original, ~, ~]=computePresence(7,x,y,...
                         sm.coord.alley_poly, sm.coord.alley_poly, sm.participant(p).session(s).trial(k).time);  
+                    [~, sm.participant(p).session(s).trial(k).presenceT_original, ~, ~]=computePresence(7,x,y,...
+                        sm.coord.alley_poly, sm.coord.tri_poly, sm.participant(p).session(s).trial(k).time); 
                     
                     % presence in EGO ALLEY
                     if sm.participant(p).session(s).trial(k).ego_alley~=0
                         [~, sm.participant(p).session(s).trial(k).presence_ego, ~, ~]=computePresence(...
                             sm.participant(p).session(s).trial(k).ego_alley,x,y,...
                             sm.coord.alley_poly, sm.coord.alley_poly, sm.participant(p).session(s).trial(k).time);
-                    else 
+                        [~, sm.participant(p).session(s).trial(k).presenceT_ego, ~, ~]=computePresence(...
+                            sm.participant(p).session(s).trial(k).ego_alley,x,y,...
+                            sm.coord.alley_poly, sm.coord.tri_poly, sm.participant(p).session(s).trial(k).time);
+                    else
                         sm.participant(p).session(s).trial(k).presence_ego=999;
+                        sm.participant(p).session(s).trial(k).presenceT_ego=999;
                     end 
                     
                     % presence in GOAL ALLEY
                     [~, sm.participant(p).session(s).trial(k).presence_goal, ~, ~]=computePresence(...
                         sm.participant(p).session(s).trial(k).goal_alley,x,y,...
-                        sm.coord.alley_poly, sm.coord.alley_poly, sm.participant(p).session(s).trial(k).time);         
+                        sm.coord.alley_poly, sm.coord.alley_poly, sm.participant(p).session(s).trial(k).time); 
+                    [~, sm.participant(p).session(s).trial(k).presenceT_goal, ~, ~]=computePresence(...
+                        sm.participant(p).session(s).trial(k).goal_alley,x,y,...
+                        sm.coord.alley_poly, sm.coord.tri_poly, sm.participant(p).session(s).trial(k).time);
   
                     % presence in all OTHER ALLEY(s) as BASELINE 
                     % get baseline alley integer
@@ -486,20 +499,36 @@ tic;
                     base_i=(base_alleys+1)/2; 
                     
                     % compute values 
-                    pr=zeros(numel(base_alleys),1); 
+                    pr=zeros(numel(base_alleys),1); prT=zeros(numel(base_alleys),1);  
                     for a=1:numel(base_alleys)
                         [~, pr(a), ~, ~]=computePresence(base_alleys(a),x,y,sm.coord.alley_poly,...
                             sm.coord.alley_poly, sm.participant(p).session(s).trial(k).time);
+                        [~, prT(a), ~, ~]=computePresence(base_alleys(a),x,y,sm.coord.alley_poly,...
+                            sm.coord.tri_poly, sm.participant(p).session(s).trial(k).time);
                     end
-                    sm.participant(p).session(s).trial(k).presence_other=sum(pr);
-                    clear pr base* a;    
+                    sm.participant(p).session(s).trial(k).presence_otherSUM=sum(pr);
+                    sm.participant(p).session(s).trial(k).presenceT_otherSUM=sum(prT);
+                    sm.participant(p).session(s).trial(k).presence_otherAVG=mean(pr);
+                    sm.participant(p).session(s).trial(k).presenceT_otherAVG=mean(prT);
+                    sm.participant(p).session(s).trial(k).presence_otherMAX=max(pr);
+                    sm.participant(p).session(s).trial(k).presenceT_otherMAX=max(prT);
+                    clear pr* base* a;    
                 else
                     % default values
                     sm.participant(p).session(s).trial(k).presence_start=999;
                     sm.participant(p).session(s).trial(k).presence_original=999;
                     sm.participant(p).session(s).trial(k).presence_ego=999; 
                     sm.participant(p).session(s).trial(k).presence_goal=999;
-                    sm.participant(p).session(s).trial(k).presence_other=999;
+                    sm.participant(p).session(s).trial(k).presence_otherSUM=999;
+                    sm.participant(p).session(s).trial(k).presence_otherAVG=999;
+                    sm.participant(p).session(s).trial(k).presence_otherMAX=999;
+                    sm.participant(p).session(s).trial(k).presenceT_start=999;
+                    sm.participant(p).session(s).trial(k).presenceT_original=999;
+                    sm.participant(p).session(s).trial(k).presenceT_ego=999; 
+                    sm.participant(p).session(s).trial(k).presenceT_goal=999;
+                    sm.participant(p).session(s).trial(k).presenceT_otherSUM=999;
+                    sm.participant(p).session(s).trial(k).presenceT_otherAVG=999;
+                    sm.participant(p).session(s).trial(k).presenceT_otherMAX=999;
                 end
                 
                 % fprintf('Additional analysis for allocentric probe trials done for %d, session %d, file no %d.\n', id, s, k);
