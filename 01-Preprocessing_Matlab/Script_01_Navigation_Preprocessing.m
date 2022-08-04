@@ -327,8 +327,8 @@ tic;
 %                 % test plot
 %                 figure; plot(sm.coord.full_poly); hold on; 
 %                 plot(x, y, 'k-', x_line, y_line, 'k+', xi_al, yi_al, 'k-',...
-%                     x_line_ego, y_line_ego, 'rx', xi_eg, yi_eg, 'r-',...
-%                     x_line_chosen, y_line_chosen, 'bx', xi_ch, yi_ch, 'b-',...
+%                     x_line_ego, y_line_ego, 'rx',...
+%                     x_line_chosen, y_line_chosen, 'bx',...
 %                     origin_x_line, origin_y_line, 'm--');
 %                 xlim([0 1]); ylim([0 1]); hold off; 
 
@@ -411,93 +411,95 @@ tic;
                 
                 % fprintf('Additional analysis to chosen target done for %d, session %d, file no %d.\n', id, s, k);
           
-                %% additional distance analysis for allocentric probe trials
-                % excludes trials where egocentric alley == original start alley 
-                if sm.participant(p).session(s).trial(k).condition=="allo_ret" && sm.participant(p).session(s).trial(k).ego_alley~=7 
-                    % % HOMING behavior % % 
-                    % FINAL DISTANCE to target in ORIGINAL START ALLEY
-                    sm.participant(p).session(s).trial(k).final_distance_home=computeDistance(...
-                        sm.coord.goal_x_in_alleys(sm.participant(p).session(s).trial(k).goal_i, 4), sm.participant(p).session(s).trial(k).x_n,...
-                        sm.coord.goal_y_in_alleys(sm.participant(p).session(s).trial(k).goal_i, 4), sm.participant(p).session(s).trial(k).y_n);
+                %% additional explorative analysis for allocentric probe trials
+                % MEMORY SCORE 
+                if sm.participant(p).session(s).trial(k).condition=="allo_ret" && sm.participant(p).session(s).trial(k).ego_alley~=0
+                    % memory score to EGOCENTRIC target
+                    % compute final distance
+                    final_distance_ego=computeDistance(...
+                        sm.participant(p).session(s).trial(k).goal_x_ego, sm.participant(p).session(s).trial(k).x_n,...
+                        sm.participant(p).session(s).trial(k).goal_y_ego, sm.participant(p).session(s).trial(k).y_n);
                     
-                    % MEMORY SCORE to target in ORIGINAL START ALLEY
-                    sm.participant(p).session(s).trial(k).memory_score_home=computeMemoryScore(sm.coord.final_distance_distribution,...
-                        sm.participant(p).session(s).trial(k).final_distance_home, sm.participant(p).session(s).trial(k).goal_i,...
-                        7);     
+                    % compute memory score 
+                    sm.participant(p).session(s).trial(k).memory_score_ego=computeMemoryScore(sm.coord.final_distance_distribution,...
+                        final_distance_ego, sm.participant(p).session(s).trial(k).goal_i, sm.participant(p).session(s).trial(k).ego_alley);
                     
-                    % PRESENCE (rel. time in zone) in ORIGINAL START ALLEY
-                    [~, sm.participant(p).session(s).trial(k).presence_home, ~, ~]=computePresence(7,x,y,...
-                        sm.coord.alley_poly, sm.coord.tri_poly, sm.participant(p).session(s).trial(k).time);         
-                    
-                    % % EGOCENTRIC behavior % %
-                    % excludes trials without egocentric alley (inner start alley)
-                    if sm.participant(p).session(s).trial(k).ego_alley~=0
-                        % FINAL DISTANCE to EGOCENTRIC target
-                        sm.participant(p).session(s).trial(k).final_distance_ego=computeDistance(...
-                            sm.participant(p).session(s).trial(k).goal_x_ego, sm.participant(p).session(s).trial(k).x_n,...
-                            sm.participant(p).session(s).trial(k).goal_y_ego, sm.participant(p).session(s).trial(k).y_n);
-                        
-                        % MEMORY SCORE to EGOCENTRIC target(final distance to ego in relation to distribution of final distance for random points)
-                        sm.participant(p).session(s).trial(k).memory_score_ego=computeMemoryScore(sm.coord.final_distance_distribution,...
-                            sm.participant(p).session(s).trial(k).final_distance_ego, sm.participant(p).session(s).trial(k).goal_i,...
-                            sm.participant(p).session(s).trial(k).ego_alley);
-                        
-                        % PRESENCE (rel. time in zone) in EGO ALLEY
-                        % as indicator for egocentric behavior
-                        [~, sm.participant(p).session(s).trial(k).presence_ego, ~, ~]=computePresence(...
-                            sm.participant(p).session(s).trial(k).ego_alley,x,y,...
-                            sm.coord.alley_poly, sm.coord.tri_poly, sm.participant(p).session(s).trial(k).time);
-                    else 
-                        % default values 
-                        sm.participant(p).session(s).trial(k).final_distance_ego=999;
-                        sm.participant(p).session(s).trial(k).memory_score_ego=999;
-                        sm.participant(p).session(s).trial(k).presence_ego=999;
-                    end 
-                    
-                    % % BASELINE behavior % % 
+                    % memory score to OTHER target(s) as BASELINE
                     % get baseline alley integer
-                    base_alleys=setBaseAlley(...
-                        sm.participant(p).session(s).trial(k).start_i,...
-                        sm.participant(p).session(s).trial(k).goal_alley,...
-                        sm.participant(p).session(s).trial(k).ego_alley);
+                    base_alleys=[1 3 5 7 9];
+                    base_alleys(base_alleys==sm.participant(p).session(s).trial(k).goal_alley)=[];
+                    base_alleys(base_alleys==sm.participant(p).session(s).trial(k).ego_alley)=[];
                     base_i=(base_alleys+1)/2; 
                     
-                    % compute values 
-                    fd=zeros(numel(base_alleys),1); ms=zeros(numel(base_alleys),1); pres=zeros(numel(base_alleys),1); 
+                    % compute final distance & memory score  
+                    fd=zeros(numel(base_alleys),1); ms=zeros(numel(base_alleys),1); 
                     for a=1:numel(base_alleys)
                         fd(a)=computeDistance(sm.coord.goal_x_in_alleys(sm.participant(p).session(s).trial(k).goal_i, base_i(a)), sm.participant(p).session(s).trial(k).x_n,...
                             sm.coord.goal_y_in_alleys(sm.participant(p).session(s).trial(k).goal_i, base_i(a)), sm.participant(p).session(s).trial(k).y_n);
-                        
                         ms(a)=computeMemoryScore(sm.coord.final_distance_distribution,...
-                            fd(a), sm.participant(p).session(s).trial(k).goal_i,...
-                            base_alleys(a));
-                        
-                        [~, pres(a), ~, ~]=computePresence(base_alleys(a),x,y,sm.coord.alley_poly,...
-                            sm.coord.tri_poly, sm.participant(p).session(s).trial(k).time);
+                            fd(a), sm.participant(p).session(s).trial(k).goal_i, base_alleys(a));
                     end
-                    % FINAL DISTANCE to BASELINE ALLEY(S)
-                    sm.participant(p).session(s).trial(k).final_distance_base=mean(fd);
-                    sm.participant(p).session(s).trial(k).final_distance_base2=max(fd);
+                    sm.participant(p).session(s).trial(k).memory_score_other=max(ms);
+                    clear final_distance_ego fd ms base_* a; 
+                else
+                    % default values 
+                    sm.participant(p).session(s).trial(k).memory_score_ego=999;
+                    sm.participant(p).session(s).trial(k).memory_score_other=999;
+                end
+                
+                % DETAILED PRESENCE in ALLEYS
+                if sm.participant(p).session(s).trial(k).condition=="allo_ret" && sm.participant(p).session(s).trial(k).ego_alley~=7 
+                    % presence in START ALLEY
+                    if mod(sm.participant(p).session(s).trial(k).start_i,2)~=0
+                        [~, sm.participant(p).session(s).trial(k).presence_start, ~, ~]=computePresence(...
+                            sm.participant(p).session(s).trial(k).start_i,x,y,...
+                            sm.coord.alley_poly, sm.coord.alley_poly, sm.participant(p).session(s).trial(k).time);
+                    else 
+                        sm.participant(p).session(s).trial(k).presence_start=999;
+                    end 
                     
-                    % MEMORY SCORE to BASELINE ALLEY(S)
-                    sm.participant(p).session(s).trial(k).memory_score_base=mean(ms);
-                    sm.participant(p).session(s).trial(k).memory_score_base2=max(ms);
+                    % presence in ORIGINAL START ALLEY
+                    [~, sm.participant(p).session(s).trial(k).presence_original, ~, ~]=computePresence(7,x,y,...
+                        sm.coord.alley_poly, sm.coord.alley_poly, sm.participant(p).session(s).trial(k).time);  
                     
-                    % PRESENCE (rel. time in zone) in BASELINE ALLEY(S) 
-                    sm.participant(p).session(s).trial(k).presence_base=mean(pres);
-                    sm.participant(p).session(s).trial(k).presence_base2=max(pres);
-                    clear base* fd ms pres;    
+                    % presence in EGO ALLEY
+                    if sm.participant(p).session(s).trial(k).ego_alley~=0
+                        [~, sm.participant(p).session(s).trial(k).presence_ego, ~, ~]=computePresence(...
+                            sm.participant(p).session(s).trial(k).ego_alley,x,y,...
+                            sm.coord.alley_poly, sm.coord.alley_poly, sm.participant(p).session(s).trial(k).time);
+                    else 
+                        sm.participant(p).session(s).trial(k).presence_ego=999;
+                    end 
+                    
+                    % presence in GOAL ALLEY
+                    [~, sm.participant(p).session(s).trial(k).presence_goal, ~, ~]=computePresence(...
+                        sm.participant(p).session(s).trial(k).goal_alley,x,y,...
+                        sm.coord.alley_poly, sm.coord.alley_poly, sm.participant(p).session(s).trial(k).time);         
+  
+                    % presence in all OTHER ALLEY(s) as BASELINE 
+                    % get baseline alley integer
+                    base_alleys=[1 3 5 7 9];
+                    base_alleys(base_alleys==7)=[];
+                    base_alleys(base_alleys==sm.participant(p).session(s).trial(k).start_i)=[];
+                    base_alleys(base_alleys==sm.participant(p).session(s).trial(k).goal_alley)=[];
+                    base_alleys(base_alleys==sm.participant(p).session(s).trial(k).ego_alley)=[];
+                    base_i=(base_alleys+1)/2; 
+                    
+                    % compute values 
+                    pr=zeros(numel(base_alleys),1); 
+                    for a=1:numel(base_alleys)
+                        [~, pr(a), ~, ~]=computePresence(base_alleys(a),x,y,sm.coord.alley_poly,...
+                            sm.coord.alley_poly, sm.participant(p).session(s).trial(k).time);
+                    end
+                    sm.participant(p).session(s).trial(k).presence_other=sum(pr);
+                    clear pr base* a;    
                 else
                     % default values
-                    sm.participant(p).session(s).trial(k).final_distance_home=999;
-                    sm.participant(p).session(s).trial(k).memory_score_home=999; 
-                    sm.participant(p).session(s).trial(k).presence_home=999;
-                    sm.participant(p).session(s).trial(k).final_distance_ego=999;
-                    sm.participant(p).session(s).trial(k).memory_score_ego=999;
+                    sm.participant(p).session(s).trial(k).presence_start=999;
+                    sm.participant(p).session(s).trial(k).presence_original=999;
                     sm.participant(p).session(s).trial(k).presence_ego=999; 
-                    sm.participant(p).session(s).trial(k).final_distance_base=999;
-                    sm.participant(p).session(s).trial(k).memory_score_base=999;
-                    sm.participant(p).session(s).trial(k).presence_base=999;
+                    sm.participant(p).session(s).trial(k).presence_goal=999;
+                    sm.participant(p).session(s).trial(k).presence_other=999;
                 end
                 
                 % fprintf('Additional analysis for allocentric probe trials done for %d, session %d, file no %d.\n', id, s, k);

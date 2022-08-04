@@ -1,5 +1,5 @@
 function [abs_presence, rel_presence, abs_time_in_zone, index]=computePresence(alley_int,...
-    x, y, alley_poly, tri_poly, time)
+    x, y, alley_poly, optional_tri_poly, time)
 % computePresence: Compute absolute and relative presence in zone. 
 % 
 % Input: 
@@ -16,7 +16,7 @@ function [abs_presence, rel_presence, abs_time_in_zone, index]=computePresence(a
 alley_int=(alley_int+1)/2;
 
 % get index(es) in zone 
-target_poly=union(alley_poly{alley_int}, tri_poly{alley_int});
+target_poly=union(alley_poly{alley_int}, optional_tri_poly{alley_int});
 index=inpolygon(x,y,target_poly.Vertices(:,1),target_poly.Vertices(:,2));
 % figure; plot(sm.coord.full_poly); hold on;
 % plot(target_poly, 'FaceColor', 'k');
