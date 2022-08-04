@@ -96,33 +96,28 @@ data_c <- data %>%
   droplevels()
 
 # probe allo trials
-data_allo <- data %>% 
-  filter(condition=="allo_ret", ego_alley!=7) %>% 
-  mutate(trial_in_block_c=trial_in_block-mean(trial_in_block)) %>%  # alternativ: zero-centering
-  droplevels()
-
-data_allo2 <- data %>%
-  filter(condition=="allo_ret", ego_alley!=7) %>% 
+data_allo_ms <- data %>%
+  filter(condition=="allo_ret", ego_alley!=0) %>% 
   select(id, sex, group, session, condition, trial, goal_f, block_f, 
-         starts_with("memory_score_"), starts_with("presence_"), starts_with("time_in_")) %>% 
-  select(-ends_with("pentagon"), -ends_with("alleys"), -ends_with("2")) %>% 
-  pivot_longer(cols=c(ends_with("ego"), ends_with("home"), ends_with("base")), 
+         correct_final_alley, correct_final_alley_ego, starts_with("memory_score")) %>% 
+  rename(memory_score_goal=memory_score) %>% 
+  pivot_longer(cols=starts_with("memory_score"), 
                names_to=c("variable", "cond"),
                names_pattern='(.*)_(\\w+)') %>% 
   pivot_wider(names_from=variable, values_from=value) %>% 
-  mutate(cond=factor(cond, levels=c("base", "ego", "home"))) %>% 
+  mutate(cond=factor(cond, levels=c("goal", "ego", "other"))) %>% 
   droplevels()
 
-data_allo3 <- data %>%
+data_allo_pr <- data %>%
   filter(condition=="allo_ret", ego_alley!=7) %>% 
   select(id, sex, group, session, condition, trial, goal_f, block_f, 
-         starts_with("memory_score_"), starts_with("presence_"), starts_with("time_in_")) %>% 
-  select(-ends_with("pentagon"), -ends_with("alleys"), -ends_with("base")) %>% 
-  pivot_longer(cols=c(ends_with("ego"), ends_with("home"), ends_with("base2")), 
+         starts_with("presence")) %>% 
+  select(-presence_alleys, -presence_pentagon) %>% 
+  pivot_longer(cols=starts_with("presence"), 
                names_to=c("variable", "cond"),
                names_pattern='(.*)_(\\w+)') %>% 
   pivot_wider(names_from=variable, values_from=value) %>% 
-  mutate(cond=factor(cond, levels=c("base2", "ego", "home"))) %>% 
+  mutate(cond=factor(cond, levels=c("start", "original", "ego", "other", "goal"))) %>% 
   droplevels()
 
 # probe aggregated change 
@@ -217,64 +212,6 @@ con_list_group_session_condition <- list(
   "a_v_e_t2_YCH"   = c(0, 0, 0, 1, 0, 0, 0, 0, 0, -1, 0, 0),
   "a_v_e_t2_OCH"   = c(0, 0, 0, 0, 1, 0, 0, 0, 0, 0, -1, 0),
   "a_v_e_t2_YAD"   = c(0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, -1)) 
-
-con_list_group_cond <- list(
-  "YCH_v_OCH_base"   = c(1, -1, 0, 0, 0, 0, 0, 0, 0), 
-  "YCH_v_YAD_base"   = c(1, 0, -1, 0, 0, 0, 0, 0, 0), 
-  "OCH_v_YAD_base"   = c(0, 1, -1, 0, 0, 0, 0, 0, 0), 
-  "YCH_v_OCH_ego"    = c(0, 0, 0, 1, -1, 0, 0, 0, 0), 
-  "YCH_v_YAD_ego"    = c(0, 0, 0, 1, 0, -1, 0, 0, 0), 
-  "OCH_v_YAD_ego"    = c(0, 0, 0, 0, 1, -1, 0, 0, 0), 
-  "YCH_v_OCH_home"   = c(0, 0, 0, 0, 0, 0, 1, -1, 0), 
-  "YCH_v_YAD_home"   = c(0, 0, 0, 0, 0, 0, 1, 0, -1), 
-  "OCH_v_YAD_home"   = c(0, 0, 0, 0, 0, 0, 0, 1, -1), 
-  "base_v_ego_YCH"   = c(1, 0, 0, -1, 0, 0, 0, 0, 0),
-  "base_v_home_YCH"  = c(1, 0, 0, 0, 0, 0, -1, 0, 0),
-  "ego_v_home_YCH"   = c(0, 0, 0, 1, 0, 0, -1, 0, 0),
-  "base_v_ego_OCH"   = c(0, 1, 0, 0, -1, 0, 0, 0, 0),
-  "base_v_home_OCH"  = c(0, 1, 0, 0, 0, 0, 0, -1, 0),
-  "ego_v_home_OCH"   = c(0, 0, 0, 0, 1, 0, 0, -1, 0),
-  "base_v_ego_YAD"   = c(0, 0, 1, 0, 0, -1, 0, 0, 0),
-  "base_v_home_YAD"  = c(0, 0, 1, 0, 0, 0, 0, 0, -1),
-  "ego_v_home_YAD"   = c(0, 0, 0, 0, 0, 1, 0, 0, -1))
-
-con_list_group_session_cond <- list(
-  "b_v_e_YCH_t1" = c(1, 0, 0, 0, 0, 0, -1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0),
-  "b_v_h_YCH_t1" = c(1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, -1, 0, 0, 0, 0, 0),
-  "e_v_h_YCH_t1" = c(0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, -1, 0, 0, 0, 0, 0),
-  "b_v_e_OCH_t1" = c(0, 1, 0, 0, 0, 0, 0, -1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0),
-  "b_v_h_OCH_t1" = c(0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, -1, 0, 0, 0, 0),
-  "e_v_h_OCH_t1" = c(0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, -1, 0, 0, 0, 0),
-  "b_v_e_YAD_t1" = c(0, 0, 1, 0, 0, 0, 0, 0, -1, 0, 0, 0, 0, 0, 0, 0, 0, 0),
-  "b_v_h_YAD_t1" = c(0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, -1, 0, 0, 0),
-  "e_v_h_YAD_t1" = c(0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, -1, 0, 0, 0),
-  "b_v_e_YCH_t2" = c(0, 0, 0, 1, 0, 0, 0, 0, 0, -1, 0, 0, 0, 0, 0, 0, 0, 0),
-  "b_v_h_YCH_t2" = c(0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, -1, 0, 0),
-  "e_v_h_YCH_t2" = c(0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, -1, 0, 0),
-  "b_v_e_OCH_t2" = c(0, 0, 0, 0, 1, 0, 0, 0, 0, 0, -1, 0, 0, 0, 0, 0, 0, 0),
-  "b_v_h_OCH_t2" = c(0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, -1, 0),
-  "e_v_h_OCH_t2" = c(0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, -1, 0),
-  "b_v_e_YAD_t2" = c(0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, -1, 0, 0, 0, 0, 0, 0),
-  "b_v_h_YAD_t2" = c(0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, -1),
-  "e_v_h_YAD_t2" = c(0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, -1),
-  "YCH_v_OCH_b_t1" = c(1, -1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0),
-  "YCH_v_YAD_b_t1" = c(1, 0, -1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0),
-  "OCH_v_YAD_b_t1" = c(0, 1, -1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0),
-  "YCH_v_OCH_b_t2" = c(0, 0, 0, 1, -1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0),
-  "YCH_v_YAD_b_t2" = c(0, 0, 0, 1, 0, -1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0),
-  "OCH_v_YAD_b_t2" = c(0, 0, 0, 0, 1, -1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0),
-  "YCH_v_OCH_e_t1" = c(0, 0, 0, 0, 0, 0, 1, -1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0),
-  "YCH_v_YAD_e_t1" = c(0, 0, 0, 0, 0, 0, 1, 0, -1, 0, 0, 0, 0, 0, 0, 0, 0, 0),
-  "OCH_v_YAD_e_t1" = c(0, 0, 0, 0, 0, 0, 0, 1, -1, 0, 0, 0, 0, 0, 0, 0, 0, 0),
-  "YCH_v_OCH_e_t2" = c(0, 0, 0, 0, 0, 0, 0, 0, 0, 1, -1, 0, 0, 0, 0, 0, 0, 0),
-  "YCH_v_YAD_e_t2" = c(0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, -1, 0, 0, 0, 0, 0, 0),
-  "OCH_v_YAD_e_t2" = c(0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, -1, 0, 0, 0, 0, 0, 0),
-  "YCH_v_OCH_h_t1" = c(0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, -1, 0, 0, 0, 0),
-  "YCH_v_YAD_h_t1" = c(0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, -1, 0, 0, 0),
-  "OCH_v_YAD_h_t1" = c(0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, -1, 0, 0, 0),
-  "YCH_v_OCH_h_t2" = c(0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, -1, 0),
-  "YCH_v_YAD_h_t2" = c(0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, -1),
-  "OCH_v_YAD_h_t2" = c(0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, -1))
 ## ----
 
 
@@ -1323,117 +1260,94 @@ ggplot(data, aes(x=group, y=rotation_turns_by_path_length)) + geom_boxplot() + f
 
 # -- PRESENCE -- # 
 
-# ---- stats_probe_presence_in_allo_simple
-probe.allo_presence_s <- mixed(presence ~ group*session*cond + block_f + sex + 
-                                 (1|id), data=data_allo2, expand_re=T)
-## ----
+# ---- stats_probe_presence_in_allo_simple 
+# probe.allo_presence_s <- mixed(presence ~ group*session*cond + (1|id), data=data_allo_pr)
+# # DOES NOT CONVERGE DUE TO SINGULARITY 
 
-# -- heteroscedasticity
-probe.allo_presence_base <- lme(presence ~ group*session*cond + block_f + sex,
-                                random=~1 | id,
-                                data=data_allo2, na.action=na.omit, method="ML")
-probe.allo_presence_var1 <- update(probe.allo_presence_base, weights=varIdent(form=~1 | group))
-probe.allo_presence_var2 <- update(probe.allo_presence_base, weights=varComb(varIdent(form=~1 | group),
-                                                                             varIdent(form=~1 | cond)))
-# probe.pres_allo_var3 <- update(probe.allo_presence_base, weights=varComb(varIdent(form=~1 | group),
-#                                                                 varIdent(form=~1 | cond),
-#                                                                 varIdent(form=~1 | session)))
-anova(probe.allo_presence_base, probe.allo_presence_var1, probe.allo_presence_var2, test=T) # chose model 2 
-rm(probe.allo_presence_base, probe.allo_presence_var1, probe.allo_presence_var2) 
-## ---- stats_probe_presence_in_allo_hetero
-# re-fit final model with with REML
-probe.allo_presence_h <- lme(presence ~ group*session*cond + block_f + sex,
-                             random=~1 | id,
-                             weights=varComb(varIdent(form=~1 | group),
-                                             varIdent(form=~1 | cond)),
-                             data=data_allo2, na.action=na.omit, method="REML")
-## ----
+# aggregate data & ANOVA 
+data_agg_pr <- data_allo_pr %>% group_by(id, group, cond) %>% 
+  summarise(presence=mean(presence, na.rm=T)) %>% 
+  filter(cond %in% c("original", "ego", "other")) %>% 
+  droplevels()
 
-# check models 
-plot(probe.allo_presence_s$full_model, resid(., type="pearson") ~ fitted(.))
-plot(probe.allo_presence_s$full_model, group ~ residuals(., type="pearson"))
-qqnorm(resid(probe.allo_presence_s$full_model))
-qqline(resid(probe.allo_presence_s$full_model))
+probe.allo_presence_aov  <- aov_ez("id", "presence", data=data_agg_pr, between=c("group"), within=c("cond"))
 
-plot(probe.allo_presence_h, resid(., type="pearson") ~ fitted(.))
-plot(probe.allo_presence_h, group ~ residuals(., type="pearson"))
-qqnorm(resid(probe.allo_presence_h))
-qqline(resid(probe.allo_presence_h))
+emm <- emmeans(probe.allo_presence_aov, ~ group*cond)
 
-# random effects
-VarCorr(probe.allo_presence_s$full_model)
-probe.allo_presence_h$modelStruct$reStruct 
+con_list_group_cond <- list(
+  "original_v_ego_YCH"   = c(1, 0, 0, -1, 0, 0, 0, 0, 0),
+  "original_v_ego_OCH"   = c(0, 1, 0, 0, -1, 0, 0, 0, 0),
+  "original_v_ego_YAD"   = c(0, 0, 1, 0, 0, -1, 0, 0, 0),
+  "original_v_other_YCH" = c(1, 0, 0, 0, 0, 0, -1, 0, 0),
+  "original_v_other_OCH" = c(0, 1, 0, 0, 0, 0, 0, -1, 0),
+  "original_v_other_YAD" = c(0, 0, 1, 0, 0, 0, 0, 0, -1),
+  "ego_v_other_YCH"      = c(0, 0, 0, 1, 0, 0, -1, 0, 0),
+  "ego_v_other_OCH"      = c(0, 0, 0, 0, 1, 0, 0, -1, 0),
+  "ego_v_other_YAD"      = c(0, 0, 0, 0, 0, 1, 0, 0, -1),
+  "YCH_v_OCH_original"   = c(1, -1, 0, 0, 0, 0, 0, 0, 0),
+  "YCH_v_YAD_original"   = c(1, 0, -1, 0, 0, 0, 0, 0, 0),
+  "OCH_v_YAD_original"   = c(0, 1, -1, 0, 0, 0, 0, 0, 0),
+  "YCH_v_OCH_ego"        = c(0, 0, 0, 1, -1, 0, 0, 0, 0),
+  "YCH_v_YAD_ego"        = c(0, 0, 0, 1, 0, -1, 0, 0, 0),
+  "OCH_v_YAD_ego"        = c(0, 0, 0, 0, 1, -1, 0, 0, 0),
+  "YCH_v_OCH_other"      = c(0, 0, 0, 0, 0, 0, 1, -1, 0),
+  "YCH_v_YAD_other"      = c(0, 0, 0, 0, 0, 0, 1, 0, -1),
+  "OCH_v_YAD_other"      = c(0, 0, 0, 0, 0, 0, 0, 1, -1))
 
-# statistics on fixed effects 
-probe.allo_presence_s
-anova.lme(probe.allo_presence_h, type="marginal")
-rm(probe.allo_presence_s, probe.allo_presence_h)
+contrast(emm, con_list_group_cond, adjust="bonferroni")
 
-# emm <- emmeans(probe.allo_presence_s, ~ group * cond)
-# contrast(emm, con_list_group_cond, adjust="bonferroni")
-
+# ----
 # helper plots 
-ggplot(data=data_allo2, aes(x=presence)) + geom_histogram()
-ggplot(data=data_allo2, aes(x=group, y=presence, fill=cond)) + geom_boxplot()
+ggplot(data=data_agg_pr, aes(x=presence)) + geom_histogram()
+ggplot(data=data_agg_pr, aes(x=group, y=presence, fill=cond)) + geom_boxplot()
+
+rm(data_allo_pr, data_agg_pr, emm, probe.allo_presence_s, probe.allo_presence_aov)
 
 # ######################################################### #
 
 # -- MEMORY SCORE TO OTHER LOCATIONS -- # 
 
 # ---- stats_probe_memory_in_allo_simple
-probe.allo_memory_s <- mixed(memory_score ~ group*session*cond + block_f + sex + 
-                               (1|id), data=data_allo2, expand_re=T)
-## ----
+# probe.allo_memory_s <- mixed(memory_score ~ group*session*cond + (1|id), data=data_allo_ms)
+# # DOES NOT CONVERGE DUE TO SINGULARITY 
 
-# -- heteroscedasticity
-probe.allo_memory_base <- lme(memory_score ~ group*session*cond + block_f + sex,
-                              random=~1 | id,
-                              data=data_allo2, na.action=na.omit, method="ML")
-probe.allo_memory_var1 <- update(probe.allo_memory_base, weights=varIdent(form=~1 | group))
-probe.allo_memory_var2 <- update(probe.allo_memory_base, weights=varComb(varIdent(form=~1 | group),
-                                                                         varIdent(form=~1 | cond)))
-probe.allo_memory_var3 <- update(probe.allo_memory_base, weights=varComb(varIdent(form=~1 | group),
-                                                                         varIdent(form=~1 | cond),
-                                                                         varIdent(form=~1 | session)))
-anova(probe.allo_memory_base, probe.allo_memory_var1, probe.allo_memory_var2, probe.allo_memory_var3, test=T) # chose model 2
-rm(probe.allo_memory_base, probe.allo_memory_var1, probe.allo_memory_var2, probe.allo_memory_var3)
-## ---- stats_probe_memory_in_allo_hetero
-# re-fit final model with with REML
-probe.allo_memory_h <- lme(memory_score ~ group*session*cond + block_f + sex,
-                           random=~1 | id,
-                           weights=varComb(varIdent(form=~1 | group),
-                                           varIdent(form=~1 | cond)),
-                           data=data_allo2, na.action=na.omit, method="REML")
-## ----
+# aggregate data & ANOVA 
+data_agg_ms <- data_allo_ms %>% group_by(id, group, cond) %>% 
+  summarise(memory_score=mean(memory_score, na.rm=T)) %>% 
+  droplevels()
 
-# check models 
-plot(probe.allo_memory_s$full_model, resid(., type="pearson") ~ fitted(.))
-plot(probe.allo_memory_s$full_model, group ~ residuals(., type="pearson"))
-qqnorm(resid(probe.allo_memory_s$full_model))
-qqline(resid(probe.allo_memory_s$full_model))
+m  <- aov_ez("id", "memory_score", data=data_agg_ms, between=c("group"), within=c("cond"))
 
-plot(probe.allo_memory_h, resid(., type="pearson") ~ fitted(.))
-plot(probe.allo_memory_h, group ~ residuals(., type="pearson"))
-qqnorm(resid(probe.allo_memory_h))
-qqline(resid(probe.allo_memory_h))
+emm <- emmeans(probe.allo_memory_aov, ~ group*cond)
 
-# random effects
-VarCorr(probe.allo_memory_s$full_model)
-probe.allo_memory_h$modelStruct$reStruct 
+con_list_group_cond <- list(
+  "goal_v_ego_YCH"    = c(1, 0, 0, -1, 0, 0, 0, 0, 0),
+  "goal_v_ego_OCH"    = c(0, 1, 0, 0, -1, 0, 0, 0, 0),
+  "goal_v_ego_YAD"    = c(0, 0, 1, 0, 0, -1, 0, 0, 0),
+  "goal_v_other_YCH"  = c(1, 0, 0, 0, 0, 0, -1, 0, 0),
+  "goal_v_other_OCH"  = c(0, 1, 0, 0, 0, 0, 0, -1, 0),
+  "goal_v_other_YAD"  = c(0, 0, 1, 0, 0, 0, 0, 0, -1),
+  "ego_v_other_YCH"   = c(0, 0, 0, 1, 0, 0, -1, 0, 0),
+  "ego_v_other_OCH"   = c(0, 0, 0, 0, 1, 0, 0, -1, 0),
+  "ego_v_other_YAD"   = c(0, 0, 0, 0, 0, 1, 0, 0, -1),
+  "YCH_v_OCH_goal"    = c(1, -1, 0, 0, 0, 0, 0, 0, 0),
+  "YCH_v_YAD_goal"    = c(1, 0, -1, 0, 0, 0, 0, 0, 0),
+  "OCH_v_YAD_goal"    = c(0, 1, -1, 0, 0, 0, 0, 0, 0),
+  "YCH_v_OCH_ego"     = c(0, 0, 0, 1, -1, 0, 0, 0, 0),
+  "YCH_v_YAD_ego"     = c(0, 0, 0 ,1, 0, -1, 0, 0, 0),
+  "OCH_v_YAD_ego"     = c(0, 0, 0, 0, 1, -1, 0, 0, 0),
+  "YCH_v_OCH_other"   = c(0, 0, 0, 0, 0, 0, 1, -1, 0),
+  "YCH_v_YAD_other"   = c(0, 0, 0, 0, 0, 0, 1, 0, -1),
+  "OCH_v_YAD_other"   = c(0, 0, 0, 0, 0, 0, 0, 1, -1))
 
-# statistics on fixed effects 
-probe.allo_memory_s
-anova.lme(probe.allo_memory_h, type="marginal")
-rm(probe.allo_memory_s, probe.allo_memory_h)
+contrast(emm, con_list_group_cond, adjust="bonferroni")
 
-# emm <- emmeans(probe.allo_memory_s3, ~ group*session*cond, lmer.df="satterthwaite")
-# contrast(emm, con_list_group_session_cond, adjust="bonferroni")
-
+# ----
 # helper plots 
-ggplot(data=data_allo2, aes(x=memory_score)) + geom_histogram()
-ggplot(data=data_allo2, aes(x=group, y=memory_score, fill=cond)) + geom_boxplot()
-ggplot(data=data_allo2, aes(x=session, y=memory_score, fill=cond)) + geom_boxplot()
-ggplot(data=data_allo2, aes(x=group, y=memory_score, fill=session)) + geom_boxplot()
+ggplot(data=data_agg_ms, aes(x=memory_score)) + geom_histogram()
+ggplot(data=data_agg_ms, aes(x=group, y=memory_score, fill=cond)) + geom_boxplot()
+
+rm(data_allo_ms, data_agg_ms, emm, probe.allo_memory_s, probe.allo_memory_aov)
 
 
 # ######################################################### #
