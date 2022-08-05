@@ -112,13 +112,25 @@ data_allo_pr <- data %>%
   filter(condition=="allo_ret", ego_alley!=7) %>% 
   select(id, sex, group, session, condition, trial, goal_f, block_f, 
          time, starts_with("presence")) %>% 
-  select(-presence_alleys, -presence_pentagon) %>% 
+  select(-presence_alleys, -presence_pentagon, -starts_with("presenceT")) %>% 
   pivot_longer(cols=starts_with("presence"), 
                names_to=c("variable", "cond"),
                names_pattern='(.*)_(\\w+)') %>% 
   pivot_wider(names_from=variable, values_from=value) %>% 
   mutate(time_in_zone=time*presence,  
-         cond=factor(cond, levels=c("start", "original", "ego", "other", "goal"))) %>% 
+         cond=factor(cond, levels=c("start", "goal", "original", "ego", "otherAVG", "otherMAX", "otherSUM"))) %>% 
+  droplevels()
+
+data_allo_prT <- data %>%
+  filter(condition=="allo_ret", ego_alley!=7) %>% 
+  select(id, sex, group, session, condition, trial, goal_f, block_f, 
+         time, starts_with("presenceT")) %>% 
+  pivot_longer(cols=starts_with("presenceT"), 
+               names_to=c("variable", "cond"),
+               names_pattern='(.*)_(\\w+)') %>% 
+  pivot_wider(names_from=variable, values_from=value) %>% 
+  mutate(time_in_zone=time*presenceT,  
+         cond=factor(cond, levels=c("start", "goal", "original", "ego", "otherAVG", "otherMAX", "otherSUM"))) %>% 
   droplevels()
 
 # probe aggregated change 
@@ -1263,14 +1275,18 @@ ggplot(data, aes(x=group, y=rotation_turns_by_path_length)) + geom_boxplot() + f
 
 # ---- stats_probe_presence_in_allo_simple 
 # probe.allo_presence_s <- mixed(presence ~ group*session*cond + (1|id), data=data_allo_pr)
+# probe.allo_presence_s <- mixed(presenceT ~ group*session*cond + (1|id), data=data_allo_prT)
 # # DOES NOT CONVERGE DUE TO SINGULARITY 
 
+# presence without triangles 
 # aggregate data & ANOVA 
 data_agg_pr <- data_allo_pr %>% group_by(id, group, cond) %>% 
   summarise(presence=mean(presence, na.rm=T), 
             time_in_zone=mean(time_in_zone, na.rm=T)) %>% 
-  filter(cond %in% c("original", "ego", "other")) %>% 
+  filter(cond %in% c("original", "ego", "otherAVG")) %>% 
   droplevels()
+
+ggplot(data=data_agg_pr, aes(x=group, y=presence, fill=cond)) + geom_boxplot()
 
 probe.allo_presence_aov  <- aov_ez("id", "presence", data=data_agg_pr, between=c("group"), within=c("cond"))
 
@@ -1298,12 +1314,48 @@ con_list_group_cond <- list(
 
 contrast(emm, con_list_group_cond, adjust="bonferroni")
 
-# ----
-# helper plots 
-ggplot(data=data_agg_pr, aes(x=presence)) + geom_histogram()
-ggplot(data=data_agg_pr, aes(x=group, y=presence, fill=cond)) + geom_boxplot()
+rm(data_allo_pr, data_agg_pr, emm, con_list_group_cond, probe.allo_presence_aov)
 
-rm(data_allo_pr, data_agg_pr, emm, probe.allo_presence_s, probe.allo_presence_aov)
+
+# presence with triangles 
+# aggregate data & ANOVA 
+data_agg_prT <- data_allo_prT %>% group_by(id, group, cond) %>% 
+  summarise(presenceT=mean(presenceT, na.rm=T), 
+            time_in_zone=mean(time_in_zone, na.rm=T)) %>% 
+  filter(cond %in% c("original", "ego", "otherAVG")) %>% 
+  droplevels()
+
+ggplot(data=data_agg_prT, aes(x=group, y=presenceT, fill=cond)) + geom_boxplot()
+
+probe.allo_presenceT_aov  <- aov_ez("id", "presenceT", data=data_agg_prT, between=c("group"), within=c("cond"))
+
+emm <- emmeans(probe.allo_presenceT_aov, ~ group*cond)
+
+con_list_group_cond <- list(
+  "original_v_ego_YCH"   = c(1, 0, 0, -1, 0, 0, 0, 0, 0),
+  "original_v_ego_OCH"   = c(0, 1, 0, 0, -1, 0, 0, 0, 0),
+  "original_v_ego_YAD"   = c(0, 0, 1, 0, 0, -1, 0, 0, 0),
+  "original_v_other_YCH" = c(1, 0, 0, 0, 0, 0, -1, 0, 0),
+  "original_v_other_OCH" = c(0, 1, 0, 0, 0, 0, 0, -1, 0),
+  "original_v_other_YAD" = c(0, 0, 1, 0, 0, 0, 0, 0, -1),
+  "ego_v_other_YCH"      = c(0, 0, 0, 1, 0, 0, -1, 0, 0),
+  "ego_v_other_OCH"      = c(0, 0, 0, 0, 1, 0, 0, -1, 0),
+  "ego_v_other_YAD"      = c(0, 0, 0, 0, 0, 1, 0, 0, -1),
+  "YCH_v_OCH_original"   = c(1, -1, 0, 0, 0, 0, 0, 0, 0),
+  "YCH_v_YAD_original"   = c(1, 0, -1, 0, 0, 0, 0, 0, 0),
+  "OCH_v_YAD_original"   = c(0, 1, -1, 0, 0, 0, 0, 0, 0),
+  "YCH_v_OCH_ego"        = c(0, 0, 0, 1, -1, 0, 0, 0, 0),
+  "YCH_v_YAD_ego"        = c(0, 0, 0, 1, 0, -1, 0, 0, 0),
+  "OCH_v_YAD_ego"        = c(0, 0, 0, 0, 1, -1, 0, 0, 0),
+  "YCH_v_OCH_other"      = c(0, 0, 0, 0, 0, 0, 1, -1, 0),
+  "YCH_v_YAD_other"      = c(0, 0, 0, 0, 0, 0, 1, 0, -1),
+  "OCH_v_YAD_other"      = c(0, 0, 0, 0, 0, 0, 0, 1, -1))
+
+contrast(emm, con_list_group_cond, adjust="bonferroni")
+
+rm(data_allo_prT, data_agg_prT, emm, con_list_group_cond, probe.allo_presenceT_aov)
+
+# ----
 
 # ######################################################### #
 
@@ -1313,12 +1365,15 @@ rm(data_allo_pr, data_agg_pr, emm, probe.allo_presence_s, probe.allo_presence_ao
 # probe.allo_memory_s <- mixed(memory_score ~ group*session*cond + (1|id), data=data_allo_ms)
 # # DOES NOT CONVERGE DUE TO SINGULARITY 
 
+# all trials 
 # aggregate data & ANOVA 
 data_agg_ms <- data_allo_ms %>% group_by(id, group, cond) %>% 
   summarise(memory_score=mean(memory_score, na.rm=T)) %>% 
   droplevels()
 
-m  <- aov_ez("id", "memory_score", data=data_agg_ms, between=c("group"), within=c("cond"))
+ggplot(data=data_agg_ms, aes(x=group, y=memory_score, fill=cond)) + geom_boxplot() + coord_cartesian(ylim=c(0,1))
+
+probe.allo_memory_aov <- aov_ez("id", "memory_score", data=data_agg_ms, between=c("group"), within=c("cond"))
 
 emm <- emmeans(probe.allo_memory_aov, ~ group*cond)
 
@@ -1344,12 +1399,24 @@ con_list_group_cond <- list(
 
 contrast(emm, con_list_group_cond, adjust="bonferroni")
 
-# ----
-# helper plots 
-ggplot(data=data_agg_ms, aes(x=memory_score)) + geom_histogram()
-ggplot(data=data_agg_ms, aes(x=group, y=memory_score, fill=cond)) + geom_boxplot()
+# only incorrect trials 
+# aggregate data & ANOVA 
+data_agg_incorr_ms <- data_allo_ms %>% 
+  filter(!correct_final_alley) %>% 
+  group_by(id, group, cond) %>% 
+  summarise(memory_score=mean(memory_score, na.rm=T)) %>% 
+  filter(cond!= "goal") %>% 
+  droplevels()
 
-rm(data_allo_ms, data_agg_ms, emm, probe.allo_memory_s, probe.allo_memory_aov)
+ggplot(data=data_agg_incorr_ms, aes(x=group, y=memory_score, fill=cond)) + geom_boxplot() + coord_cartesian(ylim=c(0,1))
+
+probe.allo_memory_incorr_aov <- aov_ez("id", "memory_score", data=data_agg_corr_ms, between=c("group"), within=c("cond"))
+
+emmeans(probe.allo_memory_incorr_aov, pairwise ~ cond)
+
+rm(data_allo_ms, data_agg_ms, data_agg_incorr_ms, emm, con_list_group_cond, 
+   probe.allo_memory_s, probe.allo_memory_aov, probe.allo_memory_incorr_aov)
+# ----
 
 
 # ######################################################### #

@@ -46,7 +46,7 @@ mylabels <- as_labeller(c(`YoungKids` = "6-7yo", `OldKids` = "9-10yo", `YoungAdu
                           `main_learn` = "Learning", `main_ret` = "Retrieval", 
                           `allo_ret` = "Allocentric", `ego_ret` = "Egocentric",
                           `1`="T1 - Immediate", `2`=" T2 - Delayed", `Consolidation` = "(T2-T1)/T1", `collapsed` = "T1 & T2",
-                          `base` = "basline", `ego` = "egocentric", `home` = "homing",
+                          `ego` = "egocentric", `other` = "baseline", `goal` = "goal", 
                           `direct` = "direct", `detour` = "detour",`reorient` = "reorient",
                           `layout`="Layout", `landmarks`="Landmarks", 
                           `goals`="Goals", `position`="Positioning",
@@ -59,8 +59,8 @@ mylabels <- as_labeller(c(`YoungKids` = "6-7yo", `OldKids` = "9-10yo", `YoungAdu
 # scales::show_col()
 group_colors <- c("YoungKids"="#FFE476", "OldKids"="#6699FF", "YoungAdults"="#C4CAC9")
 group_colors_o <-  c("YoungKids"="#CC6600", "OldKids"="#003399", "YoungAdults"="#667270")
-type_colors <- c("base"="#C4CAC9", "ego"="#A6CEE3", "home"="#FDBF6F")
-type_colors_o <- c("base"="#667270", "ego"="#1F78B4", "home"="#FF7F00")
+type_colors <- c("other"="#C4CAC9", "ego"="#A6CEE3", "goal"="#FDBF6F")
+type_colors_o <- c("other"="#667270", "ego"="#1F78B4", "goal"="#FF7F00")
 strategy_colors <- c("direct"="#E4534D", "detour"="#ED8E8A", "reorient"="#F9DAD9")
 landmark_colors <- rev(RColorBrewer::brewer.pal(3,"Blues"))
 
@@ -431,17 +431,50 @@ sm_agg_correct <- sm_data %>%
   group_by(id, group, session, condition) %>% 
   summarise_at(c("memory_score"), mean, na.rm=T)
 
-sm_agg_allo <- sm_data %>%
-  filter(condition=="allo_ret", ego_alley!=7) %>% 
-  select(id, group, session, condition, trial, starts_with("memory_score_"), starts_with("presence_")) %>% 
-  select(-ends_with("pentagon"), -ends_with("alleys")) %>% 
-  pivot_longer(cols=c(ends_with("ego"), ends_with("home"), ends_with("base")),
+data_allo_ms <- sm_data %>%
+  filter(condition=="allo_ret", ego_alley!=0) %>% 
+  select(id, sex, group, session, condition, trial, 
+         correct_final_alley, correct_final_alley_ego, starts_with("memory_score")) %>% 
+  rename(memory_score_goal=memory_score) %>% 
+  pivot_longer(cols=starts_with("memory_score"), 
                names_to=c("variable", "cond"),
                names_pattern='(.*)_(\\w+)') %>% 
   pivot_wider(names_from=variable, values_from=value) %>% 
-  mutate(cond=factor(cond, levels=c("base", "ego", "home"))) %>% 
-  group_by(id, group, session, condition, cond) %>% 
-  summarise_at(c("memory_score", "presence"), mean, na.rm=T)
+  mutate(cond=factor(cond, levels=c("goal", "ego", "other"))) %>% 
+  group_by(id, group, cond) %>% 
+  summarise(memory_score=mean(memory_score, na.rm=T)) %>% 
+  droplevels()
+
+data_allo_pr <- sm_data %>%
+  filter(condition=="allo_ret", ego_alley!=7) %>% 
+  select(id, sex, group, session, condition, trial, 
+         time, starts_with("presence")) %>% 
+  select(-presence_alleys, -presence_pentagon, -starts_with("presenceT")) %>% 
+  pivot_longer(cols=starts_with("presence"), 
+               names_to=c("variable", "cond"),
+               names_pattern='(.*)_(\\w+)') %>% 
+  pivot_wider(names_from=variable, values_from=value) %>% 
+  mutate(time_in_zone=time*presence,  
+         cond=factor(cond, levels=c("start", "goal", "original", "ego", "otherAVG", "otherMAX", "otherSUM"))) %>% 
+  group_by(id, group, cond) %>% 
+  summarise(presence=mean(presence, na.rm=T), 
+            time_in_zone=mean(time_in_zone, na.rm=T)) %>% 
+  droplevels()
+
+data_allo_prT <- sm_data %>%
+  filter(condition=="allo_ret", ego_alley!=7) %>% 
+  select(id, sex, group, session, condition, trial,
+         time, starts_with("presenceT")) %>% 
+  pivot_longer(cols=starts_with("presenceT"), 
+               names_to=c("variable", "cond"),
+               names_pattern='(.*)_(\\w+)') %>% 
+  pivot_wider(names_from=variable, values_from=value) %>% 
+  mutate(time_in_zone=time*presenceT,  
+         cond=factor(cond, levels=c("start", "goal", "original", "ego", "otherAVG", "otherMAX", "otherSUM"))) %>% 
+  group_by(id, group, cond) %>% 
+  summarise(presenceT=mean(presenceT, na.rm=T), 
+            time_in_zone=mean(time_in_zone, na.rm=T)) %>% 
+  droplevels()
 
 
 # egocentric probe trials
@@ -470,10 +503,10 @@ box_allo_rp <- box_plot(sm_agg %>% filter(condition=="allo_ret"), "group", "rota
 box_allo_cor_ms <- box_plot(sm_agg_correct %>% filter(condition=="allo_ret"), "group", "memory_score", "group", "session", "none", NULL, NULL, l_memory_score, mylabels, "top", group_colors, group_colors_o) + coord_cartesian(ylim=c(0.75,1))
 
 # exploratory: egocentric & homing behavior in allocentric probe trials 
-box_allo_msa <- box_plot(sm_agg_allo, "group", "memory_score", "cond", "session", "none", NULL, NULL, l_memory_score, mylabels, "top", type_colors, type_colors_o) + 
+box_allo_msa <- box_plot(data_allo_ms, "group", "memory_score", "cond", "none", "none", NULL, NULL, l_memory_score, mylabels, "top", type_colors, type_colors_o) + 
   theme(legend.position="top", legend.justification=c(0,0), legend.title=element_blank())
-box_allo_pres <- box_plot(sm_agg_allo, "group", "presence", "cond", "session", "none", NULL, NULL, l_presence, mylabels, "top", type_colors, type_colors_o) + 
-  theme(legend.position="top", legend.justification=c(0,0), legend.title=element_blank()) + coord_cartesian(ylim=c(0,0.4))
+box_allo_pres <- ggplot(data=data_allo_pr, aes(x=group, y=presence, fill=cond)) + geom_boxplot() + theme_classic()
+box_allo_presT <- ggplot(data=data_allo_prT, aes(x=group, y=presenceT, fill=cond)) + geom_boxplot() + theme_classic()
 ## ----
 rm(sm_agg, sm_agg_correct, sm_agg_allo)
 

@@ -1000,64 +1000,15 @@ rm(probe.rotation_path_s, apa_lmm, apa_emm1, apa_emm2, apa_emm3)
 
 ## Explorative analyses of allocentric trials 
 
-### Navigation behavior
-
-**How present were participants in specific zones that indicate an egocentric or homing strategy** (only allocentric trials where egocentric alley is not original start alley, egocentric response was available only for trials with defined egocentric location)
-
-Presence in zones is supposed to indicate the participant's navigation strategy: 
-
-1. egocentric strategy (entering the alley where the egocentric route leads)
-2. homing strategy (entering the original start alley). 
-3. baseline serves as a reference and is defined as entering those alley(s) that were not the start, goal, egocentric and homing alley (can be 1-3 alleys)
-
-Caution: this is exploratory and based on few trials! 
-
-```{r, echo=F, fig.height=4 }
-box_allo_pres + theme(legend.position="bottom", legend.justification=c(0,0))
-rm(box_allo_pres)
-```
-
-```{r, stats_probe_presence_in_allo_simple}
-```
-
-Model R^2
-
-```{r }
-r2beta(probe.allo_presence_s$full_model, method='nsj', partial=F)
-```
-
-Results: Presence in % in specific areas in allocentric probe trials at session 1 and session 2 
-
-* group * cond interaction (tbd)
-* session main effect: presence in these zones generally increased in session 2 
-* covariates: block significant, sex not significant 
-
-```{r }
-probe.allo_presence_s$anova_table
-```
-
-```{r, include=F}
-# emm <- emmeans(probe.allo_presence_s$full_model, ~ group * cond, lmer.df="satterthwaite")
-# con <- contrast(emm, con_list_group_cond, adjust="bonferroni")
-# con
-# emmeans(probe.allo_presence_s$full_model, pairwise ~ session, lmer.df="satterthwaite")$contrasts
-```
-
-```{r, include=F}
-rm(probe.allo_presence_s)
-```
-
-\newpage
-
 ### Accuracy
 
-**How often did participants erroneously pick locations that indicate an egocentric or homing strategy** (only allocentric trials where egocentric alley is not original start alley, egocentric response only for trials with defined egocentric location)
+**How often did participants erroneously pick locations that indicate an egocentric strategy** (only allocentric trials with defined egocentric location)
 
 Chosen goal alley supposed to indicate the participant's navigation strategy: 
 
-1. egocentric (alley where the egocentric route leads as goal alley)
-2. homing (picking original start alley as goal alley). 
-3. baseline serves as a reference and is defined as entering those alley(s) that were not the start, goal, egocentric and homing alley (can be 1-3 alleys -> problem: average of 2-3 alleys is giving downward-bias, maybe max() instead of mean() value for baseline?)
+1. correct goal alley = allocentric, landmark-based 
+1. egocentric alley = where the egocentric route leads to
+3. other alley; serves as a baseline reference, defined as the maximum of those 3-4 other alleys that were not the goal and  egocentric alley (maximum instead of mean because mean induces downward bias for memory score)
 
 Caution: this is exploratory and based on few trials! 
 
@@ -1066,38 +1017,27 @@ box_allo_msa + theme(legend.position="bottom", legend.justification=c(0,0))
 rm(box_allo_msa)
 ```
 
-```{r, stats_probe_memory_in_allo_simple }
+### Navigation behavior
+
+**How present were participants in specific zones that indicate strategies** (only allocentric trials where egocentric alley is not original start alley, egocentric response was available only for trials with defined egocentric location)
+
+Presence in zones is supposed to indicate the participant's navigation strategy: 
+
+1. start alley
+2. goal alley 
+3. original start alley
+4. egocentric alley 
+5. other alleys; serves as a baseline reference, defined as entering those alley(s) that were not the start, goal, original and egocentric alley (can be 1-3 alleys), either average, max or sum 
+
+Caution: this is exploratory and based on few trials! 
+
+```{r, echo=F, fig.height=4, fig.width=8}
+box_allo_pres + labs(subtitle="excluding triangle intersections") + 
+  box_allo_presT + labs(subtitle="including triangle intersections")+ 
+  plot_layout(guides="collect") & theme(legend.position="bottom", legend.justification=c(0,0)) 
+rm(box_allo_pres, box_allo_presT)
 ```
 
-Model R^2
-
-```{r }
-r2beta(probe.allo_memory_s$full_model, method='nsj', partial=F)
-```
-
-Results: Chosen goal alley in allocentric probe trials at session 1 and session 2 
-
-* session * cond interaction (tbd) 
-* group * session interaction (tbd)
-* cond main effect (tbd)
-* group main effect (tbd)
-* session main effect (tbd)
-* session main effect: presence in these zones generally increased in session 2 
-* covariates: block significant, sex not significant 
-
-```{r }
-probe.allo_memory_s$anova_table
-```
-
-```{r, include=F }
-# emm <- emmeans(probe.allo_memory_s$full_model, ~ group * cond, lmer.df="satterthwaite")
-# con <- contrast(emm, con_list_group_cond, adjust="bonferroni")
-# con
-```
-
-```{r, include=F}
-rm(probe.allo_memory_s)
-```
 \newpage 
 
 ## Non-navigational memory tasks
