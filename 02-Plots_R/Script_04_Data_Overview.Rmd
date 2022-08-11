@@ -35,8 +35,6 @@ Navigating a star-shaped maze environment ("Starmaze") with three goal locations
 
 
 ```{r setup, include=FALSE, cache=FALSE}
-
-knitr::read_chunk('Script_03_Plot_Creator.R')
 knitr::read_chunk('Script_02_Analyzer.R')
 knitr::opts_chunk$set(warning=FALSE, message=FALSE) 
 ```
@@ -44,14 +42,11 @@ knitr::opts_chunk$set(warning=FALSE, message=FALSE)
 ```{r, analysis_packages_and_sum_coding, include=FALSE, cache=FALSE}
 ```
 
-```{r, plotting_packages, include=FALSE, cache=FALSE}
-```
-
 ```{r, include=FALSE}
 file_name <- "../WP10_data/WP10_results/wp10_navigation_data.RData"
 load(file_name)
 sm_orig <- sm_data 
-sm_data <- sm_data %>% filter(exclude_trial_matlab==0)
+sm_data <- sm_data %>% filter(exclude_trial_matlab==0, id!=12018)
 rm(file_name)
 
 nn_YK <- length(unique(sm_data$id[sm_data$group=="YoungKids"]))
@@ -65,6 +60,9 @@ rm(file_name)
 np_YK <- length(unique(pt_data$id[pt_data$group=="YoungKids"]))
 np_OK <- length(unique(pt_data$id[pt_data$group=="OldKids"]))
 np_AD <- length(unique(pt_data$id[pt_data$group=="YoungAdults"]))
+```
+
+```{r, plot_settings, include=FALSE}
 ```
 
 ```{r, analysis_data, include=FALSE}
@@ -113,310 +111,73 @@ For evaluating the general fit, we calculated a (pseudo) R^2^ for each model acc
 
 Aggregated values were analyzed with robust ANOVAs from the WRS2 package (Mair & Wilcox, 2020). 
 
-``` {r, plot_settings, include=FALSE}
-```
-
-``` {r, plot_functions, include=FALSE}
-```
-
 \newpage
 
 # Results 
 
-## Training trials at Day 2 
+## Memory accuracy: Probe trials at Day 2 & Day 14
 
-```{r, plots_learning_trialwise, include=F }
+```{r, dot_plots, include=F }
+
+dot_plots <- function(mydata, xvar, yvar, goalvar, goalx, goaly, mytitle, 
+                      mylabels, facetr="session", facetc="group") {
+  p <- ggplot(mydata, aes(x=get(xvar), y=get(yvar), shape=get(goalvar))) + 
+    geom_point(aes(color=get(goalvar)), size=1.5) +
+    geom_point(aes(x=get(goalx), y=get(goaly), fill=get(goalvar), shape=get(goalvar)), size=4) +
+    scale_shape_manual(values=c(21, 22, 24)) +
+    scale_fill_brewer(palette="Set2") + 
+    scale_color_brewer(palette="Set2") + 
+    scale_x_continuous(breaks=c(0, 0.5, 1), labels=c(0, 0.5, 1)) + 
+    scale_y_continuous(breaks=c(0, 0.5, 1), labels=c(0, 0.5, 1)) + 
+    coord_fixed(ratio=1, xlim=c(0, 1), ylim=c(0, 1), expand=TRUE, clip="on") +
+    facet_grid(formula(paste(facetr, "~", facetc))) +  
+    theme_bw() +
+    theme(legend.position="top",
+          legend.key.size=unit(0.25, 'cm'),
+          legend.justification=c(0, 0),
+          legend.title=element_blank()) + 
+    labs(title=mytitle,
+         subtitle="Remembered goal location for goals 1-3",
+         x="x",
+         y="y")
+  
+  return(p)
+}
+
+dots_ego <- dot_plots(data_p %>% filter(condition=="ego_ret"), "x_n", "y_n", "goal_f", 
+                      "goal_x", "goal_y", "Egocentric trials", mylabels)
+
+dots_allo <- dot_plots(data_p %>% filter(condition=="allo_ret"), "x_n", "y_n", "goal_f", 
+                       "goal_x", "goal_y", "Allocentric trials", mylabels)
+
+rm(dot_plots)
 ```
-
-### **Time**
-
-```{r, echo=F, fig.height=3, fig.width=3, fig.cap="Trial curve for time in training." }
-line_t 
-rm(line_t)
-```
-
-```{r, stats_learn_time_simple }
-```
-
-```{r apa_learn_time, include=F}
-R2 <- r2beta(learn.time_s$full_model, method='nsj', partial=F) %>% mutate_all(apa_num)
-
-apa_lmm <- apa_print(learn.time_s)
-apa_lmm <- apa_lmm$table %>% mutate(term=str_replace_all(term, c(" c| f"), ''))
-
-emm <- emmeans(learn.time_s, pairwise ~ group, lmer.df="satterthwaite", adjust="bonferroni")$contrasts
-apa_emm <- apa_print(emm) 
-apa_emm <- apa_emm$table %>% remove_rownames()
-```
-
-The model had a fit of $R2 = `r R2$Rsq`, [CI: `r R2$upper.CL`, `r R2$lower.CL`$].
-
-The time per trial decreased across trials (main effect *trial in block*) but there were no group differences in the slope of the decrease (no interaction *group x trial in block interaction*). The groups differed in time per trial (main effect *group*). More specifically 6-7-year-old children were slower than 9-10-year-old children and adults, there were no differences between 9-10-year-old children and adults (Table\ \@ref(tab:table-learn-time1) & \@ref(tab:table-learn-time2)). 
-
-(ref:l-t-caption1) Fixed effects for time in training.
-
-```{r table-learn-time1, echo=F}
-apa_table(
-  apa_lmm,
-  caption="(ref:l-t-caption1)",
-  placement="h")
-# `r apa_lm$statistic$group`
-```
-
-(ref:l-t-caption2) Post-hoc contrasts for factor group.
-
-```{r table-learn-time2, echo=F}
-apa_table(
-  apa_emm,
-  caption="(ref:l-t-caption2)",
-  placement="h")
-```
-
-```{r, include=F}
-rm(learn.time_s, R2, apa_lmm, apa_emm, emm)
-```
-
-\newpage
-
-### **Excess path length**
-
-```{r, echo=F, fig.height=3, fig.width=3, fig.cap="Trial curve for excess path in training." }
-line_p 
-rm(line_p)
-```
-
-```{r, stats_learn_excess_path_simple }
-```
-
-```{r apa_learn_excess_path, include=F}
-R2 <- r2beta(learn.excess_path_s$full_model, method='nsj', partial=F) %>% mutate_all(apa_num)
-
-apa_lmm <- apa_print(learn.excess_path_s)
-apa_lmm <- apa_lmm$table %>% mutate(term=str_replace_all(term, c(" c| f"), ''))
-
-emm <- emmeans(learn.excess_path_s, pairwise ~ group, lmer.df="satterthwaite", adjust="bonferroni")$contrasts
-apa_emm <- apa_print(emm) 
-apa_emm <- apa_emm$table %>% remove_rownames()
-```
-
-The model had a fit of $R2 = `r R2$Rsq`, [CI: `r R2$upper.CL`, `r R2$lower.CL`$].
-
-The excess path length decreased across trials (main effect *trial in block*) but there were no group differences in the slope of the decrease (no interaction *group x trial in block* ). The groups differed in excess path length (main effect *group*). More specifically younger participants had longer excess paths, meaning they took less direct routes, compare to older participants (all groups differed from each other) (Table\ \@ref(tab:table-learn-excess1) & \@ref(tab:table-learn-excess2)). 
-
-(ref:l-ep-caption1) Fixed effects for excess path length in training.
-
-```{r table-learn-excess1, echo=F}
-apa_table(
-  apa_lmm,
-  caption="(ref:l-ep-caption1)",
-  placement="h")
-```
-
-(ref:l-ep-caption2) Post-hoc contrasts for factor group.
-
-```{r table-learn-excess2, echo=F}
-apa_table(
-  apa_emm,
-  caption="(ref:l-ep-caption2)",
-  placement="h")
-```
-
-```{r, include=F}
-rm(learn.excess_path_s, R2, apa_lmm, apa_emm, emm)
-```
-
-\newpage
-
-### **Presence in outer alleys (vs. inner ring)**
-
-```{r, echo=F, fig.height=3, fig.width=3, fig.cap="Trial curve for relative presence in alleys in training." }
-line_pa + coord_cartesian(ylim=c(0.4, 0.6)) + labs(caption="y-axis adjusted for better visibility")
-rm(line_pa)
-```
-
-```{r, stats_learn_presence_simple }
-```
-
-```{r apa_learn_presence, include=F}
-R2 <- r2beta(learn.presence_alleys_s$full_model, method='nsj', partial=F) %>% mutate_all(apa_num)
-
-apa_lmm <- apa_print(learn.presence_alleys_s)
-apa_lmm <- apa_lmm$table %>% mutate(term=str_replace_all(term, c(" c| f"), ''))
-
-emm <- emmeans(learn.presence_alleys_s, pairwise ~ group, lmer.df="satterthwaite", adjust="bonferroni")$contrasts
-apa_emm <- apa_print(emm) 
-apa_emm <- apa_emm$table %>% remove_rownames()
-```
-
-The model had a fit of $R2 = `r R2$Rsq`, [CI: `r R2$upper.CL`, `r R2$lower.CL`$].
-
-Presence in the five outer alleys (relative to the inner ring) increased across trials, i.e. participant preferentially stayed in the outer alleys compared to the inner ring (main effect *trial in block*) but there were no group differences in the slope of the increase (no interaction *group x trial in block*). The groups differed in their relative presence in the outer alleys (main effect *group*). More specifically 6-7-year-old children spend relatively less time in the outer alleys (and more in the inner ring) than 9-10-year-old children and adults. There were no differences between 9-10-year-old children and adults (Table\ \@ref(tab:table-learn-presence1) & \@ref(tab:table-learn-presence2)). 
-
-(ref:l-pa-caption1) Fixed effects for presence in alleys in training.
-
-```{r table-learn-presence1, echo=F}
-apa_table(
-  apa_lmm,
-  caption="(ref:l-pa-caption1)",
-  placement="h")
-```
-
-(ref:l-pa-caption2) Post-hoc contrasts for factor group.
-
-```{r table-learn-presence2, echo=F}
-apa_table(
-  apa_emm,
-  caption="(ref:l-pa-caption2)",
-  placement="h")
-```
-
-```{r, include=F}
-rm(learn.presence_alleys_s, R2, apa_lmm, apa_emm, emm)
-```
-
-\newpage
-
-### **Initial Rotation**
-
-```{r,echo=F, fig.height=3, fig.width=3, fig.cap="Trial curve for initial rotation in training." }
-line_ir
-rm(line_ir)
-```
-
-```{r, stats_learn_initial_rotation_simple }
-```
-
-```{r apa_learn_initial_rotation, include=F}
-R2 <- r2beta(learn.initial_rot_s$full_model, method='nsj', partial=F) %>% mutate_all(apa_num)
-
-apa_lmm <- apa_print(learn.initial_rot_s)
-apa_lmm <- apa_lmm$table %>% mutate(term=str_replace_all(term, c(" c| f"), ''))
-
-emm <- emtrends(learn.initial_rot_s$full_model, pairwise ~ group, var="trial_in_block_c", lmer.df="satterthwaite", adjust="bonferroni")$contrasts
-apa_emm <- apa_print(emm)
-apa_emm <- apa_emm$table %>% remove_rownames()
-```
-
-The model had a fit of $R2 = `r R2$Rsq`, [CI: `r R2$upper.CL`, `r R2$lower.CL`$].
-
-Rotation in the initial area did not change generally across trials (no main effect *trial in block*) but there was an interaction *group x trial in block*. More specifically, adults had a stronger decrease in initial rotation across trials compared to 6-7-year-old children (who displayed no change). The slopes did not differ for any other group comparisons (Table\ \@ref(tab:table-learn-init-rot1) & \@ref(tab:table-learn-init-rot2)). 
-
-(ref:l-ir-caption1) Post-hoc contrasts for group x trial in block interaction.
-
-```{r table-learn-init-rot1, echo=F}
-apa_table(
-  apa_lmm,
-  caption="(ref:l-ir-caption1)",
-  placement="h")
-```
-
-(ref:l-ir-caption2) Post-hoc contrasts for initial rotation in training.
-
-```{r table-learn-init-rot2, echo=F}
-apa_table(
-  apa_emm,
-  caption="(ref:l-ir-caption2)",
-  placement="h")
-```
-
-```{r, include=F}
-rm(learn.initial_rot_s, R2, apa_lmm, apa_emm, emm)
-```
-
-\newpage
-
-### **Rotation normalized by path length**
-
-```{r, echo=F, fig.height=3, fig.width=3, fig.cap="Trial curve for normalized rotation in training." }
-line_rp 
-rm(line_rp)
-```
-
-```{r, stats_learn_rotation_path_simple }
-```
-
-```{r apa_learn_rotation_path, include=F}
-R2 <- r2beta(learn.rotation_path_s$full_model, method='nsj', partial=F) %>% mutate_all(apa_num)
-
-apa_lmm <- apa_print(learn.rotation_path_s)
-apa_lmm <- apa_lmm$table %>% mutate(term=str_replace_all(term, c(" c| f"), ''))
-
-emm <- emtrends(learn.rotation_path_s$full_model, pairwise ~ group, var="trial_in_block_c", lmer.df="satterthwaite", adjust="bonferroni")$contrasts
-apa_emm <- apa_print(emm)
-apa_emm <- apa_emm$table %>% remove_rownames()
-```
-
-The model had a fit of $R2 = `r R2$Rsq`, [CI: `r R2$upper.CL`, `r R2$lower.CL`$].
-
-There was an interaction *group x trial in block* for the overall rotation (normalized by path length). More specifically, adults had a stronger decrease in rotation (normalized by path length) across trials compared to 6-7-year-old children and 9-10-year old children. The slopes did not differ between the two children groups (Table\ \@ref(tab:table-learn-rot1) & \@ref(tab:table-learn-rot2)). 
-
-(ref:l-r-caption1) Fixed effects for normalized rotation in training.
-
-```{r table-learn-rot1, echo=F}
-apa_table(
-  apa_lmm,
-  caption="(ref:l-r-caption1)",
-  placement="h")
-```
-
-(ref:l-r-caption2) Post-hoc contrasts for group x trial in block interaction.
-
-```{r table-learn-rot2, echo=F}
-apa_table(
-  apa_emm,
-  caption="(ref:l-r-caption2)",
-  placement="h")
-```
-
-```{r, include=F}
-rm(learn.rotation_path_s, R2, apa_lmm, apa_emm, emm)
-```
-
-\newpage 
-
-## Probe trials at Day 2 & Day 14
-
-Egocentric and allocentric condition. The goals are NOT visible.
-
-```{r, plots_aggregated, include=F }
-```
-
-```{r, plots_aggregated_change, include=F }
-```
-
-```{r, plots_probe_locations, include=F }
-```
-
-### Memory accuracy 
-
 
 ```{r,echo=F, fig.height=5, fig.cap="Responses for egocentric probe." }
 
 dots_ego 
-
 rm(dots_ego)
 ```
 
 ```{r,echo=F, fig.height=5, fig.cap="Responses for allocentric probe." }
 
 dots_allo 
-
 rm(dots_allo)
 ```
 
 \newpage 
 
-**Memory score (all trials)**
-
-```{r, echo=F, fig.height=3, fig.height=4, fig.cap="Memory score for probe trials." }
-
-box_ego_ms + labs(subtitle="Egocentric") + box_allo_ms + labs(subtitle="Allocentric") +
-  plot_layout(guides="collect") & theme(legend.position="bottom", legend.justification=c(0,0))
-
-rm(box_ego_ms, box_allo_ms)
-```
+### **Memory score (all trials)**
 
 ```{r, stats_probe_ms_simple }
+```
+
+```{r, plot_probe_ms, include=F }
+```
+
+```{r, echo=F, fig.height=5, fig.width=5, fig.cap="Memory score for probe trials." }
+line_memory
+rm(line_memory)
 ```
 
 ```{r apa_probe_ms, include=F}
@@ -488,56 +249,53 @@ rm(probe.memory_s, R2, apa_lmm, apa_emm1, emm1, apa_emm2, emm2, apa_emm3, emm3)
 
 ```{r,echo=F, fig.height=3, fig.height=4, fig.cap="Change in memory score for probe trials."  }
 
-box_ego_delta_ms + labs(subtitle="Egocentric") + box_allo_delta_ms + labs(subtitle="Allocentric")  +
-  plot_layout(guides="collect") & theme(legend.position="bottom", legend.justification=c(0,0))
-
-rm(box_ego_delta_ms, box_allo_delta_ms)
+# box_ego_delta_ms + labs(subtitle="Egocentric") + box_allo_delta_ms + labs(subtitle="Allocentric")  +
+#   plot_layout(guides="collect") & theme(legend.position="bottom", legend.justification=c(0,0))
+# 
+# rm(box_ego_delta_ms, box_allo_delta_ms)
 ```
 
-```{r, stats_probe_ms_change_AOV }
-```
+TBD r, stats_probe_ms_change_AOV 
 
-```{r, stats_probe_ms_change_WRS2 }
-```
+TBD r, stats_probe_ms_change_WRS2
 
 No significant group effect in conventional ANOVA. 
 
 ```{r }
-probe.change_ms_aov
+#probe.change_ms_aov
 ```
 
 BUT: Significant group effect in robust ANOVA from WRS2. Children's memory declines significantly more than adult's memory. 
 
 ```{r }
-probe.change_ms_raov
-probe.change_ms_raov_post
+#probe.change_ms_raov
+#probe.change_ms_raov_post
 ```
 
 The difference between results occurs probably due to a smaller standard error in the robust analysis, as the trim=0.2 removes outliers and does not require homoscedastic variances. Supposedly the robust analysis is more trustworthy, however, the session x group interaction in the LMM did not become significant either. How to interpret this? 
 
 ```{r, echo=F }
-ggResidpanel::resid_auxpanel(residuals=residuals(probe.change_ms_aov),
-                             predicted=fitted(probe.change_ms_aov))
+#ggResidpanel::resid_auxpanel(residuals=residuals(probe.change_ms_aov),
+#                             predicted=fitted(probe.change_ms_aov))
 ```
 
 ```{r, include=F}
-rm(probe.change_ms_aov, probe.change_ms_raov, probe.change_ms_raov_post)
+#rm(probe.change_ms_aov, probe.change_ms_raov, probe.change_ms_raov_post)
 ```
 
 \newpage 
 
-**Memory score (only correct trials) for spatial precision**
-
-```{r,echo=F, fig.height=3, fig.height=4, fig.cap="Spatial precision in correct probe trials." }
-
-box_ego_cor_ms + labs(subtitle="Egocentric",  caption="y-axis was adjusted for better visibility") +
-  box_allo_cor_ms + labs(subtitle="Allocentric") +
-  plot_layout(guides="collect") & theme(legend.position="bottom", legend.justification=c(0,0))
-
-rm(box_ego_cor_ms, box_allo_cor_ms)
-```
+### **Memory score (only correct trials) for spatial precision**
 
 ```{r, stats_probe_ms_corr_simple }
+```
+
+```{r, plot_probe_ms_corr, include=F }
+```
+
+```{r, echo=F, fig.height=5, fig.width=5, fig.cap="Spatial precision in correct probe trials." }
+line_memory_corr
+rm(line_memory_corr)
 ```
 
 ```{r apa_probe_ms_corr, include=F}
@@ -593,51 +351,198 @@ apa_table(
 rm(probe.memory_corr_s, R2, apa_lmm, emm1, emm2, apa_emm1, apa_emm2)
 ```
 
-```{r, echo=F, fig.height=3, fig.height=4, fig.cap="Change in spatial precision in correct probe trials." }
+```{r, echo=F, fig.height=5, fig.width=5, fig.cap="Change in spatial precision in correct probe trials." }
 
-box_ego_delta_cor_ms + labs(subtitle="Egocentric") + box_allo_delta_cor_ms + labs(subtitle="Allocentric")  +
-  plot_layout(guides="collect") & theme(legend.position="bottom", legend.justification=c(0,0))
-
-rm(box_ego_delta_cor_ms, box_allo_delta_cor_ms)
+# box_ego_delta_cor_ms + labs(subtitle="Egocentric") + box_allo_delta_cor_ms + labs(subtitle="Allocentric")  +
+#   plot_layout(guides="collect") & theme(legend.position="bottom", legend.justification=c(0,0))
+# 
+# rm(box_ego_delta_cor_ms, box_allo_delta_cor_ms)
 ```
 
-```{r, stats_probe_ms_change_corr_AOV }
-```
+TBD r, stats_probe_ms_change_corr_AOV 
 
-```{r, stats_probe_ms_change_corr_WRS2 }
-```
+TBD r, stats_probe_ms_change_corr_WRS2 
 
 No significant group effect in conventional ANOVA and robust ANOVA. 
 
 ```{r }
-probe.change_ms_corr_aov
+#probe.change_ms_corr_aov
 ```
 
 ```{r }
-probe.change_ms_corr_raov
+#probe.change_ms_corr_raov
 ```
 
 ```{r, include=F}
-rm(probe.change_ms_corr_raov, probe.change_ms_corr_aov)
+#rm(probe.change_ms_corr_raov, probe.change_ms_corr_aov)
 ```
 
 \newpage
 
-### Navigation behaviour
+## Memory accuracy: Non-navigational memory tasks at Day 14
 
-**Time**
+![Task overview](./pics/Overview_Session2_PostTest.jpg){width=500px}
 
-```{r, echo=F, fig.height=3, fig.height=4, fig.cap="Time in probe trials." }
+```{r, plots_layout, include=F }
 
-box_ego_t + labs(subtitle="Egocentric") + box_allo_t + labs(subtitle="Allocentric") +
+# detailed 
+layout_data <- pt_data %>% 
+  filter(condition=="layout") %>% 
+  filter(!is.na(layout_obj_1)) %>% 
+  select(id, group, layout_obj_1) %>% 
+  group_by(group) %>% 
+  count(layout_obj_1) %>% 
+  mutate(n_per_group=sum(n),
+         perc=n/n_per_group)
+
+layout_detail <- ggplot(layout_data, aes(x=group, y=perc, fill=layout_obj_1)) + 
+  geom_bar(stat="identity", position=position_dodge()) +
+  scale_x_discrete(labels=group_labels) + 
+  scale_fill_brewer(palette="Pastel1", direction=-1, name=NULL) + 
+  coord_cartesian(ylim=c(0,1)) +
+  theme_bw(base_size=15) +
+  theme(legend.position="top", legend.justification=c(0,0),
+        legend.title=NULL, 
+        panel.grid.major.x=element_blank()) +
+  labs(x=NULL, y="responses (%)")
+
+# averaged 
+layout_data_avg <- layout_data %>% 
+  filter(layout_obj_1=="4-FiveStar") %>% 
+  mutate(layout_obj_1="layout")
+
+layout_avg <- ggplot(layout_data_avg, aes(x=group, y=perc, fill=group, color=group)) + 
+  geom_bar(stat="identity", position=position_dodge()) +
+  scale_x_discrete(labels=group_labels) + 
+  scale_fill_manual(values=group_colors, labels=group_labels, name=NULL) + 
+  scale_color_manual(values=group_colors_o, labels=group_labels, name=NULL) + 
+  coord_cartesian(ylim=c(0,1)) +
+  theme_bw(base_size=15) +
+  theme(legend.position="top", legend.justification=c(0,0),
+        legend.title=NULL, 
+        panel.grid.major.x=element_blank(),
+        axis.ticks.x=element_blank(),
+        axis.text.x=element_blank()) +
+  labs(x=NULL, y="layout accuracy (%)")
+
+rm(layout_data, layout_data_avg)
+```
+
+```{r, plots_landmarks, include=F }
+
+# detailed 
+landmark_comp_data <- pt_data %>% 
+  filter(condition=="landmarks") %>% 
+  select(id, group, starts_with("landmarks_obj")) %>% 
+  pivot_longer(cols=starts_with("landmarks_obj"),
+               values_to="landmarks") %>% 
+  select(-name) %>% 
+  group_by(group) %>% 
+  count(landmarks) %>% 
+  complete(landmarks, fill=list(n=0)) %>% 
+  mutate(n_per_group=sum(n),
+         perc=n/n_per_group*100*5)
+
+landmark_comparison <- ggplot(landmark_comp_data, aes(x=perc, y=landmarks, fill=group, color=group)) + 
+  geom_col(position=position_dodge()) + 
+  geom_vline(xintercept=100, color="red", linetype="dashed") + 
+  scale_fill_manual(values=group_colors, labels=group_labels, name=NULL) + 
+  scale_color_manual(values=group_colors_o, labels=group_labels, name=NULL) + 
+  scale_y_discrete(limits=rev) + 
+  theme_classic() + 
+  labs(title="Comparison of landmark recognition rate",
+       x="responses (%)",
+       y=NULL) + 
+  theme(legend.position="top", legend.justification=c(0,0)) 
+
+# averaged
+landmark_avg <- ggplot(pt_data %>% filter(condition=="landmarks"), 
+                       aes(x=group, y=score, color=group, shape=group)) + 
+  stat_summary(fun.data=mean_cl_normal, na.rm=TRUE, geom="errorbar", width=0.2, size=1.5) +
+  stat_summary(fun=mean, na.rm=TRUE, geom="point", size=3) +
+  scale_color_manual(values=group_colors, labels=group_labels, name=NULL) +
+  scale_shape(guide="none") +
+  coord_cartesian(ylim=c(0,1)) +
+  theme_bw(base_size=15) +
+  theme(legend.position="top", legend.justification=c(0,0),
+        legend.title=NULL, 
+        panel.grid.major.x=element_blank(),
+        axis.ticks.x=element_blank(),
+        axis.text.x=element_blank()) +
+  labs(x=NULL, y="landmark score", 
+       caption="mean and 95% CI")
+  
+rm(landmark_comp_data)
+```
+
+```{r, plots_positioning, include=F }
+
+# averaged
+positioning_avg <- ggplot(pt_data %>% filter(condition=="position"), 
+                       aes(x=group, y=score, color=group, shape=group)) + 
+  stat_summary(fun.data=mean_cl_normal, na.rm=TRUE, geom="errorbar", width=0.2, size=1.5) +
+  stat_summary(fun=mean, na.rm=TRUE, geom="point", size=3) +
+  scale_color_manual(values=group_colors, labels=group_labels, name=NULL) +
+  scale_shape(guide="none") +
+  coord_cartesian(ylim=c(0,1)) +
+  theme_bw(base_size=15) +
+  theme(legend.position="top", legend.justification=c(0,0),
+        legend.title=NULL, 
+        panel.grid.major.x=element_blank(),
+        axis.ticks.x=element_blank(),
+        axis.text.x=element_blank()) +
+  labs(x=NULL, y="gmda positioning score", 
+       caption="mean and 95% CI")
+```
+
+```{r, echo=F, fig.height=4, fig.width=8, fig.cap="Scores in non-navigational memory tests." }
+
+layout_avg + 
+  (landmark_avg + guides(color="none", shape="none")) + 
+  (positioning_avg + guides(color="none", shape="none")) + 
+  plot_annotation(title="Non-navigational memory tests") +
   plot_layout(guides="collect") & theme(legend.position="bottom", legend.justification=c(0,0))
 
-rm(box_ego_t, box_allo_t)
+rm(layout_detail, layout_avg, landmark_comparison, landmark_avg, positioning_avg)
 ```
+
+### **Layout**
+
+Significant age-related differences between all three groups in layout recognition.
+
+```{r, stats_layout }
+```
+
+### **Landmarks**
+
+No significant group differences in landmark recognition. 
+
+```{r, stats_landmark }
+```
+
+### **Positioning**
+
+Children in both groups performed significantly worse in positioning.
+
+```{r, stats_gmda }
+```
+
+\newpage 
+
+## Navigation behaviour: Probe trials at Day 2 & Day 14
+
+### **Time**
 
 ```{r, stats_probe_time_simple}
 ```
 
+```{r, plot_probe_time, include=F }
+```
+
+```{r, echo=F, fig.height=5, fig.width=5, fig.cap="Time in probe trials." }
+line_time
+rm(line_time)
+```
 
 ```{r apa_probe_time, include=F}
 R2 <- r2beta(probe.time_s$full_model, method='nsj', partial=F) %>% mutate_all(apa_num)
@@ -712,17 +617,17 @@ rm(probe.time_s, apa_lmm, apa_emm1, apa_emm2, apa_emm3)
 
 \newpage 
 
-**Excess path length**
-
-```{r, echo=F, fig.height=3, fig.height=4, fig.cap="Excess path in probe trials." }
-
-box_ego_p + labs(subtitle="Egocentric") + box_allo_p + labs(subtitle="Allocentric") +
-  plot_layout(guides="collect") & theme(legend.position="bottom", legend.justification=c(0,0))
-
-rm(box_ego_p, box_allo_p)
-```
+### **Excess path length**
 
 ```{r, stats_probe_excess_path_simple }
+```
+
+```{r, plot_probe_excess_time, include=F }
+```
+
+```{r, echo=F, fig.height=5, fig.width=5, fig.cap="Excess path in probe trials." }
+line_excess_path
+rm(line_excess_path)
 ```
 
 ```{r apa_probe_excess_path, include=F}
@@ -798,17 +703,17 @@ rm(probe.excess_path_s, apa_lmm, apa_emm1, apa_emm2, apa_emm3)
 
 \newpage 
 
-**Presence in outer alleys (vs. inner ring)** 
-
-```{r, echo=F, fig.height=3, fig.height=4, fig.cap="Relative presence in alleys in probe trials." }
-
-box_ego_pa + labs(subtitle="Egocentric") + box_allo_pa + labs(subtitle="Allocentric") +
-  plot_layout(guides="collect") & theme(legend.position="bottom", legend.justification=c(0,0))
-
-rm(box_ego_pa, box_ego_pa)
-```
+### **Presence in outer alleys (vs. inner ring)** 
 
 ```{r, stats_probe_presence_alleys_simple}
+```
+
+```{r, plot_probe_presence_alleys, include=F }
+```
+
+```{r, echo=F, fig.height=5, fig.width=5, fig.cap="Relative presence in alleys in probe trials." }
+line_presence_alleys
+rm(line_presence_alleys)
 ```
 
 ```{r apa_probe_presence_alleys, include=F}
@@ -855,19 +760,18 @@ rm(probe.presence_alleys_s, apa_lmm, apa_emm1)
 
 \newpage
 
-**Initial rotation**
-
-```{r, echo=F, fig.height=3, fig.height=4, fig.cap="Initial rotation in probe trials." }
-
-box_ego_ir + labs(subtitle="Egocentric") + box_allo_ir + labs(subtitle="Allocentric") +
-  plot_layout(guides="collect") & theme(legend.position="bottom", legend.justification=c(0,0))
-
-rm(box_ego_ir, box_allo_ir)
-```
+### **Initial rotation**
 
 ```{r, stats_probe_initial_rotation_simple }
 ```
 
+```{r, plot_probe_initial_rotation, include=F }
+```
+
+```{r, echo=F, fig.height=5, fig.width=5, fig.cap="Initial rotation in probe trials." }
+line_initial_rotation
+rm(line_initial_rotation)
+```
 
 ```{r apa_probe_initial_rotation, include=F }
 R2 <- r2beta(probe.initial_rot_s$full_model, method='nsj', partial=F) %>% mutate_all(apa_num)
@@ -912,17 +816,17 @@ rm(probe.excess_path_s, apa_lmm, apa_emm1)
 
 \newpage
 
-**Rotation by path length**
-
-```{r, echo=F, fig.height=3, fig.height=4, fig.cap="Normalized rotation in probe trials." }
-
-box_ego_rp + labs(subtitle="Egocentric") + box_allo_rp + labs(subtitle="Allocentric") +
-  plot_layout(guides="collect") & theme(legend.position="bottom", legend.justification=c(0,0))
-
-rm(box_ego_rp, box_allo_rp)
-```
+### **Rotation by path length**
 
 ```{r, stats_probe_rotation_path_simple}
+```
+
+```{r, plot_probe_rotation_path, include=F }
+```
+
+```{r, echo=F, fig.height=5, fig.width=5, fig.cap="Normalized rotation in probe trials." }
+line_rotation_path
+rm(line_rotation_path)
 ```
 
 ```{r apa_probe_rotation_path, include=F}
@@ -1000,7 +904,7 @@ rm(probe.rotation_path_s, apa_lmm, apa_emm1, apa_emm2, apa_emm3)
 
 ## Explorative analyses of allocentric trials 
 
-### Accuracy
+### Memory accuracy
 
 **How often did participants erroneously pick locations that indicate an egocentric strategy** (only allocentric trials with defined egocentric location)
 
@@ -1013,8 +917,8 @@ Chosen goal alley supposed to indicate the participant's navigation strategy:
 Caution: this is exploratory and based on few trials! 
 
 ```{r, echo=F, fig.height=4 }
-box_allo_msa + theme(legend.position="bottom", legend.justification=c(0,0))
-rm(box_allo_msa)
+# box_allo_msa + theme(legend.position="bottom", legend.justification=c(0,0))
+# rm(box_allo_msa)
 ```
 
 ### Navigation behavior
@@ -1032,92 +936,346 @@ Presence in zones is supposed to indicate the participant's navigation strategy:
 Caution: this is exploratory and based on few trials! 
 
 ```{r, echo=F, fig.height=4, fig.width=8}
-box_allo_pres + labs(subtitle="excluding triangle intersections") + 
-  box_allo_presT + labs(subtitle="including triangle intersections")+ 
-  plot_layout(guides="collect") & theme(legend.position="bottom", legend.justification=c(0,0)) 
-rm(box_allo_pres, box_allo_presT)
+# box_allo_pres + labs(subtitle="excluding triangle intersections") + 
+#   box_allo_presT + labs(subtitle="including triangle intersections")+ 
+#   plot_layout(guides="collect") & theme(legend.position="bottom", legend.justification=c(0,0)) 
+# rm(box_allo_pres, box_allo_presT)
 ```
 
 \newpage 
 
-## Non-navigational memory tasks
 
-![Task overview](./pics/Overview_Session2_PostTest.jpg){width=500px}
+## Appendix
 
-```{r, plots_post_tests, include=F }
-```
-
-```{r, echo=F, fig.height=4, fig.width=6, fig.cap="Scores in non-navigational memory tests." }
-
-layout + landmark_avg + gmda_avg + 
-  plot_layout(width=c(0.4, 0.2, 0.2), guides="collect") & theme(legend.position="bottom", legend.justification=c(0,0))
-
-rm(layout, layout_avg, landmark_details, landmark_avg, gmda_avg)
-```
-
-### **Layout**
-
-Significant age-related differences between all three groups in layout recognition.
-
-```{r, stats_layout }
-```
-
-### **Landmarks**
-
-No sigificant group differences in landmark recognition. 
-
-```{r, stats_landmark }
-```
-
-### **Positioning**
-
-Children in both groups performed significantly worse in positioning.
-
-```{r, stats_gmda }
-```
-
-\newpage 
-
-## Correlations 
+### Correlations 
 
 ```{r, stats_corr_allo_ego }
 ```
 
-```{r, stats_corr_layout }
-```
-
-```{r, stats_corr_landmark }
-```
-
-```{r, stats_corr_gmda }
-```
 \newpage
 
-## Appendix
+### PLS Analysen 
+
+siehe Powerpoint Iryna 
+
+### Navigation behavior: Training trials at Day 2 
+
+#### **Time**
+
+```{r, plot_learn_time, include=F}
+```
+
+```{r, echo=F, fig.height=4, fig.width=5, fig.cap="Trial curve for time in training." }
+line_time 
+rm(line_time)
+```
+
+```{r, stats_learn_time_simple }
+```
+
+```{r apa_learn_time, include=F}
+R2 <- r2beta(learn.time_s$full_model, method='nsj', partial=F) %>% mutate_all(apa_num)
+
+apa_lmm <- apa_print(learn.time_s)
+apa_lmm <- apa_lmm$table %>% mutate(term=str_replace_all(term, c(" c| f"), ''))
+
+emm <- emmeans(learn.time_s, pairwise ~ group, lmer.df="satterthwaite", adjust="bonferroni")$contrasts
+apa_emm <- apa_print(emm) 
+apa_emm <- apa_emm$table %>% remove_rownames()
+```
+
+The model had a fit of $R2 = `r R2$Rsq`, [CI: `r R2$upper.CL`, `r R2$lower.CL`$].
+
+The time per trial decreased across trials (main effect *trial in block*) but there were no group differences in the slope of the decrease (no interaction *group x trial in block interaction*). The groups differed in time per trial (main effect *group*). More specifically 6-7-year-old children were slower than 9-10-year-old children and adults, there were no differences between 9-10-year-old children and adults (Table\ \@ref(tab:table-learn-time1) & \@ref(tab:table-learn-time2)). 
+
+(ref:l-t-caption1) Fixed effects for time in training.
+
+```{r table-learn-time1, echo=F}
+apa_table(
+  apa_lmm,
+  caption="(ref:l-t-caption1)",
+  placement="h")
+# `r apa_lm$statistic$group`
+```
+
+(ref:l-t-caption2) Post-hoc contrasts for factor group.
+
+```{r table-learn-time2, echo=F}
+apa_table(
+  apa_emm,
+  caption="(ref:l-t-caption2)",
+  placement="h")
+```
+
+```{r, include=F}
+rm(learn.time_s, R2, apa_lmm, apa_emm, emm)
+```
+
+\newpage
+
+#### **Excess path length**
+
+```{r, plot_learn_excess_path, include=F}
+```
+
+```{r, echo=F, fig.height=4, fig.width=5, fig.cap="Trial curve for excess path in training." }
+line_excess_path
+rm(line_excess_path)
+```
+
+```{r, stats_learn_excess_path_simple }
+```
+
+```{r apa_learn_excess_path, include=F}
+R2 <- r2beta(learn.excess_path_s$full_model, method='nsj', partial=F) %>% mutate_all(apa_num)
+
+apa_lmm <- apa_print(learn.excess_path_s)
+apa_lmm <- apa_lmm$table %>% mutate(term=str_replace_all(term, c(" c| f"), ''))
+
+emm <- emmeans(learn.excess_path_s, pairwise ~ group, lmer.df="satterthwaite", adjust="bonferroni")$contrasts
+apa_emm <- apa_print(emm) 
+apa_emm <- apa_emm$table %>% remove_rownames()
+```
+
+The model had a fit of $R2 = `r R2$Rsq`, [CI: `r R2$upper.CL`, `r R2$lower.CL`$].
+
+The excess path length decreased across trials (main effect *trial in block*) but there were no group differences in the slope of the decrease (no interaction *group x trial in block* ). The groups differed in excess path length (main effect *group*). More specifically younger participants had longer excess paths, meaning they took less direct routes, compare to older participants (all groups differed from each other) (Table\ \@ref(tab:table-learn-excess1) & \@ref(tab:table-learn-excess2)). 
+
+(ref:l-ep-caption1) Fixed effects for excess path length in training.
+
+```{r table-learn-excess1, echo=F}
+apa_table(
+  apa_lmm,
+  caption="(ref:l-ep-caption1)",
+  placement="h")
+```
+
+(ref:l-ep-caption2) Post-hoc contrasts for factor group.
+
+```{r table-learn-excess2, echo=F}
+apa_table(
+  apa_emm,
+  caption="(ref:l-ep-caption2)",
+  placement="h")
+```
+
+```{r, include=F}
+rm(learn.excess_path_s, R2, apa_lmm, apa_emm, emm)
+```
+
+\newpage
+
+#### **Presence in outer alleys (vs. inner ring)**
+
+```{r, plot_learn_presence, include=F}
+```
+
+```{r, echo=F, fig.height=4, fig.width=5, fig.cap="Trial curve for relative presence in alleys in training." }
+line_presence_alleys
+rm(line_presence_alleys)
+```
+
+```{r, stats_learn_presence_simple }
+```
+
+```{r apa_learn_presence, include=F}
+R2 <- r2beta(learn.presence_alleys_s$full_model, method='nsj', partial=F) %>% mutate_all(apa_num)
+
+apa_lmm <- apa_print(learn.presence_alleys_s)
+apa_lmm <- apa_lmm$table %>% mutate(term=str_replace_all(term, c(" c| f"), ''))
+
+emm <- emmeans(learn.presence_alleys_s, pairwise ~ group, lmer.df="satterthwaite", adjust="bonferroni")$contrasts
+apa_emm <- apa_print(emm) 
+apa_emm <- apa_emm$table %>% remove_rownames()
+```
+
+The model had a fit of $R2 = `r R2$Rsq`, [CI: `r R2$upper.CL`, `r R2$lower.CL`$].
+
+Presence in the five outer alleys (relative to the inner ring) increased across trials, i.e. participant preferentially stayed in the outer alleys compared to the inner ring (main effect *trial in block*) but there were no group differences in the slope of the increase (no interaction *group x trial in block*). The groups differed in their relative presence in the outer alleys (main effect *group*). More specifically 6-7-year-old children spend relatively less time in the outer alleys (and more in the inner ring) than 9-10-year-old children and adults. There were no differences between 9-10-year-old children and adults (Table\ \@ref(tab:table-learn-presence1) & \@ref(tab:table-learn-presence2)). 
+
+(ref:l-pa-caption1) Fixed effects for presence in alleys in training.
+
+```{r table-learn-presence1, echo=F}
+apa_table(
+  apa_lmm,
+  caption="(ref:l-pa-caption1)",
+  placement="h")
+```
+
+(ref:l-pa-caption2) Post-hoc contrasts for factor group.
+
+```{r table-learn-presence2, echo=F}
+apa_table(
+  apa_emm,
+  caption="(ref:l-pa-caption2)",
+  placement="h")
+```
+
+```{r, include=F}
+rm(learn.presence_alleys_s, R2, apa_lmm, apa_emm, emm)
+```
+
+\newpage
+
+#### **Initial Rotation**
+
+```{r, plot_learn_initial_rotation, include=F}
+```
+
+```{r,echo=F, fig.height=4, fig.width=5, fig.cap="Trial curve for initial rotation in training." }
+line_initial_rotation
+rm(line_initial_rotation)
+```
+
+```{r, stats_learn_initial_rotation_simple }
+```
+
+```{r apa_learn_initial_rotation, include=F}
+R2 <- r2beta(learn.initial_rot_s$full_model, method='nsj', partial=F) %>% mutate_all(apa_num)
+
+apa_lmm <- apa_print(learn.initial_rot_s)
+apa_lmm <- apa_lmm$table %>% mutate(term=str_replace_all(term, c(" c| f"), ''))
+
+emm <- emtrends(learn.initial_rot_s$full_model, pairwise ~ group, var="trial_in_block", lmer.df="satterthwaite", adjust="bonferroni")$contrasts
+apa_emm <- apa_print(emm)
+apa_emm <- apa_emm$table %>% remove_rownames()
+```
+
+The model had a fit of $R2 = `r R2$Rsq`, [CI: `r R2$upper.CL`, `r R2$lower.CL`$].
+
+Rotation in the initial area did not change generally across trials (no main effect *trial in block*) but there was an interaction *group x trial in block*. More specifically, adults had a stronger decrease in initial rotation across trials compared to 6-7-year-old children (who displayed no change). The slopes did not differ for any other group comparisons (Table\ \@ref(tab:table-learn-init-rot1) & \@ref(tab:table-learn-init-rot2)). 
+
+(ref:l-ir-caption1) Post-hoc contrasts for group x trial in block interaction.
+
+```{r table-learn-init-rot1, echo=F}
+apa_table(
+  apa_lmm,
+  caption="(ref:l-ir-caption1)",
+  placement="h")
+```
+
+(ref:l-ir-caption2) Post-hoc contrasts for initial rotation in training.
+
+```{r table-learn-init-rot2, echo=F}
+apa_table(
+  apa_emm,
+  caption="(ref:l-ir-caption2)",
+  placement="h")
+```
+
+```{r, include=F}
+rm(learn.initial_rot_s, R2, apa_lmm, apa_emm, emm)
+```
+
+\newpage
+
+#### **Rotation normalized by path length**
+
+```{r, plot_learn_rotation_path, include=F}
+```
+
+```{r, echo=F, fig.height=4, fig.width=5, fig.cap="Trial curve for normalized rotation in training." }
+line_rotation_path 
+rm(line_rotation_path)
+```
+
+```{r, stats_learn_rotation_path_simple }
+```
+
+```{r apa_learn_rotation_path, include=F}
+R2 <- r2beta(learn.rotation_path_s$full_model, method='nsj', partial=F) %>% mutate_all(apa_num)
+
+apa_lmm <- apa_print(learn.rotation_path_s)
+apa_lmm <- apa_lmm$table %>% mutate(term=str_replace_all(term, c(" c| f"), ''))
+
+emm <- emtrends(learn.rotation_path_s$full_model, pairwise ~ group, var="trial_in_block", lmer.df="satterthwaite", adjust="bonferroni")$contrasts
+apa_emm <- apa_print(emm)
+apa_emm <- apa_emm$table %>% remove_rownames()
+```
+
+The model had a fit of $R2 = `r R2$Rsq`, [CI: `r R2$upper.CL`, `r R2$lower.CL`$].
+
+There was an interaction *group x trial in block* for the overall rotation (normalized by path length). More specifically, adults had a stronger decrease in rotation (normalized by path length) across trials compared to 6-7-year-old children and 9-10-year old children. The slopes did not differ between the two children groups (Table\ \@ref(tab:table-learn-rot1) & \@ref(tab:table-learn-rot2)). 
+
+(ref:l-r-caption1) Fixed effects for normalized rotation in training.
+
+```{r table-learn-rot1, echo=F}
+apa_table(
+  apa_lmm,
+  caption="(ref:l-r-caption1)",
+  placement="h")
+```
+
+(ref:l-r-caption2) Post-hoc contrasts for group x trial in block interaction.
+
+```{r table-learn-rot2, echo=F}
+apa_table(
+  apa_emm,
+  caption="(ref:l-r-caption2)",
+  placement="h")
+```
+
+```{r, include=F}
+rm(learn.rotation_path_s, R2, apa_lmm, apa_emm, emm)
+```
+
+\newpage 
 
 ### Motor Control Task 
 
 ![Motor control practise task](./pics/Motor_Control.jpg){width=600px}
 
-``` {r, plots_motor_control, include=FALSE}
-```
+```{r, echo=F, fig.height=6, fig.width=6, fig.cap="Navigation behavior in practise trials." }
 
-```{r, echo=F, fig.cap="Navigation behavior in practise trials." }
+mc_plot <- function(data, xvar, yvar, my_colors, my_labels, y_label){
+  p <- ggplot(data, aes(x=get(xvar), y=get(yvar), color=get(xvar), shape=get(xvar))) + 
+    stat_summary(fun.data=mean_cl_normal, na.rm=TRUE, geom="errorbar", width=0.2, size=1.5) +
+    stat_summary(fun=mean, na.rm=TRUE, geom="point", size=3) +
+    scale_color_manual(values=my_colors, labels=my_labels, name=NULL) +
+    scale_shape(guide="none") +
+    coord_cartesian(ylim=c(0,NA)) +
+    theme_bw(base_size=15) +
+    theme(legend.position="top", legend.justification=c(0,0),
+          legend.title=NULL, 
+          panel.grid.major.x=element_blank(),
+          axis.ticks.x=element_blank(),
+          axis.text.x=element_blank()) +
+    labs(x=NULL, y=y_label, 
+         caption="mean and 95% CI")
+  
+  return(p)
+}
 
-mc_t +  mc_v + mc_p + mc_r +
-  plot_layout(guides="collect") & theme(legend.position="bottom", legend.justification=c(0,0))
+mc_time <- mc_plot(practise, "group", "excess_path_length", group_colors, group_labels, l_time)
+mc_excess_path <- mc_plot(practise, "group", "time", group_colors, group_labels, l_excess_path_length)
+mc_rotation <- mc_plot(practise, "group", "rotation_turns", group_colors, group_labels, l_rotation)
+mc_rotation_path <- mc_plot(practise, "group", "rotation_turns_by_path_length", group_colors, group_labels, l_rotation_by_path)
+
+mc_time + mc_excess_path + mc_rotation + mc_rotation_path + 
+  plot_annotation("Navigation behavior in motor control task") + 
+  plot_layout(guides="collect") & theme(legend.position="top", legend.justification=c(0,0))
+
+rm(mc_time, mc_excess_path, mc_rotation, mc_rotation_path, mc_plot, practise)
 ```
 
 ### Excluded trials 
 
-``` {r, plots_excluded, include=FALSE}
-```
-
 ```{r, echo=F, fig.height=3, fig.width=3, fig.cap="Overview of excluded trials." }
 
-ex2 +
-  plot_layout(guides="collect") & theme(legend.position="bottom", legend.justification=c(0,0))
+excluded_trials <- sm_orig %>% 
+  group_by(id, group) %>% 
+  tally(exclude_trial_matlab)
 
-rm(ex2)
+ggplot(excluded_trials, aes(x=n, fill=group, color=group)) + 
+  geom_histogram(binwidth=1) + 
+  scale_fill_manual(labels=group_labels, values=group_colors) + 
+  scale_color_manual(labels=group_labels, values=group_colors_o) +
+  theme_bw(base_size=15) + 
+  theme(legend.position=c(0.8,0.8),
+        legend.key.size=unit(0.5, 'cm')) + 
+  labs(subtitle="Number of excluded trials",
+       x="n trials",
+       y="n participants")
 
+rm(excluded_trials)
 ```

@@ -7,6 +7,7 @@
 ## ---- analysis_packages_and_sum_coding
 library(tidyverse)
 library(janitor)
+library(patchwork)
 #library(gt)
 library(flextable)
 #library(xtable)
@@ -49,6 +50,52 @@ rm(file_name)
 file_name <- "../WP10_data/WP10_results/wp10_post_nav_data.RData"
 load(file_name)
 rm(file_name)
+
+# ######################################################### #
+
+# ::: plot settings ::: #
+
+## ---- plot_settings
+# labels 
+group_labels <- c("YoungKids"="6-7yo", "OldKids"="9-10yo", "YoungAdults"="adults")
+condition_labels <- c("allo_ret"="Allocentric", "ego_ret"="Egocentric")
+# mylabels <- as_labeller(c(`YoungKids` = "6-7yo", `OldKids` = "9-10yo", `YoungAdults` = "adults", 
+#                           `main_learn` = "Learning", `main_ret` = "Retrieval", 
+#                           `allo_ret` = "Allocentric", `ego_ret` = "Egocentric",
+#                           `1`="T1 - Immediate", `2`=" T2 - Delayed", `Consolidation` = "(T2-T1)/T1", `collapsed` = "T1 & T2",
+#                           `ego` = "egocentric", `other` = "baseline", `goal` = "goal", 
+#                           `direct` = "direct", `detour` = "detour",`reorient` = "reorient",
+#                           `layout`="Layout", `landmarks`="Landmarks", 
+#                           `goals`="Goals", `position`="Positioning",
+#                           `1-FourSquare`="4-Square", `2-FourFork`="4-Fork", `3-FourX`="4-X", 
+#                           `4-FiveStar`="5-Star", `5-SixSquare`="6-Square", `6-SevenStar`="7-Star",
+#                           `1-correct`="correct", `2-lure similar`="lure similar", `3-lure dissimilar`="lure dissimilar",
+#                           `SQRT(CanOrg)`="SQRT(CanOrg)", `CanAcc`="CanAcc", `DistAcc`="DistAcc", `AngleAcc`="AngleAcc"))
+
+l_trial_in_block <- "trial"
+l_session <- "session"
+l_memory_score <- "memory score"
+# l_correct_alley <- "correct in %"
+# l_ego_alley <- "egocentric in %"
+l_time <- "time (s)"
+l_velocity <- "velocity"
+l_excess_path_length <- "excess path length"
+l_presence <- "presence (%)"
+l_presence_alleys <- "presence in alleys (%)"
+l_time_in_zone <- "time in zone (s)"
+l_rotation <- "rotation/360"
+l_initial_rotation <- "initial rotation/360"
+l_rotation_by_path <- "rotation/360/path length"
+
+# colors
+# scales::show_col()
+group_colors <- c("#FFE476", "#6699FF", "#000000")
+group_colors_o <-  c("#CC6600", "#003399", "#000000")
+# type_colors <- c("other"="#C4CAC9", "ego"="#A6CEE3", "goal"="#FDBF6F")
+# type_colors_o <- c("other"="#667270", "ego"="#1F78B4", "goal"="#FF7F00")
+# strategy_colors <- c("direct"="#E4534D", "detour"="#ED8E8A", "reorient"="#F9DAD9")
+# landmark_colors <- rev(RColorBrewer::brewer.pal(3,"Blues"))
+## ---- 
 
 # ######################################################### #
 
@@ -309,19 +356,8 @@ lincon(rotation_turns_by_path_length ~ group, data=practise, tr=0.2, alpha=0.05,
 # -- TIME -- #
 
 ## ---- stats_learn_time_simple
-learn.time_s <- mixed(time ~ group*factor(trial_in_block_original) + block_f + cov_t + sex + (1|id), 
+learn.time_s <- mixed(time ~ group*trial_in_block + block_f + cov_t + sex + (1|id), 
                       data=data_l, expand_re=T)
-
-afex_plot(learn.time_s, x="trial_in_block_original", trace="group", id="id", 
-          mapping=c("shape", "color", "linetype"),
-          factor_levels=list(group=c("YoungKids"="6-7yo", 
-                                     "OldKids"="9-10yo", 
-                                     "YoungAdults"="adults")),
-          legend_title=NULL) +
-  scale_color_manual(values=group_colors2) + 
-  theme_bw(base_size=15) + 
-  theme(legend.position="top", legend.justification=c(0,0)) +
-  labs(x="trial in block", y="time")
 ## ----
 
 ## ---- stats_learn_time_outlier
@@ -374,9 +410,6 @@ learn.time_o
 anova.lme(learn.time_h, type="marginal")
 rm(learn.time_s, learn.time_o, learn.time_h)
 
-# estimated variances 
-# learn.time_h$modelStruct$varStruct
-
 # # extract estimated variance
 # variance <- learn.time_h$modelStruct$varStruct %>%
 #   coef(unconstrained = FALSE, allCoef = TRUE) %>%
@@ -384,6 +417,29 @@ rm(learn.time_s, learn.time_o, learn.time_h)
 #   mutate(sigma         = learn.time_h$sigma) %>%
 #   mutate(StandardError = sigma * varStruct) %>%
 #   mutate(Variance      = StandardError ^ 2)
+
+## ---- plot_learn_time
+learn.time_plot <- mixed(time ~ group*factor(trial_in_block_original) + block_f + cov_t + sex + (1|id), 
+                         data=data_l, expand_re=T)
+
+line_time <- afex_plot(learn.time_plot, x="trial_in_block_original", trace="group", id="id", 
+                       error="model",
+                       mapping=c("shape", "color", "linetype"),
+                       factor_levels=list(group=group_labels),
+                       legend_title=NULL, 
+                       data_arg=list(color="white"),
+                       point_arg=list(size=3), 
+                       line_arg=list(size=1),
+                       error_arg=list(size=1, width=0.5)) +
+  scale_color_manual(values=group_colors) + 
+  coord_cartesian(ylim=c(0,40)) + 
+  theme_bw(base_size=15) + 
+  theme(legend.position="top", legend.justification=c(0,0),
+        panel.grid.major.x=element_blank()) +
+  labs(x=l_trial_in_block, y=l_time)
+
+rm(learn.time_plot)
+## ----
 
 # ######################################################### #
 
@@ -444,6 +500,29 @@ learn.excess_path_o
 anova.lme(learn.excess_path_h, type="marginal")
 rm(learn.excess_path_s, learn.excess_path_o, learn.excess_path_h)
 
+## ---- plot_learn_excess_path
+learn.excess_path_plot <- mixed(excess_path_length ~ group*factor(trial_in_block_original) + block_f + cov_p + sex + (1|id), 
+                                data=data_l, expand_re=T)
+
+line_excess_path <- afex_plot(learn.excess_path_plot, x="trial_in_block_original", trace="group", id="id", 
+                              error="model",
+                              mapping=c("shape", "color", "linetype"),
+                              factor_levels=list(group=group_labels),
+                              legend_title=NULL, 
+                              data_arg=list(color="white"),
+                              point_arg=list(size=3), 
+                              line_arg=list(size=1),
+                              error_arg=list(size=1, width=0.5)) +
+  scale_color_manual(values=group_colors) + 
+  coord_cartesian(ylim=c(0,1)) + 
+  theme_bw(base_size=15) + 
+  theme(legend.position="top", legend.justification=c(0,0),
+        panel.grid.major.x=element_blank()) +
+  labs(x=l_trial_in_block, y=l_excess_path_length)
+
+rm(learn.excess_path_plot)
+## ----
+
 # ######################################################### #
 
 # -- PRESENCE in outer alleys vs inner pentagon -- #
@@ -502,6 +581,29 @@ learn.presence_alleys_s
 learn.presence_alleys_o
 anova.lme(learn.presence_alleys_h, type="marginal")
 rm(learn.presence_alleys_s, learn.presence_alleys_o, learn.presence_alleys_h)
+
+## ---- plot_learn_presence
+learn.presence_alleys_plot <- mixed(presence_alleys ~ group*factor(trial_in_block_original) + block_f + sex + (1|id), 
+                                    data=data_l, expand_re=T)
+
+line_presence_alleys <- afex_plot(learn.presence_alleys_plot, x="trial_in_block_original", trace="group", id="id", 
+                                  error="model",
+                                  mapping=c("shape", "color", "linetype"),
+                                  factor_levels=list(group=group_labels),
+                                  legend_title=NULL, 
+                                  data_arg=list(color="white"),
+                                  point_arg=list(size=3), 
+                                  line_arg=list(size=1),
+                                  error_arg=list(size=1, width=0.5)) +
+  scale_color_manual(values=group_colors) + 
+  coord_cartesian(ylim=c(0.25,0.75)) + 
+  theme_bw(base_size=15) + 
+  theme(legend.position="top", legend.justification=c(0,0),
+        panel.grid.major.x=element_blank()) +
+  labs(x=l_trial_in_block, y=l_presence_alleys)
+
+rm(learn.presence_alleys_plot)
+## ----
 
 # ######################################################### #
 
@@ -562,25 +664,48 @@ learn.initial_rot_o
 anova.lme(learn.initial_rot_h, type="marginal")
 rm(learn.initial_rot_s, learn.initial_rot_o, learn.initial_rot_h)
 
+## ---- plot_learn_initial_rotation
+learn.initial_rotation_plot <- mixed(initial_rotation_turns ~ group*factor(trial_in_block_original) + block_f + cov_r + sex + (1|id), 
+                                     data=data_l, expand_re=T)
+
+line_initial_rotation <- afex_plot(learn.initial_rotation_plot, x="trial_in_block_original", trace="group", id="id", 
+                                   error="model",
+                                   mapping=c("shape", "color", "linetype"),
+                                   factor_levels=list(group=group_labels),
+                                   legend_title=NULL, 
+                                   data_arg=list(color="white"),
+                                   point_arg=list(size=3), 
+                                   line_arg=list(size=1),
+                                   error_arg=list(size=1, width=0.5)) +
+  scale_color_manual(values=group_colors) + 
+  coord_cartesian(ylim=c(0,0.3)) + 
+  theme_bw(base_size=15) + 
+  theme(legend.position="top", legend.justification=c(0,0),
+        panel.grid.major.x=element_blank()) +
+  labs(x=l_trial_in_block, y=l_initial_rotation)
+
+rm(learn.initial_rotation_plot)
+## ----
+
 # ######################################################### #
 
 # -- ROTATION (BY PATH LENGTH) -- # 
 
 ## ---- stats_learn_rotation_path_simple
-learn.rotation_path_s <- mixed(rotation_turns_by_path_length ~ group*trial_in_block + block_f + cov_r + sex + (1|id), 
+learn.rotation_path_s <- mixed(rotation_turns_by_path_length ~ group*trial_in_block + block_f + cov_rpl + sex + (1|id), 
                                data=data_l, expand_re=T)
 ## ----
 
 ## ---- stats_learn_rotation_path_outlier
 t <- data_l %>% mutate(flag=ifelse(is_outlier(rotation_turns_by_path_length), T, F))
 # ggplot(t, aes(x=rotation_turns_by_path_length, fill=flag)) + geom_histogram() + facet_wrap(~group)
-learn.rotation_path_o <- mixed(rotation_turns_by_path_length ~ group*trial_in_block + block_f + cov_r + sex + (1|id), 
+learn.rotation_path_o <- mixed(rotation_turns_by_path_length ~ group*trial_in_block + block_f + cov_rpl + sex + (1|id), 
                                data=t %>% filter(flag==F), expand_re=T)
 rm(t)
 ## ----
 
 # -- heteroscedasticity
-learn.rotation_path_base <- lme(rotation_turns_by_path_length ~  group*trial_in_block + block_f + cov_r + sex,
+learn.rotation_path_base <- lme(rotation_turns_by_path_length ~  group*trial_in_block + block_f + cov_rpl + sex,
                                 random=~1 | id, 
                                 na.action=na.omit, data=data_l, method="ML")
 learn.rotation_path_var1 <- update(learn.rotation_path_base, weights=varIdent(form=~1 | group))
@@ -588,7 +713,7 @@ anova(learn.rotation_path_base, learn.rotation_path_var1, test=T) # chose model 
 rm(learn.rotation_path_base, learn.rotation_path_var1)
 ## ---- stats_learning_rotation_path_hetero
 # re-fit final model with REML
-learn.rotation_path_h <- lme(rotation_turns_by_path_length ~  group*trial_in_block + block_f + cov_r + sex,
+learn.rotation_path_h <- lme(rotation_turns_by_path_length ~  group*trial_in_block + block_f + cov_rpl + sex,
                              random=~1 | id, 
                              weights=varIdent(form=~1 | group),
                              na.action=na.omit, data=data_l, method="REML")
@@ -621,9 +746,28 @@ learn.rotation_path_o
 anova.lme(learn.rotation_path_h, type="marginal")
 rm(learn.rotation_path_s, learn.rotation_path_o, learn.rotation_path_h)
 
-# helper plots
-ggplot(data_l, aes(x=factor(trial_in_block), y=rotation_turns_by_path_length)) + geom_boxplot() + coord_cartesian(ylim=c(0,3)) + facet_wrap(~group)
-ggplot(data_l, aes(x=factor(trial_in_block), y=rotation_turns)) + geom_boxplot() + coord_cartesian(ylim=c(0,2000)) + facet_wrap(~group)
+# ---- plot_learn_rotation_path
+learn.rotation_path_plot <- mixed(rotation_turns_by_path_length ~ group*factor(trial_in_block_original) + block_f + cov_rpl + sex + (1|id), 
+                                  data=data_l, expand_re=T)
+
+line_rotation_path <- afex_plot(learn.rotation_path_plot, x="trial_in_block_original", trace="group", id="id", 
+                                error="model",
+                                mapping=c("shape", "color", "linetype"),
+                                factor_levels=list(group=group_labels),
+                                legend_title=NULL, 
+                                data_arg=list(color="white"),
+                                point_arg=list(size=3), 
+                                line_arg=list(size=1),
+                                error_arg=list(size=1, width=0.5)) +
+  scale_color_manual(values=group_colors) + 
+  coord_cartesian(ylim=c(0,1.5)) + 
+  theme_bw(base_size=15) + 
+  theme(legend.position="top", legend.justification=c(0,0),
+        panel.grid.major.x=element_blank()) +
+  labs(x=l_trial_in_block, y=l_rotation_by_path)
+
+rm(learn.rotation_path_plot)
+## ----
 
 
 # ######################################################### #
@@ -760,16 +904,28 @@ probe.memory_o
 anova.lme(probe.memory_h, type="marginal")
 rm(probe.memory_s, probe.memory_o, probe.memory_h)
 
-# plots 
-afex_plot(probe.memory_s, x="session", panel="condition", trace="group", id="id",
-          mapping = c("shape", "color", "linetype"), 
-          factor_levels=list(group=c("6-7yo", "9-10yo", "adults"), 
-                             condition=c("Allocentric", "Egocentric")),
-          legend_title="condition") +
-  theme_bw(base_size = 15) + 
-  theme(legend.position="top", legend.justification=c(0,0)) +
-  labs(x="session", y="memory score")
+## ---- plot_probe_ms
+line_memory <- afex_plot(probe.memory_s, x="session", trace="group", panel="condition", id="id", 
+                         error="model", dodge=0.75,
+                         mapping=c("shape", "color", "linetype"),
+                         factor_levels=list(group=group_labels, condition=condition_labels),
+                         legend_title=NULL, 
+                         data_geom=ggbeeswarm::geom_quasirandom, 
+                         data_arg=list(dodge.width=0.75, cex=0.8, color="white"),
+                         point_arg=list(size=3), 
+                         line_arg=list(size=1),
+                         error_arg=list(size=1, width=0.5)) + 
+  scale_color_manual(values=group_colors) + 
+  coord_cartesian(ylim=c(0,1)) + 
+  theme_bw(base_size=15) + 
+  theme(legend.position="top", legend.justification=c(0,0),
+        panel.grid.major.x=element_blank()) +
+  labs(x=l_session, y=l_memory_score)
+## ----
 
+emm <- emmeans(probe.memory_s, ~ group*session*condition, lmer.df="satterthwaite")
+contrast(emm, con_list_group_session_condition)
+         
 # ######################################################### #
 
 # -- CHANGE IN MEMORY SCORE -- #
@@ -859,6 +1015,28 @@ probe.memory_corr_s
 probe.memory_corr_o
 anova.lme(probe.memory_corr_h, type="marginal")
 rm(probe.memory_corr_s, probe.memory_corr_o, probe.memory_corr_h)
+
+## ---- plot_probe_ms_corr
+line_memory_corr <- afex_plot(probe.memory_corr_s, x="session", trace="group", panel="condition", id="id", 
+                              error="model", dodge=0.75,
+                              mapping=c("shape", "color", "linetype"),
+                              factor_levels=list(group=group_labels, condition=condition_labels),
+                              legend_title=NULL, 
+                              data_geom=ggbeeswarm::geom_quasirandom, 
+                              data_arg=list(dodge.width=0.75, cex=0.8, color="white"),
+                              point_arg=list(size=3), 
+                              line_arg=list(size=1),
+                              error_arg=list(size=1, width=0.5)) + 
+  scale_color_manual(values=group_colors) + 
+  coord_cartesian(ylim=c(0.85,1)) + 
+  theme_bw(base_size=15) + 
+  theme(legend.position="top", legend.justification=c(0,0),
+        panel.grid.major.x=element_blank()) +
+  labs(x=l_session, y=l_memory_score)
+## ----
+
+emm <- emmeans(probe.memory_corr_s, ~ group*session*condition, lmer.df="satterthwaite")
+contrast(emm, con_list_group_session_condition, adjust="bonferroni")
 
 # ######################################################### #
 
@@ -953,24 +1131,24 @@ probe.time_o
 anova.lme(probe.time_h, type="marginal")
 rm(probe.time_s, probe.time_o, probe.time_h)
 
-# emm1 <- emmeans(probe.time_s, ~ group * session, lmer.df="satterthwaite")
-# con1 <- contrast(emm1, con_list_group_session, adjust="bonferroni")
-# con1
-# emm2 <- emmeans(probe.time_s, ~ group * condition, lmer.df="satterthwaite")
-# con2 <- contrast(emm2, con_list_group_condition, adjust="bonferroni")
-# con2
-# emm3 <- emmeans(probe.time_s, ~ session * condition, lmer.df="satterthwaite")
-# con3 <- contrast(emm3, con_list_session_condition, adjust="bonferroni")
-# con3
-# # emm4 <- emmeans(probe.time_s, ~ group * session * condition, lmer.df="satterthwaite")
-# # con4 <- contrast(emm4, con_list_group_session_condition, adjust="bonferroni")
-# # con4
-# rm(probe.time_s, con1, con2, con3, con4, emm1, emm2, emm3, emm4)
-
-# helper plots
-ggplot(data_p, aes(x=time)) + geom_histogram()
-ggplot(data_p, aes(x=group, y=time)) + geom_boxplot() + facet_grid(~ condition + session)
-ggplot(data_p, aes(x=group, y=time)) + geom_boxplot() + facet_grid(~ condition)
+## ---- plot_probe_time
+line_time <- afex_plot(probe.time_s, x="session", trace="group", panel="condition", id="id", 
+                       error="model", dodge=0.75,
+                       mapping=c("shape", "color", "linetype"),
+                       factor_levels=list(group=group_labels, condition=condition_labels),
+                       legend_title=NULL, 
+                       data_geom=ggbeeswarm::geom_quasirandom, 
+                       data_arg=list(dodge.width=0.75, cex=0.8, color="white"),
+                       point_arg=list(size=3), 
+                       line_arg=list(size=1),
+                       error_arg=list(size=1, width=0.5)) + 
+  scale_color_manual(values=group_colors) + 
+  coord_cartesian(ylim=c(0,40)) + 
+  theme_bw(base_size=15) + 
+  theme(legend.position="top", legend.justification=c(0,0),
+        panel.grid.major.x=element_blank()) +
+  labs(x=l_session, y=l_time)
+## ----
 
 # ######################################################### #
 
@@ -1037,24 +1215,24 @@ probe.excess_path_o
 anova.lme(probe.excess_path_h, type="marginal")
 rm(probe.excess_path_s, probe.excess_path_o, probe.excess_path_h)
 
-emm1 <- emmeans(probe.excess_path_s, ~ group * session, lmer.df="satterthwaite")
-con1 <- contrast(emm1, con_list_group_session, adjust="bonferroni")
-con1
-emm2 <- emmeans(probe.excess_path_s, ~ group * condition, lmer.df="satterthwaite")
-con2 <- contrast(emm2, con_list_group_condition, adjust="bonferroni")
-con2
-emm3 <- emmeans(probe.excess_path_s, ~ session * condition, lmer.df="satterthwaite")
-con3 <- contrast(emm3, con_list_session_condition, adjust="bonferroni")
-con3
-# emm4 <- emmeans(probe.excess_path_s, ~ group * session * condition, lmer.df="satterthwaite")
-# con4 <- contrast(emm4, con_list_group_session_condition, adjust="bonferroni")
-# con4
-rm(probe.excess_path_s, con1, con2, con3, con4, emm1, emm2, emm3, emm4)
-
-# helper plots 
-ggplot(data_p, aes(x=excess_path_length)) + geom_histogram()
-ggplot(data_p, aes(x=group, y=excess_path_length)) + geom_boxplot() + facet_grid(~ condition + session) + coord_cartesian(ylim=c(0,3))
-ggplot(data_p, aes(x=group, y=excess_path_length)) + geom_boxplot() + facet_grid(~ condition) 
+## ---- plot_probe_excess_time
+line_excess_path <- afex_plot(probe.excess_path_s, x="session", trace="group", panel="condition", id="id", 
+                              error="model", dodge=0.75,
+                              mapping=c("shape", "color", "linetype"),
+                              factor_levels=list(group=group_labels, condition=condition_labels),
+                              legend_title=NULL, 
+                              data_geom=ggbeeswarm::geom_quasirandom, 
+                              data_arg=list(dodge.width=0.75, cex=0.8, color="white"),
+                              point_arg=list(size=3), 
+                              line_arg=list(size=1),
+                              error_arg=list(size=1, width=0.5)) + 
+  scale_color_manual(values=group_colors) + 
+  coord_cartesian(ylim=c(0,1.5)) + 
+  theme_bw(base_size=15) + 
+  theme(legend.position="top", legend.justification=c(0,0),
+        panel.grid.major.x=element_blank()) +
+  labs(x=l_session, y=l_excess_path_length)
+## ----
 
 # ######################################################### #
 
@@ -1121,13 +1299,24 @@ probe.presence_alleys_o
 anova.lme(probe.presence_alleys_h, type="marginal")
 rm(probe.presence_alleys_s, probe.presence_alleys_o, probe.presence_alleys_h)
 
-# emm1 <- emmeans(probe.presence_alleys_s, ~ session * condition, lmer.df="satterthwaite")
-# con1 <- contrast(emm1, con_list_session_condition, adjust="bonferroni")
-# con1
-# rm(probe.presence_alleys_s, emm1, con1)
-
-# helper plot
-ggplot(data_p, aes(x=session, y=presence_alleys)) + geom_boxplot() + facet_grid(~ condition) 
+## ---- plot_probe_presence_alleys
+line_presence_alleys <- afex_plot(probe.presence_alleys_s, x="session", trace="group", panel="condition", id="id", 
+                                  error="model", dodge=0.75,
+                                  mapping=c("shape", "color", "linetype"),
+                                  factor_levels=list(group=group_labels, condition=condition_labels),
+                                  legend_title=NULL, 
+                                  data_geom=ggbeeswarm::geom_quasirandom, 
+                                  data_arg=list(dodge.width=0.75, cex=0.8, color="white"),
+                                  point_arg=list(size=3), 
+                                  line_arg=list(size=1),
+                                  error_arg=list(size=1, width=0.5)) + 
+  scale_color_manual(values=group_colors) + 
+  coord_cartesian(ylim=c(0,0.8)) + 
+  theme_bw(base_size=15) + 
+  theme(legend.position="top", legend.justification=c(0,0),
+        panel.grid.major.x=element_blank()) +
+  labs(x=l_session, y=l_presence_alleys)
+## ---- 
 
 # ######################################################### #
 
@@ -1195,15 +1384,24 @@ probe.initial_rot_o
 anova.lme(probe.initial_rot_h, type="marginal")
 rm(probe.initial_rot_s, probe.initial_rot_o, probe.initial_rot_h)
 
-# emm1 <- emmeans(probe.initial_rot_s, ~ group * session * condition, lmer.df="satterthwaite")
-# con1 <- contrast(emm1, con_list_group_session_condition, adjust="bonferroni")
-# con1
-# rm(probe.initial_rot_s, emm1, con1)
-
-# helper plots
-ggplot(data_p, aes(x=initial_rotation_turns)) + geom_histogram()
-ggplot(data_p, aes(x=group, y=initial_rotation_turns)) + geom_boxplot() + facet_wrap(~condition + session, nrow=1)
-ggplot(data_p, aes(x=group, y=initial_rotation_turns)) + geom_boxplot() + facet_wrap(~ condition, nrow=1) + coord_cartesian(ylim=c())
+## ---- plot_probe_initial_rotation
+line_initial_rotation <- afex_plot(probe.initial_rot_s, x="session", trace="group", panel="condition", id="id", 
+                                   error="model", dodge=0.75,
+                                   mapping=c("shape", "color", "linetype"),
+                                   factor_levels=list(group=group_labels, condition=condition_labels),
+                                   legend_title=NULL, 
+                                   data_geom=ggbeeswarm::geom_quasirandom, 
+                                   data_arg=list(dodge.width=0.75, cex=0.8, color="white"),
+                                   point_arg=list(size=3), 
+                                   line_arg=list(size=1),
+                                   error_arg=list(size=1, width=0.5)) + 
+  scale_color_manual(values=group_colors) + 
+  coord_cartesian(ylim=c(0,1)) + 
+  theme_bw(base_size=15) + 
+  theme(legend.position="top", legend.justification=c(0,0),
+        panel.grid.major.x=element_blank()) +
+  labs(x=l_session, y=l_initial_rotation)
+## ---- 
 
 # ######################################################### #
 
@@ -1271,24 +1469,24 @@ probe.rotation_path_o
 anova.lme(probe.rotation_path_h, type="marginal")
 rm(probe.rotation_path_s, probe.rotation_path_o, probe.rotation_path_h)
 
-# emm1 <- emmeans(probe.rotation_path_s, ~ group * session, lmer.df="satterthwaite")
-# con1 <- contrast(emm1, con_list_group_session, adjust="bonferroni")
-# con1
-# emm2 <- emmeans(probe.rotation_path_s, ~ group * condition, lmer.df="satterthwaite")
-# con2 <- contrast(emm2, con_list_group_condition, adjust="bonferroni")
-# con2
-# emm3 <- emmeans(probe.rotation_path_s, ~ session * condition, lmer.df="satterthwaite")
-# con3 <- contrast(emm3, con_list_session_condition, adjust="bonferroni")
-# con3
-# # emm4 <- emmeans(probe.rotation_path_s, ~ group * session * condition, lmer.df="satterthwaite")
-# # con4 <- contrast(emm4, con_list_group_session_condition, adjust="bonferroni")
-# # con4
-# rm(probe.rotation_path_s, con1, con2, con3, con4, emm1, emm2, emm3, emm4)
-
-# helper plots
-ggplot(data_p, aes(x=rotation_turns_by_path_length)) + geom_histogram()
-ggplot(data_p, aes(x=group, y=rotation_turns_by_path_length)) + geom_boxplot() + facet_wrap(~condition + session, nrow=1) + coord_cartesian(ylim=c(0,3))
-ggplot(data_p, aes(x=group, y=rotation_turns_by_path_length)) + geom_boxplot() + facet_wrap(~ condition, nrow=1) + coord_cartesian(ylim=c(0,3))
+## ---- plot_probe_rotation_path
+line_rotation_path <- afex_plot(probe.rotation_path_s, x="session", trace="group", panel="condition", id="id", 
+                                error="model", dodge=0.75,
+                                mapping=c("shape", "color", "linetype"),
+                                factor_levels=list(group=group_labels, condition=condition_labels),
+                                legend_title=NULL, 
+                                data_geom=ggbeeswarm::geom_quasirandom, 
+                                data_arg=list(dodge.width=0.75, cex=0.8, color="white"),
+                                point_arg=list(size=3), 
+                                line_arg=list(size=1),
+                                error_arg=list(size=1, width=0.5)) + 
+  scale_color_manual(values=group_colors) + 
+  coord_cartesian(ylim=c(0,2.5)) + 
+  theme_bw(base_size=15) + 
+  theme(legend.position="top", legend.justification=c(0,0),
+        panel.grid.major.x=element_blank()) +
+  labs(x=l_session, y=l_rotation_by_path)
+## ---- 
 
 
 # ######################################################### #
