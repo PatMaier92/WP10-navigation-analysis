@@ -43,6 +43,7 @@ options(contrasts=c(unordered="contr.sum", ordered="contr.poly"))
 file_name <- "../WP10_data/WP10_results/wp10_navigation_data.RData"
 load(file_name)
 sm_orig <- sm_data 
+sm_data <- sm_data %>% filter(exclude_trial_matlab==0)
 rm(file_name)
 
 file_name <- "../WP10_data/WP10_results/wp10_post_nav_data.RData"
@@ -54,45 +55,44 @@ rm(file_name)
 # ::: aggregate data ::: #
 
 ## ---- analysis_data
-# practise motor control
-data_p <- sm_data %>%
+# practise 
+practise <- sm_data %>%
   filter(condition %in% c("practise")) %>%  
-  select(id, group, sex, time, velocity, excess_path_length, rotation_turns) %>% 
+  select(id, group, sex, time, velocity, excess_path_length, rotation_turns, rotation_turns_by_path_length) %>% 
   droplevels()
 
-covariates <- data_p %>% 
-  select(id, time, velocity, excess_path_length, rotation_turns) %>% 
-  mutate(cov_t=time-mean(time, na.rm=T), # tbd move mean centering 
-         cov_v=velocity-mean(velocity, na.rm=T),
-         cov_p=excess_path_length-mean(excess_path_length, na.rm=T),
-         cov_r=rotation_turns-mean(rotation_turns, na.rm=T)) %>% 
-  select(-time, -velocity, -excess_path_length, -rotation_turns)
+covariates <- practise %>% 
+  select(id, time, velocity, excess_path_length, rotation_turns, rotation_turns_by_path_length) %>% 
+  rename(cov_t=time, cov_v=velocity, cov_p=excess_path_length, 
+         cov_r=rotation_turns, cov_rpl=rotation_turns_by_path_length)
+
+# full data 
+data <- sm_data %>% 
+  full_join(covariates, by="id") %>% 
+  drop_na(cov_t, cov_v, cov_p, cov_r, cov_rpl) %>% 
+  mutate(trial_in_block_original=trial_in_block,
+         goal_f=factor(goal_i), 
+         block_f=factor(block)) 
 
 # learning
-data_l <- sm_data %>%
-  filter(exclude_trial_matlab==0) %>% 
+data_l <- data %>%
   filter(condition %in% c("main_learn")) %>% 
-  mutate(block_f=factor(block),
-         trial_in_block_c=trial_in_block-mean(trial_in_block)) %>%  # alternativ: zero-centering
-  full_join(covariates, by="id") %>% 
-  drop_na(cov_t, cov_p, cov_r) %>% 
+  mutate_at(vars("trial_in_block", "cov_t", "cov_v", "cov_p", "cov_r", "cov_rpl"), 
+            ~ .x - mean(.x, na.rm=T)) %>% 
   droplevels()
 
 # probe 
-data <- sm_data %>% 
-  filter(exclude_trial_matlab==0) %>% 
+data_p <- data %>% 
   filter(condition %in% c("allo_ret", "ego_ret")) %>%
-  mutate(goal_f=factor(goal_i), 
-         block_f=factor(block),
-         trial_in_block_c=trial_in_block-mean(trial_in_block)) %>%  # alternativ: zero-centering
-  full_join(covariates, by="id") %>% 
-  drop_na(cov_t, cov_p, cov_r) %>% 
+  mutate_at(vars("trial_in_block", "cov_t", "cov_v", "cov_p", "cov_r", "cov_rpl"), 
+            ~ .x - mean(.x, na.rm=T)) %>% 
   droplevels()
 
 # probe correct trials 
-data_c <- data %>% 
-  filter(correct_final_alley==1) %>% 
-  mutate(trial_in_block_c=trial_in_block-mean(trial_in_block)) %>%  # alternativ: zero-centering
+data_pc <- data %>% 
+  filter(condition %in% c("allo_ret", "ego_ret"), correct_final_alley==1) %>%
+  mutate_at(vars("trial_in_block", "cov_t", "cov_v", "cov_p", "cov_r", "cov_rpl"), 
+            ~ .x - mean(.x, na.rm=T)) %>% 
   droplevels()
 
 # probe allo trials
@@ -135,6 +135,7 @@ data_allo_prT <- data %>%
 
 # probe aggregated change 
 data_prepost <- data %>% 
+  filter(condition %in% c("allo_ret", "ego_ret")) %>%
   select(id, sex, group, session, trial, condition, correct_final_alley, memory_score) %>%
   pivot_wider(id_cols=c(id, sex, trial, group, condition),
               names_from=session,
@@ -149,7 +150,7 @@ data_prepost <- data %>%
   droplevels()
 
 data_prepost_correct <- data %>% 
-    filter(correct_final_alley==1) %>% 
+  filter(condition %in% c("allo_ret", "ego_ret"), correct_final_alley==1) %>%
     select(id, sex, group, session, trial, condition, correct_final_alley, memory_score) %>% 
     pivot_wider(id_cols=c(id, sex, trial, group, condition),
                 names_from=session,
@@ -168,7 +169,7 @@ is_outlier <- function(x) {
   return(x < quantile(x, 0.25) - 1.5 * IQR(x) | x > quantile(x, 0.75) + 1.5 * IQR(x))
 }
 
-rm(covariates)
+rm(covariates, data)
 ## ---- 
 
 ## ---- contrast_matrices 
@@ -278,20 +279,24 @@ t2 <- pt_data %>%
 
 ## ---- stats_motor_control
 # time: GROUPS DIFFER SIGNIFICANTLY 
-t1way(time ~ group, data=data_p, tr=0.2, alpha=0.05, nboot=1000)
-lincon(time ~ group, data=data_p, tr=0.2, alpha=0.05, method="bonferroni") # default: hochberg
+t1way(time ~ group, data=practise, tr=0.2, alpha=0.05, nboot=1000)
+lincon(time ~ group, data=practise, tr=0.2, alpha=0.05, method="bonferroni") # default: hochberg
 
 # velocity: no differences 
-t1way(velocity ~ group, data=data_p, tr=0.2, alpha=0.05, nboot=1000)
-lincon(velocity ~ group, data=data_p, tr=0.2, alpha=0.05, method="bonferroni")
+t1way(velocity ~ group, data=practise, tr=0.2, alpha=0.05, nboot=1000)
+lincon(velocity ~ group, data=practise, tr=0.2, alpha=0.05, method="bonferroni")
 
 # excess path length: DIFFER SIGNIFICANTLY
-t1way(excess_path_length ~ group, data=data_p, tr=0.2, alpha=0.05, nboot=1000)
-lincon(excess_path_length ~ group, data=data_p, tr=0.2, alpha=0.05, method="bonferroni")
+t1way(excess_path_length ~ group, data=practise, tr=0.2, alpha=0.05, nboot=1000)
+lincon(excess_path_length ~ group, data=practise, tr=0.2, alpha=0.05, method="bonferroni")
 
 # rotation: GROUPS DIFFER SIGNIFICANTLY  
-t1way(rotation_turns ~ group, data=data_p, tr=0.2, alpha=0.05, nboot=1000)
-lincon(rotation_turns ~ group, data=data_p, tr=0.2, alpha=0.05, method="bonferroni")
+t1way(rotation_turns ~ group, data=practise, tr=0.2, alpha=0.05, nboot=1000)
+lincon(rotation_turns ~ group, data=practise, tr=0.2, alpha=0.05, method="bonferroni")
+
+# rotation: GROUPS DIFFER SIGNIFICANTLY  
+t1way(rotation_turns_by_path_length ~ group, data=practise, tr=0.2, alpha=0.05, nboot=1000)
+lincon(rotation_turns_by_path_length ~ group, data=practise, tr=0.2, alpha=0.05, method="bonferroni")
 ## ---- 
 
 
@@ -304,20 +309,31 @@ lincon(rotation_turns ~ group, data=data_p, tr=0.2, alpha=0.05, method="bonferro
 # -- TIME -- #
 
 ## ---- stats_learn_time_simple
-learn.time_s <- mixed(time ~ group*trial_in_block_c + block_f + cov_t + sex + (1|id), 
+learn.time_s <- mixed(time ~ group*factor(trial_in_block_original) + block_f + cov_t + sex + (1|id), 
                       data=data_l, expand_re=T)
+
+afex_plot(learn.time_s, x="trial_in_block_original", trace="group", id="id", 
+          mapping=c("shape", "color", "linetype"),
+          factor_levels=list(group=c("YoungKids"="6-7yo", 
+                                     "OldKids"="9-10yo", 
+                                     "YoungAdults"="adults")),
+          legend_title=NULL) +
+  scale_color_manual(values=group_colors2) + 
+  theme_bw(base_size=15) + 
+  theme(legend.position="top", legend.justification=c(0,0)) +
+  labs(x="trial in block", y="time")
 ## ----
 
 ## ---- stats_learn_time_outlier
 t <- data_l %>% mutate(flag=ifelse(is_outlier(time), T, F))
 # ggplot(t, aes(x=time, fill=flag)) + geom_histogram() + facet_wrap(~group)
-learn.time_o <- mixed(time ~ group*trial_in_block_c + block_f + cov_t + sex + (1|id), 
+learn.time_o <- mixed(time ~ group*trial_in_block + block_f + cov_t + sex + (1|id), 
                       data=t %>% filter(flag==F), expand_re=T)
 rm(t)
 ## ----
 
 # -- heteroscedasticity
-learn.time_base <- lme(time ~ group*trial_in_block_c + block_f + cov_t + sex,
+learn.time_base <- lme(time ~ group*trial_in_block + block_f + cov_t + sex,
                        random=~1 | id, 
                        na.action=na.omit, data=data_l, method="ML")
 learn.time_var1 <- update(learn.time_base, weights=varIdent(form=~1 | group))
@@ -325,7 +341,7 @@ anova.lme(learn.time_base, learn.time_var1) # chose model 1
 rm(learn.time_base, learn.time_var1)
 ## ---- stats_learning_time_hetero
 # re-fit final model with REML
-learn.time_h <- lme(time ~ group*trial_in_block_c + block_f + cov_t + sex,
+learn.time_h <- lme(time ~ group*trial_in_block + block_f + cov_t + sex,
                     random=~1 | id, 
                     weights=varIdent(form=~1 | group),
                     na.action=na.omit, data=data_l, method="REML")
@@ -374,20 +390,20 @@ rm(learn.time_s, learn.time_o, learn.time_h)
 # --- EXCESS PATH LENGTH -- #
 
 ## ---- stats_learn_excess_path_simple
-learn.excess_path_s <- mixed(excess_path_length ~ group*trial_in_block_c + block_f + cov_p + sex + (1|id), 
+learn.excess_path_s <- mixed(excess_path_length ~ group*trial_in_block + block_f + cov_p + sex + (1|id), 
                              data=data_l, expand_re=T)
 ## ----
 
 ## ---- stats_learn_excess_path_outlier
 t <- data_l %>% mutate(flag=ifelse(is_outlier(excess_path_length), T, F))
 # ggplot(t, aes(x=excess_path_length, fill=flag)) + geom_histogram() + facet_wrap(~group)
-learn.excess_path_o <- mixed(excess_path_length ~ group*trial_in_block_c + block_f + cov_p + sex + (1|id), 
+learn.excess_path_o <- mixed(excess_path_length ~ group*trial_in_block + block_f + cov_p + sex + (1|id), 
                              data=t %>% filter(flag==F), expand_re=T)
 rm(t)
 ## ----
 
 # -- heteroscedasticity
-learn.excess_path_base <- lme(excess_path_length ~ group*trial_in_block_c + block_f + cov_p + sex,
+learn.excess_path_base <- lme(excess_path_length ~ group*trial_in_block + block_f + cov_p + sex,
                               random=~1 | id, 
                               na.action=na.omit, data=data_l, method="ML")
 learn.excess_path_var1 <- update(learn.excess_path_base, weights=varIdent(form=~1 | group))
@@ -395,7 +411,7 @@ anova(learn.excess_path_base, learn.excess_path_var1, test=T) # chose model 1
 rm(learn.excess_path_base, learn.excess_path_var1)
 ## ---- stats_learning_excess_path_hetero
 # re-fit final model with REML
-learn.excess_path_h <-lme(excess_path_length ~ group*trial_in_block_c + block_f + cov_p + sex,
+learn.excess_path_h <-lme(excess_path_length ~ group*trial_in_block + block_f + cov_p + sex,
                           random=~1 | id, 
                           weights=varIdent(form=~1 | group),
                           na.action=na.omit, data=data_l, method="REML")
@@ -433,20 +449,20 @@ rm(learn.excess_path_s, learn.excess_path_o, learn.excess_path_h)
 # -- PRESENCE in outer alleys vs inner pentagon -- #
 
 ## ---- stats_learn_presence_simple
-learn.presence_alleys_s <- mixed(presence_alleys ~ group*trial_in_block_c + block_f + sex + (1|id), 
+learn.presence_alleys_s <- mixed(presence_alleys ~ group*trial_in_block + block_f + sex + (1|id), 
                                  data=data_l, expand_re=T)
 ## ----
 
 ## ---- stats_learn_presence_outlier
 t <- data_l %>% mutate(flag=ifelse(is_outlier(presence_alleys), T, F))
 # ggplot(t, aes(x=presence_alleys, fill=flag)) + geom_histogram() + facet_wrap(~group)
-learn.presence_alleys_o <- mixed(presence_alleys ~ group*trial_in_block_c + block_f + sex + (1|id), 
+learn.presence_alleys_o <- mixed(presence_alleys ~ group*trial_in_block + block_f + sex + (1|id), 
                                  data=t %>% filter(flag==F), expand_re=T)
 rm(t)
 ## ----
 
 # -- heteroscedasticity
-learn.presence_alleys_base <- lme(presence_alleys ~ group*trial_in_block_c + block_f + sex,
+learn.presence_alleys_base <- lme(presence_alleys ~ group*trial_in_block + block_f + sex,
                                   random=~1 | id, 
                                   na.action=na.omit, data=data_l, method="ML")
 learn.presence_alleys_var1 <- update(learn.presence_alleys_base, weights=varIdent(form=~1 | group))
@@ -454,7 +470,7 @@ anova.lme(learn.presence_alleys_base, learn.presence_alleys_var1) # chose model 
 rm(learn.presence_alleys_base, learn.presence_alleys_var1)
 ## ---- stats_learning_presence_hetero
 # re-fit final model with REML
-learn.presence_alleys_h <- lme(presence_alleys ~ group*trial_in_block_c + block_f + sex,
+learn.presence_alleys_h <- lme(presence_alleys ~ group*trial_in_block + block_f + sex,
                                random=~1 | id, 
                                weights=varIdent(form=~1 | group),
                                na.action=na.omit, data=data_l, method="REML")
@@ -492,20 +508,20 @@ rm(learn.presence_alleys_s, learn.presence_alleys_o, learn.presence_alleys_h)
 # -- INITIAL ROTATION -- # 
 
 ## ---- stats_learn_initial_rotation_simple
-learn.initial_rot_s <- mixed(initial_rotation_turns ~ group*trial_in_block_c + block_f + cov_r + sex + (1|id), 
+learn.initial_rot_s <- mixed(initial_rotation_turns ~ group*trial_in_block + block_f + cov_r + sex + (1|id), 
                              data=data_l, expand_re=T)
 ## ----
 
 ## ---- stats_learn_initial_rotation_outlier
 t <- data_l %>% mutate(flag=ifelse(is_outlier(initial_rotation_turns), T, F))
 # ggplot(t, aes(x=initial_rotation_turns, fill=flag)) + geom_histogram() + facet_wrap(~group)
-learn.initial_rot_o <- mixed(initial_rotation_turns ~ group*trial_in_block_c + block_f + cov_r + sex + (1|id), 
+learn.initial_rot_o <- mixed(initial_rotation_turns ~ group*trial_in_block + block_f + cov_r + sex + (1|id), 
                              data=t %>% filter(flag==F), expand_re=T)
 rm(t)
 ## ----
 
 # -- heteroscedasticity
-learn.initial_rot_base <- lme(initial_rotation_turns ~ group*trial_in_block_c + block_f + cov_r + sex,
+learn.initial_rot_base <- lme(initial_rotation_turns ~ group*trial_in_block + block_f + cov_r + sex,
                               random=~1 | id, 
                               na.action=na.omit, data=data_l, method="ML")
 learn.initial_rot_var1 <- update(learn.initial_rot_base, weights=varIdent(form=~1 | group))
@@ -513,7 +529,7 @@ anova(learn.initial_rot_base, learn.initial_rot_var1, test=T) # chose model 1
 rm(learn.initial_rot_base, learn.initial_rot_var1)
 ## ---- stats_learning_initial_rotation_hetero
 # re-fit final model with REML
-learn.initial_rot_h <- lme(initial_rotation_turns ~ group*trial_in_block_c + block_f + cov_r + sex,
+learn.initial_rot_h <- lme(initial_rotation_turns ~ group*trial_in_block + block_f + cov_r + sex,
                            random=~1 | id, 
                            weights=varIdent(form=~1 | group),
                            na.action=na.omit, data=data_l, method="REML")
@@ -551,20 +567,20 @@ rm(learn.initial_rot_s, learn.initial_rot_o, learn.initial_rot_h)
 # -- ROTATION (BY PATH LENGTH) -- # 
 
 ## ---- stats_learn_rotation_path_simple
-learn.rotation_path_s <- mixed(rotation_turns_by_path_length ~ group*trial_in_block_c + block_f + cov_r + sex + (1|id), 
+learn.rotation_path_s <- mixed(rotation_turns_by_path_length ~ group*trial_in_block + block_f + cov_r + sex + (1|id), 
                                data=data_l, expand_re=T)
 ## ----
 
 ## ---- stats_learn_rotation_path_outlier
 t <- data_l %>% mutate(flag=ifelse(is_outlier(rotation_turns_by_path_length), T, F))
 # ggplot(t, aes(x=rotation_turns_by_path_length, fill=flag)) + geom_histogram() + facet_wrap(~group)
-learn.rotation_path_o <- mixed(rotation_turns_by_path_length ~ group*trial_in_block_c + block_f + cov_r + sex + (1|id), 
+learn.rotation_path_o <- mixed(rotation_turns_by_path_length ~ group*trial_in_block + block_f + cov_r + sex + (1|id), 
                                data=t %>% filter(flag==F), expand_re=T)
 rm(t)
 ## ----
 
 # -- heteroscedasticity
-learn.rotation_path_base <- lme(rotation_turns_by_path_length ~  group*trial_in_block_c + block_f + cov_r + sex,
+learn.rotation_path_base <- lme(rotation_turns_by_path_length ~  group*trial_in_block + block_f + cov_r + sex,
                                 random=~1 | id, 
                                 na.action=na.omit, data=data_l, method="ML")
 learn.rotation_path_var1 <- update(learn.rotation_path_base, weights=varIdent(form=~1 | group))
@@ -572,7 +588,7 @@ anova(learn.rotation_path_base, learn.rotation_path_var1, test=T) # chose model 
 rm(learn.rotation_path_base, learn.rotation_path_var1)
 ## ---- stats_learning_rotation_path_hetero
 # re-fit final model with REML
-learn.rotation_path_h <- lme(rotation_turns_by_path_length ~  group*trial_in_block_c + block_f + cov_r + sex,
+learn.rotation_path_h <- lme(rotation_turns_by_path_length ~  group*trial_in_block + block_f + cov_r + sex,
                              random=~1 | id, 
                              weights=varIdent(form=~1 | group),
                              na.action=na.omit, data=data_l, method="REML")
@@ -622,8 +638,8 @@ ggplot(data_l, aes(x=factor(trial_in_block), y=rotation_turns)) + geom_boxplot()
 
 ## ---- stats_probe_acc
 # full binomial model (with reduced random effects due to failed convergence)
-probe.acc <- mixed(correct_final_alley ~ group*session*condition + block_f + trial_in_block_c + sex + 
-                     (session*condition||id), data=data, expand_re=T,
+probe.acc <- mixed(correct_final_alley ~ group*session*condition + block_f + trial_in_block + sex + 
+                     (session*condition||id), data=data_p, expand_re=T,
                    family=binomial(link="logit"), method="LRT",
                    control=glmerControl(optimizer="bobyqa", optCtrl=list(maxfun=1e6)))
 
@@ -642,9 +658,9 @@ emmeans(probe.acc, pairwise ~ block_f, type="response", adjust="bonferroni")$con
 simulationOutput <- simulateResiduals(fittedModel=probe.acc$full_model, plot=F)
 testResiduals(simulationOutput) 
 plotResiduals(simulationOutput) 
-testCategorical(simulationOutput, catPred=data$group[data$exclude_trial_matlab==0])
-testCategorical(simulationOutput, catPred=data$session[data$exclude_trial_matlab==0])
-testCategorical(simulationOutput, catPred=data$condition[data$exclude_trial_matlab==0])
+testCategorical(simulationOutput, catPred=data_p$group[data_p$exclude_trial_matlab==0])
+testCategorical(simulationOutput, catPred=data_p$session[data_p$exclude_trial_matlab==0])
+testCategorical(simulationOutput, catPred=data_p$condition[data_p$exclude_trial_matlab==0])
 
 # helper plots 
 afex_plot(probe.acc, "session", "group", "condition", id = "id",
@@ -679,23 +695,23 @@ lincon(change_acc ~ group, data=data_prepost, tr=0.2, alpha=0.05, method="bonfer
 # -- MEMORY SCORE IN ALL TRIALS -- # 
 
 ## ---- stats_probe_ms_simple
-probe.memory_s <- mixed(memory_score ~ group*session*condition + block_f + trial_in_block_c + sex +
-                          (session*condition||id), data=data, expand_re=T)
+probe.memory_s <- mixed(memory_score ~ group*session*condition + block_f + trial_in_block + sex +
+                          (session*condition||id), data=data_p, expand_re=T)
 ## ----
 
 ## ---- stats_probe_ms_outlier
-t <- data %>% mutate(flag=ifelse(is_outlier(memory_score), T, F))
+t <- data_p %>% mutate(flag=ifelse(is_outlier(memory_score), T, F))
 # ggplot(t, aes(x=memory_score, fill=flag)) + geom_histogram() + facet_wrap(~group)
-probe.memory_o <- mixed(memory_score ~ group*session*condition + block_f + trial_in_block_c + sex +
+probe.memory_o <- mixed(memory_score ~ group*session*condition + block_f + trial_in_block + sex +
                           (session*condition||id), 
                         data=t %>% filter(flag==F), expand_re=T)
 rm(t)
 ## ----
 
 # -- heteroscedasticity
-probe.memory <- lme(memory_score ~ group*session*condition + block_f + trial_in_block_c + sex,
+probe.memory <- lme(memory_score ~ group*session*condition + block_f + trial_in_block + sex,
                     random=list(id=pdDiag(~ condition * session)), 
-                    data=data, method="ML")
+                    data=data_p, method="ML")
 probe.memory_var1 <- update(probe.memory, weights=varIdent(form=~1 | group))
 probe.memory_var2 <- update(probe.memory, weights=varComb(varIdent(form=~1 | group),
                                                           varIdent(form=~1 | condition)))
@@ -709,12 +725,12 @@ anova(probe.memory, probe.memory_var1, probe.memory_var2, probe.memory_var3, pro
 rm(probe.memory, probe.memory_var1, probe.memory_var2, probe.memory_var3, probe.memory_var4)
 ## ---- stats_probe_ms_hetero
 # re-fit final model with with REML
-probe.memory_h <- lme(memory_score ~ group*session*condition + block_f + trial_in_block_c + sex,
+probe.memory_h <- lme(memory_score ~ group*session*condition + block_f + trial_in_block + sex,
                       random=list(id=pdDiag(~ condition + session)), 
                       weights=varComb(varIdent(form=~1 | group),
                                       varIdent(form=~1 | session),
                                       varIdent(form=~1 | condition)),
-                      data=data, method="REML")
+                      data=data_p, method="REML")
 ## ----
 
 # check models 
@@ -743,6 +759,16 @@ probe.memory_s
 probe.memory_o
 anova.lme(probe.memory_h, type="marginal")
 rm(probe.memory_s, probe.memory_o, probe.memory_h)
+
+# plots 
+afex_plot(probe.memory_s, x="session", panel="condition", trace="group", id="id",
+          mapping = c("shape", "color", "linetype"), 
+          factor_levels=list(group=c("6-7yo", "9-10yo", "adults"), 
+                             condition=c("Allocentric", "Egocentric")),
+          legend_title="condition") +
+  theme_bw(base_size = 15) + 
+  theme(legend.position="top", legend.justification=c(0,0)) +
+  labs(x="session", y="memory score")
 
 # ######################################################### #
 
@@ -775,22 +801,22 @@ rm(probe.change_ms_raov, probe.change_ms_raov2, probe.change_ms_raov_post, probe
 # -- MEMORY SCORE IN CORRECT TRIALS -- # 
 
 ## ---- stats_probe_ms_corr_simple
-probe.memory_corr_s <- mixed(memory_score ~ group*session*condition + block_f + trial_in_block_c + sex +
-                               (session||id), data=data_c, expand_re=T)
+probe.memory_corr_s <- mixed(memory_score ~ group*session*condition + block_f + trial_in_block + sex +
+                               (session||id), data=data_pc, expand_re=T)
 ## ----
 
 ## ---- stats_probe_ms_corr_outlier
-t <- data_c %>% mutate(flag=ifelse(is_outlier(memory_score), T, F))
+t <- data_pc %>% mutate(flag=ifelse(is_outlier(memory_score), T, F))
 # ggplot(t, aes(x=memory_score, fill=flag)) + geom_histogram() + facet_wrap(~group)
-probe.memory_corr_o <- mixed(memory_score ~ group*session*condition + block_f + trial_in_block_c + sex +
+probe.memory_corr_o <- mixed(memory_score ~ group*session*condition + block_f + trial_in_block + sex +
                                (session|id), data=t %>% filter(flag==F), expand_re=T)
 rm(t)
 ## ----
 
 # -- heteroscedasticity
-probe.memory_corr_base <- lme(memory_score ~ group*session*condition + block_f + trial_in_block_c + sex,
+probe.memory_corr_base <- lme(memory_score ~ group*session*condition + block_f + trial_in_block + sex,
                               random=list(id=pdDiag(~ session)), 
-                              data=data_c, method="ML")
+                              data=data_pc, method="ML")
 probe.memory_corr_var1 <- update(probe.memory_corr_base, weights=varIdent(form=~1 | group))
 probe.memory_corr_var2 <- update(probe.memory_corr_base, weights=varComb(varIdent(form=~1 | group),
                                                                          varIdent(form=~1 | session)))
@@ -800,11 +826,11 @@ anova(probe.memory_corr_base, probe.memory_corr_var1, probe.memory_corr_var2, pr
 rm(probe.memory_corr_base, probe.memory_corr_var1, probe.memory_corr_var2, probe.memory_corr_var3)
 ## ---- stats_probe_ms_corr_hetero
 # re-fit final model with with REML
-probe.memory_corr_h <- lme(memory_score ~ group*session*condition + block_f + trial_in_block_c + sex,
+probe.memory_corr_h <- lme(memory_score ~ group*session*condition + block_f + trial_in_block + sex,
                            random=list(id=pdDiag(~ session)), 
                            weights=varComb(varIdent(form=~1 | group),
                                            varIdent(form=~1 | session)),
-                           data=data_c, method="REML")
+                           data=data_pc, method="REML")
 ## ----
 
 # check models 
@@ -864,22 +890,22 @@ rm(probe.change_ms_corr_raov, probe.change_ms_corr_raov_post, probe.change_ms_co
 # -- TIME -- # 
 
 ## ---- stats_probe_time_simple
-probe.time_s <- mixed(time ~ group*session*condition + block_f + trial_in_block_c + cov_t + sex +
-                        (condition+session||id), data=data, expand_re=T)
+probe.time_s <- mixed(time ~ group*session*condition + block_f + trial_in_block + cov_t + sex +
+                        (condition+session||id), data=data_p, expand_re=T)
 ## ----
 
 ## ---- stats_probe_time_outlier
-t <- data %>% mutate(flag=ifelse(is_outlier(time), T, F))
+t <- data_p %>% mutate(flag=ifelse(is_outlier(time), T, F))
 # ggplot(t, aes(x=time, fill=flag)) + geom_histogram() + facet_wrap(~group)
-probe.time_o <- mixed(time ~ group*session*condition + block_f + trial_in_block_c + cov_t + sex +
+probe.time_o <- mixed(time ~ group*session*condition + block_f + trial_in_block + cov_t + sex +
                         (condition+session||id), data=t %>% filter(flag==F), expand_re=T)
 rm(t)
 ## ----
 
 # -- heteroscedasticity
-probe.time_base <- lme(time ~ group*session*condition + block_f + trial_in_block_c + cov_t + sex,
+probe.time_base <- lme(time ~ group*session*condition + block_f + trial_in_block + cov_t + sex,
                        random=list(id=pdDiag(~ condition + session)),
-                       na.action=na.omit, data=data, method="ML")
+                       na.action=na.omit, data=data_p, method="ML")
 probe.time_var1 <- update(probe.time_base, weights=varIdent(form=~1 | group))
 probe.time_var2 <- update(probe.time_base, weights=varComb(varIdent(form=~1 | group),
                                                            varIdent(form=~1 | condition)))
@@ -893,11 +919,11 @@ anova(probe.time_base, probe.time_var1, probe.time_var2, probe.time_var4, test=T
 rm(probe.time_base, probe.time_var1, probe.time_var2, probe.time_var3, probe.time_var4)
 ## ---- stats_probe_time_hetero
 # re-fit final model with with REML
-probe.time_h <- lme(time ~ group*session*condition + block_f + trial_in_block_c + cov_t + sex,
+probe.time_h <- lme(time ~ group*session*condition + block_f + trial_in_block + cov_t + sex,
                     random=list(id=pdDiag(~ condition + session)),
                     weights=varComb(varIdent(form=~1 | group),
                                     varIdent(form=~1 | condition)),
-                    na.action=na.omit, data=data, method="REML")
+                    na.action=na.omit, data=data_p, method="REML")
 ## ---- 
 
 # check models 
@@ -942,31 +968,31 @@ rm(probe.time_s, probe.time_o, probe.time_h)
 # rm(probe.time_s, con1, con2, con3, con4, emm1, emm2, emm3, emm4)
 
 # helper plots
-ggplot(data, aes(x=time)) + geom_histogram()
-ggplot(data, aes(x=group, y=time)) + geom_boxplot() + facet_grid(~ condition + session)
-ggplot(data, aes(x=group, y=time)) + geom_boxplot() + facet_grid(~ condition)
+ggplot(data_p, aes(x=time)) + geom_histogram()
+ggplot(data_p, aes(x=group, y=time)) + geom_boxplot() + facet_grid(~ condition + session)
+ggplot(data_p, aes(x=group, y=time)) + geom_boxplot() + facet_grid(~ condition)
 
 # ######################################################### #
 
 # -- EXCESS PATH LENGTH TO CHOSEN TARGET -- # 
 
 ## ---- stats_probe_excess_path_simple
-probe.excess_path_s <- mixed(excess_path_length ~ group*session*condition + block_f + trial_in_block_c + cov_p + sex +
-                               (condition+session||id), data=data, expand_re=T)
+probe.excess_path_s <- mixed(excess_path_length ~ group*session*condition + block_f + trial_in_block + cov_p + sex +
+                               (condition+session||id), data=data_p, expand_re=T)
 ## ----
 
 ## ---- stats_probe_excess_path_outlier
-t <- data %>% mutate(flag=ifelse(is_outlier(excess_path_length), T, F))
+t <- data_p %>% mutate(flag=ifelse(is_outlier(excess_path_length), T, F))
 # ggplot(t, aes(x=excess_path_length, fill=flag)) + geom_histogram() + facet_wrap(~group)
-probe.excess_path_o <-  mixed(excess_path_length ~ group*session*condition + block_f + trial_in_block_c + cov_p + sex +
+probe.excess_path_o <-  mixed(excess_path_length ~ group*session*condition + block_f + trial_in_block + cov_p + sex +
                                 (condition||id), data=t %>% filter(flag==F), expand_re=T)
 rm(t)
 ## ----
 
 # -- heteroscedasticity
-probe.excess_path_base <- lme(excess_path_length ~ group*session*condition + block_f + trial_in_block_c + cov_p + sex,
+probe.excess_path_base <- lme(excess_path_length ~ group*session*condition + block_f + trial_in_block + cov_p + sex,
                               random=list(id=pdDiag(~ condition)),
-                              na.action=na.omit, data=data, method="ML")
+                              na.action=na.omit, data=data_p, method="ML")
 probe.excess_path_var1 <- update(probe.excess_path_base, weights=varIdent(form=~1 | group))
 probe.excess_path_var2 <- update(probe.excess_path_base, weights=varComb(varIdent(form=~1 | group),
                                                                          varIdent(form=~1 | condition)))
@@ -977,11 +1003,11 @@ anova(probe.excess_path_base, probe.excess_path_var1, probe.excess_path_var2) # 
 rm(probe.excess_path_base, probe.excess_path_var1, probe.excess_path_var2)
 ## ---- stats_probe_excess_path_hetero
 # re-fit final model with REML
-probe.excess_path_h <- lme(excess_path_length ~ group*session*condition + block_f + trial_in_block_c + cov_p + sex,
+probe.excess_path_h <- lme(excess_path_length ~ group*session*condition + block_f + trial_in_block + cov_p + sex,
                            random=list(id=pdDiag(~ condition)),
                            weights=varComb(varIdent(form=~1 | group),
                                            varIdent(form=~1 | condition)),
-                           na.action=na.omit, data=data, method="REML")
+                           na.action=na.omit, data=data_p, method="REML")
 ## ----
 
 # check models 
@@ -1026,31 +1052,31 @@ con3
 rm(probe.excess_path_s, con1, con2, con3, con4, emm1, emm2, emm3, emm4)
 
 # helper plots 
-ggplot(data, aes(x=excess_path_length)) + geom_histogram()
-ggplot(data, aes(x=group, y=excess_path_length)) + geom_boxplot() + facet_grid(~ condition + session) + coord_cartesian(ylim=c(0,3))
-ggplot(data, aes(x=group, y=excess_path_length)) + geom_boxplot() + facet_grid(~ condition) 
+ggplot(data_p, aes(x=excess_path_length)) + geom_histogram()
+ggplot(data_p, aes(x=group, y=excess_path_length)) + geom_boxplot() + facet_grid(~ condition + session) + coord_cartesian(ylim=c(0,3))
+ggplot(data_p, aes(x=group, y=excess_path_length)) + geom_boxplot() + facet_grid(~ condition) 
 
 # ######################################################### #
 
 # -- PRESENCE in outer alleys vs inner pentagon -- #
 
 # ---- stats_probe_presence_alleys_simple
-probe.presence_alleys_s <- mixed(presence_alleys ~ group*session*condition + block_f + trial_in_block_c + sex +
-                                   (1|id), data=data, expand_re=T)
+probe.presence_alleys_s <- mixed(presence_alleys ~ group*session*condition + block_f + trial_in_block + sex +
+                                   (1|id), data=data_p, expand_re=T)
 ## ----
 
 ## ---- stats_probe_presence_alleys_outlier
-t <- data %>% mutate(flag=ifelse(is_outlier(presence_alleys), T, F))
+t <- data_p %>% mutate(flag=ifelse(is_outlier(presence_alleys), T, F))
 # ggplot(t, aes(x=presence_alleys, fill=flag)) + geom_histogram() + facet_wrap(~group)
-probe.presence_alleys_o <-  mixed(presence_alleys ~ group*session*condition + block_f + trial_in_block_c + sex +
+probe.presence_alleys_o <-  mixed(presence_alleys ~ group*session*condition + block_f + trial_in_block + sex +
                                     (1|id), data=t %>% filter(flag==F), expand_re=T)
 rm(t)
 ## ----
 
 # -- heteroscedasticity
-probe.presence_alleys_base <- lme(presence_alleys ~ group*session*condition + block_f + trial_in_block_c + sex,
+probe.presence_alleys_base <- lme(presence_alleys ~ group*session*condition + block_f + trial_in_block + sex,
                                   random=~1 | id, 
-                                  na.action=na.omit, data=data, method="ML")
+                                  na.action=na.omit, data=data_p, method="ML")
 probe.presence_alleys_var1 <- update(probe.presence_alleys_base, weights=varIdent(form=~1 | group))
 probe.presence_alleys_var2 <- update(probe.presence_alleys_base, weights=varComb(varIdent(form=~1 | group),
                                                                                  varIdent(form=~1 | condition)))
@@ -1061,11 +1087,11 @@ anova(probe.presence_alleys_base, probe.presence_alleys_var1, probe.presence_all
 rm(probe.presence_alleys_base, probe.presence_alleys_var1, probe.presence_alleys_var2, probe.presence_alleys_var3) # chose model 2 
 ## ---- stats_probe_presence_alleys_hetero
 # re-fit final model with REML
-probe.presence_alleys_h <- lme(presence_alleys ~ group*session*condition + block_f + trial_in_block_c + sex,
+probe.presence_alleys_h <- lme(presence_alleys ~ group*session*condition + block_f + trial_in_block + sex,
                                random=~1 | id, 
                                weights=varComb(varIdent(form=~1 | group),
                                                varIdent(form=~1 | condition)),
-                               na.action=na.omit, data=data, method="REML")
+                               na.action=na.omit, data=data_p, method="REML")
 ## ----
 
 # check models 
@@ -1101,29 +1127,29 @@ rm(probe.presence_alleys_s, probe.presence_alleys_o, probe.presence_alleys_h)
 # rm(probe.presence_alleys_s, emm1, con1)
 
 # helper plot
-ggplot(data, aes(x=session, y=presence_alleys)) + geom_boxplot() + facet_grid(~ condition) 
+ggplot(data_p, aes(x=session, y=presence_alleys)) + geom_boxplot() + facet_grid(~ condition) 
 
 # ######################################################### #
 
 # -- INITIAL ROTATION -- # 
 
 # ---- stats_probe_initial_rotation_simple
-probe.initial_rot_s <- mixed(initial_rotation_turns ~ group*session*condition + block_f + trial_in_block_c + cov_r + sex +
-                               (condition*session||id), data=data, expand_re=T)
+probe.initial_rot_s <- mixed(initial_rotation_turns ~ group*session*condition + block_f + trial_in_block + cov_r + sex +
+                               (condition*session||id), data=data_p, expand_re=T)
 ## ----
 
 ## ---- stats_probe_initial_rotation_outlier
-t <- data %>% mutate(flag=ifelse(is_outlier(initial_rotation_turns), T, F))
+t <- data_p %>% mutate(flag=ifelse(is_outlier(initial_rotation_turns), T, F))
 # ggplot(t, aes(x=initial_rotation_turns, fill=flag)) + geom_histogram() + facet_wrap(~group)
-probe.initial_rot_o <-  mixed(initial_rotation_turns ~ group*session*condition + block_f + trial_in_block_c + cov_r + sex +
+probe.initial_rot_o <-  mixed(initial_rotation_turns ~ group*session*condition + block_f + trial_in_block + cov_r + sex +
                                 (condition||id), data=t %>% filter(flag==F), expand_re=T)
 rm(t)
 ## ----
 
 # -- heteroscedasticity
-probe.initial_rot_base <- lme(initial_rotation_turns ~ group*session*condition + block_f + trial_in_block_c + cov_r + sex,
+probe.initial_rot_base <- lme(initial_rotation_turns ~ group*session*condition + block_f + trial_in_block + cov_r + sex,
                               random=list(id=pdDiag(~ condition + session)),
-                              na.action=na.omit, data=data, method="ML")
+                              na.action=na.omit, data=data_p, method="ML")
 probe.initial_rot_var1 <- update(probe.initial_rot_base, weights=varIdent(form=~1 | condition))
 probe.initial_rot_var2 <- update(probe.initial_rot_base, weights=varComb(varIdent(form=~1 | condition),
                                                                          varIdent(form=~1 | group)))
@@ -1134,12 +1160,12 @@ anova(probe.initial_rot_base, probe.initial_rot_var1, probe.initial_rot_var2, pr
 rm(probe.initial_rot_base, probe.initial_rot_var1, probe.initial_rot_var2, probe.initial_rot_var3)
 ## ---- stats_probe_initial_rotation_hetero
 # re-fit final model with REML
-probe.initial_rot_h <- lme(initial_rotation_turns ~ group*session*condition + block_f + trial_in_block_c + cov_r + sex,
+probe.initial_rot_h <- lme(initial_rotation_turns ~ group*session*condition + block_f + trial_in_block + cov_r + sex,
                            random=list(id=pdDiag(~ condition + session)),
                            weights=varComb(varIdent(form=~1 | condition),
                                            varIdent(form=~1 | group),
                                            varIdent(form=~1 | session)),
-                           na.action=na.omit, data=data, method="REML")
+                           na.action=na.omit, data=data_p, method="REML")
 ## ---- 
 
 # check models 
@@ -1175,31 +1201,31 @@ rm(probe.initial_rot_s, probe.initial_rot_o, probe.initial_rot_h)
 # rm(probe.initial_rot_s, emm1, con1)
 
 # helper plots
-ggplot(data, aes(x=initial_rotation_turns)) + geom_histogram()
-ggplot(data, aes(x=group, y=initial_rotation_turns)) + geom_boxplot() + facet_wrap(~condition + session, nrow=1)
-ggplot(data, aes(x=group, y=initial_rotation_turns)) + geom_boxplot() + facet_wrap(~ condition, nrow=1) + coord_cartesian(ylim=c())
+ggplot(data_p, aes(x=initial_rotation_turns)) + geom_histogram()
+ggplot(data_p, aes(x=group, y=initial_rotation_turns)) + geom_boxplot() + facet_wrap(~condition + session, nrow=1)
+ggplot(data_p, aes(x=group, y=initial_rotation_turns)) + geom_boxplot() + facet_wrap(~ condition, nrow=1) + coord_cartesian(ylim=c())
 
 # ######################################################### #
 
 # -- ROTATION BY PATH LENGTH -- # 
 
 # ---- stats_probe_rotation_path_simple
-probe.rotation_path_s <- mixed(rotation_turns_by_path_length ~ group*session*condition + block_f + trial_in_block_c + cov_r + sex +
-                                 (condition||id), data=data, expand_re=T)
+probe.rotation_path_s <- mixed(rotation_turns_by_path_length ~ group*session*condition + block_f + trial_in_block + cov_r + sex +
+                                 (condition||id), data=data_p, expand_re=T)
 ## ----
 
 ## ---- stats_probe_rotation_path_outlier
-t <- data %>% mutate(flag=ifelse(is_outlier(rotation_turns_by_path_length), T, F))
+t <- data_p %>% mutate(flag=ifelse(is_outlier(rotation_turns_by_path_length), T, F))
 # ggplot(t, aes(x=rotation_turns_by_path_length, fill=flag)) + geom_histogram() + facet_wrap(~group)
-probe.rotation_path_o <-  mixed(rotation_turns_by_path_length ~ group*session*condition + block_f + trial_in_block_c + cov_r + sex +
+probe.rotation_path_o <-  mixed(rotation_turns_by_path_length ~ group*session*condition + block_f + trial_in_block + cov_r + sex +
                                   (condition||id), data=t %>% filter(flag==F), expand_re=T)
 rm(t)
 ## ----
 
 # -- heteroscedasticity
-probe.rotation_path_base <- lme(rotation_turns_by_path_length ~ group*session*condition + block_f + trial_in_block_c + cov_r + sex,
+probe.rotation_path_base <- lme(rotation_turns_by_path_length ~ group*session*condition + block_f + trial_in_block + cov_r + sex,
                                 random=list(id=pdDiag(~ condition + session)),
-                                na.action=na.omit, data=data, method="ML")
+                                na.action=na.omit, data=data_p, method="ML")
 probe.rotation_path_var1 <- update(probe.rotation_path_base, weights=varIdent(form=~1 | condition))
 probe.rotation_path_var2 <- update(probe.rotation_path_base, weights=varComb(varIdent(form=~1 | condition),
                                                                              varIdent(form=~1 | group)))
@@ -1210,12 +1236,12 @@ anova(probe.rotation_path_base, probe.rotation_path_var1, probe.rotation_path_va
 rm(probe.rotation_path_base, probe.rotation_path_var1, probe.rotation_path_var2, probe.rotation_path_var3) 
 ## ---- stats_probe_rotation_path_hetero
 # re-fit final model with REML
-probe.rotation_path_h <-  lme(rotation_turns_by_path_length ~ group*session*condition + block_f + trial_in_block_c + cov_r + sex,
+probe.rotation_path_h <-  lme(rotation_turns_by_path_length ~ group*session*condition + block_f + trial_in_block + cov_r + sex,
                               random=list(id=pdDiag(~ condition + session)),
                               weights=varComb(varIdent(form=~1 | condition),
                                               varIdent(form=~1 | group),
                                               varIdent(form=~1 | session)),
-                              na.action=na.omit, data=data, method="REML")
+                              na.action=na.omit, data=data_p, method="REML")
 ## ----
 
 # check models 
@@ -1260,9 +1286,9 @@ rm(probe.rotation_path_s, probe.rotation_path_o, probe.rotation_path_h)
 # rm(probe.rotation_path_s, con1, con2, con3, con4, emm1, emm2, emm3, emm4)
 
 # helper plots
-ggplot(data, aes(x=rotation_turns_by_path_length)) + geom_histogram()
-ggplot(data, aes(x=group, y=rotation_turns_by_path_length)) + geom_boxplot() + facet_wrap(~condition + session, nrow=1) + coord_cartesian(ylim=c(0,3))
-ggplot(data, aes(x=group, y=rotation_turns_by_path_length)) + geom_boxplot() + facet_wrap(~ condition, nrow=1) + coord_cartesian(ylim=c(0,3))
+ggplot(data_p, aes(x=rotation_turns_by_path_length)) + geom_histogram()
+ggplot(data_p, aes(x=group, y=rotation_turns_by_path_length)) + geom_boxplot() + facet_wrap(~condition + session, nrow=1) + coord_cartesian(ylim=c(0,3))
+ggplot(data_p, aes(x=group, y=rotation_turns_by_path_length)) + geom_boxplot() + facet_wrap(~ condition, nrow=1) + coord_cartesian(ylim=c(0,3))
 
 
 # ######################################################### #
@@ -1426,19 +1452,19 @@ rm(data_allo_ms, data_agg_ms, data_agg_incorr_ms, emm, con_list_group_cond,
 # -- SEARCH STRATEGIES -- #
 
 ## ---- stats_probe_path_strategy
-table(data$search_strategy, data$group)
-da1 <- data %>% filter(condition=="allo_ret", session==1)
+table(data_p$search_strategy, data_p$group)
+da1 <- data_p %>% filter(condition=="allo_ret", session==1)
 table(da1$search_strategy, da1$group)
-da2 <- data %>% filter(condition=="allo_ret", session==2)
+da2 <- data_p %>% filter(condition=="allo_ret", session==2)
 table(da2$search_strategy, da2$group)
-de1 <- data %>% filter(condition=="ego_ret", session==1)
+de1 <- data_p %>% filter(condition=="ego_ret", session==1)
 table(de1$search_strategy, de1$group)
-de2 <- data %>% filter(condition=="ego_ret", session==2)
+de2 <- data_p %>% filter(condition=="ego_ret", session==2)
 table(de2$search_strategy, de2$group)
 
 # discANOVA from WRS2: tests hypothesis that independent groups have identical multinomial distributions. 
-discANOVA(search_strategy ~ group, data=data, nboot=500) 
-discmcp(search_strategy ~ group, data=data, alpha=0.05, nboot=2000)
+discANOVA(search_strategy ~ group, data=data_p, nboot=500) 
+discmcp(search_strategy ~ group, data=data_p, alpha=0.05, nboot=2000)
 
 discmcp(search_strategy ~ group, data=da1, alpha=0.05, nboot=2000)
 discmcp(search_strategy ~ group, data=da2, alpha=0.05, nboot=2000)
@@ -1446,7 +1472,7 @@ discmcp(search_strategy ~ group, data=de1, alpha=0.05, nboot=2000)
 discmcp(search_strategy ~ group, data=de2, alpha=0.05, nboot=2000)
 ## ---- 
 # helper plots
-t <- data %>% group_by(group, session, condition) %>% count(search_strategy) %>% mutate(percent=n/sum(n))
+t <- data_p %>% group_by(group, session, condition) %>% count(search_strategy) %>% mutate(percent=n/sum(n))
 ggplot(t, aes(x=group, y=percent, fill=search_strategy)) + geom_col(position=position_stack()) + facet_wrap(~condition + session, nrow=1)
 rm(t)
 
@@ -1548,7 +1574,7 @@ rm(data_gmda, GMDA, CanAcc, DistAcc, AngleAcc, boxplot)
 
 ## ---- stats_corr_allo_ego
 # allocentric & egocentric performance 
-corr <- data %>% 
+corr <- data_p %>% 
   group_by(id, sex, group, condition) %>% 
   summarise(memory_score=mean(memory_score, na.rm=T)) %>% 
   pivot_wider(names_from=condition,
@@ -1568,7 +1594,7 @@ temp <- pt_data %>%
   filter(condition=="layout") %>% 
   select(id, score) %>% 
   rename(layout_score=score)
-joint <- data %>% 
+joint <- data_p %>% 
   group_by(id, group, condition) %>% 
   summarise(memory_score=mean(memory_score, na.rm=T)) %>% 
   left_join(temp, by="id") %>% 
@@ -1596,7 +1622,7 @@ temp <- pt_data %>%
   filter(condition=="landmarks") %>% 
   select(id, score) %>% 
   rename(landmark_score=score)
-joint <- data %>% 
+joint <- data_p %>% 
   group_by(id, group, condition) %>% 
   summarise(memory_score=mean(memory_score, na.rm=T)) %>% 
   left_join(temp, by="id") %>% 
@@ -1636,7 +1662,7 @@ temp <- pt_data %>%
   filter(condition=="position") %>% 
   select(id, score) %>% 
   rename(gmda_score=score)
-joint <- data %>% 
+joint <- data_p %>% 
   group_by(id, group, condition) %>% 
   summarise(memory_score=mean(memory_score, na.rm=T)) %>% 
   left_join(temp, by="id") %>% 
