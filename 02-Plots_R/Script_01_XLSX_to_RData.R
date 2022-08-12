@@ -25,7 +25,7 @@ sm_data <- read_xlsx(file_path, col_names = T, na = "999")
 sm_data <- sm_data %>% 
   mutate_at(c("sex", "session", "feedback", "goal_identity"), factor) %>% 
   mutate(group=factor(group, levels=c("YoungKids", "OldKids", "YoungAdults")),
-         condition=factor(condition, levels=c("main_learn", "main_ret", "allo_ret", "ego_ret", "practise")),
+         condition=factor(condition, levels=c("main_learn", "main_ret", "ego_ret", "allo_ret", "practise")),
          condition2=factor(case_when(condition %in% c("allo_ret", "ego_ret") ~ "learn", condition=="main_learn" ~ "probe", T ~ "other")),
          goal=factor(goal_s),
          start=factor(start_s),
