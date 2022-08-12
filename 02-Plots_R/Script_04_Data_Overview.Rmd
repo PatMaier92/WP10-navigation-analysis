@@ -383,8 +383,10 @@ No significant group effect in conventional ANOVA and robust ANOVA.
 
 ![Task overview](./pics/Overview_Session2_PostTest.jpg){width=500px}
 
-```{r, plots_layout, include=F }
+```{r, stats_layout, include=F }
+```
 
+```{r, plot_layout, include=F }
 # detailed 
 layout_data <- pt_data %>% 
   filter(condition=="layout") %>% 
@@ -405,17 +407,16 @@ layout_detail <- ggplot(layout_data, aes(x=group, y=perc, fill=layout_obj_1)) +
         legend.title=NULL, 
         panel.grid.major.x=element_blank()) +
   labs(x=NULL, y="responses (%)")
+rm(layout_data)
 
 # averaged 
-layout_data_avg <- layout_data %>% 
-  filter(layout_obj_1=="4-FiveStar") %>% 
-  mutate(layout_obj_1="layout")
-
-layout_avg <- ggplot(layout_data_avg, aes(x=group, y=perc, fill=group, color=group)) + 
-  geom_bar(stat="identity", position=position_dodge()) +
+layout_avg <- ggplot(pt_data %>% filter(condition=="layout"), 
+                     aes(x=group, y=score, shape=group, color=group)) + 
+  geom_point(position=position_jitter(h=0, seed=100), color="darkgrey") + 
+  stat_summary(fun=mean, na.rm=T, geom="point", size=5) + 
+  scale_shape_manual(values=c(16, 17, 15), labels=group_labels, name=NULL) + 
+  scale_color_manual(values=group_colors, labels=group_labels, name=NULL) + 
   scale_x_discrete(labels=group_labels) + 
-  scale_fill_manual(values=group_colors, labels=group_labels, name=NULL) + 
-  scale_color_manual(values=group_colors_o, labels=group_labels, name=NULL) + 
   coord_cartesian(ylim=c(0,1)) +
   theme_bw(base_size=15) +
   theme(legend.position="top", legend.justification=c(0,0),
@@ -424,109 +425,87 @@ layout_avg <- ggplot(layout_data_avg, aes(x=group, y=perc, fill=group, color=gro
         axis.ticks.x=element_blank(),
         axis.text.x=element_blank()) +
   labs(x=NULL, y="layout accuracy (%)")
-
-rm(layout_data, layout_data_avg)
 ```
 
-```{r, plots_landmarks, include=F }
-
-# detailed 
-landmark_comp_data <- pt_data %>% 
-  filter(condition=="landmarks") %>% 
-  select(id, group, starts_with("landmarks_obj")) %>% 
-  pivot_longer(cols=starts_with("landmarks_obj"),
-               values_to="landmarks") %>% 
-  select(-name) %>% 
-  group_by(group) %>% 
-  count(landmarks) %>% 
-  complete(landmarks, fill=list(n=0)) %>% 
-  mutate(n_per_group=sum(n),
-         perc=n/n_per_group*100*5)
-
-landmark_comparison <- ggplot(landmark_comp_data, aes(x=perc, y=landmarks, fill=group, color=group)) + 
-  geom_col(position=position_dodge()) + 
-  geom_vline(xintercept=100, color="red", linetype="dashed") + 
-  scale_fill_manual(values=group_colors, labels=group_labels, name=NULL) + 
-  scale_color_manual(values=group_colors_o, labels=group_labels, name=NULL) + 
-  scale_y_discrete(limits=rev) + 
-  theme_classic() + 
-  labs(title="Comparison of landmark recognition rate",
-       x="responses (%)",
-       y=NULL) + 
-  theme(legend.position="top", legend.justification=c(0,0)) 
-
-# averaged
-landmark_avg <- ggplot(pt_data %>% filter(condition=="landmarks"), 
-                       aes(x=group, y=score, color=group, shape=group)) + 
-  stat_summary(fun.data=mean_cl_normal, na.rm=TRUE, geom="errorbar", width=0.2, size=1.5) +
-  stat_summary(fun=mean, na.rm=TRUE, geom="point", size=3) +
-  scale_color_manual(values=group_colors, labels=group_labels, name=NULL) +
-  scale_shape(guide="none") +
-  coord_cartesian(ylim=c(0,1)) +
-  theme_bw(base_size=15) +
-  theme(legend.position="top", legend.justification=c(0,0),
-        legend.title=NULL, 
-        panel.grid.major.x=element_blank(),
-        axis.ticks.x=element_blank(),
-        axis.text.x=element_blank()) +
-  labs(x=NULL, y="landmark score", 
-       caption="mean and 95% CI")
-  
-rm(landmark_comp_data)
+```{r, stats_landmark, include=F }
 ```
 
-```{r, plots_positioning, include=F }
-
-# averaged
-positioning_avg <- ggplot(pt_data %>% filter(condition=="position"), 
-                       aes(x=group, y=score, color=group, shape=group)) + 
-  stat_summary(fun.data=mean_cl_normal, na.rm=TRUE, geom="errorbar", width=0.2, size=1.5) +
-  stat_summary(fun=mean, na.rm=TRUE, geom="point", size=3) +
-  scale_color_manual(values=group_colors, labels=group_labels, name=NULL) +
-  scale_shape(guide="none") +
-  coord_cartesian(ylim=c(0,1)) +
-  theme_bw(base_size=15) +
-  theme(legend.position="top", legend.justification=c(0,0),
-        legend.title=NULL, 
-        panel.grid.major.x=element_blank(),
-        axis.ticks.x=element_blank(),
-        axis.text.x=element_blank()) +
-  labs(x=NULL, y="gmda positioning score", 
-       caption="mean and 95% CI")
+```{r, plot_landmarks, include=F }
 ```
 
-```{r, echo=F, fig.height=4, fig.width=8, fig.cap="Scores in non-navigational memory tests." }
+```{r, stats_gmda, include=F }
+```
 
+```{r, plot_gmda, include=F }
+```
+
+```{r, echo=F, fig.height=5, fig.width=8, fig.cap="Scores in non-navigational memory tests." }
 layout_avg + 
-  (landmark_avg + guides(color="none", shape="none")) + 
-  (positioning_avg + guides(color="none", shape="none")) + 
+  (afex_landmark + guides(color="none", shape="none")) + 
+  (afex_gmda + guides(color="none", shape="none")) + 
   plot_annotation(title="Non-navigational memory tests") +
   plot_layout(guides="collect") & theme(legend.position="bottom", legend.justification=c(0,0))
 
-rm(layout_detail, layout_avg, landmark_comparison, landmark_avg, positioning_avg)
+rm(layout_detail, layout_avg, afex_landmark, afex_gmda)
 ```
 
 ### **Layout**
 
-Significant age-related differences between all three groups in layout recognition.
+Significant age-related *group* differences in layout recognition.
 
-```{r, stats_layout }
+Fisher Test for layout recognition.
+
+```{r table-layout1, echo=F}
+layout_fisher
+```
+
+Post-hoc contrasts for factor group.
+
+```{r table-layout2, echo=F}
+layout_post
 ```
 
 ### **Landmarks**
 
-No significant group differences in landmark recognition. 
+```{r apa_landmark, include=F}
+apa_aov <- apa_print(landmark_aov)
+```
 
-```{r, stats_landmark }
+No sigificant age-related *group* differences in landmark recognition.  
+(Table\ \@ref(tab:table-lm)). 
+
+(ref:lm-caption1) ANOVA for landmark recognition.
+
+```{r table-lm, echo=F}
+apa_table(
+  apa_aov,
+  caption="(ref:lm-caption1)",
+  placement="h")
 ```
 
 ### **Positioning**
 
-Children in both groups performed significantly worse in positioning.
-
-```{r, stats_gmda }
+```{r apa_gmda, include=F}
+apa_aov <- apa_print(position_aov)
 ```
 
+Significant age-related *group* differences in positioning.  
+(Table\ \@ref(tab:table-gmda1)). 
+
+(ref:gmda-caption1) ANOVA for positioning task.
+
+```{r table-gmda1, echo=F}
+apa_table(
+  apa_aov,
+  caption="(ref:gmda-caption1)",
+  placement="h")
+```
+
+Post-hoc contrasts for factor group.
+
+```{r table-gmda2, echo=F}
+emmeans(position_aov, pairwise ~ group, adjust="bonferroni")
+```
 \newpage 
 
 ## Navigation behaviour: Probe trials at Day 2 & Day 14
