@@ -8,33 +8,26 @@
 library(tidyverse)
 library(janitor)
 library(patchwork)
-#library(gt)
 library(flextable)
-#library(xtable)
 library(gtsummary)
 library(performance)
 library(rstatix)
 library(ggpubr)
 library(WRS2)
-# library(WRS) # alternative: # source("Rallfun-v40.txt") # for WRS
 library(afex)
 library(lme4)
 library(nlme)
 # library(lmeresampler)
 # library(parameters)
-# library(lavaSearch2)
 library(emmeans)
 library(r2glmm)
 library(car)
 # library(DHARMa)
 library(papaja)
-# install.packages('tinytex')
-# tinytex::install_tinytex() # latex for pdf file creation
 
-# set contrast coding
-options(contrasts=c(unordered="contr.sum", ordered="contr.poly"))
+# set contrast coding 
 # options("contrasts")
-# options(contrasts=c(unordered="contr.treatment", ordered="contr.poly"))
+options(contrasts=c(unordered="contr.sum", ordered="contr.poly"))
 ## ----
 
 # ######################################################### #
@@ -59,24 +52,11 @@ rm(file_name)
 # labels 
 group_labels <- c("YoungKids"="6-7yo", "OldKids"="9-10yo", "YoungAdults"="adults")
 condition_labels <- c("ego_ret"="Egocentric", "allo_ret"="Allocentric")
-# mylabels <- as_labeller(c(`YoungKids` = "6-7yo", `OldKids` = "9-10yo", `YoungAdults` = "adults", 
-#                           `main_learn` = "Learning", `main_ret` = "Retrieval", 
-#                           `allo_ret` = "Allocentric", `ego_ret` = "Egocentric",
-#                           `1`="T1 - Immediate", `2`=" T2 - Delayed", `Consolidation` = "(T2-T1)/T1", `collapsed` = "T1 & T2",
-#                           `ego` = "egocentric", `other` = "baseline", `goal` = "goal", 
-#                           `direct` = "direct", `detour` = "detour",`reorient` = "reorient",
-#                           `layout`="Layout", `landmarks`="Landmarks", 
-#                           `goals`="Goals", `position`="Positioning",
-#                           `1-FourSquare`="4-Square", `2-FourFork`="4-Fork", `3-FourX`="4-X", 
-#                           `4-FiveStar`="5-Star", `5-SixSquare`="6-Square", `6-SevenStar`="7-Star",
-#                           `1-correct`="correct", `2-lure similar`="lure similar", `3-lure dissimilar`="lure dissimilar",
-#                           `SQRT(CanOrg)`="SQRT(CanOrg)", `CanAcc`="CanAcc", `DistAcc`="DistAcc", `AngleAcc`="AngleAcc"))
 
-l_trial_in_block <- "trial"
 l_session <- "session"
+l_trial_in_block <- "trial"
 l_memory_score <- "memory score"
-# l_correct_alley <- "correct in %"
-# l_ego_alley <- "egocentric in %"
+l_correct_alley <- "correct in %"
 l_time <- "time (s)"
 l_velocity <- "velocity"
 l_excess_path_length <- "excess path length"
@@ -110,42 +90,42 @@ practise <- sm_data %>%
 
 covariates <- practise %>% 
   select(id, time, velocity, excess_path_length, rotation_turns, rotation_turns_by_path_length) %>% 
-  rename(cov_t=time, cov_v=velocity, cov_p=excess_path_length, 
-         cov_r=rotation_turns, cov_rpl=rotation_turns_by_path_length) %>% 
+  rename(cov_time=time, cov_velocity=velocity, cov_excess_path=excess_path_length, 
+         cov_rotation=rotation_turns, cov_rotation_path=rotation_turns_by_path_length) %>% 
   add_row(id=12018)
 
 # full data 
 data <- sm_data %>% 
   full_join(covariates, by="id") %>% 
-  mutate(trial_in_block_original=trial_in_block,
-         goal_f=factor(goal_i), 
-         block_f=factor(block)) 
+  mutate(trial_in_block_original=factor(trial_in_block)) %>% 
+  mutate_at(vars("goal_i", "block"), factor) %>% 
+  rename(cov_gender=sex, cov_location=goal_i, cov_block=block)
 
 # learning
 data_l <- data %>%
   filter(condition %in% c("main_learn")) %>% 
-  mutate_at(vars("trial_in_block", "cov_t", "cov_v", "cov_p", "cov_r", "cov_rpl"), 
+  mutate_at(vars("trial_in_block", "cov_time", "cov_velocity", "cov_excess_path", "cov_rotation", "cov_rotation_path"), 
             ~ .x - mean(.x, na.rm=T)) %>% 
   droplevels()
 
 # probe 
 data_p <- data %>% 
   filter(condition %in% c("allo_ret", "ego_ret")) %>%
-  mutate_at(vars("trial_in_block", "cov_t", "cov_v", "cov_p", "cov_r", "cov_rpl"), 
+  mutate_at(vars("cov_time", "cov_velocity", "cov_excess_path", "cov_rotation", "cov_rotation_path"), 
             ~ .x - mean(.x, na.rm=T)) %>% 
   droplevels()
 
 # probe correct trials 
 data_pc <- data %>% 
   filter(condition %in% c("allo_ret", "ego_ret"), correct_final_alley==1) %>%
-  mutate_at(vars("trial_in_block", "cov_t", "cov_v", "cov_p", "cov_r", "cov_rpl"), 
+  mutate_at(vars("cov_time", "cov_velocity", "cov_excess_path", "cov_rotation", "cov_rotation_path"), 
             ~ .x - mean(.x, na.rm=T)) %>% 
   droplevels()
 
 # probe allo trials
 data_allo_ms <- data %>%
   filter(condition=="allo_ret", ego_alley!=0) %>% 
-  select(id, sex, group, session, condition, trial, goal_f, block_f, 
+  select(id, cov_gender, group, session, condition, trial, cov_location, cov_block, 
          correct_final_alley, correct_final_alley_ego, starts_with("memory_score")) %>% 
   rename(memory_score_goal=memory_score) %>% 
   pivot_longer(cols=starts_with("memory_score"), 
@@ -157,7 +137,7 @@ data_allo_ms <- data %>%
 
 data_allo_pr <- data %>%
   filter(condition=="allo_ret", ego_alley!=7) %>% 
-  select(id, sex, group, session, condition, trial, goal_f, block_f, 
+  select(id, cov_gender, group, session, condition, trial, cov_location, cov_block, 
          time, starts_with("presence")) %>% 
   select(-presence_alleys, -presence_pentagon, -starts_with("presenceT")) %>% 
   pivot_longer(cols=starts_with("presence"), 
@@ -170,7 +150,7 @@ data_allo_pr <- data %>%
 
 data_allo_prT <- data %>%
   filter(condition=="allo_ret", ego_alley!=7) %>% 
-  select(id, sex, group, session, condition, trial, goal_f, block_f, 
+  select(id, cov_gender, group, session, condition, trial, cov_location, cov_block, 
          time, starts_with("presenceT")) %>% 
   pivot_longer(cols=starts_with("presenceT"), 
                names_to=c("variable", "cond"),
@@ -183,12 +163,12 @@ data_allo_prT <- data %>%
 # probe aggregated change 
 data_prepost <- data %>% 
   filter(condition %in% c("allo_ret", "ego_ret")) %>%
-  select(id, sex, group, session, trial, condition, correct_final_alley, memory_score) %>%
-  pivot_wider(id_cols=c(id, sex, trial, group, condition),
+  select(id, cov_gender, group, session, trial, condition, correct_final_alley, memory_score) %>%
+  pivot_wider(id_cols=c(id, cov_gender, trial, group, condition),
               names_from=session,
               names_prefix="s_",
               values_from=c(correct_final_alley, memory_score)) %>%
-  group_by(id, sex, group, condition) %>%
+  group_by(id, cov_gender, group, condition) %>%
   summarise_at(vars(correct_final_alley_s_1, correct_final_alley_s_2,
                     memory_score_s_1, memory_score_s_2), mean, na.rm=T) %>% 
   mutate(change_acc=(correct_final_alley_s_2-correct_final_alley_s_1)/correct_final_alley_s_1,
@@ -198,12 +178,12 @@ data_prepost <- data %>%
 
 data_prepost_correct <- data %>% 
   filter(condition %in% c("allo_ret", "ego_ret"), correct_final_alley==1) %>%
-    select(id, sex, group, session, trial, condition, correct_final_alley, memory_score) %>% 
-    pivot_wider(id_cols=c(id, sex, trial, group, condition),
+    select(id, cov_gender, group, session, trial, condition, correct_final_alley, memory_score) %>% 
+    pivot_wider(id_cols=c(id, cov_gender, trial, group, condition),
                 names_from=session,
                 names_prefix="s_",
                 values_from=c(correct_final_alley, memory_score)) %>%
-    group_by(id, sex, group, condition) %>%
+    group_by(id, cov_gender, group, condition) %>%
     summarise_at(vars(correct_final_alley_s_1, correct_final_alley_s_2,
                       memory_score_s_1, memory_score_s_2), mean, na.rm=T) %>% 
     mutate(change_acc=(correct_final_alley_s_2-correct_final_alley_s_1)/correct_final_alley_s_1,
@@ -285,9 +265,9 @@ con_list_group_session_condition <- list(
 ## ---- tables_demo
 t1 <- sm_data %>% 
   filter(trial==1, session==1) %>% 
-  select(group, sex) %>%
+  select(group, cov_gender) %>%
   tbl_summary(by=group,
-              label=list(sex ~ "Gender"),
+              label=list(cov_gender ~ "Gender"),
               statistic=list(all_categorical() ~ "{n}")) %>% 
   modify_header(label="Starmaze data",
                 update=all_stat_cols() ~ "**{level}** N = {n}") %>% 
@@ -300,9 +280,9 @@ t1 <- sm_data %>%
 
 t2 <- pt_data %>% 
   filter(trial==4) %>% 
-  select(group, sex) %>%
+  select(group, cov_gender) %>%
   tbl_summary(by=group,
-              label=list(sex ~ "Gender"),
+              label=list(cov_gender ~ "Gender"),
               statistic=list(all_categorical() ~ "{n}")) %>% 
   modify_header(label="Post-navigation data",
                 update=all_stat_cols() ~ "**{level}** N = {n}") %>% 
@@ -321,45 +301,14 @@ t2 <- pt_data %>%
 # ######################################################### #
 
 
-# ::: motor control task ::: #
-# ::: METHOD: single value per person, therefore (robust) ANOVA ::: #
-
-## ---- stats_motor_control
-# time: GROUPS DIFFER SIGNIFICANTLY 
-t1way(time ~ group, data=practise, tr=0.2, alpha=0.05, nboot=1000)
-lincon(time ~ group, data=practise, tr=0.2, alpha=0.05, method="bonferroni") # default: hochberg
-
-# velocity: no differences 
-t1way(velocity ~ group, data=practise, tr=0.2, alpha=0.05, nboot=1000)
-lincon(velocity ~ group, data=practise, tr=0.2, alpha=0.05, method="bonferroni")
-
-# excess path length: DIFFER SIGNIFICANTLY
-t1way(excess_path_length ~ group, data=practise, tr=0.2, alpha=0.05, nboot=1000)
-lincon(excess_path_length ~ group, data=practise, tr=0.2, alpha=0.05, method="bonferroni")
-
-# rotation: GROUPS DIFFER SIGNIFICANTLY  
-t1way(rotation_turns ~ group, data=practise, tr=0.2, alpha=0.05, nboot=1000)
-lincon(rotation_turns ~ group, data=practise, tr=0.2, alpha=0.05, method="bonferroni")
-
-# rotation: GROUPS DIFFER SIGNIFICANTLY  
-t1way(rotation_turns_by_path_length ~ group, data=practise, tr=0.2, alpha=0.05, nboot=1000)
-lincon(rotation_turns_by_path_length ~ group, data=practise, tr=0.2, alpha=0.05, method="bonferroni")
-## ---- 
-
-
-# ######################################################### #
-# ######################################################### #
-
-
 # ::: probe trials ::: #
 
 # -- CORRECT FINAL ALLEY --#
-# ::: METHOD: several trials p. p. (session, condition) with binomial outcome, therefore glmm model ::: #
-# watch out for convergence (stepwise reduction of random effects) #
+# METHOD: binomial GLMM
 
 ## ---- stats_probe_acc
 # full binomial model (with reduced random effects due to failed convergence)
-probe.acc <- mixed(correct_final_alley ~ group*session*condition + block_f + trial_in_block + sex + 
+probe.acc <- mixed(correct_final_alley ~ group*session*condition + cov_block + cov_location + cov_gender + 
                      (session*condition||id), data=data_p, expand_re=T,
                    family=binomial(link="logit"), method="LRT",
                    control=glmerControl(optimizer="bobyqa", optCtrl=list(maxfun=1e6)))
@@ -372,7 +321,7 @@ probe.acc
 emmeans(probe.acc, pairwise ~ group, type="response", adjust="bonferroni")$contrasts
 emmeans(probe.acc, pairwise ~ session, type="response")$contrasts
 emmeans(probe.acc, pairwise ~ condition, type="response")$contrasts
-emmeans(probe.acc, pairwise ~ block_f, type="response", adjust="bonferroni")$contrasts
+emmeans(probe.acc, pairwise ~ cov_block, type="response", adjust="bonferroni")$contrasts
 ## ---- 
 
 # check model: ok 
@@ -383,54 +332,60 @@ testCategorical(simulationOutput, catPred=data_p$group[data_p$exclude_trial_matl
 testCategorical(simulationOutput, catPred=data_p$session[data_p$exclude_trial_matlab==0])
 testCategorical(simulationOutput, catPred=data_p$condition[data_p$exclude_trial_matlab==0])
 
-# helper plots 
-afex_plot(probe.acc, "session", "group", "condition", id = "id",
-          data_geom = ggbeeswarm::geom_quasirandom)
-afex_plot(probe.acc, "session", "group", id = "id",
-          data_geom = ggbeeswarm::geom_quasirandom)
-afex_plot(probe.acc, "condition", "group", id = "id",
-          data_geom = ggbeeswarm::geom_quasirandom)
-afex_plot(probe.acc, "session", "condition", id = "id",
-          data_geom = ggbeeswarm::geom_quasirandom)
-
-# ::: MEANING: Significant differences between age groups (the older, the better), 
-# sessions (s1 better than s2) and slight difference between conditions (ego slightly better than allo), 
-# no interactions ::: #
+## ---- plot_probe_acc
+line_acc <- afex_plot(probe.acc, x="session", trace="group", panel="condition", id="id", 
+                      error="model", dodge=0.8,
+                      mapping=c("shape", "fill", "color"),
+                      factor_levels=list(group=group_labels, condition=condition_labels),
+                      legend_title=NULL, 
+                      data_geom=geom_boxplot, 
+                      data_arg=list(width=0.5, color="black"),
+                      point_arg=list(size=3), 
+                      line_arg=list(size=1.25),
+                      error_arg=list(size=1.25, width=0)) + 
+  scale_fill_manual(values=group_colors) + 
+  scale_color_manual(values=group_colors_o) +
+  coord_cartesian(ylim=c(0,1)) + 
+  theme_bw(base_size=15) + 
+  theme(legend.position="top", legend.justification=c(0,0),
+        panel.grid.major.x=element_blank()) +
+  labs(x=l_session, y=l_correct_alley)
+## ----
 
 # ######################################################### #
 
-# -- CHANGE IN ACCURACY -- #
-# ::: METHOD: one aggregated value per person, therefore (robust) ANOVA ::: #  
-
-## ---- stats_probe_acc_change
-# robust ANOVA (from WRS/WRS2 by Mair & Wilcox)
-# sum contrasts set by default (I think)
-bwtrim(change_acc ~ group*condition, id=id, data=data_prepost, tr=0.2)
-# using one-way post-test lincon() 
-# because there is no dedicated post-test for bwtrim() and there are no interactions
-lincon(change_acc ~ group, data=data_prepost, tr=0.2, alpha=0.05, method="bonferroni")
-## ---- 
+# # -- CHANGE IN ACCURACY -- #
+# # ::: METHOD: one aggregated value per person, therefore (robust) ANOVA ::: #  
+# 
+# ## ---- stats_probe_acc_change
+# # robust ANOVA (from WRS/WRS2 by Mair & Wilcox)
+# # sum contrasts set by default (I think)
+# bwtrim(change_acc ~ group*condition, id=id, data=data_prepost, tr=0.2)
+# # using one-way post-test lincon() 
+# # because there is no dedicated post-test for bwtrim() and there are no interactions
+# lincon(change_acc ~ group, data=data_prepost, tr=0.2, alpha=0.05, method="bonferroni")
+# ## ---- 
 
 # ######################################################### #
 
 # -- MEMORY SCORE IN ALL TRIALS -- # 
 
 ## ---- stats_probe_ms_simple
-probe.memory_s <- mixed(memory_score ~ group*session*condition + block_f + trial_in_block + sex +
+probe.memory_s <- mixed(memory_score ~ group*session*condition + cov_block + cov_location + cov_gender +
                           (session*condition||id), data=data_p, expand_re=T)
 ## ----
 
 
 # option A: getrennte Modelle für ego & allo
-probe.memory_s <- mixed(memory_score ~ group*session*condition + sex +
+probe.memory_s <- mixed(memory_score ~ group*session*condition + cov_gender +
                           (session*condition||id), data=data_p, expand_re=T)
 
-probe.memory_a <- mixed(memory_score ~ group*session + sex +
+probe.memory_a <- mixed(memory_score ~ group*session + cov_gender +
                                (session|id), data=data_p %>% filter(condition=="allo_ret"), expand_re=T)
 probe.memory_a
 # ns 
 
-probe.memory_e <- mixed(memory_score ~ group*session + sex +
+probe.memory_e <- mixed(memory_score ~ group*session + cov_gender +
                                (session|id), data=data_p %>% filter(condition=="ego_ret"), expand_re=T)
 probe.memory_e
 # trend
@@ -440,7 +395,7 @@ probe.memory_e
 data_p <- data_p %>% mutate(session2=as.numeric(session),
                             session2=session2-mean(session2, na.rm=T))
 
-probe.memory_s <- mixed(memory_score ~ group*session2*condition + sex +
+probe.memory_s <- mixed(memory_score ~ group*session2*condition + cov_gender +
                           (session2*condition||id), data=data_p, expand_re=T)
 probe.memory_s
 emtrends(probe.memory_s, pairwise ~ group, var="session2", adjust="bonferroni", lmer.df="satterthwaite") 
@@ -448,33 +403,33 @@ emtrends(probe.memory_s, pairwise ~ group | condition, var="session2", adjust="n
 # ns 
 
 data_a <- data_p %>% filter(condition=="allo_ret") %>% mutate(session3=session2 - mean(session2))
-probe.memory_a <- mixed(memory_score ~ group*session3 + sex +
+probe.memory_a <- mixed(memory_score ~ group*session3 + cov_gender +
                           (session3|id), data=data_a, expand_re=T)
 emtrends(probe.memory_a, pairwise ~ group, var="session3", adjust="bonferroni", lmer.df="satterthwaite") 
 # ns 
 
 data_e <- data_p %>% filter(condition=="ego_ret") %>% mutate(session3=session2 - mean(session2))
-probe.memory_e <- mixed(memory_score ~ group*session3 + sex +
+probe.memory_e <- mixed(memory_score ~ group*session3 + cov_gender +
                           (session3|id), data=data_e, expand_re=T)
 emtrends(probe.memory_e, pairwise ~ group, var="session3", adjust="bonferroni", lmer.df="satterthwaite") 
 # slope 9-10yo significantly steeper than adults 
 
 
-# option C: session und block -> getrennte Modelle für ego & allo
+# option C: session und cov_block -> getrennte Modelle für ego & allo
 # TBD # 
 
 
 ## ---- stats_probe_ms_outlier
 t <- data_p %>% mutate(flag=ifelse(is_outlier(memory_score), T, F))
 # ggplot(t, aes(x=memory_score, fill=flag)) + geom_histogram() + facet_wrap(~group)
-probe.memory_o <- mixed(memory_score ~ group*session*condition + block_f + trial_in_block + sex +
+probe.memory_o <- mixed(memory_score ~ group*session*condition + cov_block + cov_gender +
                           (session*condition||id), 
                         data=t %>% filter(flag==F), expand_re=T)
 rm(t)
 ## ----
 
 # -- heteroscedasticity
-probe.memory <- lme(memory_score ~ group*session*condition + block_f + trial_in_block + sex,
+probe.memory <- lme(memory_score ~ group*session*condition + cov_block + cov_gender,
                     random=list(id=pdDiag(~ condition * session)), 
                     data=data_p, method="ML")
 probe.memory_var1 <- update(probe.memory, weights=varIdent(form=~1 | group))
@@ -490,7 +445,7 @@ anova(probe.memory, probe.memory_var1, probe.memory_var2, probe.memory_var3, pro
 rm(probe.memory, probe.memory_var1, probe.memory_var2, probe.memory_var3, probe.memory_var4)
 ## ---- stats_probe_ms_hetero
 # re-fit final model with with REML
-probe.memory_h <- lme(memory_score ~ group*session*condition + block_f + trial_in_block + sex,
+probe.memory_h <- lme(memory_score ~ group*session*condition + cov_block + cov_gender,
                       random=list(id=pdDiag(~ condition + session)), 
                       weights=varComb(varIdent(form=~1 | group),
                                       varIdent(form=~1 | session),
@@ -527,71 +482,86 @@ rm(probe.memory_s, probe.memory_o, probe.memory_h)
 
 ## ---- plot_probe_ms
 line_memory <- afex_plot(probe.memory_s, x="session", trace="group", panel="condition", id="id", 
-                         error="model", dodge=0.75,
-                         mapping=c("shape", "color", "linetype"),
+                         error="model", dodge=0.8,
+                         mapping=c("shape", "fill", "color"),
                          factor_levels=list(group=group_labels, condition=condition_labels),
                          legend_title=NULL, 
-                         data_geom=ggbeeswarm::geom_quasirandom, 
-                         data_arg=list(dodge.width=0.75, cex=0.8, color="white"),
+                         data_geom=geom_boxplot, 
+                         data_arg=list(width=0.5, color="black"),
                          point_arg=list(size=3), 
-                         line_arg=list(size=1),
-                         error_arg=list(size=1, width=0.5)) + 
-  scale_color_manual(values=group_colors) + 
+                         line_arg=list(size=1.25),
+                         error_arg=list(size=1.25, width=0)) + 
+  scale_fill_manual(values=group_colors) + 
+  scale_color_manual(values=group_colors_o) +
   coord_cartesian(ylim=c(0,1)) + 
   theme_bw(base_size=15) + 
   theme(legend.position="top", legend.justification=c(0,0),
         panel.grid.major.x=element_blank()) +
   labs(x=l_session, y=l_memory_score)
-## ----
 
-emm <- emmeans(probe.memory_s, ~ group*session*condition, lmer.df="satterthwaite")
-contrast(emm, con_list_group_session_condition)
+# line_memory <- afex_plot(probe.memory_s, x="session", trace="group", panel="condition", id="id", 
+#                          error="model", dodge=0.75,
+#                          mapping=c("shape", "color", "linetype"),
+#                          factor_levels=list(group=group_labels, condition=condition_labels),
+#                          legend_title=NULL, 
+#                          data_geom=ggbeeswarm::geom_quasirandom, 
+#                          data_arg=list(dodge.width=0.75, cex=1, color="darkgrey", shape=16),
+#                          point_arg=list(size=3), 
+#                          line_arg=list(size=1),
+#                          error_arg=list(size=1, width=0.5)) + 
+#   scale_color_manual(values=group_colors) +
+#   coord_cartesian(ylim=c(0,1)) + 
+#   theme_bw(base_size=15) + 
+#   theme(legend.position="top", legend.justification=c(0,0),
+#         panel.grid.major.x=element_blank()) +
+#   labs(x=l_session, y=l_memory_score)
+## ----
          
 # ######################################################### #
 
-# -- CHANGE IN MEMORY SCORE -- #
-
-## ---- stats_probe_ms_change_WRS2
-# robust ANOVA (from WRS/WRS2 by Mair & Wilcox)
-probe.change_ms_raov <- bwtrim(change_ms ~ group*condition, id=id, data=data_prepost, tr=0.2)
-#probe.change_ms_raov2 <- sppba(change_ms ~ group*condition, id, data=data_prepost)
-# using one-way post-test lincon() 
-# because there is no dedicated post-test for bwtrim() and there are no interactions
-probe.change_ms_raov_post <- lincon(change_ms ~ group, data=data_prepost, tr=0.2, alpha=0.05, method="bonferroni")
-## ----
-
-## ---- stats_probe_ms_change_KW
-# kruskal-wallis 
-probe.change_ms_kw <- kruskal.test(change_ms ~ group, data=data_prepost)
-probe.change_ms_kw_post <- pairwise.wilcox.test(data_prepost$change_ms, data_prepost$group, p.adjust="bonferroni")
-## ----
-
-## ---- stats_probe_ms_change_AOV
-# standard anova 
-probe.change_ms_aov <- aov_ez("id", "change_ms", data_prepost, between=c("group"), within=c("condition"))
-#probe.change_ms_aov_post <- emmeans(probe.change_ms_aov, pairwise ~ group, adjust="bonferroni")
-## ----
-rm(probe.change_ms_raov, probe.change_ms_raov2, probe.change_ms_raov_post, probe.change_ms_kw, probe.change_ms_kw_post, probe.change_ms_aov, probe.change_ms_aov_post)
+# # -- CHANGE IN MEMORY SCORE -- #
+# 
+# ## ---- stats_probe_ms_change_WRS2
+# # robust ANOVA (from WRS/WRS2 by Mair & Wilcox)
+# probe.change_ms_raov <- bwtrim(change_ms ~ group*condition, id=id, data=data_prepost, tr=0.2)
+# #probe.change_ms_raov2 <- sppba(change_ms ~ group*condition, id, data=data_prepost)
+# # using one-way post-test lincon() 
+# # because there is no dedicated post-test for bwtrim() and there are no interactions
+# probe.change_ms_raov_post <- lincon(change_ms ~ group, data=data_prepost, tr=0.2, alpha=0.05, method="bonferroni")
+# ## ----
+# 
+# ## ---- stats_probe_ms_change_KW
+# # kruskal-wallis 
+# probe.change_ms_kw <- kruskal.test(change_ms ~ group, data=data_prepost)
+# probe.change_ms_kw_post <- pairwise.wilcox.test(data_prepost$change_ms, data_prepost$group, p.adjust="bonferroni")
+# ## ----
+# 
+# ## ---- stats_probe_ms_change_AOV
+# # standard anova 
+# probe.change_ms_aov <- aov_ez("id", "change_ms", data_prepost, between=c("group"), within=c("condition"))
+# #probe.change_ms_aov_post <- emmeans(probe.change_ms_aov, pairwise ~ group, adjust="bonferroni")
+# ## ----
+# rm(probe.change_ms_raov, probe.change_ms_raov2, probe.change_ms_raov_post, probe.change_ms_kw, probe.change_ms_kw_post, probe.change_ms_aov, probe.change_ms_aov_post)
 
 # ######################################################### #
 
 # -- MEMORY SCORE IN CORRECT TRIALS -- # 
 
 ## ---- stats_probe_ms_corr_simple
-probe.memory_corr_s <- mixed(memory_score ~ group*session*condition + block_f + trial_in_block + sex +
+probe.memory_corr_s <- mixed(memory_score ~ group*session*condition + cov_block + cov_location + cov_gender +
                                (session||id), data=data_pc, expand_re=T)
 ## ----
 
 ## ---- stats_probe_ms_corr_outlier
 t <- data_pc %>% mutate(flag=ifelse(is_outlier(memory_score), T, F))
 # ggplot(t, aes(x=memory_score, fill=flag)) + geom_histogram() + facet_wrap(~group)
-probe.memory_corr_o <- mixed(memory_score ~ group*session*condition + block_f + trial_in_block + sex +
+probe.memory_corr_o <- mixed(memory_score ~ group*session*condition + cov_block + cov_gender +
                                (session|id), data=t %>% filter(flag==F), expand_re=T)
 rm(t)
 ## ----
 
 # -- heteroscedasticity
-probe.memory_corr_base <- lme(memory_score ~ group*session*condition + block_f + trial_in_block + sex,
+probe.memory_corr_base <- lme(memory_score ~ group*session*condition + cov_block + cov_gender,
                               random=list(id=pdDiag(~ session)), 
                               data=data_pc, method="ML")
 probe.memory_corr_var1 <- update(probe.memory_corr_base, weights=varIdent(form=~1 | group))
@@ -603,7 +573,7 @@ anova(probe.memory_corr_base, probe.memory_corr_var1, probe.memory_corr_var2, pr
 rm(probe.memory_corr_base, probe.memory_corr_var1, probe.memory_corr_var2, probe.memory_corr_var3)
 ## ---- stats_probe_ms_corr_hetero
 # re-fit final model with with REML
-probe.memory_corr_h <- lme(memory_score ~ group*session*condition + block_f + trial_in_block + sex,
+probe.memory_corr_h <- lme(memory_score ~ group*session*condition + cov_block + cov_gender,
                            random=list(id=pdDiag(~ session)), 
                            weights=varComb(varIdent(form=~1 | group),
                                            varIdent(form=~1 | session)),
@@ -639,16 +609,17 @@ rm(probe.memory_corr_s, probe.memory_corr_o, probe.memory_corr_h)
 
 ## ---- plot_probe_ms_corr
 line_memory_corr <- afex_plot(probe.memory_corr_s, x="session", trace="group", panel="condition", id="id", 
-                              error="model", dodge=0.75,
-                              mapping=c("shape", "color", "linetype"),
+                              error="model", dodge=0.8,
+                              mapping=c("shape", "fill", "color"),
                               factor_levels=list(group=group_labels, condition=condition_labels),
                               legend_title=NULL, 
-                              data_geom=ggbeeswarm::geom_quasirandom, 
-                              data_arg=list(dodge.width=0.75, cex=0.8, color="white"),
+                              data_geom=geom_boxplot, 
+                              data_arg=list(width=0.5, color="black"),
                               point_arg=list(size=3), 
-                              line_arg=list(size=1),
-                              error_arg=list(size=1, width=0.5)) + 
-  scale_color_manual(values=group_colors) + 
+                              line_arg=list(size=1.25),
+                              error_arg=list(size=1.25, width=0)) + 
+  scale_fill_manual(values=group_colors) + 
+  scale_color_manual(values=group_colors_o) +
   coord_cartesian(ylim=c(0.85,1)) + 
   theme_bw(base_size=15) + 
   theme(legend.position="top", legend.justification=c(0,0),
@@ -661,48 +632,48 @@ contrast(emm, con_list_group_session_condition, adjust="bonferroni")
 
 # ######################################################### #
 
-# -- CHANGE IN MEMORY SCORE IN CORRECT TRIALS -- #
-
-## ---- stats_probe_ms_change_corr_WRS2
-# robust ANOVA (from WRS/WRS2 by Mair & Wilcox)
-probe.change_ms_corr_raov <- bwtrim(change_ms ~ group*condition, id=id, data=data_prepost_correct, tr=0.2)
-# using one-way post-test lincon() 
-# because there is no dedicated post-test for bwtrim() and there are no interactions
-#probe.change_ms_corr_raov_post <- lincon(change_ms ~ group, data=data_prepost_correct, tr=0.2, alpha=0.05, method="bonferroni")
-## ----
-
-## ---- stats_probe_ms_change_corr_KW
-# kruskal-wallis 
-probe.change_ms_corr_kw <- kruskal.test(change_ms ~ group, data=data_prepost_correct)
-probe.change_ms_corr_kw_post <- pairwise.wilcox.test(data_prepost_correct$change_ms, data_prepost_correct$group, p.adjust="bonferroni")
-## ----
-
-## ---- stats_probe_ms_change_corr_AOV
-# standard anova 
-probe.change_ms_corr_aov <- aov_ez("id", "change_ms", data_prepost_correct, between=c("group"), within=c("condition"))
-#probe.change_ms_corr_aov_post <- emmeans(probe.change_ms_corr_aov, pairwise ~ group, adjust="bonferroni")
-## ----
-rm(probe.change_ms_corr_raov, probe.change_ms_corr_raov_post, probe.change_ms_corr_kw, probe.change_ms_corr_kw_post, probe.change_ms_corr_aov, probe.change_ms_corr_aov_post)
+# # -- CHANGE IN MEMORY SCORE IN CORRECT TRIALS -- #
+# 
+# ## ---- stats_probe_ms_change_corr_WRS2
+# # robust ANOVA (from WRS/WRS2 by Mair & Wilcox)
+# probe.change_ms_corr_raov <- bwtrim(change_ms ~ group*condition, id=id, data=data_prepost_correct, tr=0.2)
+# # using one-way post-test lincon() 
+# # because there is no dedicated post-test for bwtrim() and there are no interactions
+# #probe.change_ms_corr_raov_post <- lincon(change_ms ~ group, data=data_prepost_correct, tr=0.2, alpha=0.05, method="bonferroni")
+# ## ----
+# 
+# ## ---- stats_probe_ms_change_corr_KW
+# # kruskal-wallis 
+# probe.change_ms_corr_kw <- kruskal.test(change_ms ~ group, data=data_prepost_correct)
+# probe.change_ms_corr_kw_post <- pairwise.wilcox.test(data_prepost_correct$change_ms, data_prepost_correct$group, p.adjust="bonferroni")
+# ## ----
+# 
+# ## ---- stats_probe_ms_change_corr_AOV
+# # standard anova 
+# probe.change_ms_corr_aov <- aov_ez("id", "change_ms", data_prepost_correct, between=c("group"), within=c("condition"))
+# #probe.change_ms_corr_aov_post <- emmeans(probe.change_ms_corr_aov, pairwise ~ group, adjust="bonferroni")
+# ## ----
+# rm(probe.change_ms_corr_raov, probe.change_ms_corr_raov_post, probe.change_ms_corr_kw, probe.change_ms_corr_kw_post, probe.change_ms_corr_aov, probe.change_ms_corr_aov_post)
 
 # ######################################################### #
 
 # -- TIME -- # 
 
 ## ---- stats_probe_time_simple
-probe.time_s <- mixed(time ~ group*session*condition + block_f + trial_in_block + cov_t + sex +
+probe.time_s <- mixed(time ~ group*session*condition + cov_block + cov_location + cov_time + cov_gender +
                         (condition+session||id), data=data_p, expand_re=T)
 ## ----
 
 ## ---- stats_probe_time_outlier
 t <- data_p %>% mutate(flag=ifelse(is_outlier(time), T, F))
 # ggplot(t, aes(x=time, fill=flag)) + geom_histogram() + facet_wrap(~group)
-probe.time_o <- mixed(time ~ group*session*condition + block_f + trial_in_block + cov_t + sex +
+probe.time_o <- mixed(time ~ group*session*condition + cov_block + cov_time + cov_gender +
                         (condition+session||id), data=t %>% filter(flag==F), expand_re=T)
 rm(t)
 ## ----
 
 # -- heteroscedasticity
-probe.time_base <- lme(time ~ group*session*condition + block_f + trial_in_block + cov_t + sex,
+probe.time_base <- lme(time ~ group*session*condition + cov_block + cov_time + cov_gender,
                        random=list(id=pdDiag(~ condition + session)),
                        na.action=na.omit, data=data_p, method="ML")
 probe.time_var1 <- update(probe.time_base, weights=varIdent(form=~1 | group))
@@ -718,7 +689,7 @@ anova(probe.time_base, probe.time_var1, probe.time_var2, probe.time_var4, test=T
 rm(probe.time_base, probe.time_var1, probe.time_var2, probe.time_var3, probe.time_var4)
 ## ---- stats_probe_time_hetero
 # re-fit final model with with REML
-probe.time_h <- lme(time ~ group*session*condition + block_f + trial_in_block + cov_t + sex,
+probe.time_h <- lme(time ~ group*session*condition + cov_block + cov_time + cov_gender,
                     random=list(id=pdDiag(~ condition + session)),
                     weights=varComb(varIdent(form=~1 | group),
                                     varIdent(form=~1 | condition)),
@@ -754,16 +725,17 @@ rm(probe.time_s, probe.time_o, probe.time_h)
 
 ## ---- plot_probe_time
 line_time <- afex_plot(probe.time_s, x="session", trace="group", panel="condition", id="id", 
-                       error="model", dodge=0.75,
-                       mapping=c("shape", "color", "linetype"),
+                       error="model", dodge=0.8,
+                       mapping=c("shape", "fill", "color"),
                        factor_levels=list(group=group_labels, condition=condition_labels),
                        legend_title=NULL, 
-                       data_geom=ggbeeswarm::geom_quasirandom, 
-                       data_arg=list(dodge.width=0.75, cex=0.8, color="white"),
+                       data_geom=geom_boxplot, 
+                       data_arg=list(width=0.5, color="black"),
                        point_arg=list(size=3), 
-                       line_arg=list(size=1),
-                       error_arg=list(size=1, width=0.5)) + 
-  scale_color_manual(values=group_colors) + 
+                       line_arg=list(size=1.25),
+                       error_arg=list(size=1.25, width=0)) + 
+  scale_fill_manual(values=group_colors) + 
+  scale_color_manual(values=group_colors_o) +
   coord_cartesian(ylim=c(0,40)) + 
   theme_bw(base_size=15) + 
   theme(legend.position="top", legend.justification=c(0,0),
@@ -776,20 +748,20 @@ line_time <- afex_plot(probe.time_s, x="session", trace="group", panel="conditio
 # -- EXCESS PATH LENGTH TO CHOSEN TARGET -- # 
 
 ## ---- stats_probe_excess_path_simple
-probe.excess_path_s <- mixed(excess_path_length ~ group*session*condition + block_f + trial_in_block + cov_p + sex +
+probe.excess_path_s <- mixed(excess_path_length ~ group*session*condition + cov_block + cov_location + cov_excess_path + cov_gender +
                                (condition+session||id), data=data_p, expand_re=T)
 ## ----
 
 ## ---- stats_probe_excess_path_outlier
 t <- data_p %>% mutate(flag=ifelse(is_outlier(excess_path_length), T, F))
 # ggplot(t, aes(x=excess_path_length, fill=flag)) + geom_histogram() + facet_wrap(~group)
-probe.excess_path_o <-  mixed(excess_path_length ~ group*session*condition + block_f + trial_in_block + cov_p + sex +
+probe.excess_path_o <-  mixed(excess_path_length ~ group*session*condition + cov_block + cov_excess_path + cov_gender +
                                 (condition||id), data=t %>% filter(flag==F), expand_re=T)
 rm(t)
 ## ----
 
 # -- heteroscedasticity
-probe.excess_path_base <- lme(excess_path_length ~ group*session*condition + block_f + trial_in_block + cov_p + sex,
+probe.excess_path_base <- lme(excess_path_length ~ group*session*condition + cov_block + cov_excess_path + cov_gender,
                               random=list(id=pdDiag(~ condition)),
                               na.action=na.omit, data=data_p, method="ML")
 probe.excess_path_var1 <- update(probe.excess_path_base, weights=varIdent(form=~1 | group))
@@ -802,7 +774,7 @@ anova(probe.excess_path_base, probe.excess_path_var1, probe.excess_path_var2) # 
 rm(probe.excess_path_base, probe.excess_path_var1, probe.excess_path_var2)
 ## ---- stats_probe_excess_path_hetero
 # re-fit final model with REML
-probe.excess_path_h <- lme(excess_path_length ~ group*session*condition + block_f + trial_in_block + cov_p + sex,
+probe.excess_path_h <- lme(excess_path_length ~ group*session*condition + cov_block + cov_excess_path + cov_gender,
                            random=list(id=pdDiag(~ condition)),
                            weights=varComb(varIdent(form=~1 | group),
                                            varIdent(form=~1 | condition)),
@@ -838,16 +810,17 @@ rm(probe.excess_path_s, probe.excess_path_o, probe.excess_path_h)
 
 ## ---- plot_probe_excess_time
 line_excess_path <- afex_plot(probe.excess_path_s, x="session", trace="group", panel="condition", id="id", 
-                              error="model", dodge=0.75,
-                              mapping=c("shape", "color", "linetype"),
+                              error="model", dodge=0.8,
+                              mapping=c("shape", "fill", "color"),
                               factor_levels=list(group=group_labels, condition=condition_labels),
                               legend_title=NULL, 
-                              data_geom=ggbeeswarm::geom_quasirandom, 
-                              data_arg=list(dodge.width=0.75, cex=0.8, color="white"),
+                              data_geom=geom_boxplot, 
+                              data_arg=list(width=0.5, color="black"),
                               point_arg=list(size=3), 
-                              line_arg=list(size=1),
-                              error_arg=list(size=1, width=0.5)) + 
-  scale_color_manual(values=group_colors) + 
+                              line_arg=list(size=1.25),
+                              error_arg=list(size=1.25, width=0)) + 
+  scale_fill_manual(values=group_colors) + 
+  scale_color_manual(values=group_colors_o) + 
   coord_cartesian(ylim=c(0,1.5)) + 
   theme_bw(base_size=15) + 
   theme(legend.position="top", legend.justification=c(0,0),
@@ -860,20 +833,20 @@ line_excess_path <- afex_plot(probe.excess_path_s, x="session", trace="group", p
 # -- PRESENCE in outer alleys vs inner pentagon -- #
 
 # ---- stats_probe_presence_alleys_simple
-probe.presence_alleys_s <- mixed(presence_alleys ~ group*session*condition + block_f + trial_in_block + sex +
+probe.presence_alleys_s <- mixed(presence_alleys ~ group*session*condition + cov_block + cov_location + cov_gender +
                                    (1|id), data=data_p, expand_re=T)
 ## ----
 
 ## ---- stats_probe_presence_alleys_outlier
 t <- data_p %>% mutate(flag=ifelse(is_outlier(presence_alleys), T, F))
 # ggplot(t, aes(x=presence_alleys, fill=flag)) + geom_histogram() + facet_wrap(~group)
-probe.presence_alleys_o <-  mixed(presence_alleys ~ group*session*condition + block_f + trial_in_block + sex +
+probe.presence_alleys_o <-  mixed(presence_alleys ~ group*session*condition + cov_block + cov_gender +
                                     (1|id), data=t %>% filter(flag==F), expand_re=T)
 rm(t)
 ## ----
 
 # -- heteroscedasticity
-probe.presence_alleys_base <- lme(presence_alleys ~ group*session*condition + block_f + trial_in_block + sex,
+probe.presence_alleys_base <- lme(presence_alleys ~ group*session*condition + cov_block + cov_gender,
                                   random=~1 | id, 
                                   na.action=na.omit, data=data_p, method="ML")
 probe.presence_alleys_var1 <- update(probe.presence_alleys_base, weights=varIdent(form=~1 | group))
@@ -886,7 +859,7 @@ anova(probe.presence_alleys_base, probe.presence_alleys_var1, probe.presence_all
 rm(probe.presence_alleys_base, probe.presence_alleys_var1, probe.presence_alleys_var2, probe.presence_alleys_var3) # chose model 2 
 ## ---- stats_probe_presence_alleys_hetero
 # re-fit final model with REML
-probe.presence_alleys_h <- lme(presence_alleys ~ group*session*condition + block_f + trial_in_block + sex,
+probe.presence_alleys_h <- lme(presence_alleys ~ group*session*condition + cov_block + cov_gender,
                                random=~1 | id, 
                                weights=varComb(varIdent(form=~1 | group),
                                                varIdent(form=~1 | condition)),
@@ -922,16 +895,17 @@ rm(probe.presence_alleys_s, probe.presence_alleys_o, probe.presence_alleys_h)
 
 ## ---- plot_probe_presence_alleys
 line_presence_alleys <- afex_plot(probe.presence_alleys_s, x="session", trace="group", panel="condition", id="id", 
-                                  error="model", dodge=0.75,
-                                  mapping=c("shape", "color", "linetype"),
+                                  error="model", dodge=0.8,
+                                  mapping=c("shape", "fill", "color"),
                                   factor_levels=list(group=group_labels, condition=condition_labels),
                                   legend_title=NULL, 
-                                  data_geom=ggbeeswarm::geom_quasirandom, 
-                                  data_arg=list(dodge.width=0.75, cex=0.8, color="white"),
+                                  data_geom=geom_boxplot, 
+                                  data_arg=list(width=0.5, color="black"),
                                   point_arg=list(size=3), 
-                                  line_arg=list(size=1),
-                                  error_arg=list(size=1, width=0.5)) + 
-  scale_color_manual(values=group_colors) + 
+                                  line_arg=list(size=1.25),
+                                  error_arg=list(size=1.25, width=0)) + 
+  scale_fill_manual(values=group_colors) + 
+  scale_color_manual(values=group_colors_o) +
   coord_cartesian(ylim=c(0,0.8)) + 
   theme_bw(base_size=15) + 
   theme(legend.position="top", legend.justification=c(0,0),
@@ -944,20 +918,20 @@ line_presence_alleys <- afex_plot(probe.presence_alleys_s, x="session", trace="g
 # -- INITIAL ROTATION -- # 
 
 # ---- stats_probe_initial_rotation_simple
-probe.initial_rot_s <- mixed(initial_rotation_turns ~ group*session*condition + block_f + trial_in_block + cov_r + sex +
+probe.initial_rot_s <- mixed(initial_rotation_turns ~ group*session*condition + cov_block + cov_location + cov_rotation + cov_gender +
                                (condition*session||id), data=data_p, expand_re=T)
 ## ----
 
 ## ---- stats_probe_initial_rotation_outlier
 t <- data_p %>% mutate(flag=ifelse(is_outlier(initial_rotation_turns), T, F))
 # ggplot(t, aes(x=initial_rotation_turns, fill=flag)) + geom_histogram() + facet_wrap(~group)
-probe.initial_rot_o <-  mixed(initial_rotation_turns ~ group*session*condition + block_f + trial_in_block + cov_r + sex +
+probe.initial_rot_o <-  mixed(initial_rotation_turns ~ group*session*condition + cov_block + cov_rotation + cov_gender +
                                 (condition||id), data=t %>% filter(flag==F), expand_re=T)
 rm(t)
 ## ----
 
 # -- heteroscedasticity
-probe.initial_rot_base <- lme(initial_rotation_turns ~ group*session*condition + block_f + trial_in_block + cov_r + sex,
+probe.initial_rot_base <- lme(initial_rotation_turns ~ group*session*condition + cov_block + cov_rotation + cov_gender,
                               random=list(id=pdDiag(~ condition + session)),
                               na.action=na.omit, data=data_p, method="ML")
 probe.initial_rot_var1 <- update(probe.initial_rot_base, weights=varIdent(form=~1 | condition))
@@ -970,7 +944,7 @@ anova(probe.initial_rot_base, probe.initial_rot_var1, probe.initial_rot_var2, pr
 rm(probe.initial_rot_base, probe.initial_rot_var1, probe.initial_rot_var2, probe.initial_rot_var3)
 ## ---- stats_probe_initial_rotation_hetero
 # re-fit final model with REML
-probe.initial_rot_h <- lme(initial_rotation_turns ~ group*session*condition + block_f + trial_in_block + cov_r + sex,
+probe.initial_rot_h <- lme(initial_rotation_turns ~ group*session*condition + cov_block + cov_rotation + cov_gender,
                            random=list(id=pdDiag(~ condition + session)),
                            weights=varComb(varIdent(form=~1 | condition),
                                            varIdent(form=~1 | group),
@@ -1007,16 +981,17 @@ rm(probe.initial_rot_s, probe.initial_rot_o, probe.initial_rot_h)
 
 ## ---- plot_probe_initial_rotation
 line_initial_rotation <- afex_plot(probe.initial_rot_s, x="session", trace="group", panel="condition", id="id", 
-                                   error="model", dodge=0.75,
-                                   mapping=c("shape", "color", "linetype"),
+                                   error="model", dodge=0.8,
+                                   mapping=c("shape", "fill", "color"),
                                    factor_levels=list(group=group_labels, condition=condition_labels),
                                    legend_title=NULL, 
-                                   data_geom=ggbeeswarm::geom_quasirandom, 
-                                   data_arg=list(dodge.width=0.75, cex=0.8, color="white"),
+                                   data_geom=geom_boxplot, 
+                                   data_arg=list(width=0.5, color="black"),
                                    point_arg=list(size=3), 
-                                   line_arg=list(size=1),
-                                   error_arg=list(size=1, width=0.5)) + 
-  scale_color_manual(values=group_colors) + 
+                                   line_arg=list(size=1.25),
+                                   error_arg=list(size=1.25, width=0)) + 
+  scale_fill_manual(values=group_colors) + 
+  scale_color_manual(values=group_colors_o) +
   coord_cartesian(ylim=c(0,1)) + 
   theme_bw(base_size=15) + 
   theme(legend.position="top", legend.justification=c(0,0),
@@ -1029,20 +1004,20 @@ line_initial_rotation <- afex_plot(probe.initial_rot_s, x="session", trace="grou
 # -- ROTATION BY PATH LENGTH -- # 
 
 # ---- stats_probe_rotation_path_simple
-probe.rotation_path_s <- mixed(rotation_turns_by_path_length ~ group*session*condition + block_f + trial_in_block + cov_r + sex +
+probe.rotation_path_s <- mixed(rotation_turns_by_path_length ~ group*session*condition + cov_block + cov_location + cov_rotation_path + cov_gender +
                                  (condition||id), data=data_p, expand_re=T)
 ## ----
 
 ## ---- stats_probe_rotation_path_outlier
 t <- data_p %>% mutate(flag=ifelse(is_outlier(rotation_turns_by_path_length), T, F))
 # ggplot(t, aes(x=rotation_turns_by_path_length, fill=flag)) + geom_histogram() + facet_wrap(~group)
-probe.rotation_path_o <-  mixed(rotation_turns_by_path_length ~ group*session*condition + block_f + trial_in_block + cov_r + sex +
+probe.rotation_path_o <-  mixed(rotation_turns_by_path_length ~ group*session*condition + cov_block + cov_rotation + cov_gender +
                                   (condition||id), data=t %>% filter(flag==F), expand_re=T)
 rm(t)
 ## ----
 
 # -- heteroscedasticity
-probe.rotation_path_base <- lme(rotation_turns_by_path_length ~ group*session*condition + block_f + trial_in_block + cov_r + sex,
+probe.rotation_path_base <- lme(rotation_turns_by_path_length ~ group*session*condition + cov_block + cov_rotation + cov_gender,
                                 random=list(id=pdDiag(~ condition + session)),
                                 na.action=na.omit, data=data_p, method="ML")
 probe.rotation_path_var1 <- update(probe.rotation_path_base, weights=varIdent(form=~1 | condition))
@@ -1055,7 +1030,7 @@ anova(probe.rotation_path_base, probe.rotation_path_var1, probe.rotation_path_va
 rm(probe.rotation_path_base, probe.rotation_path_var1, probe.rotation_path_var2, probe.rotation_path_var3) 
 ## ---- stats_probe_rotation_path_hetero
 # re-fit final model with REML
-probe.rotation_path_h <-  lme(rotation_turns_by_path_length ~ group*session*condition + block_f + trial_in_block + cov_r + sex,
+probe.rotation_path_h <-  lme(rotation_turns_by_path_length ~ group*session*condition + cov_block + cov_rotation + cov_gender,
                               random=list(id=pdDiag(~ condition + session)),
                               weights=varComb(varIdent(form=~1 | condition),
                                               varIdent(form=~1 | group),
@@ -1092,16 +1067,17 @@ rm(probe.rotation_path_s, probe.rotation_path_o, probe.rotation_path_h)
 
 ## ---- plot_probe_rotation_path
 line_rotation_path <- afex_plot(probe.rotation_path_s, x="session", trace="group", panel="condition", id="id", 
-                                error="model", dodge=0.75,
-                                mapping=c("shape", "color", "linetype"),
+                                error="model", dodge=0.8,
+                                mapping=c("shape", "fill", "color"),
                                 factor_levels=list(group=group_labels, condition=condition_labels),
                                 legend_title=NULL, 
-                                data_geom=ggbeeswarm::geom_quasirandom, 
-                                data_arg=list(dodge.width=0.75, cex=0.8, color="white"),
+                                data_geom=geom_boxplot, 
+                                data_arg=list(width=0.5, color="black"),
                                 point_arg=list(size=3), 
-                                line_arg=list(size=1),
-                                error_arg=list(size=1, width=0.5)) + 
-  scale_color_manual(values=group_colors) + 
+                                line_arg=list(size=1.25),
+                                error_arg=list(size=1.25, width=0)) + 
+  scale_fill_manual(values=group_colors) + 
+  scale_color_manual(values=group_colors_o) +
   coord_cartesian(ylim=c(0,2.5)) + 
   theme_bw(base_size=15) + 
   theme(legend.position="top", legend.justification=c(0,0),
@@ -1305,20 +1281,20 @@ rm(t)
 # -- TIME -- #
 
 ## ---- stats_learn_time_simple
-learn.time_s <- mixed(time ~ group*trial_in_block + block_f + cov_t + sex + (1|id), 
+learn.time_s <- mixed(time ~ group*trial_in_block + cov_block + cov_location + cov_time + cov_gender + (1|id), 
                       data=data_l, expand_re=T)
 ## ----
 
 ## ---- stats_learn_time_outlier
 t <- data_l %>% mutate(flag=ifelse(is_outlier(time), T, F))
 # ggplot(t, aes(x=time, fill=flag)) + geom_histogram() + facet_wrap(~group)
-learn.time_o <- mixed(time ~ group*trial_in_block + block_f + cov_t + sex + (1|id), 
+learn.time_o <- mixed(time ~ group*trial_in_block + cov_block + cov_time + cov_gender + (1|id), 
                       data=t %>% filter(flag==F), expand_re=T)
 rm(t)
 ## ----
 
 # -- heteroscedasticity
-learn.time_base <- lme(time ~ group*trial_in_block + block_f + cov_t + sex,
+learn.time_base <- lme(time ~ group*trial_in_block + cov_block + cov_time + cov_gender,
                        random=~1 | id, 
                        na.action=na.omit, data=data_l, method="ML")
 learn.time_var1 <- update(learn.time_base, weights=varIdent(form=~1 | group))
@@ -1326,7 +1302,7 @@ anova.lme(learn.time_base, learn.time_var1) # chose model 1
 rm(learn.time_base, learn.time_var1)
 ## ---- stats_learning_time_hetero
 # re-fit final model with REML
-learn.time_h <- lme(time ~ group*trial_in_block + block_f + cov_t + sex,
+learn.time_h <- lme(time ~ group*trial_in_block + cov_block + cov_time + cov_gender,
                     random=~1 | id, 
                     weights=varIdent(form=~1 | group),
                     na.action=na.omit, data=data_l, method="REML")
@@ -1368,7 +1344,7 @@ rm(learn.time_s, learn.time_o, learn.time_h)
 #   mutate(Variance      = StandardError ^ 2)
 
 ## ---- plot_learn_time
-learn.time_plot <- mixed(time ~ group*factor(trial_in_block_original) + block_f + cov_t + sex + (1|id), 
+learn.time_plot <- mixed(time ~ group*trial_in_block_original + cov_block + cov_location + cov_time + cov_gender + (1|id), 
                          data=data_l, expand_re=T)
 
 line_time <- afex_plot(learn.time_plot, x="trial_in_block_original", trace="group", id="id", 
@@ -1395,20 +1371,20 @@ rm(learn.time_plot)
 # --- EXCESS PATH LENGTH -- #
 
 ## ---- stats_learn_excess_path_simple
-learn.excess_path_s <- mixed(excess_path_length ~ group*trial_in_block + block_f + cov_p + sex + (1|id), 
+learn.excess_path_s <- mixed(excess_path_length ~ group*trial_in_block + cov_block + cov_location + cov_excess_path + cov_gender + (1|id), 
                              data=data_l, expand_re=T)
 ## ----
 
 ## ---- stats_learn_excess_path_outlier
 t <- data_l %>% mutate(flag=ifelse(is_outlier(excess_path_length), T, F))
 # ggplot(t, aes(x=excess_path_length, fill=flag)) + geom_histogram() + facet_wrap(~group)
-learn.excess_path_o <- mixed(excess_path_length ~ group*trial_in_block + block_f + cov_p + sex + (1|id), 
+learn.excess_path_o <- mixed(excess_path_length ~ group*trial_in_block + cov_block + cov_excess_path + cov_gender + (1|id), 
                              data=t %>% filter(flag==F), expand_re=T)
 rm(t)
 ## ----
 
 # -- heteroscedasticity
-learn.excess_path_base <- lme(excess_path_length ~ group*trial_in_block + block_f + cov_p + sex,
+learn.excess_path_base <- lme(excess_path_length ~ group*trial_in_block + cov_block + cov_excess_path + cov_gender,
                               random=~1 | id, 
                               na.action=na.omit, data=data_l, method="ML")
 learn.excess_path_var1 <- update(learn.excess_path_base, weights=varIdent(form=~1 | group))
@@ -1416,7 +1392,7 @@ anova(learn.excess_path_base, learn.excess_path_var1, test=T) # chose model 1
 rm(learn.excess_path_base, learn.excess_path_var1)
 ## ---- stats_learning_excess_path_hetero
 # re-fit final model with REML
-learn.excess_path_h <-lme(excess_path_length ~ group*trial_in_block + block_f + cov_p + sex,
+learn.excess_path_h <-lme(excess_path_length ~ group*trial_in_block + cov_block + cov_excess_path + cov_gender,
                           random=~1 | id, 
                           weights=varIdent(form=~1 | group),
                           na.action=na.omit, data=data_l, method="REML")
@@ -1450,7 +1426,7 @@ anova.lme(learn.excess_path_h, type="marginal")
 rm(learn.excess_path_s, learn.excess_path_o, learn.excess_path_h)
 
 ## ---- plot_learn_excess_path
-learn.excess_path_plot <- mixed(excess_path_length ~ group*factor(trial_in_block_original) + block_f + cov_p + sex + (1|id), 
+learn.excess_path_plot <- mixed(excess_path_length ~ group*trial_in_block_original + cov_block + cov_location + cov_excess_path + cov_gender + (1|id), 
                                 data=data_l, expand_re=T)
 
 line_excess_path <- afex_plot(learn.excess_path_plot, x="trial_in_block_original", trace="group", id="id", 
@@ -1477,20 +1453,20 @@ rm(learn.excess_path_plot)
 # -- PRESENCE in outer alleys vs inner pentagon -- #
 
 ## ---- stats_learn_presence_simple
-learn.presence_alleys_s <- mixed(presence_alleys ~ group*trial_in_block + block_f + sex + (1|id), 
+learn.presence_alleys_s <- mixed(presence_alleys ~ group*trial_in_block + cov_block + cov_location + cov_gender + (1|id), 
                                  data=data_l, expand_re=T)
 ## ----
 
 ## ---- stats_learn_presence_outlier
 t <- data_l %>% mutate(flag=ifelse(is_outlier(presence_alleys), T, F))
 # ggplot(t, aes(x=presence_alleys, fill=flag)) + geom_histogram() + facet_wrap(~group)
-learn.presence_alleys_o <- mixed(presence_alleys ~ group*trial_in_block + block_f + sex + (1|id), 
+learn.presence_alleys_o <- mixed(presence_alleys ~ group*trial_in_block + cov_block + cov_gender + (1|id), 
                                  data=t %>% filter(flag==F), expand_re=T)
 rm(t)
 ## ----
 
 # -- heteroscedasticity
-learn.presence_alleys_base <- lme(presence_alleys ~ group*trial_in_block + block_f + sex,
+learn.presence_alleys_base <- lme(presence_alleys ~ group*trial_in_block + cov_block + cov_gender,
                                   random=~1 | id, 
                                   na.action=na.omit, data=data_l, method="ML")
 learn.presence_alleys_var1 <- update(learn.presence_alleys_base, weights=varIdent(form=~1 | group))
@@ -1498,7 +1474,7 @@ anova.lme(learn.presence_alleys_base, learn.presence_alleys_var1) # chose model 
 rm(learn.presence_alleys_base, learn.presence_alleys_var1)
 ## ---- stats_learning_presence_hetero
 # re-fit final model with REML
-learn.presence_alleys_h <- lme(presence_alleys ~ group*trial_in_block + block_f + sex,
+learn.presence_alleys_h <- lme(presence_alleys ~ group*trial_in_block + cov_block + cov_gender,
                                random=~1 | id, 
                                weights=varIdent(form=~1 | group),
                                na.action=na.omit, data=data_l, method="REML")
@@ -1532,7 +1508,7 @@ anova.lme(learn.presence_alleys_h, type="marginal")
 rm(learn.presence_alleys_s, learn.presence_alleys_o, learn.presence_alleys_h)
 
 ## ---- plot_learn_presence
-learn.presence_alleys_plot <- mixed(presence_alleys ~ group*factor(trial_in_block_original) + block_f + sex + (1|id), 
+learn.presence_alleys_plot <- mixed(presence_alleys ~ group*trial_in_block_original + cov_block + cov_location + cov_gender + (1|id), 
                                     data=data_l, expand_re=T)
 
 line_presence_alleys <- afex_plot(learn.presence_alleys_plot, x="trial_in_block_original", trace="group", id="id", 
@@ -1559,20 +1535,20 @@ rm(learn.presence_alleys_plot)
 # -- INITIAL ROTATION -- # 
 
 ## ---- stats_learn_initial_rotation_simple
-learn.initial_rot_s <- mixed(initial_rotation_turns ~ group*trial_in_block + block_f + cov_r + sex + (1|id), 
+learn.initial_rot_s <- mixed(initial_rotation_turns ~ group*trial_in_block + cov_block + cov_location + cov_rotation + cov_gender + (1|id), 
                              data=data_l, expand_re=T)
 ## ----
 
 ## ---- stats_learn_initial_rotation_outlier
 t <- data_l %>% mutate(flag=ifelse(is_outlier(initial_rotation_turns), T, F))
 # ggplot(t, aes(x=initial_rotation_turns, fill=flag)) + geom_histogram() + facet_wrap(~group)
-learn.initial_rot_o <- mixed(initial_rotation_turns ~ group*trial_in_block + block_f + cov_r + sex + (1|id), 
+learn.initial_rot_o <- mixed(initial_rotation_turns ~ group*trial_in_block + cov_block + cov_rotation + cov_gender + (1|id), 
                              data=t %>% filter(flag==F), expand_re=T)
 rm(t)
 ## ----
 
 # -- heteroscedasticity
-learn.initial_rot_base <- lme(initial_rotation_turns ~ group*trial_in_block + block_f + cov_r + sex,
+learn.initial_rot_base <- lme(initial_rotation_turns ~ group*trial_in_block + cov_block + cov_rotation + cov_gender,
                               random=~1 | id, 
                               na.action=na.omit, data=data_l, method="ML")
 learn.initial_rot_var1 <- update(learn.initial_rot_base, weights=varIdent(form=~1 | group))
@@ -1580,7 +1556,7 @@ anova(learn.initial_rot_base, learn.initial_rot_var1, test=T) # chose model 1
 rm(learn.initial_rot_base, learn.initial_rot_var1)
 ## ---- stats_learning_initial_rotation_hetero
 # re-fit final model with REML
-learn.initial_rot_h <- lme(initial_rotation_turns ~ group*trial_in_block + block_f + cov_r + sex,
+learn.initial_rot_h <- lme(initial_rotation_turns ~ group*trial_in_block + cov_block + cov_rotation + cov_gender,
                            random=~1 | id, 
                            weights=varIdent(form=~1 | group),
                            na.action=na.omit, data=data_l, method="REML")
@@ -1614,7 +1590,7 @@ anova.lme(learn.initial_rot_h, type="marginal")
 rm(learn.initial_rot_s, learn.initial_rot_o, learn.initial_rot_h)
 
 ## ---- plot_learn_initial_rotation
-learn.initial_rotation_plot <- mixed(initial_rotation_turns ~ group*factor(trial_in_block_original) + block_f + cov_r + sex + (1|id), 
+learn.initial_rotation_plot <- mixed(initial_rotation_turns ~ group*trial_in_block_original + cov_block + cov_location + cov_rotation + cov_gender + (1|id), 
                                      data=data_l, expand_re=T)
 
 line_initial_rotation <- afex_plot(learn.initial_rotation_plot, x="trial_in_block_original", trace="group", id="id", 
@@ -1641,20 +1617,20 @@ rm(learn.initial_rotation_plot)
 # -- ROTATION (BY PATH LENGTH) -- # 
 
 ## ---- stats_learn_rotation_path_simple
-learn.rotation_path_s <- mixed(rotation_turns_by_path_length ~ group*trial_in_block + block_f + cov_rpl + sex + (1|id), 
+learn.rotation_path_s <- mixed(rotation_turns_by_path_length ~ group*trial_in_block + cov_block + cov_location + cov_rotation_path + cov_gender + (1|id), 
                                data=data_l, expand_re=T)
 ## ----
 
 ## ---- stats_learn_rotation_path_outlier
 t <- data_l %>% mutate(flag=ifelse(is_outlier(rotation_turns_by_path_length), T, F))
 # ggplot(t, aes(x=rotation_turns_by_path_length, fill=flag)) + geom_histogram() + facet_wrap(~group)
-learn.rotation_path_o <- mixed(rotation_turns_by_path_length ~ group*trial_in_block + block_f + cov_rpl + sex + (1|id), 
+learn.rotation_path_o <- mixed(rotation_turns_by_path_length ~ group*trial_in_block + cov_block + cov_rotation_path + cov_gender + (1|id), 
                                data=t %>% filter(flag==F), expand_re=T)
 rm(t)
 ## ----
 
 # -- heteroscedasticity
-learn.rotation_path_base <- lme(rotation_turns_by_path_length ~  group*trial_in_block + block_f + cov_rpl + sex,
+learn.rotation_path_base <- lme(rotation_turns_by_path_length ~  group*trial_in_block + cov_block + cov_rotation_path + cov_gender,
                                 random=~1 | id, 
                                 na.action=na.omit, data=data_l, method="ML")
 learn.rotation_path_var1 <- update(learn.rotation_path_base, weights=varIdent(form=~1 | group))
@@ -1662,7 +1638,7 @@ anova(learn.rotation_path_base, learn.rotation_path_var1, test=T) # chose model 
 rm(learn.rotation_path_base, learn.rotation_path_var1)
 ## ---- stats_learning_rotation_path_hetero
 # re-fit final model with REML
-learn.rotation_path_h <- lme(rotation_turns_by_path_length ~  group*trial_in_block + block_f + cov_rpl + sex,
+learn.rotation_path_h <- lme(rotation_turns_by_path_length ~  group*trial_in_block + cov_block + cov_rotation_path + cov_gender,
                              random=~1 | id, 
                              weights=varIdent(form=~1 | group),
                              na.action=na.omit, data=data_l, method="REML")
@@ -1696,7 +1672,7 @@ anova.lme(learn.rotation_path_h, type="marginal")
 rm(learn.rotation_path_s, learn.rotation_path_o, learn.rotation_path_h)
 
 # ---- plot_learn_rotation_path
-learn.rotation_path_plot <- mixed(rotation_turns_by_path_length ~ group*factor(trial_in_block_original) + block_f + cov_rpl + sex + (1|id), 
+learn.rotation_path_plot <- mixed(rotation_turns_by_path_length ~ group*trial_in_block_original + cov_block + cov_location + cov_rotation_path + cov_gender + (1|id), 
                                   data=data_l, expand_re=T)
 
 line_rotation_path <- afex_plot(learn.rotation_path_plot, x="trial_in_block_original", trace="group", id="id", 
@@ -1825,13 +1801,7 @@ boxplot(DistAcc)
 
 boxplot(AngleAcc)
 
-# composite score
-GMDA <- data_gmda %>% filter(gmda_measure %in% c("CanAcc", "DistAcc", "AngleAcc")) %>%
-  group_by(id, group) %>% summarise(score=mean(score))
-
-boxplot(GMDA)
-
-rm(data_gmda, GMDA, CanAcc, DistAcc, AngleAcc, boxplot)
+rm(data_gmda, CanAcc, DistAcc, AngleAcc, boxplot)
 
 
 # ######################################################### #
@@ -1842,7 +1812,7 @@ rm(data_gmda, GMDA, CanAcc, DistAcc, AngleAcc, boxplot)
 ## ---- stats_corr_allo_ego
 # allocentric & egocentric performance 
 corr <- data_p %>% 
-  group_by(id, sex, group, condition) %>% 
+  group_by(id, cov_gender, group, condition) %>% 
   summarise(memory_score=mean(memory_score, na.rm=T)) %>% 
   pivot_wider(names_from=condition,
               names_prefix="memory_",
@@ -1855,114 +1825,28 @@ ggplot(corr, aes(x=memory_allo_ret, y=memory_ego_ret)) +
 cor.test(corr$memory_allo_ret, corr$memory_ego_ret, method="spearman")
 ## ----
 
-## ---- stats_corr_layout
-# allocentric/egocentric & layout score
-temp <- pt_data %>% 
-  filter(condition=="layout") %>% 
-  select(id, score) %>% 
-  rename(layout_score=score)
-joint <- data_p %>% 
-  group_by(id, group, condition) %>% 
-  summarise(memory_score=mean(memory_score, na.rm=T)) %>% 
-  left_join(temp, by="id") %>% 
-  drop_na(layout_score)
-rm(temp)
 
-ggplot(joint, aes(x=factor(layout_score), y=memory_score)) +
-  stat_summary(fun.data=mean_cl_normal) + 
-  facet_grid(~ condition) +
-  coord_cartesian(ylim=c(0.5,1))
+# ######################################################### #
+# ######################################################### #
+
+# ::: motor control task ::: #
+
+## ---- stats_motor_control
+# time: GROUPS DIFFER SIGNIFICANTLY 
+aov_ez("id", "time", practise, between=c("group"))
+
+# velocity: trend 
+aov_ez("id", "velocity", practise, between=c("group"))
+
+# excess path length: DIFFER SIGNIFICANTLY
+aov_ez("id", "excess_path_length", practise, between=c("group"))
+
+# rotation: GROUPS DIFFER SIGNIFICANTLY  
+aov_ez("id", "rotation_turns", practise, between=c("group"))
+
+# rotation: GROUPS DIFFER SIGNIFICANTLY  
+aov_ez("id", "rotation_turns_by_path_length", practise, between=c("group"))
 ## ---- 
-m0 <- lm(memory_score ~ 1, data=joint)
-m1 <- lm(memory_score ~ layout_score, data=joint)
-m2 <- lm(memory_score ~ layout_score + condition, data=joint)
-m3 <- lm(memory_score ~ layout_score*condition, data=joint)
-anova(m0, m1, m2, m3)
-m4 <- lm(memory_score ~ layout_score + group, data=joint)
-m5 <- lm(memory_score ~ layout_score*group, data=joint)
-anova(m0, m1, m4, m5)
-# predictors for memory_score: layout_score, group, no interaction
-
-## ---- stats_corr_landmark
-# allocentric/egocentric & landmark score
-temp <- pt_data %>% 
-  filter(condition=="landmarks") %>% 
-  select(id, score) %>% 
-  rename(landmark_score=score)
-joint <- data_p %>% 
-  group_by(id, group, condition) %>% 
-  summarise(memory_score=mean(memory_score, na.rm=T)) %>% 
-  left_join(temp, by="id") %>% 
-  drop_na(landmark_score)
-
-ggplot(joint, aes(x=landmark_score, y=memory_score)) + 
-  geom_point() + geom_smooth(method="lm") +
-  facet_wrap(~group, nrow=1)
-
-cor.test(joint$memory_score, joint$landmark_score, method="spearman")
-## ----
-ggplot(joint, aes(x=landmark_score, y=memory_allo_ret)) + 
-  geom_point() + geom_smooth(method="lm") +
-  facet_wrap(~group, nrow=1)
-
-cor.test(joint$memory_allo_ret, joint$landmark_score, method="spearman")
- 
-ggplot(joint, aes(x=landmark_score, y=memory_allo_ret)) + 
-  geom_point() + geom_smooth(method="lm") +
-  facet_wrap(~group, nrow=1)
-
-cor.test(joint$memory_ego_ret, joint$landmark_score, method="spearman")
-
-m0 <- lm(memory_score ~ 1, data=joint)
-m1 <- lm(memory_score ~ landmark_score, data=joint)
-m2 <- lm(memory_score ~ landmark_score + condition, data=joint)
-m3 <- lm(memory_score ~ landmark_score*condition, data=joint)
-anova(m0, m1, m2, m3)
-m4 <- lm(memory_score ~ landmark_score + group, data=joint)
-m5 <- lm(memory_score ~ landmark_score*group, data=joint)
-anova(m0, m1, m4, m5)
-# predictors for memory_score: landmark_score, group, no interaction
-
-## ---- stats_corr_gmda
-# allocentric/egocentric & gmda score
-temp <- pt_data %>% 
-  filter(condition=="position") %>% 
-  select(id, score) %>% 
-  rename(gmda_score=score)
-joint <- data_p %>% 
-  group_by(id, group, condition) %>% 
-  summarise(memory_score=mean(memory_score, na.rm=T)) %>% 
-  left_join(temp, by="id") %>% 
-  drop_na(gmda_score)
-rm(temp)
-
-ggplot(joint, aes(x=gmda_score, y=memory_score)) + 
-  geom_point() + geom_smooth(method="lm") +
-  facet_wrap(~group, nrow=1)
-
-cor.test(joint$memory_score, joint$gmda_score, method="spearman")
-## ----
-ggplot(joint, aes(x=gmda_score, y=memory_allo_ret)) + 
-  geom_point() + geom_smooth(method="lm") +
-  facet_wrap(~group, nrow=1)
-
-cor.test(joint$memory_allo_ret, joint$gmda_score, method="spearman")
- 
-ggplot(joint, aes(x=gmda_score, y=memory_ego_ret)) + 
-  geom_point() + geom_smooth(method="lm") +
-  facet_wrap(~group, nrow=1)
-
-cor.test(joint$memory_ego_ret, joint$gmda_score, method="spearman")
-
-m0 <- lm(memory_score ~ 1, data=joint)
-m1 <- lm(memory_score ~ gmda_score, data=joint)
-m2 <- lm(memory_score ~ gmda_score + condition, data=joint)
-m3 <- lm(memory_score ~ gmda_score*condition, data=joint)
-anova(m0, m1, m2, m3)
-m4 <- lm(memory_score ~ gmda_score + group, data=joint)
-m5 <- lm(memory_score ~ gmda_score*group, data=joint)
-anova(m0, m1, m4, m5)
-# predictors for memory_score: gmda_score, group, no interaction
 
 
 # ######################################################### #

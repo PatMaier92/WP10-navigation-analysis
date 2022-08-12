@@ -144,11 +144,11 @@ dot_plots <- function(mydata, xvar, yvar, goalvar, goalx, goaly, mytitle,
   return(p)
 }
 
-dots_ego <- dot_plots(data_p %>% filter(condition=="ego_ret"), "x_n", "y_n", "goal_f", 
-                      "goal_x", "goal_y", "Egocentric trials", mylabels)
+dots_ego <- dot_plots(data_p %>% filter(condition=="ego_ret"), "x_n", "y_n", 
+                      "cov_location", "goal_x", "goal_y", "Egocentric trials", mylabels)
 
-dots_allo <- dot_plots(data_p %>% filter(condition=="allo_ret"), "x_n", "y_n", "goal_f", 
-                       "goal_x", "goal_y", "Allocentric trials", mylabels)
+dots_allo <- dot_plots(data_p %>% filter(condition=="allo_ret"), "x_n", "y_n", 
+                       "cov_location", "goal_x", "goal_y", "Allocentric trials", mylabels)
 
 rm(dot_plots)
 ```
@@ -247,42 +247,6 @@ apa_table(
 rm(probe.memory_s, R2, apa_lmm, apa_emm1, emm1, apa_emm2, emm2, apa_emm3, emm3)
 ```
 
-```{r,echo=F, fig.height=3, fig.height=4, fig.cap="Change in memory score for probe trials."  }
-
-# box_ego_delta_ms + labs(subtitle="Egocentric") + box_allo_delta_ms + labs(subtitle="Allocentric")  +
-#   plot_layout(guides="collect") & theme(legend.position="bottom", legend.justification=c(0,0))
-# 
-# rm(box_ego_delta_ms, box_allo_delta_ms)
-```
-
-TBD r, stats_probe_ms_change_AOV 
-
-TBD r, stats_probe_ms_change_WRS2
-
-No significant group effect in conventional ANOVA. 
-
-```{r }
-#probe.change_ms_aov
-```
-
-BUT: Significant group effect in robust ANOVA from WRS2. Children's memory declines significantly more than adult's memory. 
-
-```{r }
-#probe.change_ms_raov
-#probe.change_ms_raov_post
-```
-
-The difference between results occurs probably due to a smaller standard error in the robust analysis, as the trim=0.2 removes outliers and does not require homoscedastic variances. Supposedly the robust analysis is more trustworthy, however, the session x group interaction in the LMM did not become significant either. How to interpret this? 
-
-```{r, echo=F }
-#ggResidpanel::resid_auxpanel(residuals=residuals(probe.change_ms_aov),
-#                             predicted=fitted(probe.change_ms_aov))
-```
-
-```{r, include=F}
-#rm(probe.change_ms_aov, probe.change_ms_raov, probe.change_ms_raov_post)
-```
-
 \newpage 
 
 ### **Memory score (only correct trials) for spatial precision**
@@ -349,32 +313,6 @@ apa_table(
 
 ```{r, include=F}
 rm(probe.memory_corr_s, R2, apa_lmm, emm1, emm2, apa_emm1, apa_emm2)
-```
-
-```{r, echo=F, fig.height=5, fig.width=5, fig.cap="Change in spatial precision in correct probe trials." }
-
-# box_ego_delta_cor_ms + labs(subtitle="Egocentric") + box_allo_delta_cor_ms + labs(subtitle="Allocentric")  +
-#   plot_layout(guides="collect") & theme(legend.position="bottom", legend.justification=c(0,0))
-# 
-# rm(box_ego_delta_cor_ms, box_allo_delta_cor_ms)
-```
-
-TBD r, stats_probe_ms_change_corr_AOV 
-
-TBD r, stats_probe_ms_change_corr_WRS2 
-
-No significant group effect in conventional ANOVA and robust ANOVA. 
-
-```{r }
-#probe.change_ms_corr_aov
-```
-
-```{r }
-#probe.change_ms_corr_raov
-```
-
-```{r, include=F}
-#rm(probe.change_ms_corr_raov, probe.change_ms_corr_aov)
 ```
 
 \newpage
