@@ -375,6 +375,10 @@ probe.memory_s <- mixed(memory_score ~ group*session*condition + cov_block + cov
                           (session*condition||id), data=data_p, expand_re=T)
 ## ----
 
+# item/goal 
+probe.memory_s <- mixed(memory_score ~ group*condition*session*cov_location +
+                          (condition+session+cov_location||id), data=data_p, expand_re=T)
+
 
 # option A: getrennte Modelle für ego & allo
 probe.memory_s <- mixed(memory_score ~ group*session*condition + cov_gender +
