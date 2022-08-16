@@ -186,24 +186,24 @@ R2 <- r2beta(probe.memory_s$full_model, method='nsj', partial=F) %>% mutate_all(
 apa_lmm <- apa_print(probe.memory_s)
 apa_lmm <- apa_lmm$table %>% mutate(term=str_replace_all(term, c(" c| f"), ''))
 
-emm1 <- emmeans(probe.memory_s$full_model, pairwise ~ group, lmer.df="satterthwaite", adjust="bonferroni")$contrasts
-apa_emm1 <- apa_print(emm1)
+emm1 <- emmeans(probe.memory_s, ~ group*condition, lmer.df="satterthwaite")
+con1 <- contrast(emm1, con_list_group_condition, adjust="bonferroni")
+apa_emm1 <- apa_print(con1)
 apa_emm1 <- apa_emm1$table %>% remove_rownames()
 
-emm2 <- emmeans(probe.memory_s$full_model, pairwise ~ session, lmer.df="satterthwaite", adjust="bonferroni")$contrasts
+emm2 <- emmeans(probe.memory_s$full_model, pairwise ~ group, lmer.df="satterthwaite", adjust="bonferroni")$contrasts
 apa_emm2 <- apa_print(emm2)
 apa_emm2 <- apa_emm2$table %>% remove_rownames()
 
-emm3 <- emmeans(probe.memory_s$full_model, pairwise ~ condition, lmer.df="satterthwaite", adjust="bonferroni")$contrasts
-apa_emm3 <- apa_print(emm3)
-apa_emm3 <- apa_emm3$table %>% remove_rownames()
+rm(emm1, con1, emm2)
 ```
 
 The model had a fit of $R2 = `r R2$Rsq`, [CI: `r R2$upper.CL`, `r R2$lower.CL`$].
 
-* no interactions, especially no *group x session* interaction
-* *group* main effect: younger participants had worse memory accuracy than older participants (all groups differ from each other) 
-* *session* main effect: memory accuracy declines over 2-week period 
+* trend for *group x condition* interaction 
+* no other interactions, especially not *group x session* interaction
+* *group* main effect: younger participants had worse memory accuracy than older participants 
+* *session* main effect: memory accuracy declines over 2-week period
 * *condition* main effect: slightly better memory accuracy in egocentric compared to allocentric 
 (Table\ \@ref(tab:table-probe-ms1)). 
 
@@ -216,7 +216,7 @@ apa_table(
   placement="h")
 ```
 
-(ref:p-ms-caption2) Post-hoc contrasts for factor group.
+(ref:p-ms-caption2) Post-hoc contrasts for group x condition interaction.
 
 ```{r table-probe-ms2, echo=F}
 apa_table(
@@ -225,7 +225,7 @@ apa_table(
   placement="h")
 ```
 
-(ref:p-ms-caption3) Post-hoc contrasts for factor session.
+(ref:p-ms-caption3) Post-hoc contrasts for factor group.
 
 ```{r table-probe-ms3, echo=F}
 apa_table(
@@ -234,17 +234,8 @@ apa_table(
   placement="h")
 ```
 
-(ref:p-ms-caption4) Post-hoc contrasts for factor condition.
-
-```{r table-probe-ms4, echo=F}
-apa_table(
-  apa_emm3,
-  caption="(ref:p-ms-caption4)",
-  placement="h")
-```
-
 ```{r, include=F}
-rm(probe.memory_s, R2, apa_lmm, apa_emm1, emm1, apa_emm2, emm2, apa_emm3, emm3)
+rm(probe.memory_s, R2, apa_lmm, apa_emm1, emm1)
 ```
 
 \newpage 
@@ -268,13 +259,12 @@ R2 <- r2beta(probe.memory_corr_s$full_model, method='nsj', partial=F) %>% mutate
 apa_lmm <- apa_print(probe.memory_corr_s)
 apa_lmm <- apa_lmm$table %>% mutate(term=str_replace_all(term, c(" c| f"), ''))
 
-emm1 <- emmeans(probe.memory_corr_s$full_model, pairwise ~ group, lmer.df="satterthwaite", adjust="bonferroni")$contrasts
+emm1 <- emmeans(probe.memory_corr_s$full_model, pairwise ~ group, lmer.df="satterthwaite",
+                adjust="bonferroni")$contrasts
 apa_emm1 <- apa_print(emm1)
 apa_emm1 <- apa_emm1$table %>% remove_rownames()
 
-emm2 <- emmeans(probe.memory_corr_s$full_model, pairwise ~ session, lmer.df="satterthwaite", adjust="bonferroni")$contrasts
-apa_emm2 <- apa_print(emm2)
-apa_emm2 <- apa_emm2$table %>% remove_rownames()
+rm(emm1)
 ```
 
 The model had a fit of $R2 = `r R2$Rsq`, [CI: `r R2$upper.CL`, `r R2$lower.CL`$].
@@ -302,17 +292,8 @@ apa_table(
   placement="h")
 ```
 
-(ref:p-ms-caption3) Post-hoc contrasts for factor session.
-
-```{r table-probe-msc3, echo=F}
-apa_table(
-  apa_emm2,
-  caption="(ref:p-ms-caption3)",
-  placement="h")
-```
-
 ```{r, include=F}
-rm(probe.memory_corr_s, R2, apa_lmm, emm1, emm2, apa_emm1, apa_emm2)
+rm(probe.memory_corr_s, R2, apa_lmm, apa_emm1)
 ```
 
 \newpage
@@ -467,29 +448,29 @@ R2 <- r2beta(probe.time_s$full_model, method='nsj', partial=F) %>% mutate_all(ap
 apa_lmm <- apa_print(probe.time_s)
 apa_lmm <- apa_lmm$table %>% mutate(term=str_replace_all(term, c(" c| f"), ''))
 
-emm1 <- emmeans(probe.time_s, ~ group * session, lmer.df="satterthwaite")
-con1 <- contrast(emm1, con_list_group_session, adjust="bonferroni")
-apa_emm1 <- apa_print(con1)
-apa_emm1 <- apa_emm1$table %>% remove_rownames()
+emm1 <- test(emtrends(probe.time_s, ~ group, var="sessionC", lmer.df="satterthwaite"), adjust="none")
+# TBD adjust for 6 comparisons
 
-emm2 <- emmeans(probe.time_s, ~ group * condition, lmer.df="satterthwaite")
-con2 <- contrast(emm2, con_list_group_condition, adjust="bonferroni")
-apa_emm2 <- apa_print(con2)
-apa_emm2 <- apa_emm2$table %>% remove_rownames()
+emm2 <- emtrends(probe.time_s, pairwise ~ group, var="sessionC", lmer.df="satterthwaite", adjust="none")
+# TBD adjust for 6 comparisons
 
-emm3 <- emmeans(probe.time_s, ~ session * condition, lmer.df="satterthwaite")
-con3 <- contrast(emm3, con_list_session_condition, adjust="bonferroni")
+emm3 <- emmeans(probe.time_s, ~ group * condition, lmer.df="satterthwaite")
+con3 <- contrast(emm3, con_list_group_condition, adjust="bonferroni")
 apa_emm3 <- apa_print(con3)
 apa_emm3 <- apa_emm3$table %>% remove_rownames()
 
-rm(emm1, emm2, emm3, con1, con2, con3)
+emm4 <- test(emtrends(probe.time_s, ~ condition, var="sessionC", lmer.df="satterthwaite"), adjust="none")
+# TBD adjust for 3 comparisons
+
+emm5 <- emtrends(probe.time_s, pairwise ~ condition, var="sessionC", lmer.df="satterthwaite", adjust="none")
+# TBD adjust for 3 comparisons
 ```
 
 The model had a fit of $R2 = `r R2$Rsq`, [CI: `r R2$upper.CL`, `r R2$lower.CL`$].
 
-* *group x session* interaction: at T1 6-7-year-old children required significantly more time than young adults, at T2 there were no significant group differences; for all groups there were no significant changes in time across sessions.
+* *group x session* interaction: the slopes in all groups did not differ from zero, the slope of 6-7-year-old children was significantly steeper than the slope of adults. 
 * *group x condition* interaction: in allocentric trials 6-7-year-old children required significantly more time than young adults, in egocentric trials there were no significant group differences; all groups required more time for allocentric compared to egocentric trials.
-* *session x condition* interaction: in both sessions participants required more time for allocentric compared to egocentric trials; in both conditions there were no significant changes in time across sessions.
+* *session x condition* interaction: the slopes in both conditions did not differ from zero, the slopes across sessions differed between egocentric and allocentric.
 (Table\ \@ref(tab:table-probe-time1)). 
 
 (ref:p-t-caption1) Fixed effects for time in probe trials.
@@ -501,35 +482,37 @@ apa_table(
   placement="h")
 ```
 
-(ref:p-t-caption2) Post-hoc contrasts for group x session interaction.
+Post-hoc contrasts for group * session interaction.
 
 ```{r table-probe-time2, echo=F}
-apa_table(
-  apa_emm1,
-  caption="(ref:p-t-caption2)",
-  placement="h")
+emm1
+```
+
+```{r table-probe-time3, echo=F}
+emm2
 ```
 
 (ref:p-t-caption3) Post-hoc contrasts for group x condition interaction.
 
-```{r table-probe-time3, echo=F}
+```{r table-probe-time4, echo=F}
 apa_table(
-  apa_emm2,
+  apa_emm3,
   caption="(ref:p-t-caption3)",
   placement="h")
 ```
 
-(ref:p-t-caption4) Post-hoc contrasts for session x condition interaction.
+Post-hoc contrasts for condition * session interaction.
 
-```{r table-probe-time4, echo=F}
-apa_table(
-  apa_emm3,
-  caption="(ref:p-t-caption4)",
-  placement="h")
+```{r table-probe-time5, echo=F}
+emm4
+```
+
+```{r table-probe-time6, echo=F}
+emm5
 ```
 
 ```{r, include=F}
-rm(probe.time_s, apa_lmm, apa_emm1, apa_emm2, apa_emm3)
+rm(probe.time_s, apa_lmm, apa_emm3, emm1, emm2, emm3, emm4, emm5)
 ```
 
 \newpage 
@@ -553,22 +536,22 @@ R2 <- r2beta(probe.excess_path_s$full_model, method='nsj', partial=F) %>% mutate
 apa_lmm <- apa_print(probe.excess_path_s)
 apa_lmm <- apa_lmm$table %>% mutate(term=str_replace_all(term, c(" c| f"), ''))
 
-emm1 <- emmeans(probe.excess_path_s, ~ group * session, lmer.df="satterthwaite")
-con1 <- contrast(emm1, con_list_group_session, adjust="bonferroni")
-apa_emm1 <- apa_print(con1)
-apa_emm1 <- apa_emm1$table %>% remove_rownames()
+# emm1 <- emmeans(probe.excess_path_s, ~ group * session, lmer.df="satterthwaite")
+# con1 <- contrast(emm1, con_list_group_session, adjust="bonferroni")
+# apa_emm1 <- apa_print(con1)
+# apa_emm1 <- apa_emm1$table %>% remove_rownames()
 
 emm2 <- emmeans(probe.excess_path_s, ~ group * condition, lmer.df="satterthwaite")
 con2 <- contrast(emm2, con_list_group_condition, adjust="bonferroni")
 apa_emm2 <- apa_print(con2)
 apa_emm2 <- apa_emm2$table %>% remove_rownames()
 
-emm3 <- emmeans(probe.excess_path_s, ~ session * condition, lmer.df="satterthwaite")
-con3 <- contrast(emm3, con_list_session_condition, adjust="bonferroni")
-apa_emm3 <- apa_print(con3)
-apa_emm3 <- apa_emm3$table %>% remove_rownames()
+# emm3 <- emmeans(probe.excess_path_s, ~ session * condition, lmer.df="satterthwaite")
+# con3 <- contrast(emm3, con_list_session_condition, adjust="bonferroni")
+# apa_emm3 <- apa_print(con3)
+# apa_emm3 <- apa_emm3$table %>% remove_rownames()
 
-rm(emm1, emm2, emm3, con1, con2, con3)
+rm(emm2, con2)
 ```
 
 The model had a fit of $R2 = `r R2$Rsq`, [CI: `r R2$upper.CL`, `r R2$lower.CL`$].
@@ -587,15 +570,6 @@ apa_table(
   placement="h")
 ```
 
-(ref:p-ep-caption2) Post-hoc contrasts for group x session interaction.
-
-```{r table-probe-excess2, echo=F}
-apa_table(
-  apa_emm1,
-  caption="(ref:p-ep-caption2)",
-  placement="h")
-```
-
 (ref:p-ep-caption3) Post-hoc contrasts for group x condition interaction.
 
 ```{r table-probe-excess3, echo=F}
@@ -605,17 +579,8 @@ apa_table(
   placement="h")
 ```
 
-(ref:p-ep-caption4) Post-hoc contrasts for session x condition interaction.
-
-```{r table-probe-excess4, echo=F}
-apa_table(
-  apa_emm3,
-  caption="(ref:p-ep-caption4)",
-  placement="h")
-```
-
 ```{r, include=F}
-rm(probe.excess_path_s, apa_lmm, apa_emm1, apa_emm2, apa_emm3)
+rm(probe.excess_path_s, apa_lmm, apa_emm2)
 ```
 
 \newpage 
@@ -639,12 +604,12 @@ R2 <- r2beta(probe.presence_alleys_s$full_model, method='nsj', partial=F) %>% mu
 apa_lmm <- apa_print(probe.presence_alleys_s)
 apa_lmm <- apa_lmm$table %>% mutate(term=str_replace_all(term, c(" c| f"), ''))
 
-emm1 <- emmeans(probe.presence_alleys_s, ~ session * condition, lmer.df="satterthwaite")
-con1 <- contrast(emm1, con_list_session_condition, adjust="bonferroni")
-apa_emm1 <- apa_print(con1)
-apa_emm1 <- apa_emm1$table %>% remove_rownames()
+# emm1 <- emmeans(probe.presence_alleys_s, ~ session * condition, lmer.df="satterthwaite")
+# con1 <- contrast(emm1, con_list_session_condition, adjust="bonferroni")
+# apa_emm1 <- apa_print(con1)
+# apa_emm1 <- apa_emm1$table %>% remove_rownames()
 
-rm(emm1, con1)
+#rm(emm1, con1)
 ```
 
 The model had a fit of $R2 = `r R2$Rsq`, [CI: `r R2$upper.CL`, `r R2$lower.CL`$].
@@ -662,17 +627,8 @@ apa_table(
   placement="h")
 ```
 
-(ref:p-pa-caption2) Post-hoc contrasts for session x condition interaction.
-
-```{r table-probe-presence2, echo=F}
-apa_table(
-  apa_emm1,
-  caption="(ref:p-pa-caption2)",
-  placement="h")
-```
-
 ```{r, include=F}
-rm(probe.presence_alleys_s, apa_lmm, apa_emm1)
+rm(probe.presence_alleys_s)
 ```
 
 \newpage
@@ -696,12 +652,12 @@ R2 <- r2beta(probe.initial_rot_s$full_model, method='nsj', partial=F) %>% mutate
 apa_lmm <- apa_print(probe.initial_rot_s)
 apa_lmm <- apa_lmm$table %>% mutate(term=str_replace_all(term, c(" c| f"), ''))
 
-emm1 <- emmeans(probe.initial_rot_s, ~ group * session * condition, lmer.df="satterthwaite")
-con1 <- contrast(emm1, con_list_group_session_condition, adjust="bonferroni")
-apa_emm1 <- apa_print(con1)
-apa_emm1 <- apa_emm1$table %>% remove_rownames()
-
-rm(emm1, con1)
+# emm1 <- emmeans(probe.initial_rot_s, ~ group * session * condition, lmer.df="satterthwaite")
+# con1 <- contrast(emm1, con_list_group_session_condition, adjust="bonferroni")
+# apa_emm1 <- apa_print(con1)
+# apa_emm1 <- apa_emm1$table %>% remove_rownames()
+# 
+# rm(emm1, con1)
 ```
 
 The model had a fit of $R2 = `r R2$Rsq`, [CI: `r R2$upper.CL`, `r R2$lower.CL`$].
@@ -718,17 +674,8 @@ apa_table(
   placement="h")
 ```
 
-(ref:p-ir-caption2) Post-hoc contrasts for group x session x condition interaction.
-
-```{r table-probe-init-rot2, echo=F}
-apa_table(
-  apa_emm1,
-  caption="(ref:p-ir-caption2)",
-  placement="h")
-```
-
 ```{r, include=F}
-rm(probe.excess_path_s, apa_lmm, apa_emm1)
+rm(probe.initial_rot_s)
 ```
 
 \newpage
@@ -752,22 +699,22 @@ R2 <- r2beta(probe.rotation_path_s$full_model, method='nsj', partial=F) %>% muta
 apa_lmm <- apa_print(probe.rotation_path_s)
 apa_lmm <- apa_lmm$table %>% mutate(term=str_replace_all(term, c(" c| f"), ''))
 
-emm1 <- emmeans(probe.rotation_path_s, ~ group * session, lmer.df="satterthwaite")
-con1 <- contrast(emm1, con_list_group_session, adjust="bonferroni")
-apa_emm1 <- apa_print(con1)
-apa_emm1 <- apa_emm1$table %>% remove_rownames()
+# emm1 <- emmeans(probe.rotation_path_s, ~ group * session, lmer.df="satterthwaite")
+# con1 <- contrast(emm1, con_list_group_session, adjust="bonferroni")
+# apa_emm1 <- apa_print(con1)
+# apa_emm1 <- apa_emm1$table %>% remove_rownames()
 
 emm2 <- emmeans(probe.rotation_path_s, ~ group * condition, lmer.df="satterthwaite")
 con2 <- contrast(emm2, con_list_group_condition, adjust="bonferroni")
 apa_emm2 <- apa_print(con2)
 apa_emm2 <- apa_emm2$table %>% remove_rownames()
 
-emm3 <- emmeans(probe.rotation_path_s, ~ session * condition, lmer.df="satterthwaite")
-con3 <- contrast(emm3, con_list_session_condition, adjust="bonferroni")
-apa_emm3 <- apa_print(con3)
-apa_emm3 <- apa_emm3$table %>% remove_rownames()
+# emm3 <- emmeans(probe.rotation_path_s, ~ session * condition, lmer.df="satterthwaite")
+# con3 <- contrast(emm3, con_list_session_condition, adjust="bonferroni")
+# apa_emm3 <- apa_print(con3)
+# apa_emm3 <- apa_emm3$table %>% remove_rownames()
 
-rm(emm1, emm2, emm3, con1, con2, con3)
+# rm(emm1, emm2, emm3, con1, con2, con3)
 ```
 
 The model had a fit of $R2 = `r R2$Rsq`, [CI: `r R2$upper.CL`, `r R2$lower.CL`$].
@@ -786,14 +733,6 @@ apa_table(
   placement="h")
 ```
 
-(ref:p-r-caption2) Post-hoc contrasts for group x session interaction.
-
-```{r table-probe-rot2, echo=F}
-apa_table(
-  apa_emm1,
-  caption="(ref:p-r-caption2)",
-  placement="h")
-```
 
 (ref:p-r-caption3) Post-hoc contrasts for group x condition interaction.
 
@@ -804,17 +743,9 @@ apa_table(
   placement="h")
 ```
 
-(ref:p-r-caption4) Post-hoc contrasts for session x condition interaction.
-
-```{r table-probe-rot4, echo=F}
-apa_table(
-  apa_emm3,
-  caption="(ref:p-r-caption4)",
-  placement="h")
-```
 
 ```{r, include=F}
-rm(probe.rotation_path_s, apa_lmm, apa_emm1, apa_emm2, apa_emm3)
+rm(probe.rotation_path_s, apa_lmm, apa_emm2)
 ```
 
 \newpage 
