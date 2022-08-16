@@ -22,9 +22,9 @@ library(nlme)
 library(emmeans)
 library(r2glmm)
 library(car)
-# library(DHARMa)
 library(lattice)
-library(sjPlot)
+# library(DHARMa)
+# library(sjPlot)
 library(papaja)
 
 # set contrast coding 
@@ -113,6 +113,7 @@ data_l <- data %>%
 # probe 
 data_p <- data %>% 
   filter(condition %in% c("allo_ret", "ego_ret")) %>%
+  mutate(sessionC=as.numeric(session) - mean(as.numeric(session), na.rm=T)) %>% 
   mutate_at(vars("cov_time", "cov_velocity", "cov_excess_path", "cov_rotation", "cov_rotation_path"), 
             ~ .x - mean(.x, na.rm=T)) %>% 
   droplevels()
@@ -120,6 +121,7 @@ data_p <- data %>%
 # probe correct trials 
 data_pc <- data %>% 
   filter(condition %in% c("allo_ret", "ego_ret"), correct_final_alley==1) %>%
+  mutate(sessionC=as.numeric(session) - mean(as.numeric(session), na.rm=T)) %>% 
   mutate_at(vars("cov_time", "cov_velocity", "cov_excess_path", "cov_rotation", "cov_rotation_path"), 
             ~ .x - mean(.x, na.rm=T)) %>% 
   droplevels()
@@ -203,10 +205,10 @@ rm(covariates, data)
 
 ## ---- contrast_matrices 
 con_list_session_condition <- list(
-  "a_v_e_t1"  = c(1, 0, -1, 0), 
-  "a_v_e_t2"  = c(0, 1, 0, -1), 
-  "t1_v_t2_a" = c(1, -1, 0, 0),
-  "t1_v_t2_e" = c(0, 0, 1, -1))
+  "e_v_a_t1"  = c(1, 0, -1, 0), 
+  "e_v_a_t2"  = c(0, 1, 0, -1), 
+  "t1_v_t2_e" = c(1, -1, 0, 0),
+  "t1_v_t2_a" = c(0, 0, 1, -1))
 
 con_list_group_session <- list(
   "t1_v_t2_YCH"  = c(1, 0, 0, -1, 0, 0),
@@ -220,41 +222,41 @@ con_list_group_session <- list(
   "OCH_v_YAD_t2" = c(0, 0, 0, 0, 1, -1)) 
 
 con_list_group_condition <- list(
-  "a_v_e_YCH"   = c(1, 0, 0, -1, 0, 0),
-  "a_v_e_OCH"   = c(0, 1, 0, 0, -1, 0),
-  "a_v_e_YAD"   = c(0, 0, 1, 0, 0, -1),
-  "YCH_v_OCH_a" = c(1, -1, 0, 0, 0, 0),
-  "YCH_v_YAD_a" = c(1, 0, -1, 0, 0, 0),
-  "OCH_v_YAD_a" = c(0, 1, -1, 0, 0, 0),
-  "YCH_v_OCH_e" = c(0, 0, 0, 1, -1, 0),
-  "YCH_v_YAD_e" = c(0, 0, 0, 1, 0, -1),
-  "OCH_v_YAD_e" = c(0, 0, 0, 0, 1, -1)) 
+  "e_v_a_YCH"   = c(1, 0, 0, -1, 0, 0),
+  "e_v_a_OCH"   = c(0, 1, 0, 0, -1, 0),
+  "e_v_a_YAD"   = c(0, 0, 1, 0, 0, -1),
+  "YCH_v_OCH_e" = c(1, -1, 0, 0, 0, 0),
+  "YCH_v_YAD_e" = c(1, 0, -1, 0, 0, 0),
+  "OCH_v_YAD_e" = c(0, 1, -1, 0, 0, 0),
+  "YCH_v_OCH_a" = c(0, 0, 0, 1, -1, 0),
+  "YCH_v_YAD_a" = c(0, 0, 0, 1, 0, -1),
+  "OCH_v_YAD_a" = c(0, 0, 0, 0, 1, -1)) 
 
 con_list_group_session_condition <- list(
-  "YCH_v_OCH_t1_a" = c(1, -1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0),
-  "YCH_v_YAD_t1_a" = c(1, 0, -1, 0, 0, 0, 0, 0, 0, 0, 0, 0),
-  "OCH_v_YAD_t1_a" = c(0, 1, -1, 0, 0, 0, 0, 0, 0, 0, 0, 0),
-  "YCH_v_OCH_t2_a" = c(0, 0, 0, 1, -1, 0, 0, 0, 0, 0, 0, 0),
-  "YCH_v_YAD_t2_a" = c(0, 0, 0, 1, 0, -1, 0, 0, 0, 0, 0, 0),
-  "OCH_v_YAD_t2_a" = c(0, 0, 0, 0, 1, -1, 0, 0, 0, 0, 0, 0),
-  "YCH_v_OCH_t1_e" = c(0, 0, 0, 0, 0, 0, 1, -1, 0, 0, 0, 0),
-  "YCH_v_YAD_t1_e" = c(0, 0, 0, 0, 0, 0, 1, 0, -1, 0, 0, 0),
-  "OCH_v_YAD_t1_e" = c(0, 0, 0, 0, 0, 0, 0, 1, -1, 0, 0, 0),
-  "YCH_v_OCH_t2_e" = c(0, 0, 0, 0, 0, 0, 0, 0, 0, 1, -1, 0),
-  "YCH_v_YAD_t2_e" = c(0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, -1),
-  "OCH_v_YAD_t2_e" = c(0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, -1),
-  "t1_v_t2_YCH_a"  = c(1, 0, 0, -1, 0, 0, 0, 0, 0, 0, 0, 0),
-  "t1_v_t2_OCH_a"  = c(0, 1, 0, 0, -1, 0, 0, 0, 0, 0, 0, 0),
-  "t1_v_t2_YAD_a"  = c(0, 0, 1, 0, 0, -1, 0, 0, 0, 0, 0, 0),
-  "t1_v_t2_YCH_e"  = c(0, 0, 0, 0, 0, 0, 1, 0, 0, -1, 0, 0),
-  "t1_v_t2_OCH_e"  = c(0, 0, 0, 0, 0, 0, 0, 1, 0, 0, -1, 0),
-  "t1_v_t2_YAD_e"  = c(0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, -1),
-  "a_v_e_t1_YCH"   = c(1, 0, 0, 0, 0, 0, -1, 0, 0, 0, 0, 0),
-  "a_v_e_t1_OCH"   = c(0, 1, 0, 0, 0, 0, 0, -1, 0, 0, 0, 0),
-  "a_v_e_t1_YAD"   = c(0, 0, 1, 0, 0, 0, 0, 0, -1, 0, 0, 0),
-  "a_v_e_t2_YCH"   = c(0, 0, 0, 1, 0, 0, 0, 0, 0, -1, 0, 0),
-  "a_v_e_t2_OCH"   = c(0, 0, 0, 0, 1, 0, 0, 0, 0, 0, -1, 0),
-  "a_v_e_t2_YAD"   = c(0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, -1)) 
+  "YCH_v_OCH_t1_e" = c(1, -1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0),
+  "YCH_v_YAD_t1_e" = c(1, 0, -1, 0, 0, 0, 0, 0, 0, 0, 0, 0),
+  "OCH_v_YAD_t1_e" = c(0, 1, -1, 0, 0, 0, 0, 0, 0, 0, 0, 0),
+  "YCH_v_OCH_t2_e" = c(0, 0, 0, 1, -1, 0, 0, 0, 0, 0, 0, 0),
+  "YCH_v_YAD_t2_e" = c(0, 0, 0, 1, 0, -1, 0, 0, 0, 0, 0, 0),
+  "OCH_v_YAD_t2_e" = c(0, 0, 0, 0, 1, -1, 0, 0, 0, 0, 0, 0),
+  "YCH_v_OCH_t1_a" = c(0, 0, 0, 0, 0, 0, 1, -1, 0, 0, 0, 0),
+  "YCH_v_YAD_t1_a" = c(0, 0, 0, 0, 0, 0, 1, 0, -1, 0, 0, 0),
+  "OCH_v_YAD_t1_a" = c(0, 0, 0, 0, 0, 0, 0, 1, -1, 0, 0, 0),
+  "YCH_v_OCH_t2_a" = c(0, 0, 0, 0, 0, 0, 0, 0, 0, 1, -1, 0),
+  "YCH_v_YAD_t2_a" = c(0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, -1),
+  "OCH_v_YAD_t2_a" = c(0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, -1),
+  "t1_v_t2_YCH_e"  = c(1, 0, 0, -1, 0, 0, 0, 0, 0, 0, 0, 0),
+  "t1_v_t2_OCH_e"  = c(0, 1, 0, 0, -1, 0, 0, 0, 0, 0, 0, 0),
+  "t1_v_t2_YAD_e"  = c(0, 0, 1, 0, 0, -1, 0, 0, 0, 0, 0, 0),
+  "t1_v_t2_YCH_a"  = c(0, 0, 0, 0, 0, 0, 1, 0, 0, -1, 0, 0),
+  "t1_v_t2_OCH_a"  = c(0, 0, 0, 0, 0, 0, 0, 1, 0, 0, -1, 0),
+  "t1_v_t2_YAD_a"  = c(0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, -1),
+  "e_v_a_t1_YCH"   = c(1, 0, 0, 0, 0, 0, -1, 0, 0, 0, 0, 0),
+  "e_v_a_t1_OCH"   = c(0, 1, 0, 0, 0, 0, 0, -1, 0, 0, 0, 0),
+  "e_v_a_t1_YAD"   = c(0, 0, 1, 0, 0, 0, 0, 0, -1, 0, 0, 0),
+  "e_v_a_t2_YCH"   = c(0, 0, 0, 1, 0, 0, 0, 0, 0, -1, 0, 0),
+  "e_v_a_t2_OCH"   = c(0, 0, 0, 0, 1, 0, 0, 0, 0, 0, -1, 0),
+  "e_v_a_t2_YAD"   = c(0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, -1)) 
 
 con_list_group_location <- list(
   "l1_v_l2_YCH"   = c(1, 0, 0, -1, 0, 0, 0, 0, 0),
@@ -277,15 +279,15 @@ con_list_group_location <- list(
   "OCH_v_YAD_l3"  = c(0, 0, 0,  0, 0, 0, 0, 1, -1)) 
 
 con_list_condition_location <- list(
-  "l1_v_l2_a"   = c(1, 0, -1, 0, 0, 0),
-  "l1_v_l3_a"   = c(1, 0, 0, 0, -1, 0),
-  "l2_v_l3_a"   = c(0, 0, 1, 0, -1, 0),
-  "l1_v_l2_e"   = c(0, 1, 0, -1, 0, 0),
-  "l1_v_l3_e"   = c(0, 1, 0, 0, 0, -1),
-  "l2_v_l3_e"   = c(0, 0, 0, 1, 0, -1),
-  "a_v_e_l1"    = c(1, -1, 0, 0, 0, 0),
-  "a_v_e_l2"    = c(0, 0, 1, -1, 0, 0),
-  "a_v_e_l3"    = c(0, 0, 0, 0, 1, -1))
+  "l1_v_l2_e"   = c(1, 0, -1, 0, 0, 0),
+  "l1_v_l3_e"   = c(1, 0, 0, 0, -1, 0),
+  "l2_v_l3_e"   = c(0, 0, 1, 0, -1, 0),
+  "l1_v_l2_a"   = c(0, 1, 0, -1, 0, 0),
+  "l1_v_l3_a"   = c(0, 1, 0, 0, 0, -1),
+  "l2_v_l3_a"   = c(0, 0, 0, 1, 0, -1),
+  "e_v_a_l1"    = c(1, -1, 0, 0, 0, 0),
+  "e_v_a_l2"    = c(0, 0, 1, -1, 0, 0),
+  "e_v_a_l3"    = c(0, 0, 0, 0, 1, -1))
 ## ----
 
 
@@ -295,32 +297,32 @@ con_list_condition_location <- list(
 
 # ::: tables with demographics::: #
 
-## ---- tables_demo
-t1 <- sm_data %>% 
-  filter(trial==1, session==1) %>% 
-  select(group, cov_gender) %>%
-  tbl_summary(by=group,
-              label=list(cov_gender ~ "Gender"),
-              statistic=list(all_categorical() ~ "{n}")) %>% 
-  modify_header(label="Starmaze data",
-                update=all_stat_cols() ~ "**{level}** N = {n}") %>% 
-  modify_footnote(everything() ~ NA)
-
-# t1 %>%
-#   as_flex_table() %>%
-#   flextable::save_as_docx(path="TEST.docx")
-
-
-t2 <- pt_data %>% 
-  filter(trial==4) %>% 
-  select(group, cov_gender) %>%
-  tbl_summary(by=group,
-              label=list(cov_gender ~ "Gender"),
-              statistic=list(all_categorical() ~ "{n}")) %>% 
-  modify_header(label="Post-navigation data",
-                update=all_stat_cols() ~ "**{level}** N = {n}") %>% 
-  modify_footnote(everything() ~ NA)
-## ----
+# ## ---- tables_demo
+# t1 <- sm_data %>% 
+#   filter(trial==1, session==1) %>% 
+#   select(group, cov_gender) %>%
+#   tbl_summary(by=group,
+#               label=list(cov_gender ~ "Gender"),
+#               statistic=list(all_categorical() ~ "{n}")) %>% 
+#   modify_header(label="Starmaze data",
+#                 update=all_stat_cols() ~ "**{level}** N = {n}") %>% 
+#   modify_footnote(everything() ~ NA)
+# 
+# # t1 %>%
+# #   as_flex_table() %>%
+# #   flextable::save_as_docx(path="TEST.docx")
+# 
+# 
+# t2 <- pt_data %>% 
+#   filter(trial==4) %>% 
+#   select(group, cov_gender) %>%
+#   tbl_summary(by=group,
+#               label=list(cov_gender ~ "Gender"),
+#               statistic=list(all_categorical() ~ "{n}")) %>% 
+#   modify_header(label="Post-navigation data",
+#                 update=all_stat_cols() ~ "**{level}** N = {n}") %>% 
+#   modify_footnote(everything() ~ NA)
+# ## ----
 
 
 # ######################################################### #
@@ -343,16 +345,12 @@ t2 <- pt_data %>%
 probe.acc <- mixed(correct_final_alley ~ group*session*condition + cov_location + cov_object + cov_gender +
                      (session|id), data=data_p, expand_re=T, family=binomial(link="logit"), method="LRT",
                    control=glmerControl(optimizer="bobyqa", optCtrl=list(maxfun=1e6)))
-
-# probe.acc <- mixed(correct_final_alley ~ group*session*condition + cov_location + cov_object + cov_gender + 
-#                      (session*condition||id), data=data_p, expand_re=T, family=binomial(link="logit"), method="LRT",
+## ---- 
+# probe.acc <- mixed(correct_final_alley ~ group*sessionC*condition + cov_location + cov_object + cov_gender +
+#                      (sessionC|id), data=data_p, expand_re=T, family=binomial(link="logit"), method="LRT",
 #                    control=glmerControl(optimizer="bobyqa", optCtrl=list(maxfun=1e6)))
 
-# random effects
-VarCorr(probe.acc$full_model)
-# dotplot(ranef(probe.acc$full_model))
-
-# statistics for fixed effects
+# fixed effects
 probe.acc
 emm <- emmeans(probe.acc, ~ group*condition)
 contrast(emm, con_list_group_condition, type="response", adjust="bonferroni")
@@ -360,7 +358,10 @@ emmeans(probe.acc, pairwise ~ session, type="response")$contrasts
 emmeans(probe.acc, pairwise ~ group, type="response", adjust="bonferroni")$contrasts
 emmeans(probe.acc, pairwise ~ condition, type="response")$contrasts
 # emmeans(probe.acc, pairwise ~ cov_location, type="response")$contrasts
-## ---- 
+
+# random effects
+VarCorr(probe.acc$full_model)
+# dotplot(ranef(probe.acc$full_model))
 
 # check model: ok 
 simulationOutput <- simulateResiduals(fittedModel=probe.acc$full_model, plot=F)
@@ -409,48 +410,25 @@ line_acc <- afex_plot(probe.acc, x="session", trace="group", panel="condition", 
 # -- MEMORY SCORE IN ALL TRIALS -- # 
 
 ## ---- stats_probe_ms_simple
-probe.memory_s <- mixed(memory_score ~ group*session*condition + cov_location + cov_object + cov_gender +
-                          (session|id), data=data_p, expand_re=T)
-
-# probe.memory_s <- mixed(memory_score ~ group*session*condition + cov_location + cov_object + cov_gender +
-#                           (session*condition||id), data=data_p, expand_re=T)
+probe.memory_s <- mixed(memory_score ~ group*sessionC*condition + cov_location + cov_object + cov_gender +
+                          (sessionC|id), data=data_p, expand_re=T)
 ## ----
 
-
-# option A: getrennte Modelle für ego & allo
-probe.memory_a <- mixed(memory_score ~ group*session + cov_location + cov_object + cov_gender +
-                               (session|id), data=data_p %>% filter(condition=="allo_ret"), expand_re=T)
-probe.memory_a
-# ns 
-
-probe.memory_e <- mixed(memory_score ~ group*session + cov_location + cov_object + cov_gender +
-                               (session|id), data=data_p %>% filter(condition=="ego_ret"), expand_re=T)
-probe.memory_e
-# trend
-
-
-# option B: session als kontinuierlich und emtrends, ggf. mit getrennten Modellen f?r ego & allo
-data_p <- data_p %>% mutate(session2=as.numeric(session),
-                            session2=session2-mean(session2, na.rm=T))
-
-probe.memory_s <- mixed(memory_score ~ group*session2*condition + cov_location + cov_object + cov_gender +
-                          (session2|id), data=data_p, expand_re=T)
-probe.memory_s
 emm <- emmeans(probe.memory_s, ~ group*condition, lmer.df="satterthwaite")
-contrast(emm, con_list_group_condition, type="response", adjust="bonferroni")
-# emtrends(probe.memory_s, pairwise ~ group, var="session2", adjust="bonferroni", lmer.df="satterthwaite") 
+contrast(emm, con_list_group_condition, adjust="bonferroni")
 
-data_a <- data_p %>% filter(condition=="allo_ret") %>% mutate(session3=session2 - mean(session2))
-probe.memory_a <- mixed(memory_score ~ group*session3 + cov_location + cov_object + cov_gender +
-                          (session3|id), data=data_a, expand_re=T)
-emtrends(probe.memory_a, pairwise ~ group, var="session3", adjust="bonferroni", lmer.df="satterthwaite") 
-# ns 
 
-data_e <- data_p %>% filter(condition=="ego_ret") %>% mutate(session3=session2 - mean(session2))
-probe.memory_e <- mixed(memory_score ~ group*session3 + cov_location + cov_object + cov_gender +
-                          (session3|id), data=data_e, expand_re=T)
-emtrends(probe.memory_e, pairwise ~ group, var="session3", adjust="bonferroni", lmer.df="satterthwaite") 
-# slope 9-10yo significantly steeper than adults 
+# # option A: getrennte Modelle für ego & allo
+# probe.memory_a <- mixed(memory_score ~ group*sessionC + cov_location + cov_object + cov_gender +
+#                                (sessionC|id), data=data_p %>% filter(condition=="allo_ret"), expand_re=T)
+# probe.memory_a
+# # ns 
+# 
+# probe.memory_e <- mixed(memory_score ~ group*sessionC + cov_location + cov_object + cov_gender +
+#                                (sessionC|id), data=data_p %>% filter(condition=="ego_ret"), expand_re=T)
+# probe.memory_e
+# emtrends(probe.memory_e, pairwise ~ group, var="session3", adjust="bonferroni", lmer.df="satterthwaite") 
+# # trend
 
 
 ## ---- stats_probe_ms_outlier
@@ -515,7 +493,7 @@ anova.lme(probe.memory_h, type="marginal")
 rm(probe.memory_s, probe.memory_o, probe.memory_h)
 
 ## ---- plot_probe_ms
-line_memory <- afex_plot(probe.memory_s, x="session", trace="group", panel="condition", id="id", 
+line_memory <- afex_plot(probe.memory_s, x="sessionC", trace="group", panel="condition", id="id", 
                          error="model", dodge=0.8,
                          mapping=c("shape", "fill", "color"),
                          factor_levels=list(group=group_labels, condition=condition_labels),
@@ -582,8 +560,8 @@ line_memory <- afex_plot(probe.memory_s, x="session", trace="group", panel="cond
 # -- MEMORY SCORE IN CORRECT TRIALS -- # 
 
 ## ---- stats_probe_ms_corr_simple
-probe.memory_corr_s <- mixed(memory_score ~ group*session*condition + cov_block + cov_location + cov_gender +
-                               (session||id), data=data_pc, expand_re=T)
+probe.memory_corr_s <- mixed(memory_score ~ group*sessionC*condition + cov_location + cov_object + cov_gender +
+                               (sessionC|id), data=data_pc, expand_re=T)
 ## ----
 
 ## ---- stats_probe_ms_corr_outlier
@@ -632,7 +610,7 @@ qqline(resid(probe.memory_corr_h))
 
 # random effects
 VarCorr(probe.memory_corr_s$full_model)
-# dotplot(ranef(probe.memory_s$full_model))
+# dotplot(ranef(probe.memory_corr_s$full_model))
 VarCorr(probe.memory_corr_o$full_model)
 probe.memory_corr_h$modelStruct$reStruct 
 
@@ -662,8 +640,6 @@ line_memory_corr <- afex_plot(probe.memory_corr_s, x="session", trace="group", p
   labs(x=l_session, y=l_memory_score)
 ## ----
 
-emm <- emmeans(probe.memory_corr_s, ~ group*session*condition, lmer.df="satterthwaite")
-contrast(emm, con_list_group_session_condition, adjust="bonferroni")
 
 # ######################################################### #
 
@@ -1128,30 +1104,19 @@ line_rotation_path <- afex_plot(probe.rotation_path_s, x="session", trace="group
 # -- EXPLORATION ROLE OF GOAL LOCATIONS -- # 
 
 ## ---- stats_probe_explore_goals
-# option A: session as factor -> very complex contrasts
-probe.memory_goals <- mixed(memory_score ~ group*condition*session*cov_location + cov_object + cov_gender +
-                              (condition+session+cov_location|id), data=data_p, expand_re=T)
+probe.memory_goals <- mixed(memory_score ~ group*condition*sessionC*cov_location + cov_object + cov_gender +
+                              (condition+sessionC+cov_location||id), data=data_p, expand_re=T)
+
+# random effects
+VarCorr(probe.memory_goals$full_model)
+dotplot(ranef(probe.memory_goals$full_model))
 
 # fixed effects 
 probe.memory_goals
-emm1 <- emmeans(probe.memory_goals, ~ group*session*cov_location, lmer.df="satterthwaite")
-# TBD contrasts 
-
-
-# option B: session as continuous and emtrends
-probe.memory_goals2 <- mixed(memory_score ~ group*condition*session2*cov_location + cov_object + cov_gender +
-                              (condition+session2+cov_location|id), data=data_p, expand_re=T)
-
-# random effects
-VarCorr(probe.memory_goals2$full_model)
-dotplot(ranef(probe.memory_goals2$full_model))
-
-# fixed effects 
-probe.memory_goals2
-emm1 <- emtrends(probe.memory_goals2, ~ group*cov_location, var="session2", lmer.df="satterthwaite")
+emm1 <- emtrends(probe.memory_goals, ~ group*cov_location, var="sessionC", lmer.df="satterthwaite")
 contrast(emm1, con_list_group_location, adjust="bonferroni")
 
-afex_plot(probe.memory_goals2, x="session", trace="group", panel="cov_location", id="id", 
+afex_plot(probe.memory_goals2, x="sessionC", trace="group", panel="cov_location", id="id", 
           error="model", dodge=0.8,
           mapping=c("shape", "fill", "color"),
           factor_levels=list(group=group_labels),
@@ -1189,9 +1154,35 @@ afex_plot(probe.memory_goals2, x="condition", trace="group", panel="cov_location
         panel.grid.major.x=element_blank()) +
   labs(x="condition", y=l_memory_score)
 
-# random effects
-VarCorr(probe.memory_goals2$full_model)
-dotplot(ranef(probe.memory_goals2$full_model))
+
+# option B:
+# probe.acc_goals2 <- mixed(correct_final_alley ~ group*sessionC*condition*cov_location + cov_object + cov_gender +
+#                             (condition+sessionC+cov_location|id), data=data_p, expand_re=T, family=binomial(link="logit"), method="LRT",
+#                           control=glmerControl(optimizer="bobyqa", optCtrl=list(maxfun=1e6)))
+# 
+# # random effects
+# VarCorr(probe.acc_goals2$full_model)
+# dotplot(ranef(probe.acc_goals2$full_model))
+# 
+# # fixed effects 
+# probe.acc_goals2
+# 
+# afex_plot(probe.acc_goals2, x="condition", trace="group", panel="cov_location", id="id", 
+#           error="model", dodge=0.8,
+#           mapping=c("shape", "fill", "color"),
+#           legend_title=NULL, 
+#           data_geom=geom_boxplot, 
+#           data_arg=list(width=0.5, color="black"),
+#           point_arg=list(size=3), 
+#           line_arg=list(size=1.25),
+#           error_arg=list(size=1.25, width=0)) + 
+#   scale_fill_manual(values=group_colors) + 
+#   scale_color_manual(values=group_colors_o) +
+#   coord_cartesian(ylim=c(0,1)) + 
+#   theme_bw(base_size=15) + 
+#   theme(legend.position="top", legend.justification=c(0,0),
+#         panel.grid.major.x=element_blank()) +
+#   labs(x="condition", y=l_memory_score)
 ## ---- 
 
 
