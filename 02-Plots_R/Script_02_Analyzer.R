@@ -1048,7 +1048,7 @@ rm(line_rotation_path, probe.rotation_path_s)
 
 ## ---- stats_probe_explore_goals
 probe.memory_goals <- mixed(memory_score ~ group*condition*sessionC*cov_location + cov_object + cov_gender +
-                              (condition+sessionC+cov_location||id), data=data_p, expand_re=T)
+                               (sessionC+cov_location|id), data=data_p, expand_re=T)
 
 # random effects
 VarCorr(probe.memory_goals$full_model)
@@ -1056,10 +1056,20 @@ dotplot(ranef(probe.memory_goals$full_model))
 
 # fixed effects 
 probe.memory_goals
-emm1 <- emtrends(probe.memory_goals, ~ group*cov_location, var="sessionC", lmer.df="satterthwaite")
-contrast(emm1, con_list_group_location, adjust="bonferroni")
 
-afex_plot(probe.memory_goals2, x="sessionC", trace="group", panel="cov_location", id="id", 
+# group x sessionC x location 
+emm1_0 <- emtrends(probe.memory_goals, ~ group*cov_location, var="sessionC", lmer.df="satterthwaite")
+emm1_1 <- summary(contrast(emm1_0, con_list_group_location, adjust="none")) # 18 comparisons
+emm1_2 <- summary(emm1_0, infer=c(F,T)) # 9 comparisons 
+emm1_2 <- as.data.frame(emm1_2) %>% unite("contrast", group:cov_location, sep=" - ") %>%
+  setNames(names(emm1_1))
+emm1 <- rbind(emm1_1, emm1_2) %>% mutate(p.value=ifelse(p.value*27>1, 1, p.value*27))
+apa_emm1 <- apa_print(emm1)
+apa_emm1 <- apa_emm1$table %>% remove_rownames()
+variable_labels(apa_emm1)$p.value <- "$p_\\mathrm{\\scriptsize Bonferroni(27)}$"
+rm(emm1_0, emm1_1, emm1_2, emm1)
+
+afex_plot(probe.memory_goals, x="sessionC", trace="group", panel="cov_location", id="id", 
           error="model", dodge=0.8,
           mapping=c("shape", "fill", "color"),
           factor_levels=list(group=group_labels),
@@ -1077,10 +1087,13 @@ afex_plot(probe.memory_goals2, x="sessionC", trace="group", panel="cov_location"
         panel.grid.major.x=element_blank()) +
   labs(x=l_session, y=l_memory_score)
 
-emm2 <- emmeans(probe.memory_goals2, ~ condition*cov_location, lmer.df="satterthwaite")
-contrast(emm2, con_list_condition_location, adjust="bonferroni")
+# condition x location 
+emm2 <- emmeans(probe.memory_goals, ~ condition*cov_location, lmer.df="satterthwaite")
+emm2 <- contrast(emm2, con_list_condition_location, adjust="bonferroni")
+apa_emm2 <- apa_print(emm2)
+apa_emm2 <- apa_emm2$table %>% remove_rownames()
 
-afex_plot(probe.memory_goals2, x="condition", trace="group", panel="cov_location", id="id", 
+afex_plot(probe.memory_goals, x="condition", trace="group", panel="cov_location", id="id", 
           error="model", dodge=0.8,
           mapping=c("shape", "fill", "color"),
           legend_title=NULL, 
@@ -1097,35 +1110,51 @@ afex_plot(probe.memory_goals2, x="condition", trace="group", panel="cov_location
         panel.grid.major.x=element_blank()) +
   labs(x="condition", y=l_memory_score)
 
+# group x location (TREND)
+emm3 <- emmeans(probe.memory_goals, ~ group*cov_location, lmer.df="satterthwaite")
+emm3 <- contrast(emm3, con_list_group_location, adjust="bonferroni")
+apa_emm3 <- apa_print(emm3)
+apa_emm3 <- apa_emm3$table %>% remove_rownames()
 
-# option B:
-# probe.acc_goals2 <- mixed(correct_final_alley ~ group*sessionC*condition*cov_location + cov_object + cov_gender +
-#                             (condition+sessionC+cov_location|id), data=data_p, expand_re=T, family=binomial(link="logit"), method="LRT",
-#                           control=glmerControl(optimizer="bobyqa", optCtrl=list(maxfun=1e6)))
-# 
-# # random effects
-# VarCorr(probe.acc_goals2$full_model)
-# dotplot(ranef(probe.acc_goals2$full_model))
-# 
-# # fixed effects 
-# probe.acc_goals2
-# 
-# afex_plot(probe.acc_goals2, x="condition", trace="group", panel="cov_location", id="id", 
-#           error="model", dodge=0.8,
-#           mapping=c("shape", "fill", "color"),
-#           legend_title=NULL, 
-#           data_geom=geom_boxplot, 
-#           data_arg=list(width=0.5, color="black"),
-#           point_arg=list(size=3), 
-#           line_arg=list(size=1.25),
-#           error_arg=list(size=1.25, width=0)) + 
-#   scale_fill_manual(values=group_colors) + 
-#   scale_color_manual(values=group_colors_o) +
-#   coord_cartesian(ylim=c(0,1)) + 
-#   theme_bw(base_size=15) + 
-#   theme(legend.position="top", legend.justification=c(0,0),
-#         panel.grid.major.x=element_blank()) +
-#   labs(x="condition", y=l_memory_score)
+afex_plot(probe.memory_goals, x="cov_location", trace="group", id="id",
+          error="model", dodge=0.8,
+          mapping=c("shape", "fill", "color"),
+          legend_title=NULL,
+          data_geom=geom_boxplot,
+          data_arg=list(width=0.5, color="black"),
+          point_arg=list(size=3),
+          line_arg=list(size=1.25),
+          error_arg=list(size=1.25, width=0)) +
+  scale_fill_manual(values=group_colors) +
+  scale_color_manual(values=group_colors_o) +
+  coord_cartesian(ylim=c(0,1)) +
+  theme_bw(base_size=15) +
+  theme(legend.position="top", legend.justification=c(0,0),
+        panel.grid.major.x=element_blank()) +
+  labs(x="location", y=l_memory_score)
+
+# group x condition (TREND)
+emm4 <- emmeans(probe.memory_goals, ~ group*condition, lmer.df="satterthwaite")
+emm4 <- contrast(emm4, con_list_group_condition, adjust="bonferroni")
+apa_emm4 <- apa_print(emm4)
+apa_emm4 <- apa_emm4$table %>% remove_rownames()
+
+afex_plot(probe.memory_goals, x="condition", trace="group", id="id",
+          error="model", dodge=0.8,
+          mapping=c("shape", "fill", "color"),
+          legend_title=NULL,
+          data_geom=geom_boxplot,
+          data_arg=list(width=0.5, color="black"),
+          point_arg=list(size=3),
+          line_arg=list(size=1.25),
+          error_arg=list(size=1.25, width=0)) +
+  scale_fill_manual(values=group_colors) +
+  scale_color_manual(values=group_colors_o) +
+  coord_cartesian(ylim=c(0,1)) +
+  theme_bw(base_size=15) +
+  theme(legend.position="top", legend.justification=c(0,0),
+        panel.grid.major.x=element_blank()) +
+  labs(x="condition", y=l_memory_score)
 ## ---- 
 
 
