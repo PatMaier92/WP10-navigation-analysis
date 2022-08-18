@@ -615,8 +615,86 @@ line_memory_corr <- afex_plot(probe.memory_corr_s, x="sessionC", trace="group", 
 ## ----
 rm(line_memory_corr, probe.memory_corr_s)
 
+
+# ######################################################### #
 # ######################################################### #
 
+
+# -- EXTENDED ANALYSIS WITH ROLE OF GOAL LOCATIONS -- # 
+
+## ---- stats_probe_explore_goals
+probe.memory_goals <- mixed(memory_score ~ group*condition*sessionC*cov_location + cov_object + cov_gender +
+                              (sessionC+cov_location|id), data=data_p, expand_re=T)
+## ---- 
+
+# random effects
+VarCorr(probe.memory_goals$full_model)
+dotplot(ranef(probe.memory_goals$full_model))
+
+# fixed effects 
+probe.memory_goals
+
+## ---- plot_probe_explore_ms
+line_explore_ms <- afex_plot(probe.memory_goals, x="sessionC", trace="group", panel=~ cov_location + condition, id="id", 
+                             error="model", dodge=0.8,
+                             mapping=c("shape", "fill", "color"),
+                             factor_levels=list(group=group_labels),
+                             legend_title=NULL, 
+                             data_geom=geom_boxplot, 
+                             data_arg=list(width=0.5, color="black"),
+                             point_arg=list(size=3), 
+                             line_arg=list(size=1.25),
+                             error_arg=list(size=1.25, width=0)) + 
+  scale_fill_manual(values=group_colors) + 
+  scale_color_manual(values=group_colors_o) +
+  coord_cartesian(ylim=c(0,1)) + 
+  theme_bw(base_size=15) + 
+  theme(legend.position="top", legend.justification=c(0,0),
+        panel.grid.major.x=element_blank(),
+        axis.text.x=element_blank()) +
+  labs(x=l_session, y=l_memory_score)
+## ---- 
+
+
+## ---- stats_probe_corr_explore_goals
+probe.memory_corr_goals <- mixed(memory_score ~ group*condition*sessionC*cov_location + cov_object + cov_gender +
+                                   (sessionC+cov_location|id), data=data_pc, expand_re=T)
+## ---- 
+
+# random effects
+VarCorr(probe.memory_corr_goals$full_model)
+dotplot(ranef(probe.memory_corr_goals$full_model))
+
+# fixed effects 
+probe.memory_corr_goals
+
+## ---- plot_probe_corr_explore_ms
+line_explore_corr_ms <- afex_plot(probe.memory_corr_goals, x="sessionC", trace="group", panel=~ cov_location + condition, id="id", 
+                                  error="model", dodge=0.8,
+                                  mapping=c("shape", "fill", "color"),
+                                  factor_levels=list(group=group_labels),
+                                  legend_title=NULL, 
+                                  data_geom=geom_boxplot, 
+                                  data_arg=list(width=0.5, color="black"),
+                                  point_arg=list(size=3), 
+                                  line_arg=list(size=1.25),
+                                  error_arg=list(size=1.25, width=0)) + 
+  scale_fill_manual(values=group_colors) + 
+  scale_color_manual(values=group_colors_o) +
+  coord_cartesian(ylim=c(0.75,1)) + 
+  theme_bw(base_size=15) + 
+  theme(legend.position="top", legend.justification=c(0,0),
+        panel.grid.major.x=element_blank(),
+        axis.text.x=element_blank()) +
+  labs(x=l_session, y=l_memory_score)
+## ---- 
+
+
+# ######################################################### #
+# ######################################################### #
+
+
+# -- NAVIGATION BEHAVIOR -- # 
 # -- TIME -- # 
 
 ## ---- stats_probe_time_simple
@@ -1039,79 +1117,6 @@ line_rotation_path <- afex_plot(probe.rotation_path_s, x="sessionC", trace="grou
 ## ---- 
 rm(line_rotation_path, probe.rotation_path_s)
 
-
-# ######################################################### #
-# ######################################################### #
-
-
-# -- EXPLORATION ROLE OF GOAL LOCATIONS -- # 
-
-## ---- stats_probe_explore_goals
-probe.memory_goals <- mixed(memory_score ~ group*condition*sessionC*cov_location + cov_object + cov_gender +
-                               (sessionC+cov_location|id), data=data_p, expand_re=T)
-## ---- 
-
-# random effects
-VarCorr(probe.memory_goals$full_model)
-dotplot(ranef(probe.memory_goals$full_model))
-
-# fixed effects 
-probe.memory_goals
-
-## ---- plot_probe_explore_ms
-line_explore_ms <- afex_plot(probe.memory_goals, x="sessionC", trace="group", panel=~ cov_location + condition, id="id", 
-                             error="model", dodge=0.8,
-                             mapping=c("shape", "fill", "color"),
-                             factor_levels=list(group=group_labels),
-                             legend_title=NULL, 
-                             data_geom=geom_boxplot, 
-                             data_arg=list(width=0.5, color="black"),
-                             point_arg=list(size=3), 
-                             line_arg=list(size=1.25),
-                             error_arg=list(size=1.25, width=0)) + 
-  scale_fill_manual(values=group_colors) + 
-  scale_color_manual(values=group_colors_o) +
-  coord_cartesian(ylim=c(0,1)) + 
-  theme_bw(base_size=15) + 
-  theme(legend.position="top", legend.justification=c(0,0),
-        panel.grid.major.x=element_blank(),
-        axis.text.x=element_blank()) +
-  labs(x=l_session, y=l_memory_score)
-## ---- 
-
-
-## ---- stats_probe_corr_explore_goals
-probe.memory_corr_goals <- mixed(memory_score ~ group*condition*sessionC*cov_location + cov_object + cov_gender +
-                                   (sessionC+cov_location|id), data=data_pc, expand_re=T)
-## ---- 
-
-# random effects
-VarCorr(probe.memory_corr_goals$full_model)
-dotplot(ranef(probe.memory_corr_goals$full_model))
-
-# fixed effects 
-probe.memory_corr_goals
-
-## ---- plot_probe_corr_explore_ms
-line_explore_corr_ms <- afex_plot(probe.memory_corr_goals, x="sessionC", trace="group", panel=~ cov_location + condition, id="id", 
-                                  error="model", dodge=0.8,
-                                  mapping=c("shape", "fill", "color"),
-                                  factor_levels=list(group=group_labels),
-                                  legend_title=NULL, 
-                                  data_geom=geom_boxplot, 
-                                  data_arg=list(width=0.5, color="black"),
-                                  point_arg=list(size=3), 
-                                  line_arg=list(size=1.25),
-                                  error_arg=list(size=1.25, width=0)) + 
-  scale_fill_manual(values=group_colors) + 
-  scale_color_manual(values=group_colors_o) +
-  coord_cartesian(ylim=c(0.75,1)) + 
-  theme_bw(base_size=15) + 
-  theme(legend.position="top", legend.justification=c(0,0),
-        panel.grid.major.x=element_blank(),
-        axis.text.x=element_blank()) +
-  labs(x=l_session, y=l_memory_score)
-## ---- 
 
 # ######################################################### #
 # ######################################################### #
