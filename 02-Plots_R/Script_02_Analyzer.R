@@ -1308,21 +1308,21 @@ rm(t)
 # -- TIME -- #
 
 ## ---- stats_learn_time_simple
-learn.time_s <- mixed(time ~ group*trial_in_block + cov_block + cov_location + cov_time + cov_gender + (1|id), 
+learn.time_s <- mixed(time ~ group*trial_in_block + cov_block + cov_location + cov_time + cov_gender + (trial_in_block|id), 
                       data=data_l, expand_re=T)
 ## ----
 
 ## ---- stats_learn_time_outlier
 t <- data_l %>% mutate(flag=ifelse(is_outlier(time), T, F))
 # ggplot(t, aes(x=time, fill=flag)) + geom_histogram() + facet_wrap(~group)
-learn.time_o <- mixed(time ~ group*trial_in_block + cov_block + cov_time + cov_gender + (1|id), 
+learn.time_o <- mixed(time ~ group*trial_in_block + cov_block + cov_time + cov_gender + (trial_in_block|id), 
                       data=t %>% filter(flag==F), expand_re=T)
 rm(t)
 ## ----
 
 # -- heteroscedasticity
 learn.time_base <- lme(time ~ group*trial_in_block + cov_block + cov_time + cov_gender,
-                       random=~1 | id, 
+                       random=~trial_in_block | id, 
                        na.action=na.omit, data=data_l, method="ML")
 learn.time_var1 <- update(learn.time_base, weights=varIdent(form=~1 | group))
 anova.lme(learn.time_base, learn.time_var1) # chose model 1
@@ -1330,7 +1330,7 @@ rm(learn.time_base, learn.time_var1)
 ## ---- stats_learning_time_hetero
 # re-fit final model with REML
 learn.time_h <- lme(time ~ group*trial_in_block + cov_block + cov_time + cov_gender,
-                    random=~1 | id, 
+                    random=~trial_in_block | id, 
                     weights=varIdent(form=~1 | group),
                     na.action=na.omit, data=data_l, method="REML")
 ## ---- 
@@ -1398,21 +1398,21 @@ rm(learn.time_plot)
 # --- EXCESS PATH LENGTH -- #
 
 ## ---- stats_learn_excess_path_simple
-learn.excess_path_s <- mixed(excess_path_length ~ group*trial_in_block + cov_block + cov_location + cov_excess_path + cov_gender + (1|id), 
+learn.excess_path_s <- mixed(excess_path_length ~ group*trial_in_block + cov_block + cov_location + cov_excess_path + cov_gender + (trial_in_block|id), 
                              data=data_l, expand_re=T)
 ## ----
 
 ## ---- stats_learn_excess_path_outlier
 t <- data_l %>% mutate(flag=ifelse(is_outlier(excess_path_length), T, F))
 # ggplot(t, aes(x=excess_path_length, fill=flag)) + geom_histogram() + facet_wrap(~group)
-learn.excess_path_o <- mixed(excess_path_length ~ group*trial_in_block + cov_block + cov_excess_path + cov_gender + (1|id), 
+learn.excess_path_o <- mixed(excess_path_length ~ group*trial_in_block + cov_block + cov_excess_path + cov_gender + (trial_in_block|id), 
                              data=t %>% filter(flag==F), expand_re=T)
 rm(t)
 ## ----
 
 # -- heteroscedasticity
 learn.excess_path_base <- lme(excess_path_length ~ group*trial_in_block + cov_block + cov_excess_path + cov_gender,
-                              random=~1 | id, 
+                              random=~trial_in_block | id, 
                               na.action=na.omit, data=data_l, method="ML")
 learn.excess_path_var1 <- update(learn.excess_path_base, weights=varIdent(form=~1 | group))
 anova(learn.excess_path_base, learn.excess_path_var1, test=T) # chose model 1
@@ -1420,7 +1420,7 @@ rm(learn.excess_path_base, learn.excess_path_var1)
 ## ---- stats_learning_excess_path_hetero
 # re-fit final model with REML
 learn.excess_path_h <-lme(excess_path_length ~ group*trial_in_block + cov_block + cov_excess_path + cov_gender,
-                          random=~1 | id, 
+                          random=~trial_in_block | id, 
                           weights=varIdent(form=~1 | group),
                           na.action=na.omit, data=data_l, method="REML")
 ## ---- 
@@ -1480,21 +1480,21 @@ rm(learn.excess_path_plot)
 # -- PRESENCE in outer alleys vs inner pentagon -- #
 
 ## ---- stats_learn_presence_simple
-learn.presence_alleys_s <- mixed(presence_alleys ~ group*trial_in_block + cov_block + cov_location + cov_gender + (1|id), 
+learn.presence_alleys_s <- mixed(presence_alleys ~ group*trial_in_block + cov_block + cov_location + cov_gender + (trial_in_block|id), 
                                  data=data_l, expand_re=T)
 ## ----
 
 ## ---- stats_learn_presence_outlier
 t <- data_l %>% mutate(flag=ifelse(is_outlier(presence_alleys), T, F))
 # ggplot(t, aes(x=presence_alleys, fill=flag)) + geom_histogram() + facet_wrap(~group)
-learn.presence_alleys_o <- mixed(presence_alleys ~ group*trial_in_block + cov_block + cov_gender + (1|id), 
+learn.presence_alleys_o <- mixed(presence_alleys ~ group*trial_in_block + cov_block + cov_gender + (trial_in_block|id), 
                                  data=t %>% filter(flag==F), expand_re=T)
 rm(t)
 ## ----
 
 # -- heteroscedasticity
 learn.presence_alleys_base <- lme(presence_alleys ~ group*trial_in_block + cov_block + cov_gender,
-                                  random=~1 | id, 
+                                  random=~trial_in_block | id, 
                                   na.action=na.omit, data=data_l, method="ML")
 learn.presence_alleys_var1 <- update(learn.presence_alleys_base, weights=varIdent(form=~1 | group))
 anova.lme(learn.presence_alleys_base, learn.presence_alleys_var1) # chose model 1
@@ -1502,7 +1502,7 @@ rm(learn.presence_alleys_base, learn.presence_alleys_var1)
 ## ---- stats_learning_presence_hetero
 # re-fit final model with REML
 learn.presence_alleys_h <- lme(presence_alleys ~ group*trial_in_block + cov_block + cov_gender,
-                               random=~1 | id, 
+                               random=~trial_in_block | id, 
                                weights=varIdent(form=~1 | group),
                                na.action=na.omit, data=data_l, method="REML")
 ## ---- 
