@@ -239,7 +239,7 @@ rm(probe.memory_s, R2, apa_lmm, apa_emm1)
 
 \newpage 
 
-### **Explorative: Memory score (all trials) with interactions with goal locations**
+### **EXTENDED: Memory score (all trials) with interactions with goal locations**
 
 ```{r, stats_probe_explore_goals }
 ```
