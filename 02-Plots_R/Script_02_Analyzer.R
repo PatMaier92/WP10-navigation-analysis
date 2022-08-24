@@ -73,8 +73,8 @@ l_rotation_by_path <- "rotation/360/path length"
 # scales::show_col()
 group_colors <- c("#FFE476", "#6699FF", "#000000")
 group_colors_o <-  c("#CC6600", "#003399", "#000000")
-# type_colors <- c("other"="#C4CAC9", "ego"="#A6CEE3", "goal"="#FDBF6F")
-# type_colors_o <- c("other"="#667270", "ego"="#1F78B4", "goal"="#FF7F00")
+type_colors <- c("#FDBF6F", "#C4CAC9", "#A6CEE3")
+type_colors_o <- c("#FF7F00", "#667270", "#1F78B4")
 # strategy_colors <- c("direct"="#E4534D", "detour"="#ED8E8A", "reorient"="#F9DAD9")
 # landmark_colors <- rev(RColorBrewer::brewer.pal(3,"Blues"))
 ## ---- 
@@ -137,7 +137,8 @@ data_allo_ms <- data %>%
                names_to=c("variable", "cond"),
                names_pattern='(.*)_(\\w+)') %>% 
   pivot_wider(names_from=variable, values_from=value) %>% 
-  mutate(cond=factor(cond, levels=c("goal", "ego", "other"))) %>% 
+  mutate(cond=factor(cond, levels=c("goal", "ego", "other")),
+         sessionC=as.numeric(session) - mean(as.numeric(session), na.rm=T)) %>% 
   droplevels()
 
 data_allo_pr <- data %>%
@@ -1127,24 +1128,18 @@ rm(line_rotation_path, probe.rotation_path_s)
 # -- PRESENCE -- # 
 
 # ---- stats_probe_presence_in_allo_simple 
-# probe.allo_presence_s <- mixed(presence ~ group*session*cond + (1|id), data=data_allo_pr)
-# probe.allo_presence_s <- mixed(presenceT ~ group*session*cond + (1|id), data=data_allo_prT)
-# # DOES NOT CONVERGE DUE TO SINGULARITY 
+# LMM with only random intercept does not converge -> go ANOVA 
 
 # presence without triangles 
 # aggregate data & ANOVA 
-data_agg_pr <- data_allo_pr %>% group_by(id, group, cond) %>% 
+data_agg_pr <- data_allo_pr %>% group_by(id, group, cond, session) %>% 
   summarise(presence=mean(presence, na.rm=T), 
             time_in_zone=mean(time_in_zone, na.rm=T)) %>% 
   filter(cond %in% c("original", "ego", "otherAVG")) %>% 
   droplevels()
 
-ggplot(data=data_agg_pr, aes(x=group, y=presence, fill=cond)) + geom_boxplot()
-
-probe.allo_presence_aov  <- aov_ez("id", "presence", data=data_agg_pr, between=c("group"), within=c("cond"))
-
+probe.allo_presence_aov  <- aov_ez("id", "presence", data=data_agg_pr, between=c("group"), within=c("cond", "session"))
 emm <- emmeans(probe.allo_presence_aov, ~ group*cond)
-
 con_list_group_cond <- list(
   "original_v_ego_YCH"   = c(1, 0, 0, -1, 0, 0, 0, 0, 0),
   "original_v_ego_OCH"   = c(0, 1, 0, 0, -1, 0, 0, 0, 0),
@@ -1160,54 +1155,61 @@ con_list_group_cond <- list(
   "OCH_v_YAD_original"   = c(0, 1, -1, 0, 0, 0, 0, 0, 0),
   "YCH_v_OCH_ego"        = c(0, 0, 0, 1, -1, 0, 0, 0, 0),
   "YCH_v_YAD_ego"        = c(0, 0, 0, 1, 0, -1, 0, 0, 0),
-  "OCH_v_YAD_ego"        = c(0, 0, 0, 0, 1, -1, 0, 0, 0),
-  "YCH_v_OCH_other"      = c(0, 0, 0, 0, 0, 0, 1, -1, 0),
-  "YCH_v_YAD_other"      = c(0, 0, 0, 0, 0, 0, 1, 0, -1),
-  "OCH_v_YAD_other"      = c(0, 0, 0, 0, 0, 0, 0, 1, -1))
+  "OCH_v_YAD_ego"        = c(0, 0, 0, 0, 1, -1, 0, 0, 0))
+con <- contrast(emm, con_list_group_cond, adjust="bonferroni")
 
-contrast(emm, con_list_group_cond, adjust="bonferroni")
+explore_pr <- afex_plot(probe.allo_presence_aov, x="session", trace="cond", panel="group", 
+                        error="none", dodge=0.8,
+                        mapping=c("fill", "color"),
+                        factor_levels=list(group=group_labels, session=c(1,2)),
+                        legend_title=NULL, 
+                        data_geom=geom_boxplot, 
+                        data_arg=list(width=0.5, color="black"),
+                        point_arg=list(size=3), 
+                        line_arg=list(size=1.25),
+                        error_arg=list(size=1.25, width=0)) + 
+  scale_fill_manual(values=type_colors) + 
+  scale_color_manual(values=type_colors_o) +
+  coord_cartesian(ylim=c(0,0.3)) + 
+  theme_bw(base_size=15) + 
+  theme(legend.position="top", legend.justification=c(0,0),
+        panel.grid.major.x=element_blank()) +
+  labs(x=l_session, y="presence in zones")
 
-rm(data_allo_pr, data_agg_pr, emm, con_list_group_cond, probe.allo_presence_aov)
+rm(data_allo_pr, data_agg_pr, emm, probe.allo_presence_aov, explore_pr, con)
 
 
 # presence with triangles 
 # aggregate data & ANOVA 
-data_agg_prT <- data_allo_prT %>% group_by(id, group, cond) %>% 
+data_agg_prT <- data_allo_prT %>% group_by(id, group, cond, session) %>% 
   summarise(presenceT=mean(presenceT, na.rm=T), 
             time_in_zone=mean(time_in_zone, na.rm=T)) %>% 
   filter(cond %in% c("original", "ego", "otherAVG")) %>% 
   droplevels()
 
-ggplot(data=data_agg_prT, aes(x=group, y=presenceT, fill=cond)) + geom_boxplot()
-
-probe.allo_presenceT_aov  <- aov_ez("id", "presenceT", data=data_agg_prT, between=c("group"), within=c("cond"))
-
+probe.allo_presenceT_aov  <- aov_ez("id", "presenceT", data=data_agg_prT, between=c("group"), within=c("cond", "session"))
 emm <- emmeans(probe.allo_presenceT_aov, ~ group*cond)
+con <- contrast(emm, con_list_group_cond, adjust="bonferroni")
 
-con_list_group_cond <- list(
-  "original_v_ego_YCH"   = c(1, 0, 0, -1, 0, 0, 0, 0, 0),
-  "original_v_ego_OCH"   = c(0, 1, 0, 0, -1, 0, 0, 0, 0),
-  "original_v_ego_YAD"   = c(0, 0, 1, 0, 0, -1, 0, 0, 0),
-  "original_v_other_YCH" = c(1, 0, 0, 0, 0, 0, -1, 0, 0),
-  "original_v_other_OCH" = c(0, 1, 0, 0, 0, 0, 0, -1, 0),
-  "original_v_other_YAD" = c(0, 0, 1, 0, 0, 0, 0, 0, -1),
-  "ego_v_other_YCH"      = c(0, 0, 0, 1, 0, 0, -1, 0, 0),
-  "ego_v_other_OCH"      = c(0, 0, 0, 0, 1, 0, 0, -1, 0),
-  "ego_v_other_YAD"      = c(0, 0, 0, 0, 0, 1, 0, 0, -1),
-  "YCH_v_OCH_original"   = c(1, -1, 0, 0, 0, 0, 0, 0, 0),
-  "YCH_v_YAD_original"   = c(1, 0, -1, 0, 0, 0, 0, 0, 0),
-  "OCH_v_YAD_original"   = c(0, 1, -1, 0, 0, 0, 0, 0, 0),
-  "YCH_v_OCH_ego"        = c(0, 0, 0, 1, -1, 0, 0, 0, 0),
-  "YCH_v_YAD_ego"        = c(0, 0, 0, 1, 0, -1, 0, 0, 0),
-  "OCH_v_YAD_ego"        = c(0, 0, 0, 0, 1, -1, 0, 0, 0),
-  "YCH_v_OCH_other"      = c(0, 0, 0, 0, 0, 0, 1, -1, 0),
-  "YCH_v_YAD_other"      = c(0, 0, 0, 0, 0, 0, 1, 0, -1),
-  "OCH_v_YAD_other"      = c(0, 0, 0, 0, 0, 0, 0, 1, -1))
+explore_prT <- afex_plot(probe.allo_presenceT_aov, x="session", trace="cond", panel="group", 
+                         error="none", dodge=0.8,
+                         mapping=c("fill", "color"),
+                         factor_levels=list(group=group_labels, session=c(1,2)),
+                         legend_title=NULL, 
+                         data_geom=geom_boxplot, 
+                         data_arg=list(width=0.5, color="black"),
+                         point_arg=list(size=3), 
+                         line_arg=list(size=1.25),
+                         error_arg=list(size=1.25, width=0)) + 
+  scale_fill_manual(values=type_colors) + 
+  scale_color_manual(values=type_colors_o) +
+  coord_cartesian(ylim=c(0,0.3)) + 
+  theme_bw(base_size=15) + 
+  theme(legend.position="top", legend.justification=c(0,0),
+        panel.grid.major.x=element_blank()) +
+  labs(x=l_session, y="presence in zones")
 
-contrast(emm, con_list_group_cond, adjust="bonferroni")
-
-rm(data_allo_prT, data_agg_prT, emm, con_list_group_cond, probe.allo_presenceT_aov)
-
+rm(data_allo_prT, data_agg_prT, emm, con_list_group_cond, probe.allo_presenceT_aov, con)
 # ----
 
 # ######################################################### #
@@ -1215,21 +1217,16 @@ rm(data_allo_prT, data_agg_prT, emm, con_list_group_cond, probe.allo_presenceT_a
 # -- MEMORY SCORE TO OTHER LOCATIONS -- # 
 
 # ---- stats_probe_memory_in_allo_simple
-# probe.allo_memory_s <- mixed(memory_score ~ group*session*cond + (1|id), data=data_allo_ms)
-# # DOES NOT CONVERGE DUE TO SINGULARITY 
+# LMM with only random intercept does not converge -> go ANOVA 
 
 # all trials 
 # aggregate data & ANOVA 
-data_agg_ms <- data_allo_ms %>% group_by(id, group, cond) %>% 
+data_agg_ms <- data_allo_ms %>% group_by(id, group, cond, session) %>% 
   summarise(memory_score=mean(memory_score, na.rm=T)) %>% 
   droplevels()
 
-ggplot(data=data_agg_ms, aes(x=group, y=memory_score, fill=cond)) + geom_boxplot() + coord_cartesian(ylim=c(0,1))
-
-probe.allo_memory_aov <- aov_ez("id", "memory_score", data=data_agg_ms, between=c("group"), within=c("cond"))
-
+probe.allo_memory_aov <- aov_ez("id", "memory_score", data=data_agg_ms, between=c("group"), within=c("cond", "session"))
 emm <- emmeans(probe.allo_memory_aov, ~ group*cond)
-
 con_list_group_cond <- list(
   "goal_v_ego_YCH"    = c(1, 0, 0, -1, 0, 0, 0, 0, 0),
   "goal_v_ego_OCH"    = c(0, 1, 0, 0, -1, 0, 0, 0, 0),
@@ -1249,26 +1246,102 @@ con_list_group_cond <- list(
   "YCH_v_OCH_other"   = c(0, 0, 0, 0, 0, 0, 1, -1, 0),
   "YCH_v_YAD_other"   = c(0, 0, 0, 0, 0, 0, 1, 0, -1),
   "OCH_v_YAD_other"   = c(0, 0, 0, 0, 0, 0, 0, 1, -1))
-
 contrast(emm, con_list_group_cond, adjust="bonferroni")
+
+explore_ms <- afex_plot(probe.allo_memory_aov, x="session", trace="cond", panel="group", 
+                        error="none", dodge=0.8,
+                        mapping=c("fill", "color"),
+                        factor_levels=list(group=group_labels, session=c(1,2)),
+                        legend_title=NULL, 
+                        data_geom=geom_boxplot, 
+                        data_arg=list(width=0.5, color="black"),
+                        point_arg=list(size=3), 
+                        line_arg=list(size=1.25),
+                        error_arg=list(size=1.25, width=0)) + 
+  scale_fill_manual(values=type_colors) + 
+  scale_color_manual(values=type_colors_o) +
+  coord_cartesian(ylim=c(0,1)) + 
+  theme_bw(base_size=15) + 
+  theme(legend.position="top", legend.justification=c(0,0),
+        panel.grid.major.x=element_blank()) +
+  labs(x=l_session, y="memory score to ...")
+
+rm(data_agg_ms, emm, con_list_group_cond, probe.allo_memory_aov, explore_ms)
+
 
 # only incorrect trials 
 # aggregate data & ANOVA 
 data_agg_incorr_ms <- data_allo_ms %>% 
   filter(!correct_final_alley) %>% 
-  group_by(id, group, cond) %>% 
+  group_by(id, group, cond, session) %>% 
   summarise(memory_score=mean(memory_score, na.rm=T)) %>% 
   filter(cond!= "goal") %>% 
   droplevels()
 
-ggplot(data=data_agg_incorr_ms, aes(x=group, y=memory_score, fill=cond)) + geom_boxplot() + coord_cartesian(ylim=c(0,1))
+probe.allo_memory_incorr_aov <- aov_ez("id", "memory_score", data=data_agg_incorr_ms, between=c("group"), within=c("cond", "session"))
+emm <- emmeans(probe.allo_memory_incorr_aov, ~ group*cond*session)
+con_list_group_cond_session <- list(
+  "YCH_vs_OCH_ego_1"   = c(1, -1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0),
+  "YCH_vs_YAD_ego_1"   = c(1, 0, -1, 0, 0, 0, 0, 0, 0, 0, 0, 0),
+  "OCH_vs_YAD_ego_1"   = c(0, 1, -1, 0, 0, 0, 0, 0, 0, 0, 0, 0),
+  "YCH_vs_OCH_other_1" = c(0, 0, 0, 1, -1, 0, 0, 0, 0, 0, 0, 0),
+  "YCH_vs_YAD_other_1" = c(0, 0, 0, 1, 0, -1, 0, 0, 0, 0, 0, 0),
+  "OCH_vs_YAD_other_1" = c(0, 0, 0, 0, 1, -1, 0, 0, 0, 0, 0, 0),
+  "YCH_vs_OCH_ego_2"   = c(0, 0, 0, 0, 0, 0, 1, -1, 0, 0, 0, 0),
+  "YCH_vs_YAD_ego_2"   = c(0, 0, 0, 0, 0, 0, 1, 0, -1, 0, 0, 0),
+  "OCH_vs_YAD_ego_2"   = c(0, 0, 0, 0, 0, 0, 0, 1, -1, 0, 0, 0),
+  "YCH_vs_OCH_other_2" = c(0, 0, 0, 0, 0, 0, 0, 0, 0, 1, -1, 0),
+  "YCH_vs_YAD_other_2" = c(0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, -1),
+  "OCH_vs_YAD_other_2" = c(0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, -1),
+  "ego_vs_other_YCH_1" = c(1, 0, 0, -1, 0, 0, 0, 0, 0, 0, 0, 0),
+  "ego_vs_other_OCH_1" = c(0, 1, 0, 0, -1, 0, 0, 0, 0, 0, 0, 0),
+  "ego_vs_other_YAD_1" = c(0, 0, 1, 0, 0, -1, 0, 0, 0, 0, 0, 0),
+  "ego_vs_other_YCH_2" = c(0, 0, 0, 0, 0, 0, 1, 0, 0, -1, 0, 0),
+  "ego_vs_other_OCH_2" = c(0, 0, 0, 0, 0, 0, 0, 1, 0, 0, -1, 0),
+  "ego_vs_other_YAD_2" = c(0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, -1),
+  "1_vs_2_ego_YCH"     = c(1, 0, 0, 0, 0, 0, -1, 0, 0, 0, 0, 0),
+  "1_vs_2_ego_OCH"     = c(0, 1, 0, 0, 0, 0, 0, -1, 0, 0, 0, 0),
+  "1_vs_2_ego_YAD"     = c(0, 0, 1, 0, 0, 0, 0, 0, -1, 0, 0, 0),
+  "1_vs_2_other_YCH"   = c(0, 0, 0, 1, 0, 0, 0, 0, 0, -1, 0, 0),
+  "1_vs_2_other_OCH"   = c(0, 0, 0, 0, 1, 0, 0, 0, 0, 0, -1, 0),
+  "1_vs_2_other_YAD"   = c(0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, -1))
+con_list_group_cond_session2 <- list(
+  "YCH_vs_OCH_ego_1"   = c(1, -1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0),
+  "YCH_vs_YAD_ego_1"   = c(1, 0, -1, 0, 0, 0, 0, 0, 0, 0, 0, 0),
+  "OCH_vs_YAD_ego_1"   = c(0, 1, -1, 0, 0, 0, 0, 0, 0, 0, 0, 0),
+  "YCH_vs_OCH_ego_2"   = c(0, 0, 0, 0, 0, 0, 1, -1, 0, 0, 0, 0),
+  "YCH_vs_YAD_ego_2"   = c(0, 0, 0, 0, 0, 0, 1, 0, -1, 0, 0, 0),
+  "OCH_vs_YAD_ego_2"   = c(0, 0, 0, 0, 0, 0, 0, 1, -1, 0, 0, 0),
+  "ego_vs_other_YCH_1" = c(1, 0, 0, -1, 0, 0, 0, 0, 0, 0, 0, 0),
+  "ego_vs_other_OCH_1" = c(0, 1, 0, 0, -1, 0, 0, 0, 0, 0, 0, 0),
+  "ego_vs_other_YAD_1" = c(0, 0, 1, 0, 0, -1, 0, 0, 0, 0, 0, 0),
+  "ego_vs_other_YCH_2" = c(0, 0, 0, 0, 0, 0, 1, 0, 0, -1, 0, 0),
+  "ego_vs_other_OCH_2" = c(0, 0, 0, 0, 0, 0, 0, 1, 0, 0, -1, 0),
+  "ego_vs_other_YAD_2" = c(0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, -1),
+  "1_vs_2_ego_YCH"     = c(1, 0, 0, 0, 0, 0, -1, 0, 0, 0, 0, 0),
+  "1_vs_2_ego_OCH"     = c(0, 1, 0, 0, 0, 0, 0, -1, 0, 0, 0, 0),
+  "1_vs_2_ego_YAD"     = c(0, 0, 1, 0, 0, 0, 0, 0, -1, 0, 0, 0))
+contrast(emm, con_list_group_cond_session, adjust="bonferroni")
 
-probe.allo_memory_incorr_aov <- aov_ez("id", "memory_score", data=data_agg_corr_ms, between=c("group"), within=c("cond"))
+explore_incor_ms <- afex_plot(probe.allo_memory_incorr_aov, x="session", trace="cond", panel="group", 
+                              error="none", dodge=0.8,
+                              mapping=c("fill", "color"),
+                              factor_levels=list(group=group_labels, session=c(1,2)),
+                              legend_title=NULL, 
+                              data_geom=geom_boxplot, 
+                              data_arg=list(width=0.5, color="black"),
+                              point_arg=list(size=3), 
+                              line_arg=list(size=1.25),
+                              error_arg=list(size=1.25, width=0)) + 
+  scale_fill_manual(values=type_colors) + 
+  scale_color_manual(values=type_colors_o) +
+  coord_cartesian(ylim=c(0,1)) + 
+  theme_bw(base_size=15) + 
+  theme(legend.position="top", legend.justification=c(0,0),
+        panel.grid.major.x=element_blank()) +
+  labs(x=l_session, y="memory score in incorrect trials to ...")
 
-emmeans(probe.allo_memory_incorr_aov, pairwise ~ cond)
-
-rm(data_allo_ms, data_agg_ms, data_agg_incorr_ms, emm, con_list_group_cond, 
-   probe.allo_memory_s, probe.allo_memory_aov, probe.allo_memory_incorr_aov)
+rm(data_allo_ms, data_agg_incorr_ms, emm, con_list_group_cond_session, probe.allo_memory_incorr_aov, explore_incor_ms)
 # ----
 
 
