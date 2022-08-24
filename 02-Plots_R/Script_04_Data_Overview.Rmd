@@ -787,7 +787,7 @@ The model had a fit of $R2 = `r R2$Rsq`, [CI: `r R2$upper.CL`, `r R2$lower.CL`$]
 * no *group* main effect and interactions, i.e. relative presence in alleys is not influences by age. 
 (Table\ \@ref(tab:table-probe-presence0)). 
 
-(ref:p-pa-caption0) Fixed effects for excess path in probe trials.
+(ref:p-pa-caption0) Fixed effects for presence in probe trials.
 
 ```{r table-probe-presence0, echo=F}
 apa_table(
@@ -849,7 +849,7 @@ The model had a fit of $R2 = `r R2$Rsq`, [CI: `r R2$upper.CL`, `r R2$lower.CL`$]
 * *group x condition* interaction and/or *condition* main effect: Initial rotation was higher in allocentric compared to egocentric.
 (Table\ \@ref(tab:table-probe-init-rot0)). 
 
-(ref:p-ir-caption0) Fixed effects for excess path in probe trials.
+(ref:p-ir-caption0) Fixed effects for initial rotation in probe trials.
 
 ```{r table-probe-init-rot0, echo=F}
 apa_table(
