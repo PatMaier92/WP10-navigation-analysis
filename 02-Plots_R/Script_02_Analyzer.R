@@ -1349,6 +1349,28 @@ rm(data_allo_ms, data_agg_incorr_ms, emm, con_list_group_cond_session, probe.all
 # ######################################################### #
 
 
+# -- CORRELATION/REGRESSION/PLS -- #
+
+library(corrplot)
+corr_data <- data_p %>%
+  select(memory_score, time, excess_path_length, presence_alleys, initial_rotation_turns, rotation_turns_by_path_length) %>% 
+  drop_na() %>% cor()
+
+corrplot(corr_data, method="number", tl.col="black", tl.srt=45)
+rm(corr_data)
+
+m <- lm(memory_score ~ time + excess_path_length + presence_alleys + initial_rotation_turns + rotation_turns_by_path_length, data=data_p)
+summary(m)
+
+m <- lm(memory_score ~ group + session + condition +
+          time + excess_path_length + presence_alleys + initial_rotation_turns + rotation_turns_by_path_length, data=data_p)
+summary(m)
+
+
+# ######################################################### #
+# ######################################################### #
+
+
 # -- SEARCH STRATEGIES -- #
 
 ## ---- stats_probe_path_strategy
