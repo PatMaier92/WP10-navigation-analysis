@@ -206,22 +206,22 @@ rm(covariates, data)
 ## ---- 
 
 ## ---- contrast_matrices 
-# con_list_session_condition <- list(
-#   "ego_vs_allo_in_T1" = c(1, 0, -1, 0), 
-#   "ego_vs_allo_in_T2" = c(0, 1, 0, -1), 
-#   "T1_vs_T2_in_ego"   = c(1, -1, 0, 0),
-#   "t1_vs_T2_in_allo"  = c(0, 0, 1, -1))
-# 
-# con_list_group_session <- list(
-#   "T1_vs_T2_in_6-7-yo"      = c(1, 0, 0, -1, 0, 0),
-#   "T1_vs_T2_in_9-10-yo"     = c(0, 1, 0, 0, -1, 0),
-#   "T1_vs_T2_in_adults"      = c(0, 0, 1, 0, 0, -1),
-#   "6-7-yo_vs_9-10-yo_in_T1" = c(1, -1, 0, 0, 0, 0),
-#   "6-7-yo_vs_adults_in_T1"  = c(1, 0, -1, 0, 0, 0),
-#   "9-10-yo_vs_adults_in_T1" = c(0, 1, -1, 0, 0, 0),
-#   "6-7-yo_vs_9-10-yo_in_T2" = c(0, 0, 0, 1, -1, 0),
-#   "6-7-yo_vs_adults_in_T2"  = c(0, 0, 0, 1, 0, -1),
-#   "9-10-yo_vs_adults_in_T2" = c(0, 0, 0, 0, 1, -1)) 
+con_list_session_condition <- list(
+  "ego_vs_allo_in_T1" = c(1, 0, -1, 0),
+  "ego_vs_allo_in_T2" = c(0, 1, 0, -1),
+  "T1_vs_T2_in_ego"   = c(1, -1, 0, 0),
+  "t1_vs_T2_in_allo"  = c(0, 0, 1, -1))
+
+con_list_group_session <- list(
+  "T1_vs_T2_in_6-7-yo"      = c(1, 0, 0, -1, 0, 0),
+  "T1_vs_T2_in_9-10-yo"     = c(0, 1, 0, 0, -1, 0),
+  "T1_vs_T2_in_adults"      = c(0, 0, 1, 0, 0, -1),
+  "6-7-yo_vs_9-10-yo_in_T1" = c(1, -1, 0, 0, 0, 0),
+  "6-7-yo_vs_adults_in_T1"  = c(1, 0, -1, 0, 0, 0),
+  "9-10-yo_vs_adults_in_T1" = c(0, 1, -1, 0, 0, 0),
+  "6-7-yo_vs_9-10-yo_in_T2" = c(0, 0, 0, 1, -1, 0),
+  "6-7-yo_vs_adults_in_T2"  = c(0, 0, 0, 1, 0, -1),
+  "9-10-yo_vs_adults_in_T2" = c(0, 0, 0, 0, 1, -1))
 
 con_list_group_condition <- list(
   "ego_vs_allo_in_6-7-yo"     = c(1, 0, 0, -1, 0, 0),
@@ -234,31 +234,33 @@ con_list_group_condition <- list(
   "6-7-yo_vs_adults_in_allo"  = c(0, 0, 0, 1, 0, -1),
   "9-10-yo_vs_adults_in_allo" = c(0, 0, 0, 0, 1, -1)) 
 
-# con_list_group_session_condition <- list(
-#   "6-7-yo_vs_9-10-yo_in_T1_ego"     = c(1, -1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0),
-#   "6-7-yo_vs_adults_in_T1_ego"      = c(1, 0, -1, 0, 0, 0, 0, 0, 0, 0, 0, 0),
-#   "9-10-yo_vs_adults_in_T1_ego"     = c(0, 1, -1, 0, 0, 0, 0, 0, 0, 0, 0, 0),
-#   "6-7-yo_vs_9-10-yo_in_T2_ego"     = c(0, 0, 0, 1, -1, 0, 0, 0, 0, 0, 0, 0),
-#   "6-7-yo_vs_adults_in_T2_ego"      = c(0, 0, 0, 1, 0, -1, 0, 0, 0, 0, 0, 0),
-#   "9-10-yo_vs_adults_in_T2_ego"     = c(0, 0, 0, 0, 1, -1, 0, 0, 0, 0, 0, 0),
-#   "6-7-yo_vs_9-10-yo_in_T1_in_allo" = c(0, 0, 0, 0, 0, 0, 1, -1, 0, 0, 0, 0),
-#   "6-7-yo_vs_adults_in_T1_in_allo"  = c(0, 0, 0, 0, 0, 0, 1, 0, -1, 0, 0, 0),
-#   "9-10-yo_vs_adults_in_T1_in_allo" = c(0, 0, 0, 0, 0, 0, 0, 1, -1, 0, 0, 0),
-#   "6-7-yo_vs_9-10-yo_in_T2_in_allo" = c(0, 0, 0, 0, 0, 0, 0, 0, 0, 1, -1, 0),
-#   "6-7-yo_vs_adults_in_T2_in_allo"  = c(0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, -1),
-#   "9-10-yo_vs_adults_in_T2_in_allo" = c(0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, -1),
-#   "T1_vs_T2_in_6-7-yo_ego"          = c(1, 0, 0, -1, 0, 0, 0, 0, 0, 0, 0, 0),
-#   "T1_vs_T2_in_9-10-yo_ego"         = c(0, 1, 0, 0, -1, 0, 0, 0, 0, 0, 0, 0),
-#   "T1_vs_T2_in_adults_ego"          = c(0, 0, 1, 0, 0, -1, 0, 0, 0, 0, 0, 0),
-#   "T1_vs_T2_in_6-7-yo_in_allo"      = c(0, 0, 0, 0, 0, 0, 1, 0, 0, -1, 0, 0),
-#   "T1_vs_T2_in_9-10-yo_in_allo"     = c(0, 0, 0, 0, 0, 0, 0, 1, 0, 0, -1, 0),
-#   "T1_vs_T2_in_adults_in_allo"      = c(0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, -1),
-#   "ego_vs_allo_in_T1_6-7-yo"        = c(1, 0, 0, 0, 0, 0, -1, 0, 0, 0, 0, 0),
-#   "ego_vs_allo_in_T1_9-10-yo"       = c(0, 1, 0, 0, 0, 0, 0, -1, 0, 0, 0, 0),
-#   "ego_vs_allo_in_T1_adults"        = c(0, 0, 1, 0, 0, 0, 0, 0, -1, 0, 0, 0),
-#   "ego_vs_allo_in_T2_6-7-yo"        = c(0, 0, 0, 1, 0, 0, 0, 0, 0, -1, 0, 0),
-#   "ego_vs_allo_in_T2_9-10-yo"       = c(0, 0, 0, 0, 1, 0, 0, 0, 0, 0, -1, 0),
-#   "ego_vs_allo_in_T2_adults"        = c(0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, -1)) 
+con_list_group_session_condition <- list(
+  "6-7-yo_vs_9-10-yo_in_T1_ego"     = c(1, -1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0),
+  "6-7-yo_vs_adults_in_T1_ego"      = c(1, 0, -1, 0, 0, 0, 0, 0, 0, 0, 0, 0),
+  "9-10-yo_vs_adults_in_T1_ego"     = c(0, 1, -1, 0, 0, 0, 0, 0, 0, 0, 0, 0),
+  "6-7-yo_vs_9-10-yo_in_T2_ego"     = c(0, 0, 0, 1, -1, 0, 0, 0, 0, 0, 0, 0),
+  "6-7-yo_vs_adults_in_T2_ego"      = c(0, 0, 0, 1, 0, -1, 0, 0, 0, 0, 0, 0),
+  "9-10-yo_vs_adults_in_T2_ego"     = c(0, 0, 0, 0, 1, -1, 0, 0, 0, 0, 0, 0),
+  "6-7-yo_vs_9-10-yo_in_T1_in_allo" = c(0, 0, 0, 0, 0, 0, 1, -1, 0, 0, 0, 0),
+  "6-7-yo_vs_adults_in_T1_in_allo"  = c(0, 0, 0, 0, 0, 0, 1, 0, -1, 0, 0, 0),
+  "9-10-yo_vs_adults_in_T1_in_allo" = c(0, 0, 0, 0, 0, 0, 0, 1, -1, 0, 0, 0),
+  "6-7-yo_vs_9-10-yo_in_T2_in_allo" = c(0, 0, 0, 0, 0, 0, 0, 0, 0, 1, -1, 0),
+  "6-7-yo_vs_adults_in_T2_in_allo"  = c(0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, -1),
+  "9-10-yo_vs_adults_in_T2_in_allo" = c(0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, -1),
+  
+  "T1_vs_T2_in_6-7-yo_ego"          = c(1, 0, 0, -1, 0, 0, 0, 0, 0, 0, 0, 0),
+  "T1_vs_T2_in_9-10-yo_ego"         = c(0, 1, 0, 0, -1, 0, 0, 0, 0, 0, 0, 0),
+  "T1_vs_T2_in_adults_ego"          = c(0, 0, 1, 0, 0, -1, 0, 0, 0, 0, 0, 0),
+  "T1_vs_T2_in_6-7-yo_in_allo"      = c(0, 0, 0, 0, 0, 0, 1, 0, 0, -1, 0, 0),
+  "T1_vs_T2_in_9-10-yo_in_allo"     = c(0, 0, 0, 0, 0, 0, 0, 1, 0, 0, -1, 0),
+  "T1_vs_T2_in_adults_in_allo"      = c(0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, -1),
+  
+  "ego_vs_allo_in_T1_6-7-yo"        = c(1, 0, 0, 0, 0, 0, -1, 0, 0, 0, 0, 0),
+  "ego_vs_allo_in_T1_9-10-yo"       = c(0, 1, 0, 0, 0, 0, 0, -1, 0, 0, 0, 0),
+  "ego_vs_allo_in_T1_adults"        = c(0, 0, 1, 0, 0, 0, 0, 0, -1, 0, 0, 0),
+  "ego_vs_allo_in_T2_6-7-yo"        = c(0, 0, 0, 1, 0, 0, 0, 0, 0, -1, 0, 0),
+  "ego_vs_allo_in_T2_9-10-yo"       = c(0, 0, 0, 0, 1, 0, 0, 0, 0, 0, -1, 0),
+  "ego_vs_allo_in_T2_adults"        = c(0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, -1))
 
 con_list_group_location_session <- list(
   "T1_vs_T2_in_6-7-yo_in_l1"      = c(1, 0, 0, 0, 0, 0, 0, 0, 0, -1, 0, 0, 0, 0, 0, 0, 0, 0),
@@ -444,6 +446,11 @@ line_acc <- afex_plot(probe.acc, x="sessionC", trace="group", panel="condition",
 probe.memory_s <- mixed(memory_score ~ group*sessionC*condition + cov_location + cov_object + cov_gender +
                           (sessionC|id), data=data_p, expand_re=T)
 ## ----
+
+# ## ---- stats_probe_ms_simple
+# probe.memory_s <- mixed(memory_score ~ group*session*condition + cov_location + cov_object + cov_gender +
+#                           (session+condition|id), data=data_p, expand_re=T)
+# ## ----
 
 ## ---- stats_probe_ms_outlier
 t <- data_p %>% mutate(flag=ifelse(is_outlier(memory_score), T, F))
@@ -658,6 +665,11 @@ rm(line_memory_corr, probe.memory_corr_s)
 probe.memory_goals <- mixed(memory_score ~ group*condition*sessionC*cov_location + cov_object + cov_gender +
                               (sessionC+cov_location|id), data=data_p, expand_re=T)
 ## ---- 
+
+# ## ---- stats_probe_explore_goals
+# probe.memory_goals <- mixed(memory_score ~ group*condition*session*cov_location + cov_object + cov_gender +
+#                               (session*cov_location*condition||id), data=data_p, expand_re=T)
+# ## ----
 
 # random effects
 VarCorr(probe.memory_goals$full_model)
