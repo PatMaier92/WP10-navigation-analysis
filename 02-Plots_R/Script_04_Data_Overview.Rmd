@@ -186,24 +186,27 @@ R2 <- r2beta(probe.memory_s$full_model, method='nsj', partial=F) %>% mutate_all(
 apa_lmm <- apa_print(probe.memory_s)
 apa_lmm <- apa_lmm$table %>% mutate(term=str_replace_all(term, c(" c| f"), ''))
 
-emm1 <- emmeans(probe.memory_s, ~ group*condition, lmer.df="satterthwaite")
-con1 <- contrast(emm1, con_list_group_condition, adjust="bonferroni")
-apa_emm1 <- apa_print(con1)
-apa_emm1 <- apa_emm1$table %>% remove_rownames()
+# emm1 <- emmeans(probe.memory_s, ~ group*condition, lmer.df="satterthwaite")
+# con1 <- contrast(emm1, con_list_group_condition, adjust="bonferroni")
+# apa_emm1 <- apa_print(con1)
+# apa_emm1 <- apa_emm1$table %>% remove_rownames()
 
 emm2 <- emmeans(probe.memory_s$full_model, pairwise ~ group, lmer.df="satterthwaite", adjust="bonferroni")$contrasts
 apa_emm2 <- apa_print(emm2)
 apa_emm2 <- apa_emm2$table %>% remove_rownames()
+rm(emm2)
 
-rm(emm1, con1, emm2)
+#rm(emm1, con1, emm2)
 ```
 
 The model had a fit of $R2 = `r R2$Rsq`, [CI: `r R2$upper.CL`, `r R2$lower.CL`$].
 
-* trend for *group x condition* interaction: significantly better memory accuracy for older participants compared to younger participants in both egocentric and allocentric condition, in 9-10-yo children significantly better performance in egocentric compared to allocentric, but no condition differences for adults (ceiling effect) and 6-7-yo children (floor effect). 
-* no *group x session* interaction, i.e. similar forgetting slope for all groups. 
-* no *session x condition* interaction, i.e. similar forgetting slopes for both conditions. 
+* *group* main effect: age-related differences in memory performance. 
 * *session* main effect: memory accuracy declines over 2-week period.
+* *condition* main effect: egocentric slightly better than allocentric. 
+* no *group x condition* interaction, i.e. no age-specific condition differences.
+* no *group x session* interaction, i.e. similar forgetting for all groups. 
+* no *session x condition* interaction, i.e. similar forgetting for both conditions. 
 (Table\ \@ref(tab:table-probe-ms0)). 
 
 (ref:p-ms-caption0) Fixed effects for memory score in probe.
@@ -212,15 +215,6 @@ The model had a fit of $R2 = `r R2$Rsq`, [CI: `r R2$upper.CL`, `r R2$lower.CL`$]
 apa_table(
   apa_lmm,
   caption="(ref:p-ms-caption0)",
-  placement="h")
-```
-
-(ref:p-ms-caption1) Post-hoc contrasts for group x condition interaction.
-
-```{r table-probe-ms1, echo=F}
-apa_table(
-  apa_emm1,
-  caption="(ref:p-ms-caption1)",
   placement="h")
 ```
 
@@ -234,7 +228,7 @@ apa_table(
 ```
 
 ```{r, include=F}
-rm(probe.memory_s, R2, apa_lmm, apa_emm1)
+rm(probe.memory_s, R2, apa_lmm, apa_emm1, apa_emm2)
 ```
 
 \newpage 
@@ -258,18 +252,25 @@ R2 <- r2beta(probe.memory_goals$full_model, method='nsj', partial=F) %>% mutate_
 apa_lmm <- apa_print(probe.memory_goals)
 apa_lmm <- apa_lmm$table %>% mutate(term=str_replace_all(term, c(" c| f"), ''))
 
-# group x sessionC x location 
-emm1_0 <- emtrends(probe.memory_goals, ~ group*cov_location, var="sessionC", lmer.df="satterthwaite")
-emm1_1 <- summary(contrast(emm1_0, con_list_group_location, adjust="none")) # 18 comparisons
-emm1_2 <- summary(emm1_0, infer=c(F,T)) # 9 comparisons 
-emm1_2 <- as.data.frame(emm1_2) %>% unite("contrast", group:cov_location, sep=" - ") %>%
-  setNames(names(emm1_1))
-emm1 <- rbind(emm1_1, emm1_2) 
-emm1$p.value <- ifelse(emm1$p.value*27>1, 1, emm1$p.value*27)
+# group x session x location 
+emm1 <- emmeans(probe.memory_goals, ~ group*cov_location*session, lmer.df="satterthwaite")
+emm1 <- contrast(emm1, con_list_group_location_session, adjust="bonferroni") # 27 comparisons
 apa_emm1 <- apa_print(emm1)
 apa_emm1 <- apa_emm1$table %>% remove_rownames()
-variable_labels(apa_emm1)$p.value <- "$p_\\mathrm{\\scriptsize Bonferroni(27)}$"
-rm(emm1_0, emm1_1, emm1_2, emm1)
+rm(emm1)
+
+# # group x sessionC x location 
+# emm1_0 <- emtrends(probe.memory_goals, ~ group*cov_location, var="sessionC", lmer.df="satterthwaite")
+# emm1_1 <- summary(contrast(emm1_0, con_list_group_location, adjust="none")) # 18 comparisons
+# emm1_2 <- summary(emm1_0, infer=c(F,T)) # 9 comparisons 
+# emm1_2 <- as.data.frame(emm1_2) %>% unite("contrast", group:cov_location, sep=" - ") %>%
+#   setNames(names(emm1_1))
+# emm1 <- rbind(emm1_1, emm1_2) 
+# emm1$p.value <- ifelse(emm1$p.value*27>1, 1, emm1$p.value*27)
+# apa_emm1 <- apa_print(emm1)
+# apa_emm1 <- apa_emm1$table %>% remove_rownames()
+# variable_labels(apa_emm1)$p.value <- "$p_\\mathrm{\\scriptsize Bonferroni(27)}$"
+# rm(emm1_0, emm1_1, emm1_2, emm1)
 
 # condition x location 
 emm2 <- emmeans(probe.memory_goals, ~ condition*cov_location, lmer.df="satterthwaite")
@@ -278,27 +279,25 @@ apa_emm2 <- apa_print(emm2)
 apa_emm2 <- apa_emm2$table %>% remove_rownames()
 rm(emm2)
 
-# group x location (TREND)
-emm3 <- emmeans(probe.memory_goals, ~ group*cov_location, lmer.df="satterthwaite")
-emm3 <- contrast(emm3, con_list_group_location, adjust="bonferroni")
-apa_emm3 <- apa_print(emm3)
-apa_emm3 <- apa_emm3$table %>% remove_rownames()
-rm(emm3)
-
-# group x condition (TREND)
-emm4 <- emmeans(probe.memory_goals, ~ group*condition, lmer.df="satterthwaite")
-emm4 <- contrast(emm4, con_list_group_condition, adjust="bonferroni")
-apa_emm4 <- apa_print(emm4)
-apa_emm4 <- apa_emm4$table %>% remove_rownames()
-rm(emm4)
+# # group x location (TREND)
+# emm3 <- emmeans(probe.memory_goals, ~ group*cov_location, lmer.df="satterthwaite")
+# emm3 <- contrast(emm3, con_list_group_location, adjust="bonferroni")
+# apa_emm3 <- apa_print(emm3)
+# apa_emm3 <- apa_emm3$table %>% remove_rownames()
+# rm(emm3)
+# 
+# # group x condition (TREND)
+# emm4 <- emmeans(probe.memory_goals, ~ group*condition, lmer.df="satterthwaite")
+# emm4 <- contrast(emm4, con_list_group_condition, adjust="bonferroni")
+# apa_emm4 <- apa_print(emm4)
+# apa_emm4 <- apa_emm4$table %>% remove_rownames()
+# rm(emm4)
 ```
 
 The model had a fit of $R2 = `r R2$Rsq`, [CI: `r R2$upper.CL`, `r R2$lower.CL`$].
 
-* *group x sessionC x location* interaction: 
+* *group x session x location* interaction: 
 * *condition x location* interaction: 
-* trend for *group x location* interaction:  
-* trend for *group x condition* interaction:  
 (Table\ \@ref(tab:table-probe-ex-ms0)). 
 
 (ref:p-ex-ms-caption0) Fixed effects for memory score in probe (interactions with goal location).
@@ -310,7 +309,7 @@ apa_table(
   placement="h")
 ```
 
-(ref:p-ex-ms-caption1) Post-hoc contrasts for group x sessionC x location interaction.
+(ref:p-ex-ms-caption1) Post-hoc contrasts for group x session x location interaction.
 
 ```{r table-probe-ex-ms1, echo=F}
 apa_table(
@@ -328,86 +327,8 @@ apa_table(
   placement="h")
 ```
 
-(ref:p-ex-ms-caption3) Post-hoc contrasts for group x location interaction.
-
-```{r table-probe-ex-ms3, echo=F}
-apa_table(
-  apa_emm3,
-  caption="(ref:p-ex-ms-caption3)",
-  placement="h")
-```
-
-(ref:p-ex-ms-caption4) Post-hoc contrasts for group x condition interaction.
-
-```{r table-probe-ex-ms4, echo=F}
-apa_table(
-  apa_emm4,
-  caption="(ref:p-ex-ms-caption4)",
-  placement="h")
-```
-
 ```{r, include=F}
-rm(probe.memory_goals, R2, apa_lmm, apa_emm1, apa_emm2, apa_emm3, apa_emm4)
-```
-
-\newpage 
-
-### **Memory score (only correct trials) for spatial precision**
-
-```{r, stats_probe_ms_corr_simple }
-```
-
-```{r, plot_probe_ms_corr, include=F }
-```
-
-```{r, echo=F, fig.height=5, fig.width=5, fig.cap="Spatial precision in correct probe trials." }
-line_memory_corr
-rm(line_memory_corr)
-```
-
-```{r apa_probe_ms_corr, include=F}
-R2 <- r2beta(probe.memory_corr_s$full_model, method='nsj', partial=F) %>% mutate_all(apa_num)
-
-apa_lmm <- apa_print(probe.memory_corr_s)
-apa_lmm <- apa_lmm$table %>% mutate(term=str_replace_all(term, c(" c| f"), ''))
-
-emm1 <- emmeans(probe.memory_corr_s$full_model, pairwise ~ group, lmer.df="satterthwaite",
-                adjust="bonferroni")$contrasts
-apa_emm1 <- apa_print(emm1)
-apa_emm1 <- apa_emm1$table %>% remove_rownames()
-rm(emm1)
-```
-
-The model had a fit of $R2 = `r R2$Rsq`, [CI: `r R2$upper.CL`, `r R2$lower.CL`$].
-
-* no *group x session* interaction, i.e. similar forgetting slope for all groups. 
-* no *group x condition* interaction, i.e. similar group differences in spatial precision across conditions. 
-* no *session x condition* interaction, i.e. similar forgetting slopes for both conditions. 
-* *group* main effect: younger participants had worse spatial precision than older participants.
-* *session* main effect: spatial precision declines over 2-week period. 
-* no *condition* main effect: no differences between egocentric and allocentric. 
-(Table\ \@ref(tab:table-probe-msc0)). 
-
-(ref:p-msc-caption0) Fixed effects for memory score in correctly solved probe trials.
-
-```{r table-probe-msc0, echo=F}
-apa_table(
-  apa_lmm,
-  caption="(ref:p-msc-caption0)",
-  placement="h")
-```
-
-(ref:p-msc-caption1) Post-hoc contrasts for factor group.
-
-```{r table-probe-msc1, echo=F}
-apa_table(
-  apa_emm1,
-  caption="(ref:p-msc-caption1)",
-  placement="h")
-```
-
-```{r, include=F}
-rm(probe.memory_corr_s, R2, apa_lmm, apa_emm1)
+rm(probe.memory_goals, R2, apa_lmm, apa_emm1, apa_emm2)
 ```
 
 \newpage
@@ -579,15 +500,21 @@ R2 <- r2beta(probe.time_s$full_model, method='nsj', partial=F) %>% mutate_all(ap
 apa_lmm <- apa_print(probe.time_s)
 apa_lmm <- apa_lmm$table %>% mutate(term=str_replace_all(term, c(" c| f"), ''))
 
-emm1_1 <- summary(emtrends(probe.time_s, pairwise ~ group, var="sessionC", lmer.df="satterthwaite", 
-                           adjust="none"), infer=c(T,T))
-emm1_2 <- as.data.frame(emm1_1$emtrends) %>% setNames(names(emm1_1$contrast))
-emm1 <- rbind(emm1_1$contrast, emm1_2)
-emm1$p.value <- ifelse(emm1$p.value*6>1, 1, emm1$p.value*6)
+emm1 <- emmeans(probe.time_s, ~ group*session, lmer.df="satterthwaite")
+emm1 <- contrast(emm1, con_list_group_session, adjust="bonferroni")
 apa_emm1 <- apa_print(emm1)
 apa_emm1 <- apa_emm1$table %>% remove_rownames()
-variable_labels(apa_emm1)$p.value <- "$p_\\mathrm{\\scriptsize Bonferroni(6)}$"
-rm(emm1_1, emm1_2, emm1)
+rm(emm1)
+
+# emm1_1 <- summary(emtrends(probe.time_s, pairwise ~ group, var="sessionC", lmer.df="satterthwaite", 
+#                            adjust="none"), infer=c(T,T))
+# emm1_2 <- as.data.frame(emm1_1$emtrends) %>% setNames(names(emm1_1$contrast))
+# emm1 <- rbind(emm1_1$contrast, emm1_2)
+# emm1$p.value <- ifelse(emm1$p.value*6>1, 1, emm1$p.value*6)
+# apa_emm1 <- apa_print(emm1)
+# apa_emm1 <- apa_emm1$table %>% remove_rownames()
+# variable_labels(apa_emm1)$p.value <- "$p_\\mathrm{\\scriptsize Bonferroni(6)}$"
+# rm(emm1_1, emm1_2, emm1)
 
 emm2 <- emmeans(probe.time_s, ~ group * condition, lmer.df="satterthwaite")
 emm2 <- contrast(emm2, con_list_group_condition, adjust="bonferroni")
@@ -595,15 +522,21 @@ apa_emm2 <- apa_print(emm2)
 apa_emm2 <- apa_emm2$table %>% remove_rownames()
 rm(emm2)
 
-emm3_1 <- summary(emtrends(probe.time_s, pairwise ~ condition, var="sessionC", lmer.df="satterthwaite", 
-                           adjust="none"), infer=c(T,T))
-emm3_2 <- as.data.frame(emm3_1$emtrends) %>% setNames(names(emm3_1$contrast))
-emm3 <- rbind(emm3_1$contrast, emm3_2) 
-emm3$p.value <- ifelse(emm3$p.value*3>1, 1, emm3$p.value*3) 
+emm3 <- emmeans(probe.time_s, ~ session*condition, lmer.df="satterthwaite")
+emm3 <- contrast(emm3, con_list_session_condition, adjust="bonferroni")
 apa_emm3 <- apa_print(emm3)
 apa_emm3 <- apa_emm3$table %>% remove_rownames()
-variable_labels(apa_emm3)$p.value <- "$p_\\mathrm{\\scriptsize Bonferroni(3)}$"
-rm(emm3_1, emm3_2, emm3)
+rm(emm3)
+
+# emm3_1 <- summary(emtrends(probe.time_s, pairwise ~ condition, var="sessionC", lmer.df="satterthwaite", 
+#                            adjust="none"), infer=c(T,T))
+# emm3_2 <- as.data.frame(emm3_1$emtrends) %>% setNames(names(emm3_1$contrast))
+# emm3 <- rbind(emm3_1$contrast, emm3_2) 
+# emm3$p.value <- ifelse(emm3$p.value*3>1, 1, emm3$p.value*3) 
+# apa_emm3 <- apa_print(emm3)
+# apa_emm3 <- apa_emm3$table %>% remove_rownames()
+# variable_labels(apa_emm3)$p.value <- "$p_\\mathrm{\\scriptsize Bonferroni(3)}$"
+# rm(emm3_1, emm3_2, emm3)
 ```
 
 The model had a fit of $R2 = `r R2$Rsq`, [CI: `r R2$upper.CL`, `r R2$lower.CL`$].
@@ -674,15 +607,21 @@ R2 <- r2beta(probe.excess_path_s$full_model, method='nsj', partial=F) %>% mutate
 apa_lmm <- apa_print(probe.excess_path_s)
 apa_lmm <- apa_lmm$table %>% mutate(term=str_replace_all(term, c(" c| f"), ''))
 
-emm1_1 <- summary(emtrends(probe.excess_path_s, pairwise ~ group, var="sessionC", lmer.df="satterthwaite", 
-                           adjust="none"), infer=c(T,T))
-emm1_2 <- as.data.frame(emm1_1$emtrends) %>% setNames(names(emm1_1$contrast))
-emm1 <- rbind(emm1_1$contrast, emm1_2) 
-emm1$p.value <- ifelse(emm1$p.value*6>1, 1, emm1$p.value*6)
+emm1 <- emmeans(probe.excess_path_s, ~ group * session, lmer.df="satterthwaite")
+emm1 <- contrast(emm1, con_list_group_session, adjust="bonferroni")
 apa_emm1 <- apa_print(emm1)
 apa_emm1 <- apa_emm1$table %>% remove_rownames()
-variable_labels(apa_emm1)$p.value <- "$p_\\mathrm{\\scriptsize Bonferroni(6)}$"
-rm(emm1_1, emm1_2, emm1)
+rm(emm1)
+
+# emm1_1 <- summary(emtrends(probe.excess_path_s, pairwise ~ group, var="sessionC", lmer.df="satterthwaite", 
+#                            adjust="none"), infer=c(T,T))
+# emm1_2 <- as.data.frame(emm1_1$emtrends) %>% setNames(names(emm1_1$contrast))
+# emm1 <- rbind(emm1_1$contrast, emm1_2) 
+# emm1$p.value <- ifelse(emm1$p.value*6>1, 1, emm1$p.value*6)
+# apa_emm1 <- apa_print(emm1)
+# apa_emm1 <- apa_emm1$table %>% remove_rownames()
+# variable_labels(apa_emm1)$p.value <- "$p_\\mathrm{\\scriptsize Bonferroni(6)}$"
+# rm(emm1_1, emm1_2, emm1)
 
 emm2 <- emmeans(probe.excess_path_s, ~ group * condition, lmer.df="satterthwaite")
 emm2 <- contrast(emm2, con_list_group_condition, adjust="bonferroni")
@@ -690,15 +629,21 @@ apa_emm2 <- apa_print(emm2)
 apa_emm2 <- apa_emm2$table %>% remove_rownames()
 rm(emm2)
 
-emm3_1 <- summary(emtrends(probe.excess_path_s, pairwise ~ condition, var="sessionC", lmer.df="satterthwaite", 
-                           adjust="none"), infer=c(T,T))
-emm3_2 <- as.data.frame(emm3_1$emtrends) %>% setNames(names(emm3_1$contrast))
-emm3 <- rbind(emm3_1$contrast, emm3_2)
-emm3$p.value <- ifelse(emm3$p.value*3>1, 1, emm3$p.value*3)
+emm3 <- emmeans(probe.excess_path_s, ~ session * condition, lmer.df="satterthwaite")
+emm3 <- contrast(emm3, con_list_session_condition, adjust="bonferroni")
 apa_emm3 <- apa_print(emm3)
 apa_emm3 <- apa_emm3$table %>% remove_rownames()
-variable_labels(apa_emm3)$p.value <- "$p_\\mathrm{\\scriptsize Bonferroni(3)}$"
-rm(emm3_1, emm3_2, emm3)
+rm(emm3)
+
+# emm3_1 <- summary(emtrends(probe.excess_path_s, pairwise ~ condition, var="sessionC", lmer.df="satterthwaite", 
+#                            adjust="none"), infer=c(T,T))
+# emm3_2 <- as.data.frame(emm3_1$emtrends) %>% setNames(names(emm3_1$contrast))
+# emm3 <- rbind(emm3_1$contrast, emm3_2)
+# emm3$p.value <- ifelse(emm3$p.value*3>1, 1, emm3$p.value*3)
+# apa_emm3 <- apa_print(emm3)
+# apa_emm3 <- apa_emm3$table %>% remove_rownames()
+# variable_labels(apa_emm3)$p.value <- "$p_\\mathrm{\\scriptsize Bonferroni(3)}$"
+# rm(emm3_1, emm3_2, emm3)
 ```
 
 The model had a fit of $R2 = `r R2$Rsq`, [CI: `r R2$upper.CL`, `r R2$lower.CL`$].
@@ -769,15 +714,21 @@ R2 <- r2beta(probe.presence_alleys_s$full_model, method='nsj', partial=F) %>% mu
 apa_lmm <- apa_print(probe.presence_alleys_s)
 apa_lmm <- apa_lmm$table %>% mutate(term=str_replace_all(term, c(" c| f"), ''))
 
-emm3_1 <- summary(emtrends(probe.presence_alleys_s, pairwise ~ condition, var="sessionC", lmer.df="satterthwaite", 
-                           adjust="none"), infer=c(T,T))
-emm3_2 <- as.data.frame(emm3_1$emtrends) %>% setNames(names(emm3_1$contrast))
-emm3 <- rbind(emm3_1$contrast, emm3_2)
-emm3$p.value <- ifelse(emm3$p.value*3>1, 1, emm3$p.value*3)
+emm3 <- emmeans(probe.presence_alleys_s, ~ session * condition, lmer.df="satterthwaite")
+emm3 <- contrast(emm3, con_list_session_condition, adjust="bonferroni")
 apa_emm3 <- apa_print(emm3)
 apa_emm3 <- apa_emm3$table %>% remove_rownames()
-variable_labels(apa_emm3)$p.value <- "$p_\\mathrm{\\scriptsize Bonferroni(3)}$"
-rm(emm3_1, emm3_2, emm3)
+rm(emm3)
+
+# emm3_1 <- summary(emtrends(probe.presence_alleys_s, pairwise ~ condition, var="sessionC", lmer.df="satterthwaite", 
+#                            adjust="none"), infer=c(T,T))
+# emm3_2 <- as.data.frame(emm3_1$emtrends) %>% setNames(names(emm3_1$contrast))
+# emm3 <- rbind(emm3_1$contrast, emm3_2)
+# emm3$p.value <- ifelse(emm3$p.value*3>1, 1, emm3$p.value*3)
+# apa_emm3 <- apa_print(emm3)
+# apa_emm3 <- apa_emm3$table %>% remove_rownames()
+# variable_labels(apa_emm3)$p.value <- "$p_\\mathrm{\\scriptsize Bonferroni(3)}$"
+# rm(emm3_1, emm3_2, emm3)
 ```
 
 The model had a fit of $R2 = `r R2$Rsq`, [CI: `r R2$upper.CL`, `r R2$lower.CL`$].
@@ -830,17 +781,23 @@ R2 <- r2beta(probe.initial_rot_s$full_model, method='nsj', partial=F) %>% mutate
 apa_lmm <- apa_print(probe.initial_rot_s)
 apa_lmm <- apa_lmm$table %>% mutate(term=str_replace_all(term, c(" c| f"), ''))
 
-emm4_0 <- emtrends(probe.initial_rot_s, ~ group*condition, var="sessionC", lmer.df="satterthwaite")
-emm4_1 <- summary(contrast(emm4_0, con_list_group_condition, adjust="none"))
-emm4_2 <- summary(emm4_0, infer=c(F,T), adjust="none")
-emm4_2 <- as.data.frame(emm4_2) %>% unite("contrast", group:condition, sep=" - ") %>%
-  setNames(names(emm4_1))
-emm4 <- rbind(emm4_1, emm4_2)
-emm4$p.value <- ifelse(emm4$p.value*15>1, 1, emm4$p.value*15)
+emm4 <- emmeans(probe.initial_rot_s, ~ group * session *condition, lmer.df="satterthwaite")
+emm4 <- contrast(emm4, con_list_group_session_condition, adjust="bonferroni")
 apa_emm4 <- apa_print(emm4)
 apa_emm4 <- apa_emm4$table %>% remove_rownames()
-variable_labels(apa_emm4)$p.value <- "$p_\\mathrm{\\scriptsize Bonferroni(15)}$"
-rm(emm4_0, emm4_1, emm4_2, emm4)
+rm(emm4)
+
+# emm4_0 <- emtrends(probe.initial_rot_s, ~ group*condition, var="sessionC", lmer.df="satterthwaite")
+# emm4_1 <- summary(contrast(emm4_0, con_list_group_condition, adjust="none"))
+# emm4_2 <- summary(emm4_0, infer=c(F,T), adjust="none")
+# emm4_2 <- as.data.frame(emm4_2) %>% unite("contrast", group:condition, sep=" - ") %>%
+#   setNames(names(emm4_1))
+# emm4 <- rbind(emm4_1, emm4_2)
+# emm4$p.value <- ifelse(emm4$p.value*15>1, 1, emm4$p.value*15)
+# apa_emm4 <- apa_print(emm4)
+# apa_emm4 <- apa_emm4$table %>% remove_rownames()
+# variable_labels(apa_emm4)$p.value <- "$p_\\mathrm{\\scriptsize Bonferroni(15)}$"
+# rm(emm4_0, emm4_1, emm4_2, emm4)
 ```
 
 The model had a fit of $R2 = `r R2$Rsq`, [CI: `r R2$upper.CL`, `r R2$lower.CL`$].
@@ -892,15 +849,21 @@ R2 <- r2beta(probe.rotation_path_s$full_model, method='nsj', partial=F) %>% muta
 apa_lmm <- apa_print(probe.rotation_path_s)
 apa_lmm <- apa_lmm$table %>% mutate(term=str_replace_all(term, c(" c| f"), ''))
 
-emm1_1 <- summary(emtrends(probe.rotation_path_s, pairwise ~ group, var="sessionC", lmer.df="satterthwaite", 
-                           adjust="none"), infer=c(T,T))
-emm1_2 <- as.data.frame(emm1_1$emtrends) %>% setNames(names(emm1_1$contrast))
-emm1 <- rbind(emm1_1$contrast, emm1_2) 
-emm1$p.value <- ifelse(emm1$p.value*6>1, 1, emm1$p.value*6)
+emm1 <- emmeans(probe.rotation_path_s, ~ group * session, lmer.df="satterthwaite")
+emm1 <- contrast(emm1, con_list_group_session, adjust="bonferroni")
 apa_emm1 <- apa_print(emm1)
 apa_emm1 <- apa_emm1$table %>% remove_rownames()
-variable_labels(apa_emm1)$p.value <- "$p_\\mathrm{\\scriptsize Bonferroni(6)}$"
-rm(emm1_1, emm1_2, emm1)
+rm(emm1)
+
+# emm1_1 <- summary(emtrends(probe.rotation_path_s, pairwise ~ group, var="sessionC", lmer.df="satterthwaite", 
+#                            adjust="none"), infer=c(T,T))
+# emm1_2 <- as.data.frame(emm1_1$emtrends) %>% setNames(names(emm1_1$contrast))
+# emm1 <- rbind(emm1_1$contrast, emm1_2) 
+# emm1$p.value <- ifelse(emm1$p.value*6>1, 1, emm1$p.value*6)
+# apa_emm1 <- apa_print(emm1)
+# apa_emm1 <- apa_emm1$table %>% remove_rownames()
+# variable_labels(apa_emm1)$p.value <- "$p_\\mathrm{\\scriptsize Bonferroni(6)}$"
+# rm(emm1_1, emm1_2, emm1)
 
 emm2 <- emmeans(probe.rotation_path_s, ~ group * condition, lmer.df="satterthwaite")
 emm2 <- contrast(emm2, con_list_group_condition, adjust="bonferroni")
@@ -908,15 +871,21 @@ apa_emm2 <- apa_print(emm2)
 apa_emm2 <- apa_emm2$table %>% remove_rownames()
 rm(emm2)
 
-emm3_1 <- summary(emtrends(probe.rotation_path_s, pairwise ~ condition, var="sessionC", lmer.df="satterthwaite", 
-                           adjust="none"), infer=c(T,T))
-emm3_2 <- as.data.frame(emm3_1$emtrends) %>% setNames(names(emm3_1$contrast))
-emm3 <- rbind(emm3_1$contrast, emm3_2) 
-emm3$p.value <- ifelse(emm3$p.value*3>1, 1, emm3$p.value*3)
+emm3 <- emmeans(probe.rotation_path_s, ~ session * condition, lmer.df="satterthwaite")
+emm3 <- contrast(emm3, con_list_session_condition, adjust="bonferroni")
 apa_emm3 <- apa_print(emm3)
 apa_emm3 <- apa_emm3$table %>% remove_rownames()
-variable_labels(apa_emm3)$p.value <- "$p_\\mathrm{\\scriptsize Bonferroni(3)}$"
-rm(emm3_1, emm3_2, emm3)
+rm(emm3)
+
+# emm3_1 <- summary(emtrends(probe.rotation_path_s, pairwise ~ condition, var="sessionC", lmer.df="satterthwaite", 
+#                            adjust="none"), infer=c(T,T))
+# emm3_2 <- as.data.frame(emm3_1$emtrends) %>% setNames(names(emm3_1$contrast))
+# emm3 <- rbind(emm3_1$contrast, emm3_2) 
+# emm3$p.value <- ifelse(emm3$p.value*3>1, 1, emm3$p.value*3)
+# apa_emm3 <- apa_print(emm3)
+# apa_emm3 <- apa_emm3$table %>% remove_rownames()
+# variable_labels(apa_emm3)$p.value <- "$p_\\mathrm{\\scriptsize Bonferroni(3)}$"
+# rm(emm3_1, emm3_2, emm3)
 ```
 
 The model had a fit of $R2 = `r R2$Rsq`, [CI: `r R2$upper.CL`, `r R2$lower.CL`$].
@@ -1015,12 +984,15 @@ Caution: this is exploratory and based on few trials!
 
 ### Correlations 
 
-```{r, stats_corr_allo_ego }
+```{r, stats_corr_allo_ego_trad }
+```
+
+```{r, stats_corr_allo_ego_rmcorr }
 ```
 
 \newpage
 
-### PLS Analysen 
+### PLS-C Analysis 
 
 siehe Powerpoint Iryna 
 

@@ -114,7 +114,7 @@ data_l <- data %>%
 # probe 
 data_p <- data %>% 
   filter(condition %in% c("allo_ret", "ego_ret")) %>%
-  mutate(sessionC=as.numeric(session) - mean(as.numeric(session), na.rm=T)) %>% 
+  #mutate(sessionC=as.numeric(session) - mean(as.numeric(session), na.rm=T)) %>% 
   mutate_at(vars("cov_time", "cov_velocity", "cov_excess_path", "cov_rotation", "cov_rotation_path"), 
             ~ .x - mean(.x, na.rm=T)) %>% 
   droplevels()
@@ -122,7 +122,7 @@ data_p <- data %>%
 # probe correct trials 
 data_pc <- data %>% 
   filter(condition %in% c("allo_ret", "ego_ret"), correct_final_alley==1) %>%
-  mutate(sessionC=as.numeric(session) - mean(as.numeric(session), na.rm=T)) %>% 
+  #mutate(sessionC=as.numeric(session) - mean(as.numeric(session), na.rm=T)) %>% 
   mutate_at(vars("cov_time", "cov_velocity", "cov_excess_path", "cov_rotation", "cov_rotation_path"), 
             ~ .x - mean(.x, na.rm=T)) %>% 
   droplevels()
@@ -166,37 +166,6 @@ data_allo_prT <- data %>%
          cond=factor(cond, levels=c("start", "goal", "original", "ego", "otherAVG", "otherMAX", "otherSUM"))) %>% 
   droplevels()
 
-# # probe aggregated change 
-# data_prepost <- data %>% 
-#   filter(condition %in% c("allo_ret", "ego_ret")) %>%
-#   select(id, cov_gender, group, session, trial, condition, correct_final_alley, memory_score) %>%
-#   pivot_wider(id_cols=c(id, cov_gender, trial, group, condition),
-#               names_from=session,
-#               names_prefix="s_",
-#               values_from=c(correct_final_alley, memory_score)) %>%
-#   group_by(id, cov_gender, group, condition) %>%
-#   summarise_at(vars(correct_final_alley_s_1, correct_final_alley_s_2,
-#                     memory_score_s_1, memory_score_s_2), mean, na.rm=T) %>% 
-#   mutate(change_acc=(correct_final_alley_s_2-correct_final_alley_s_1)/correct_final_alley_s_1,
-#          change_ms=(memory_score_s_2-memory_score_s_1)/memory_score_s_1) %>% 
-#   ungroup() %>% 
-#   droplevels()
-# 
-# data_prepost_correct <- data %>% 
-#   filter(condition %in% c("allo_ret", "ego_ret"), correct_final_alley==1) %>%
-#     select(id, cov_gender, group, session, trial, condition, correct_final_alley, memory_score) %>% 
-#     pivot_wider(id_cols=c(id, cov_gender, trial, group, condition),
-#                 names_from=session,
-#                 names_prefix="s_",
-#                 values_from=c(correct_final_alley, memory_score)) %>%
-#     group_by(id, cov_gender, group, condition) %>%
-#     summarise_at(vars(correct_final_alley_s_1, correct_final_alley_s_2,
-#                       memory_score_s_1, memory_score_s_2), mean, na.rm=T) %>% 
-#     mutate(change_acc=(correct_final_alley_s_2-correct_final_alley_s_1)/correct_final_alley_s_1,
-#            change_ms=(memory_score_s_2-memory_score_s_1)/memory_score_s_1) %>% 
-#     ungroup() %>% 
-#     droplevels()
-
 # helper function for outlier check
 is_outlier <- function(x) {
   return(x < quantile(x, 0.25) - 1.5 * IQR(x) | x > quantile(x, 0.75) + 1.5 * IQR(x))
@@ -210,7 +179,7 @@ con_list_session_condition <- list(
   "ego_vs_allo_in_T1" = c(1, 0, -1, 0),
   "ego_vs_allo_in_T2" = c(0, 1, 0, -1),
   "T1_vs_T2_in_ego"   = c(1, -1, 0, 0),
-  "t1_vs_T2_in_allo"  = c(0, 0, 1, -1))
+  "T1_vs_T2_in_allo"  = c(0, 0, 1, -1))
 
 con_list_group_session <- list(
   "T1_vs_T2_in_6-7-yo"      = c(1, 0, 0, -1, 0, 0),
@@ -235,19 +204,6 @@ con_list_group_condition <- list(
   "9-10-yo_vs_adults_in_allo" = c(0, 0, 0, 0, 1, -1)) 
 
 con_list_group_session_condition <- list(
-  "6-7-yo_vs_9-10-yo_in_T1_ego"     = c(1, -1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0),
-  "6-7-yo_vs_adults_in_T1_ego"      = c(1, 0, -1, 0, 0, 0, 0, 0, 0, 0, 0, 0),
-  "9-10-yo_vs_adults_in_T1_ego"     = c(0, 1, -1, 0, 0, 0, 0, 0, 0, 0, 0, 0),
-  "6-7-yo_vs_9-10-yo_in_T2_ego"     = c(0, 0, 0, 1, -1, 0, 0, 0, 0, 0, 0, 0),
-  "6-7-yo_vs_adults_in_T2_ego"      = c(0, 0, 0, 1, 0, -1, 0, 0, 0, 0, 0, 0),
-  "9-10-yo_vs_adults_in_T2_ego"     = c(0, 0, 0, 0, 1, -1, 0, 0, 0, 0, 0, 0),
-  "6-7-yo_vs_9-10-yo_in_T1_in_allo" = c(0, 0, 0, 0, 0, 0, 1, -1, 0, 0, 0, 0),
-  "6-7-yo_vs_adults_in_T1_in_allo"  = c(0, 0, 0, 0, 0, 0, 1, 0, -1, 0, 0, 0),
-  "9-10-yo_vs_adults_in_T1_in_allo" = c(0, 0, 0, 0, 0, 0, 0, 1, -1, 0, 0, 0),
-  "6-7-yo_vs_9-10-yo_in_T2_in_allo" = c(0, 0, 0, 0, 0, 0, 0, 0, 0, 1, -1, 0),
-  "6-7-yo_vs_adults_in_T2_in_allo"  = c(0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, -1),
-  "9-10-yo_vs_adults_in_T2_in_allo" = c(0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, -1),
-  
   "T1_vs_T2_in_6-7-yo_ego"          = c(1, 0, 0, -1, 0, 0, 0, 0, 0, 0, 0, 0),
   "T1_vs_T2_in_9-10-yo_ego"         = c(0, 1, 0, 0, -1, 0, 0, 0, 0, 0, 0, 0),
   "T1_vs_T2_in_adults_ego"          = c(0, 0, 1, 0, 0, -1, 0, 0, 0, 0, 0, 0),
@@ -260,7 +216,20 @@ con_list_group_session_condition <- list(
   "ego_vs_allo_in_T1_adults"        = c(0, 0, 1, 0, 0, 0, 0, 0, -1, 0, 0, 0),
   "ego_vs_allo_in_T2_6-7-yo"        = c(0, 0, 0, 1, 0, 0, 0, 0, 0, -1, 0, 0),
   "ego_vs_allo_in_T2_9-10-yo"       = c(0, 0, 0, 0, 1, 0, 0, 0, 0, 0, -1, 0),
-  "ego_vs_allo_in_T2_adults"        = c(0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, -1))
+  "ego_vs_allo_in_T2_adults"        = c(0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, -1),
+  
+  "6-7-yo_vs_9-10-yo_in_T1_ego"     = c(1, -1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0),
+  "6-7-yo_vs_adults_in_T1_ego"      = c(1, 0, -1, 0, 0, 0, 0, 0, 0, 0, 0, 0),
+  "9-10-yo_vs_adults_in_T1_ego"     = c(0, 1, -1, 0, 0, 0, 0, 0, 0, 0, 0, 0),
+  "6-7-yo_vs_9-10-yo_in_T2_ego"     = c(0, 0, 0, 1, -1, 0, 0, 0, 0, 0, 0, 0),
+  "6-7-yo_vs_adults_in_T2_ego"      = c(0, 0, 0, 1, 0, -1, 0, 0, 0, 0, 0, 0),
+  "9-10-yo_vs_adults_in_T2_ego"     = c(0, 0, 0, 0, 1, -1, 0, 0, 0, 0, 0, 0),
+  "6-7-yo_vs_9-10-yo_in_T1_in_allo" = c(0, 0, 0, 0, 0, 0, 1, -1, 0, 0, 0, 0),
+  "6-7-yo_vs_adults_in_T1_in_allo"  = c(0, 0, 0, 0, 0, 0, 1, 0, -1, 0, 0, 0),
+  "9-10-yo_vs_adults_in_T1_in_allo" = c(0, 0, 0, 0, 0, 0, 0, 1, -1, 0, 0, 0),
+  "6-7-yo_vs_9-10-yo_in_T2_in_allo" = c(0, 0, 0, 0, 0, 0, 0, 0, 0, 1, -1, 0),
+  "6-7-yo_vs_adults_in_T2_in_allo"  = c(0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, -1),
+  "9-10-yo_vs_adults_in_T2_in_allo" = c(0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, -1))
 
 con_list_group_location_session <- list(
   "T1_vs_T2_in_6-7-yo_in_l1"      = c(1, 0, 0, 0, 0, 0, 0, 0, 0, -1, 0, 0, 0, 0, 0, 0, 0, 0),
@@ -328,40 +297,6 @@ con_list_condition_location <- list(
 
 # ######################################################### #
 # ######################################################### #
-
-
-# ::: tables with demographics::: #
-
-# ## ---- tables_demo
-# t1 <- sm_data %>% 
-#   filter(trial==1, session==1) %>% 
-#   select(group, cov_gender) %>%
-#   tbl_summary(by=group,
-#               label=list(cov_gender ~ "Gender"),
-#               statistic=list(all_categorical() ~ "{n}")) %>% 
-#   modify_header(label="Starmaze data",
-#                 update=all_stat_cols() ~ "**{level}** N = {n}") %>% 
-#   modify_footnote(everything() ~ NA)
-# 
-# # t1 %>%
-# #   as_flex_table() %>%
-# #   flextable::save_as_docx(path="TEST.docx")
-# 
-# 
-# t2 <- pt_data %>% 
-#   filter(trial==4) %>% 
-#   select(group, cov_gender) %>%
-#   tbl_summary(by=group,
-#               label=list(cov_gender ~ "Gender"),
-#               statistic=list(all_categorical() ~ "{n}")) %>% 
-#   modify_header(label="Post-navigation data",
-#                 update=all_stat_cols() ~ "**{level}** N = {n}") %>% 
-#   modify_footnote(everything() ~ NA)
-# ## ----
-
-
-# ######################################################### #
-# ######################################################### #
 # ######################################################### #
 
 # ::: ANALYSIS ::: #
@@ -377,8 +312,8 @@ con_list_condition_location <- list(
 
 ## ---- stats_probe_acc
 # full binomial model (with reduced random effects according to Bates (2015) & Matuschek (2017))
-probe.acc <- mixed(correct_final_alley ~ group*sessionC*condition + cov_location + cov_object + cov_gender +
-                     (sessionC|id), data=data_p, expand_re=T, family=binomial(link="logit"), method="LRT",
+probe.acc <- mixed(correct_final_alley ~ group*session*condition + cov_location + cov_object + cov_gender +
+                     (session|id), data=data_p, expand_re=T, family=binomial(link="logit"), method="LRT",
                    control=glmerControl(optimizer="bobyqa", optCtrl=list(maxfun=1e6)))
 ## ---- 
 
@@ -404,7 +339,7 @@ testCategorical(simulationOutput, catPred=data_p$session[data_p$exclude_trial_ma
 testCategorical(simulationOutput, catPred=data_p$condition[data_p$exclude_trial_matlab==0])
 
 ## ---- plot_probe_acc
-line_acc <- afex_plot(probe.acc, x="sessionC", trace="group", panel="condition", id="id", 
+line_acc <- afex_plot(probe.acc, x="session", trace="group", panel="condition", id="id", 
                       error="model", dodge=0.8,
                       mapping=c("shape", "fill", "color"),
                       factor_levels=list(group=group_labels, condition=condition_labels),
@@ -419,8 +354,7 @@ line_acc <- afex_plot(probe.acc, x="sessionC", trace="group", panel="condition",
   coord_cartesian(ylim=c(0,1)) + 
   theme_bw(base_size=15) + 
   theme(legend.position="top", legend.justification=c(0,0),
-        panel.grid.major.x=element_blank(),
-        axis.text.x=element_blank()) +
+        panel.grid.major.x=element_blank()) +
   labs(x=l_session, y=l_correct_alley)
 ## ----
 
@@ -443,38 +377,38 @@ line_acc <- afex_plot(probe.acc, x="sessionC", trace="group", panel="condition",
 # -- MEMORY SCORE IN ALL TRIALS -- # 
 
 ## ---- stats_probe_ms_simple
-probe.memory_s <- mixed(memory_score ~ group*sessionC*condition + cov_location + cov_object + cov_gender +
-                          (sessionC|id), data=data_p, expand_re=T)
+probe.memory_s <- mixed(memory_score ~ group*session*condition + cov_location + cov_object + cov_gender +
+                          (session|id), data=data_p, expand_re=T)
 ## ----
-
-# ## ---- stats_probe_ms_simple
-# probe.memory_s <- mixed(memory_score ~ group*session*condition + cov_location + cov_object + cov_gender +
-#                           (session+condition|id), data=data_p, expand_re=T)
-# ## ----
 
 ## ---- stats_probe_ms_outlier
 t <- data_p %>% mutate(flag=ifelse(is_outlier(memory_score), T, F))
-t <- t %>% filter(flag==F) %>% mutate(sessionC=as.numeric(session) - mean(as.numeric(session), na.rm=T))
+t <- t %>% filter(flag==F)
+# t <- t %>% filter(flag==F) %>% mutate(sessionC=as.numeric(session) - mean(as.numeric(session), na.rm=T))
 # ggplot(t, aes(x=memory_score, fill=flag)) + geom_histogram() + facet_wrap(~group)
-probe.memory_o <- mixed(memory_score ~ group*sessionC*condition + cov_location + cov_object + cov_gender +
-                          (sessionC|id), data=t, expand_re=T)
+probe.memory_o <- mixed(memory_score ~ group*session*condition + cov_location + cov_object + cov_gender +
+                          (session|id), data=t, expand_re=T)
 rm(t)
 ## ----
 
 # -- heteroscedasticity
-probe.memory <- lme(memory_score ~ group*sessionC*condition + cov_location + cov_object + cov_gender, 
-                    random=~sessionC | id, data=data_p, method="ML")
+probe.memory <- lme(memory_score ~ group*session*condition + cov_location + cov_object + cov_gender, 
+                    random=~session | id, data=data_p, method="ML")
 probe.memory_var1 <- update(probe.memory, weights=varIdent(form=~1 | group))
 probe.memory_var2 <- update(probe.memory, weights=varComb(varIdent(form=~1 | group),
                                                           varIdent(form=~1 | condition)))
-anova(probe.memory, probe.memory_var1, probe.memory_var2, test=T) # chose model 2
-rm(probe.memory, probe.memory_var1, probe.memory_var2)
+probe.memory_var3 <- update(probe.memory, weights=varComb(varIdent(form=~1 | group),
+                                                          varIdent(form=~1 | condition),
+                                                          varIdent(form=~1 | session)))
+anova(probe.memory, probe.memory_var1, probe.memory_var2, probe.memory_var3) # chose model 3
+rm(probe.memory, probe.memory_var1, probe.memory_var2, probe.memory_var3)
 ## ---- stats_probe_ms_hetero
 # re-fit final model with with REML
-probe.memory_h <- lme(memory_score ~ group*sessionC*condition + cov_location + cov_object + cov_gender, 
-                      random=~sessionC | id,
+probe.memory_h <- lme(memory_score ~ group*session*condition + cov_location + cov_object + cov_gender, 
+                      random=~session | id,
                       weights=varComb(varIdent(form=~1 | group),
-                                      varIdent(form=~1 | condition)),
+                                      varIdent(form=~1 | condition),
+                                      varIdent(form=~1 | session)),
                       data=data_p, method="REML")
 ## ----
 
@@ -506,7 +440,7 @@ anova.lme(probe.memory_h, type="marginal")
 rm(probe.memory_s, probe.memory_o, probe.memory_h)
 
 ## ---- plot_probe_ms
-line_memory <- afex_plot(probe.memory_s, x="sessionC", trace="group", panel="condition", id="id", 
+line_memory <- afex_plot(probe.memory_s, x="session", trace="group", panel="condition", id="id", 
                          error="model", dodge=0.8,
                          mapping=c("shape", "fill", "color"),
                          factor_levels=list(group=group_labels, condition=condition_labels),
@@ -521,26 +455,8 @@ line_memory <- afex_plot(probe.memory_s, x="sessionC", trace="group", panel="con
   coord_cartesian(ylim=c(0,1)) + 
   theme_bw(base_size=15) + 
   theme(legend.position="top", legend.justification=c(0,0),
-        panel.grid.major.x=element_blank(),
-        axis.text.x=element_blank()) +
+        panel.grid.major.x=element_blank()) +
   labs(x=l_session, y=l_memory_score)
-
-# line_memory <- afex_plot(probe.memory_s, x="sessionC", trace="group", panel="condition", id="id", 
-#                          error="model", dodge=0.75,
-#                          mapping=c("shape", "color", "linetype"),
-#                          factor_levels=list(group=group_labels, condition=condition_labels),
-#                          legend_title=NULL, 
-#                          data_geom=ggbeeswarm::geom_quasirandom, 
-#                          data_arg=list(dodge.width=0.75, cex=1, color="darkgrey", shape=16),
-#                          point_arg=list(size=3), 
-#                          line_arg=list(size=1),
-#                          error_arg=list(size=1, width=0.5)) + 
-#   scale_color_manual(values=group_colors) +
-#   coord_cartesian(ylim=c(0,1)) + 
-#   theme_bw(base_size=15) + 
-#   theme(legend.position="top", legend.justification=c(0,0),
-#         panel.grid.major.x=element_blank()) +
-#   labs(x=l_session, y=l_memory_score)
 ## ----
 rm(line_memory, probe.memory_s)
          
@@ -572,99 +488,14 @@ rm(line_memory, probe.memory_s)
 
 # ######################################################### #
 
-# -- MEMORY SCORE IN CORRECT TRIALS -- # 
-
-## ---- stats_probe_ms_corr_simple
-probe.memory_corr_s <- mixed(memory_score ~ group*sessionC*condition + cov_location + cov_object + cov_gender +
-                               (sessionC|id), data=data_pc, expand_re=T)
-## ----
-
-## ---- stats_probe_ms_corr_outlier
-t <- data_pc %>% mutate(flag=ifelse(is_outlier(memory_score), T, F))
-t <- t %>% filter(flag==F) %>% mutate(sessionC=as.numeric(session) - mean(as.numeric(session), na.rm=T))
-# ggplot(t, aes(x=memory_score, fill=flag)) + geom_histogram() + facet_wrap(~group)
-probe.memory_corr_o <- mixed(memory_score ~ group*sessionC*condition + cov_location + cov_object + cov_gender + 
-                               (sessionC|id), data=t, expand_re=T)
-rm(t)
-## ----
-
-# -- heteroscedasticity
-probe.memory_corr_base <- lme(memory_score ~ group*sessionC*condition + cov_location + cov_object + cov_gender, 
-                              random=~sessionC | id, data=data_pc, method="ML")
-probe.memory_corr_var1 <- update(probe.memory_corr_base, weights=varIdent(form=~1 | group))
-probe.memory_corr_var2 <- update(probe.memory_corr_base, weights=varComb(varIdent(form=~1 | group),
-                                                                         varIdent(form=~1 | condition)))
-anova(probe.memory_corr_base, probe.memory_corr_var1, probe.memory_corr_var2, test=T) # chose model 1
-rm(probe.memory_corr_base, probe.memory_corr_var1, probe.memory_corr_var2)
-## ---- stats_probe_ms_corr_hetero
-# re-fit final model with with REML
-probe.memory_corr_h <- lme(memory_score ~ group*sessionC*condition + cov_location + cov_object + cov_gender, 
-                           random=~sessionC | id,
-                           weights=varIdent(form=~1 | group),
-                           data=data_pc, method="REML")
-## ----
-
-# check models 
-plot(probe.memory_corr_s$full_model, resid(., type="pearson") ~ fitted(.))
-plot(probe.memory_corr_s$full_model, group ~ residuals(., type="pearson"))
-qqnorm(resid(probe.memory_corr_s$full_model))
-qqline(resid(probe.memory_corr_s$full_model))
-
-plot(probe.memory_corr_o$full_model, resid(., type="pearson") ~ fitted(.))
-plot(probe.memory_corr_o$full_model, group ~ residuals(., type="pearson"))
-qqnorm(resid(probe.memory_corr_o$full_model))
-qqline(resid(probe.memory_corr_o$full_model))
-
-plot(probe.memory_corr_h, resid(., type="pearson") ~ fitted(.))
-plot(probe.memory_corr_h, group ~ residuals(., type="pearson"))
-qqnorm(resid(probe.memory_corr_h))
-qqline(resid(probe.memory_corr_h))
-
-# random effects
-VarCorr(probe.memory_corr_s$full_model)
-# dotplot(ranef(probe.memory_corr_s$full_model))
-VarCorr(probe.memory_corr_o$full_model)
-probe.memory_corr_h$modelStruct$reStruct 
-
-# statistics on fixed effects 
-probe.memory_corr_s
-probe.memory_corr_o
-anova.lme(probe.memory_corr_h, type="marginal")
-rm(probe.memory_corr_s, probe.memory_corr_o, probe.memory_corr_h)
-
-## ---- plot_probe_ms_corr
-line_memory_corr <- afex_plot(probe.memory_corr_s, x="sessionC", trace="group", panel="condition", id="id", 
-                              error="model", dodge=0.8,
-                              mapping=c("shape", "fill", "color"),
-                              factor_levels=list(group=group_labels, condition=condition_labels),
-                              legend_title=NULL, 
-                              data_geom=geom_boxplot, 
-                              data_arg=list(width=0.5, color="black"),
-                              point_arg=list(size=3), 
-                              line_arg=list(size=1.25),
-                              error_arg=list(size=1.25, width=0)) + 
-  scale_fill_manual(values=group_colors) + 
-  scale_color_manual(values=group_colors_o) +
-  coord_cartesian(ylim=c(0.85,1)) + 
-  theme_bw(base_size=15) + 
-  theme(legend.position="top", legend.justification=c(0,0),
-        panel.grid.major.x=element_blank(),
-        axis.text.x=element_blank()) +
-  labs(x=l_session, y=l_memory_score)
-## ----
-rm(line_memory_corr, probe.memory_corr_s)
-
-
-# ######################################################### #
-# ######################################################### #
-
-
 # -- EXTENDED ANALYSIS WITH ROLE OF GOAL LOCATIONS -- # 
 
 ## ---- stats_probe_explore_goals
-probe.memory_goals <- mixed(memory_score ~ group*condition*sessionC*cov_location + cov_object + cov_gender +
-                              (sessionC+cov_location|id), data=data_p, expand_re=T)
+probe.memory_goals <- mixed(memory_score ~ group*condition*session*cov_location + cov_object + cov_gender +
+                              (session*condition*cov_location||id), data=data_p, expand_re=T)
 ## ---- 
+# probe.memory_goals <- mixed(memory_score ~ group*condition*sessionC*cov_location + cov_object + cov_gender +
+#                               (sessionC+cov_location|id), data=data_p, expand_re=T)
 
 # ## ---- stats_probe_explore_goals
 # probe.memory_goals <- mixed(memory_score ~ group*condition*session*cov_location + cov_object + cov_gender +
@@ -677,9 +508,13 @@ dotplot(ranef(probe.memory_goals$full_model))
 
 # fixed effects 
 probe.memory_goals
+emm1 <- emmeans(probe.memory_goals, ~ group*cov_location*session, lmer.df="satterthwaite")
+contrast(emm1, con_list_group_location_session, adjust="bonferroni")
+emm2 <- emmeans(probe.memory_goals, ~ condition*cov_location, lmer.df="satterthwaite")
+contrast(emm2, con_list_condition_location, adjust="bonferroni")
 
 ## ---- plot_probe_explore_ms
-line_explore_ms <- afex_plot(probe.memory_goals, x="sessionC", trace="group", panel=~ cov_location + condition, id="id", 
+line_explore_ms <- afex_plot(probe.memory_goals, x="session", trace="group", panel=~ cov_location + condition, id="id", 
                              error="model", dodge=0.8,
                              mapping=c("shape", "fill", "color"),
                              factor_levels=list(group=group_labels),
@@ -694,44 +529,48 @@ line_explore_ms <- afex_plot(probe.memory_goals, x="sessionC", trace="group", pa
   coord_cartesian(ylim=c(0,1)) + 
   theme_bw(base_size=15) + 
   theme(legend.position="top", legend.justification=c(0,0),
-        panel.grid.major.x=element_blank(),
-        axis.text.x=element_blank()) +
+        panel.grid.major.x=element_blank()) +
   labs(x=l_session, y=l_memory_score)
 ## ---- 
 
+# ######################################################### #
 
-## ---- stats_probe_corr_explore_goals
-probe.memory_corr_goals <- mixed(memory_score ~ group*condition*sessionC*cov_location + cov_object + cov_gender +
-                                   (sessionC+cov_location|id), data=data_pc, expand_re=T)
-## ---- 
-
-# random effects
-VarCorr(probe.memory_corr_goals$full_model)
-dotplot(ranef(probe.memory_corr_goals$full_model))
-
-# fixed effects 
-probe.memory_corr_goals
-
-## ---- plot_probe_corr_explore_ms
-line_explore_corr_ms <- afex_plot(probe.memory_corr_goals, x="sessionC", trace="group", panel=~ cov_location + condition, id="id", 
-                                  error="model", dodge=0.8,
-                                  mapping=c("shape", "fill", "color"),
-                                  factor_levels=list(group=group_labels),
-                                  legend_title=NULL, 
-                                  data_geom=geom_boxplot, 
-                                  data_arg=list(width=0.5, color="black"),
-                                  point_arg=list(size=3), 
-                                  line_arg=list(size=1.25),
-                                  error_arg=list(size=1.25, width=0)) + 
-  scale_fill_manual(values=group_colors) + 
-  scale_color_manual(values=group_colors_o) +
-  coord_cartesian(ylim=c(0.75,1)) + 
-  theme_bw(base_size=15) + 
-  theme(legend.position="top", legend.justification=c(0,0),
-        panel.grid.major.x=element_blank(),
-        axis.text.x=element_blank()) +
-  labs(x=l_session, y=l_memory_score)
-## ---- 
+# # -- MEMORY SCORE IN CORRECT TRIALS -- # 
+# 
+# ## ---- stats_probe_ms_corr_simple
+# probe.memory_corr_s <- mixed(memory_score ~ group*session*condition + cov_location + cov_object + cov_gender +
+#                                (session|id), data=data_pc, expand_re=T)
+# # probe.memory_corr_s <- mixed(memory_score ~ group*sessionC*condition + cov_location + cov_object + cov_gender +
+# #                                (sessionC|id), data=data_pc, expand_re=T)
+# ## ----
+# 
+# # random effects 
+# VarCorr(probe.memory_corr_s$full_model)
+# # dotplot(ranef(probe.memory_corr_s$full_model))
+# 
+# # statistics on fixed effects 
+# probe.memory_corr_s
+# 
+# ## ---- plot_probe_ms_corr
+# line_memory_corr <- afex_plot(probe.memory_corr_s, x="session", trace="group", panel="condition", id="id", 
+#                               error="model", dodge=0.8,
+#                               mapping=c("shape", "fill", "color"),
+#                               factor_levels=list(group=group_labels, condition=condition_labels),
+#                               legend_title=NULL, 
+#                               data_geom=geom_boxplot, 
+#                               data_arg=list(width=0.5, color="black"),
+#                               point_arg=list(size=3), 
+#                               line_arg=list(size=1.25),
+#                               error_arg=list(size=1.25, width=0)) + 
+#   scale_fill_manual(values=group_colors) + 
+#   scale_color_manual(values=group_colors_o) +
+#   coord_cartesian(ylim=c(0.85,1)) + 
+#   theme_bw(base_size=15) + 
+#   theme(legend.position="top", legend.justification=c(0,0),
+#         panel.grid.major.x=element_blank()) +
+#   labs(x=l_session, y=l_memory_score)
+# ## ----
+# rm(line_memory_corr, probe.memory_corr_s)
 
 
 # ######################################################### #
@@ -742,33 +581,40 @@ line_explore_corr_ms <- afex_plot(probe.memory_corr_goals, x="sessionC", trace="
 # -- TIME -- # 
 
 ## ---- stats_probe_time_simple
-probe.time_s <- mixed(time ~ group*sessionC*condition + cov_location + cov_object + cov_gender + cov_time + 
-                        (condition+sessionC|id), data=data_p, expand_re=T)
+probe.time_s <- mixed(time ~ group*session*condition + cov_location + cov_object + cov_gender + cov_time + 
+                        (session+condition|id), data=data_p, expand_re=T)
 ## ----
+# probe.time_s <- mixed(time ~ group*sessionC*condition + cov_location + cov_object + cov_gender + cov_time + 
+#                         (condition+sessionC|id), data=data_p, expand_re=T)
 
 ## ---- stats_probe_time_outlier
 t <- data_p %>% mutate(flag=ifelse(is_outlier(time), T, F))
-t <- t %>% filter(flag==F) %>% mutate(sessionC=as.numeric(session) - mean(as.numeric(session), na.rm=T))
+t <- t %>% filter(flag==F)
+# t <- t %>% filter(flag==F) %>% mutate(sessionC=as.numeric(session) - mean(as.numeric(session), na.rm=T))
 # ggplot(t, aes(x=time, fill=flag)) + geom_histogram() + facet_wrap(~group)
-probe.time_o <- mixed(time ~ group*sessionC*condition + cov_location + cov_object + cov_gender + cov_time + 
-                        (condition+sessionC|id), data=t, expand_re=T)
+probe.time_o <- mixed(time ~ group*session*condition + cov_location + cov_object + cov_gender + cov_time + 
+                        (condition+session|id), data=t, expand_re=T)
 rm(t)
 ## ----
 
 # -- heteroscedasticity
-probe.time_base <- lme(time ~ group*sessionC*condition + cov_location + cov_object + cov_gender + cov_time, 
-                       random=list(id=pdDiag(~ condition + sessionC)), data=data_p, method="ML")
+probe.time_base <- lme(time ~ group*session*condition + cov_location + cov_object + cov_gender + cov_time, 
+                       random=list(id=pdDiag(~ condition + session)), data=data_p, method="ML")
 probe.time_var1 <- update(probe.time_base, weights=varIdent(form=~1 | group))
 probe.time_var2 <- update(probe.time_base, weights=varComb(varIdent(form=~1 | group),
                                                            varIdent(form=~1 | condition)))
-anova(probe.time_base, probe.time_var1, probe.time_var2, test=T) # chose model 2 
-rm(probe.time_base, probe.time_var1, probe.time_var)
+probe.time_var3 <- update(probe.time_base, weights=varComb(varIdent(form=~1 | group),
+                                                           varIdent(form=~1 | condition),
+                                                           varIdent(form=~1 | session)))
+anova(probe.time_base, probe.time_var1, probe.time_var2, probe.time_var3) # chose model 3 
+rm(probe.time_base, probe.time_var1, probe.time_var2, probe.time_var3)
 ## ---- stats_probe_time_hetero
 # re-fit final model with with REML
-probe.time_h <- lme(time ~ group*sessionC*condition + cov_location + cov_object + cov_gender + cov_time, 
-                    random=list(id=pdDiag(~ condition + sessionC)),
+probe.time_h <- lme(time ~ group*session*condition + cov_location + cov_object + cov_gender + cov_time, 
+                    random=list(id=pdDiag(~ condition + session)),
                     weights=varComb(varIdent(form=~1 | group),
-                                    varIdent(form=~1 | condition)),
+                                    varIdent(form=~1 | condition),
+                                    varIdent(form=~1 | session)),
                     na.action=na.omit, data=data_p, method="REML")
 ## ---- 
 
@@ -800,7 +646,7 @@ anova.lme(probe.time_h, type="marginal")
 rm(probe.time_s, probe.time_o, probe.time_h)
 
 ## ---- plot_probe_time
-line_time <- afex_plot(probe.time_s, x="sessionC", trace="group", panel="condition", id="id", 
+line_time <- afex_plot(probe.time_s, x="session", trace="group", panel="condition", id="id", 
                        error="model", dodge=0.8,
                        mapping=c("shape", "fill", "color"),
                        factor_levels=list(group=group_labels, condition=condition_labels),
@@ -815,8 +661,7 @@ line_time <- afex_plot(probe.time_s, x="sessionC", trace="group", panel="conditi
   coord_cartesian(ylim=c(0,40)) + 
   theme_bw(base_size=15) + 
   theme(legend.position="top", legend.justification=c(0,0),
-        panel.grid.major.x=element_blank(),
-        axis.text.x=element_blank()) +
+        panel.grid.major.x=element_blank()) +
   labs(x=l_session, y=l_time)
 ## ----
 rm(line_probe.time_s)
@@ -826,34 +671,41 @@ rm(line_probe.time_s)
 # -- EXCESS PATH LENGTH TO CHOSEN TARGET -- # 
 
 ## ---- stats_probe_excess_path_simple
-probe.excess_path_s <- mixed(excess_path_length ~ group*sessionC*condition + cov_location + cov_object + cov_gender + cov_excess_path +  
+probe.excess_path_s <- mixed(excess_path_length ~ group*session*condition + cov_location + cov_object + cov_gender + cov_excess_path +  
                                (condition||id), data=data_p, expand_re=T)
 ## ----
+# probe.excess_path_s <- mixed(excess_path_length ~ group*sessionC*condition + cov_location + cov_object + cov_gender + cov_excess_path +  
+#                                (condition||id), data=data_p, expand_re=T)
 
 ## ---- stats_probe_excess_path_outlier
 t <- data_p %>% mutate(flag=ifelse(is_outlier(excess_path_length), T, F))
-t <- t %>% filter(flag==F) %>% mutate(sessionC=as.numeric(session) - mean(as.numeric(session), na.rm=T))
+t <- t %>% filter(flag==F)
+# t <- t %>% filter(flag==F) %>% mutate(sessionC=as.numeric(session) - mean(as.numeric(session), na.rm=T))
 # ggplot(t, aes(x=excess_path_length, fill=flag)) + geom_histogram() + facet_wrap(~group)
-probe.excess_path_o <-  mixed(excess_path_length ~ group*sessionC*condition + cov_location + cov_object + cov_gender + cov_excess_path +  
-                                (condition||id), data=t, expand_re=T)
+probe.excess_path_o <- mixed(excess_path_length ~ group*session*condition + cov_location + cov_object + cov_gender + cov_excess_path +  
+                               (condition||id), data=t, expand_re=T)
 rm(t)
 ## ----
 
 # -- heteroscedasticity
-probe.excess_path_base <- lme(excess_path_length ~ group*sessionC*condition + cov_location + cov_object + cov_gender + cov_excess_path, 
+probe.excess_path_base <- lme(excess_path_length ~ group*session*condition + cov_location + cov_object + cov_gender + cov_excess_path, 
                               random=list(id=pdDiag(~ condition)),
                               na.action=na.omit, data=data_p, method="ML")
 probe.excess_path_var1 <- update(probe.excess_path_base, weights=varIdent(form=~1 | group))
 probe.excess_path_var2 <- update(probe.excess_path_base, weights=varComb(varIdent(form=~1 | group),
                                                                          varIdent(form=~1 | condition)))
-anova(probe.excess_path_base, probe.excess_path_var1, probe.excess_path_var2) # chose model 2 
-rm(probe.excess_path_base, probe.excess_path_var1, probe.excess_path_var2)
+probe.excess_path_var3 <- update(probe.excess_path_base, weights=varComb(varIdent(form=~1 | group),
+                                                                         varIdent(form=~1 | condition),
+                                                                         varIdent(form=~1 | session)))
+anova(probe.excess_path_base, probe.excess_path_var1, probe.excess_path_var2, probe.excess_path_var3) # chose model 3 
+rm(probe.excess_path_base, probe.excess_path_var1, probe.excess_path_var2, probe.excess_path_var3)
 ## ---- stats_probe_excess_path_hetero
 # re-fit final model with REML
-probe.excess_path_h <- lme(excess_path_length ~ group*sessionC*condition + cov_location + cov_object + cov_gender + cov_excess_path,  
+probe.excess_path_h <- lme(excess_path_length ~ group*session*condition + cov_location + cov_object + cov_gender + cov_excess_path,  
                            random=list(id=pdDiag(~ condition)),
                            weights=varComb(varIdent(form=~1 | group),
-                                           varIdent(form=~1 | condition)),
+                                           varIdent(form=~1 | condition),
+                                           varIdent(form=~1 | session)),
                            na.action=na.omit, data=data_p, method="REML")
 ## ----
 
@@ -885,7 +737,7 @@ anova.lme(probe.excess_path_h, type="marginal")
 rm(probe.excess_path_s, probe.excess_path_o, probe.excess_path_h)
 
 ## ---- plot_probe_excess_time
-line_excess_path <- afex_plot(probe.excess_path_s, x="sessionC", trace="group", panel="condition", id="id", 
+line_excess_path <- afex_plot(probe.excess_path_s, x="session", trace="group", panel="condition", id="id", 
                               error="model", dodge=0.8,
                               mapping=c("shape", "fill", "color"),
                               factor_levels=list(group=group_labels, condition=condition_labels),
@@ -900,8 +752,7 @@ line_excess_path <- afex_plot(probe.excess_path_s, x="sessionC", trace="group", 
   coord_cartesian(ylim=c(0,1.5)) + 
   theme_bw(base_size=15) + 
   theme(legend.position="top", legend.justification=c(0,0),
-        panel.grid.major.x=element_blank(),
-        axis.text.x=element_blank()) +
+        panel.grid.major.x=element_blank()) +
   labs(x=l_session, y=l_excess_path_length)
 ## ----
 rm(line_excess_path, probe.excess_path_s)
@@ -911,31 +762,37 @@ rm(line_excess_path, probe.excess_path_s)
 # -- PRESENCE in outer alleys vs inner pentagon -- #
 
 # ---- stats_probe_presence_alleys_simple
-probe.presence_alleys_s <- mixed(presence_alleys ~ group*sessionC*condition + cov_location + cov_object + cov_gender +  
+probe.presence_alleys_s <- mixed(presence_alleys ~ group*session*condition + cov_location + cov_object + cov_gender +
                                    (condition||id), data=data_p, expand_re=T)
 ## ----
+# probe.presence_alleys_s <- mixed(presence_alleys ~ group*sessionC*condition + cov_location + cov_object + cov_gender +  
+#                                    (condition||id), data=data_p, expand_re=T)
 
 ## ---- stats_probe_presence_alleys_outlier
 t <- data_p %>% mutate(flag=ifelse(is_outlier(presence_alleys), T, F))
-t <- t %>% filter(flag==F) %>% mutate(sessionC=as.numeric(session) - mean(as.numeric(session), na.rm=T))
+t <- t %>% filter(flag==F) 
+# t <- t %>% filter(flag==F) %>% mutate(sessionC=as.numeric(session) - mean(as.numeric(session), na.rm=T))
 # ggplot(t, aes(x=presence_alleys, fill=flag)) + geom_histogram() + facet_wrap(~group)
-probe.presence_alleys_o <-  mixed(presence_alleys ~ group*sessionC*condition + cov_location + cov_object + cov_gender + 
+probe.presence_alleys_o <-  mixed(presence_alleys ~ group*session*condition + cov_location + cov_object + cov_gender + 
                                     (condition||id), data=t, expand_re=T)
 rm(t)
 ## ----
 
 # -- heteroscedasticity
-probe.presence_alleys_base <- lme(presence_alleys ~ group*sessionC*condition + cov_location + cov_object + cov_gender, 
+probe.presence_alleys_base <- lme(presence_alleys ~ group*session*condition + cov_location + cov_object + cov_gender, 
                                   random=list(id=pdDiag(~ condition)),
                                   na.action=na.omit, data=data_p, method="ML")
 probe.presence_alleys_var1 <- update(probe.presence_alleys_base, weights=varIdent(form=~1 | group))
 probe.presence_alleys_var2 <- update(probe.presence_alleys_base, weights=varComb(varIdent(form=~1 | group),
                                                                                  varIdent(form=~1 | condition)))
+# probe.presence_alleys_var3 <- update(probe.presence_alleys_base, weights=varComb(varIdent(form=~1 | group),
+#                                                                                  varIdent(form=~1 | condition),
+#                                                                                  varIdent(form=~1 | session)))
 anova(probe.presence_alleys_base, probe.presence_alleys_var1, probe.presence_alleys_var2) # chose model 2 
 rm(probe.presence_alleys_base, probe.presence_alleys_var1, probe.presence_alleys_var2)  
 ## ---- stats_probe_presence_alleys_hetero
 # re-fit final model with REML
-probe.presence_alleys_h <- lme(presence_alleys ~ group*sessionC*condition + cov_location + cov_object + cov_gender, 
+probe.presence_alleys_h <- lme(presence_alleys ~ group*session*condition + cov_location + cov_object + cov_gender, 
                                random=list(id=pdDiag(~ condition)),
                                weights=varComb(varIdent(form=~1 | group),
                                                varIdent(form=~1 | condition)),
@@ -970,7 +827,7 @@ anova.lme(probe.presence_alleys_h, type="marginal")
 rm(probe.presence_alleys_s, probe.presence_alleys_o, probe.presence_alleys_h)
 
 ## ---- plot_probe_presence_alleys
-line_presence_alleys <- afex_plot(probe.presence_alleys_s, x="sessionC", trace="group", panel="condition", id="id", 
+line_presence_alleys <- afex_plot(probe.presence_alleys_s, x="session", trace="group", panel="condition", id="id", 
                                   error="model", dodge=0.8,
                                   mapping=c("shape", "fill", "color"),
                                   factor_levels=list(group=group_labels, condition=condition_labels),
@@ -985,8 +842,7 @@ line_presence_alleys <- afex_plot(probe.presence_alleys_s, x="sessionC", trace="
   coord_cartesian(ylim=c(0,0.8)) + 
   theme_bw(base_size=15) + 
   theme(legend.position="top", legend.justification=c(0,0),
-        panel.grid.major.x=element_blank(),
-        axis.text.x=element_blank()) +
+        panel.grid.major.x=element_blank()) +
   labs(x=l_session, y=l_presence_alleys)
 ## ---- 
 rm(line_presence_alleys, presence_alleys_s)
@@ -996,34 +852,41 @@ rm(line_presence_alleys, presence_alleys_s)
 # -- INITIAL ROTATION -- # 
 
 # ---- stats_probe_initial_rotation_simple
-probe.initial_rot_s <- mixed(initial_rotation_turns ~ group*sessionC*condition + cov_location + cov_object + cov_gender + cov_rotation + cov_gender +
+probe.initial_rot_s <- mixed(initial_rotation_turns ~ group*session*condition + cov_location + cov_object + cov_gender + cov_rotation + cov_gender +
                                (condition||id), data=data_p, expand_re=T)
 ## ----
+# probe.initial_rot_s <- mixed(initial_rotation_turns ~ group*sessionC*condition + cov_location + cov_object + cov_gender + cov_rotation + cov_gender +
+#                                (condition||id), data=data_p, expand_re=T)
 
 ## ---- stats_probe_initial_rotation_outlier
 t <- data_p %>% mutate(flag=ifelse(is_outlier(initial_rotation_turns), T, F))
-t <- t %>% filter(flag==F) %>% mutate(sessionC=as.numeric(session) - mean(as.numeric(session), na.rm=T))
+t <- t %>% filter(flag==F)
+# t <- t %>% filter(flag==F) %>% mutate(sessionC=as.numeric(session) - mean(as.numeric(session), na.rm=T))
 # ggplot(t, aes(x=initial_rotation_turns, fill=flag)) + geom_histogram() + facet_wrap(~group)
-probe.initial_rot_o <-  mixed(initial_rotation_turns ~ group*sessionC*condition + cov_location + cov_object + cov_gender + cov_rotation + cov_gender +
+probe.initial_rot_o <-  mixed(initial_rotation_turns ~ group*session*condition + cov_location + cov_object + cov_gender + cov_rotation + cov_gender +
                                 (condition||id), data=t, expand_re=T)
 rm(t)
 ## ----
 
 # -- heteroscedasticity
-probe.initial_rot_base <- lme(initial_rotation_turns ~ group*sessionC*condition + cov_location + cov_object + cov_gender + cov_rotation + cov_gender, 
+probe.initial_rot_base <- lme(initial_rotation_turns ~ group*session*condition + cov_location + cov_object + cov_gender + cov_rotation + cov_gender, 
                               random=list(id=pdDiag(~ condition)),
                               na.action=na.omit, data=data_p, method="ML")
 probe.initial_rot_var1 <- update(probe.initial_rot_base, weights=varIdent(form=~1 | condition))
 probe.initial_rot_var2 <- update(probe.initial_rot_base, weights=varComb(varIdent(form=~1 | condition),
                                                                          varIdent(form=~1 | group)))
-anova(probe.initial_rot_base, probe.initial_rot_var1, probe.initial_rot_var2) # chose model
-rm(probe.initial_rot_base, probe.initial_rot_var1, probe.initial_rot_var2)
+probe.initial_rot_var3 <- update(probe.initial_rot_base, weights=varComb(varIdent(form=~1 | condition),
+                                                                         varIdent(form=~1 | group),
+                                                                         varIdent(form=~1 | session)))
+anova(probe.initial_rot_base, probe.initial_rot_var1, probe.initial_rot_var2, probe.initial_rot_var3) # chose model 3
+rm(probe.initial_rot_base, probe.initial_rot_var1, probe.initial_rot_var2, probe.initial_rot_var3)
 ## ---- stats_probe_initial_rotation_hetero
 # re-fit final model with REML
-probe.initial_rot_h <- lme(initial_rotation_turns ~ group*sessionC*condition + cov_location + cov_object + cov_gender + cov_rotation + cov_gender, 
+probe.initial_rot_h <- lme(initial_rotation_turns ~ group*session*condition + cov_location + cov_object + cov_gender + cov_rotation + cov_gender, 
                            random=list(id=pdDiag(~ condition)),
                            weights=varComb(varIdent(form=~1 | condition),
-                                           varIdent(form=~1 | group)),
+                                           varIdent(form=~1 | group),
+                                           varIdent(form=~1 | session)),
                            na.action=na.omit, data=data_p, method="REML")
 ## ---- 
 
@@ -1055,7 +918,7 @@ anova.lme(probe.initial_rot_h, type="marginal")
 rm(probe.initial_rot_s, probe.initial_rot_o, probe.initial_rot_h)
 
 ## ---- plot_probe_initial_rotation
-line_initial_rotation <- afex_plot(probe.initial_rot_s, x="sessionC", trace="group", panel="condition", id="id", 
+line_initial_rotation <- afex_plot(probe.initial_rot_s, x="session", trace="group", panel="condition", id="id", 
                                    error="model", dodge=0.8,
                                    mapping=c("shape", "fill", "color"),
                                    factor_levels=list(group=group_labels, condition=condition_labels),
@@ -1070,8 +933,7 @@ line_initial_rotation <- afex_plot(probe.initial_rot_s, x="sessionC", trace="gro
   coord_cartesian(ylim=c(0,1)) + 
   theme_bw(base_size=15) + 
   theme(legend.position="top", legend.justification=c(0,0),
-        panel.grid.major.x=element_blank(),
-        axis.text.x=element_blank()) +
+        panel.grid.major.x=element_blank()) +
   labs(x=l_session, y=l_initial_rotation)
 ## ---- 
 rm(line_initial_rotation, probe.initial_rot_s)
@@ -1081,34 +943,41 @@ rm(line_initial_rotation, probe.initial_rot_s)
 # -- ROTATION BY PATH LENGTH -- # 
 
 # ---- stats_probe_rotation_path_simple
-probe.rotation_path_s <- mixed(rotation_turns_by_path_length ~ group*sessionC*condition + cov_location + cov_object + cov_gender + cov_rotation + cov_gender + 
+probe.rotation_path_s <- mixed(rotation_turns_by_path_length ~ group*session*condition + cov_location + cov_object + cov_gender + cov_rotation + cov_gender + 
                                  (condition||id), data=data_p, expand_re=T)
 ## ----
+# probe.rotation_path_s <- mixed(rotation_turns_by_path_length ~ group*sessionC*condition + cov_location + cov_object + cov_gender + cov_rotation + cov_gender + 
+#                                  (condition||id), data=data_p, expand_re=T)
 
 ## ---- stats_probe_rotation_path_outlier
 t <- data_p %>% mutate(flag=ifelse(is_outlier(rotation_turns_by_path_length), T, F))
-t <- t %>% filter(flag==F) %>% mutate(sessionC=as.numeric(session) - mean(as.numeric(session), na.rm=T))
+# t <- t %>% filter(flag==F)
+# t <- t %>% filter(flag==F) %>% mutate(sessionC=as.numeric(session) - mean(as.numeric(session), na.rm=T))
 # ggplot(t, aes(x=rotation_turns_by_path_length, fill=flag)) + geom_histogram() + facet_wrap(~group)
-probe.rotation_path_o <-  mixed(rotation_turns_by_path_length ~ group*sessionC*condition + cov_location + cov_object + cov_gender + cov_rotation + cov_gender + 
+probe.rotation_path_o <-  mixed(rotation_turns_by_path_length ~ group*session*condition + cov_location + cov_object + cov_gender + cov_rotation + cov_gender + 
                                   (condition||id), data=t %>% filter(flag==F), expand_re=T)
 rm(t)
 ## ----
 
 # -- heteroscedasticity
-probe.rotation_path_base <- lme(rotation_turns_by_path_length ~ group*sessionC*condition + cov_location + cov_object + cov_gender + cov_rotation + cov_gender, 
+probe.rotation_path_base <- lme(rotation_turns_by_path_length ~ group*session*condition + cov_location + cov_object + cov_gender + cov_rotation + cov_gender, 
                                 random=list(id=pdDiag(~ condition)),
                                 na.action=na.omit, data=data_p, method="ML")
 probe.rotation_path_var1 <- update(probe.rotation_path_base, weights=varIdent(form=~1 | condition))
 probe.rotation_path_var2 <- update(probe.rotation_path_base, weights=varComb(varIdent(form=~1 | condition),
                                                                              varIdent(form=~1 | group)))
-anova(probe.rotation_path_base, probe.rotation_path_var1, probe.rotation_path_var2) # chose model 2
-rm(probe.rotation_path_base, probe.rotation_path_var1, probe.rotation_path_var2) 
+probe.rotation_path_var3 <- update(probe.rotation_path_base, weights=varComb(varIdent(form=~1 | condition),
+                                                                             varIdent(form=~1 | group),
+                                                                             varIdent(form=~1 | session)))
+anova(probe.rotation_path_base, probe.rotation_path_var1, probe.rotation_path_var2, probe.rotation_path_var3) # chose model 3
+rm(probe.rotation_path_base, probe.rotation_path_var1, probe.rotation_path_var2, probe.rotation_path_var3) 
 ## ---- stats_probe_rotation_path_hetero
 # re-fit final model with REML
-probe.rotation_path_h <-  lme(rotation_turns_by_path_length ~  group*sessionC*condition + cov_location + cov_object + cov_gender + cov_rotation + cov_gender, 
+probe.rotation_path_h <-  lme(rotation_turns_by_path_length ~  group*session*condition + cov_location + cov_object + cov_gender + cov_rotation + cov_gender, 
                               random=list(id=pdDiag(~ condition)),
                               weights=varComb(varIdent(form=~1 | condition),
-                                              varIdent(form=~1 | group)),
+                                              varIdent(form=~1 | group),
+                                              varIdent(form=~1 | session)),
                               na.action=na.omit, data=data_p, method="REML")
 ## ----
 
@@ -1140,7 +1009,7 @@ anova.lme(probe.rotation_path_h, type="marginal")
 rm(probe.rotation_path_s, probe.rotation_path_o, probe.rotation_path_h)
 
 ## ---- plot_probe_rotation_path
-line_rotation_path <- afex_plot(probe.rotation_path_s, x="sessionC", trace="group", panel="condition", id="id", 
+line_rotation_path <- afex_plot(probe.rotation_path_s, x="session", trace="group", panel="condition", id="id", 
                                 error="model", dodge=0.8,
                                 mapping=c("shape", "fill", "color"),
                                 factor_levels=list(group=group_labels, condition=condition_labels),
@@ -1155,8 +1024,7 @@ line_rotation_path <- afex_plot(probe.rotation_path_s, x="sessionC", trace="grou
   coord_cartesian(ylim=c(0,2.5)) + 
   theme_bw(base_size=15) + 
   theme(legend.position="top", legend.justification=c(0,0),
-        panel.grid.major.x=element_blank(),
-        axis.text.x=element_blank()) +
+        panel.grid.major.x=element_blank()) +
   labs(x=l_session, y=l_rotation_by_path)
 ## ---- 
 rm(line_rotation_path, probe.rotation_path_s)
@@ -1392,54 +1260,32 @@ rm(data_allo_ms, data_agg_incorr_ms, emm, con_list_group_cond_session, probe.all
 # ######################################################### #
 
 
-# -- CORRELATION/REGRESSION/PLS -- #
-
-library(corrplot)
-corr_data <- data_p %>%
-  select(memory_score, time, excess_path_length, presence_alleys, initial_rotation_turns, rotation_turns_by_path_length) %>% 
-  drop_na() %>% cor()
-
-corrplot(corr_data, method="number", tl.col="black", tl.srt=45)
-rm(corr_data)
-
-m <- lm(memory_score ~ time + excess_path_length + presence_alleys + initial_rotation_turns + rotation_turns_by_path_length, data=data_p)
-summary(m)
-
-m <- lm(memory_score ~ group + session + condition +
-          time + excess_path_length + presence_alleys + initial_rotation_turns + rotation_turns_by_path_length, data=data_p)
-summary(m)
-
-
-# ######################################################### #
-# ######################################################### #
-
-
-# -- SEARCH STRATEGIES -- #
-
-## ---- stats_probe_path_strategy
-table(data_p$search_strategy, data_p$group)
-da1 <- data_p %>% filter(condition=="allo_ret", session==1)
-table(da1$search_strategy, da1$group)
-da2 <- data_p %>% filter(condition=="allo_ret", session==2)
-table(da2$search_strategy, da2$group)
-de1 <- data_p %>% filter(condition=="ego_ret", session==1)
-table(de1$search_strategy, de1$group)
-de2 <- data_p %>% filter(condition=="ego_ret", session==2)
-table(de2$search_strategy, de2$group)
-
-# discANOVA from WRS2: tests hypothesis that independent groups have identical multinomial distributions. 
-discANOVA(search_strategy ~ group, data=data_p, nboot=500) 
-discmcp(search_strategy ~ group, data=data_p, alpha=0.05, nboot=2000)
-
-discmcp(search_strategy ~ group, data=da1, alpha=0.05, nboot=2000)
-discmcp(search_strategy ~ group, data=da2, alpha=0.05, nboot=2000)
-discmcp(search_strategy ~ group, data=de1, alpha=0.05, nboot=2000)
-discmcp(search_strategy ~ group, data=de2, alpha=0.05, nboot=2000)
-## ---- 
-# helper plots
-t <- data_p %>% group_by(group, session, condition) %>% count(search_strategy) %>% mutate(percent=n/sum(n))
-ggplot(t, aes(x=group, y=percent, fill=search_strategy)) + geom_col(position=position_stack()) + facet_wrap(~condition + session, nrow=1)
-rm(t)
+# # -- SEARCH STRATEGIES -- #
+# 
+# ## ---- stats_probe_path_strategy
+# table(data_p$search_strategy, data_p$group)
+# da1 <- data_p %>% filter(condition=="allo_ret", session==1)
+# table(da1$search_strategy, da1$group)
+# da2 <- data_p %>% filter(condition=="allo_ret", session==2)
+# table(da2$search_strategy, da2$group)
+# de1 <- data_p %>% filter(condition=="ego_ret", session==1)
+# table(de1$search_strategy, de1$group)
+# de2 <- data_p %>% filter(condition=="ego_ret", session==2)
+# table(de2$search_strategy, de2$group)
+# 
+# # discANOVA from WRS2: tests hypothesis that independent groups have identical multinomial distributions. 
+# discANOVA(search_strategy ~ group, data=data_p, nboot=500) 
+# discmcp(search_strategy ~ group, data=data_p, alpha=0.05, nboot=2000)
+# 
+# discmcp(search_strategy ~ group, data=da1, alpha=0.05, nboot=2000)
+# discmcp(search_strategy ~ group, data=da2, alpha=0.05, nboot=2000)
+# discmcp(search_strategy ~ group, data=de1, alpha=0.05, nboot=2000)
+# discmcp(search_strategy ~ group, data=de2, alpha=0.05, nboot=2000)
+# ## ---- 
+# # helper plots
+# t <- data_p %>% group_by(group, session, condition) %>% count(search_strategy) %>% mutate(percent=n/sum(n))
+# ggplot(t, aes(x=group, y=percent, fill=search_strategy)) + geom_col(position=position_stack()) + facet_wrap(~condition + session, nrow=1)
+# rm(t)
 
 
 # ######################################################### #
@@ -1977,23 +1823,40 @@ rm(data_gmda, CanAcc, DistAcc, AngleAcc, boxplot)
 # ######################################################### #
 # ######################################################### #
 
+
 # -- CORRELATIONS -- # 
 
-## ---- stats_corr_allo_ego
-# allocentric & egocentric performance 
+## ---- stats_corr_allo_ego_trad
+# aggregated standard spearman correlation
 corr <- data_p %>% 
-  group_by(id, cov_gender, group, condition) %>% 
+  group_by(id, group, condition) %>% 
   summarise(memory_score=mean(memory_score, na.rm=T)) %>% 
   pivot_wider(names_from=condition,
               names_prefix="memory_",
               values_from=memory_score)
 
+cor.test(corr$memory_allo_ret, corr$memory_ego_ret, method="spearman")
+rm(corr)
+## ----
 ggplot(corr, aes(x=memory_allo_ret, y=memory_ego_ret)) + 
   geom_point() + geom_smooth(method="lm") +
   facet_wrap(~group, nrow=1)
- 
-cor.test(corr$memory_allo_ret, corr$memory_ego_ret, method="spearman")
-## ----
+
+
+## ---- stats_corr_allo_ego_rmcorr
+# aggregated repeated measures correlation 
+rm_corr <- data_p %>% 
+  group_by(id, group, session, cov_location, cov_block, condition) %>% 
+  summarise(memory_score=mean(memory_score, na.rm=T)) %>% 
+  pivot_wider(names_from=condition,
+              names_prefix="memory_",
+              values_from=memory_score)
+
+rcorr <- rmcorr::rmcorr(id, memory_ego_ret, memory_allo_ret, rm_corr, CIs=c("analytic"))
+rcorr
+rm(rm_corr, rcorr)
+## ---- 
+plot(rcorr)
 
 
 # ######################################################### #
