@@ -987,8 +987,8 @@ Caution: this is exploratory and based on few trials!
 ```{r, stats_corr_allo_ego_trad }
 ```
 
-```{r, stats_corr_allo_ego_rmcorr }
-```
+# ```{r, stats_corr_allo_ego_rmcorr }
+# ```
 
 \newpage
 
