@@ -509,9 +509,18 @@ dotplot(ranef(probe.memory_goals$full_model))
 # fixed effects 
 probe.memory_goals
 emm1 <- emmeans(probe.memory_goals, ~ group*cov_location*session, lmer.df="satterthwaite")
-contrast(emm1, con_list_group_location_session, adjust="bonferroni")
+e1 <- pairs(emm1, simple="group")
+e2 <- pairs(emm1, simple="session")
+e3 <- pairs(emm1, simple="cov_location")
+e4 <- pairs(emm1, interaction="pairwise", by="cov_location")
+c1 <- summary(rbind(e2, e4, e1, e3), by=NULL, adjust="bonferroni")
+c2 <- summary(rbind(e2, e4, e1), by=NULL, adjust="bonferroni")
+
 emm2 <- emmeans(probe.memory_goals, ~ condition*cov_location, lmer.df="satterthwaite")
 contrast(emm2, con_list_condition_location, adjust="bonferroni")
+
+emm3 <- emmeans(probe.memory_goals, ~ group*cov_location, lmer.df="satterthwaite")
+summary(pairs(emm3, simple="group"), by=NULL, adjust="bonferroni")
 
 ## ---- plot_probe_explore_ms
 line_explore_ms <- afex_plot(probe.memory_goals, x="session", trace="group", panel=~ cov_location + condition, id="id", 
