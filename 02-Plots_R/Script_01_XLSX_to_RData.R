@@ -124,5 +124,33 @@ save(pt_data, file=file_name)
 # clear workspace
 rm(list = ls())
 
+
 # ######################################################### #
 # ######################################################### #
+
+
+# ::: STARMAZE DATA FOR PLSC ANALYSIS ::: # 
+
+# read-in starmaze data 
+file_name <- "../WP10_data/WP10_results/wp10_navigation_data.RData"
+load(file_name)
+sm_data <- sm_data %>% filter(exclude_trial_matlab==0) 
+rm(file_name)
+
+# filter and aggregate for PLSC analysis 
+plsc_data <- sm_data %>% 
+  filter(condition %in% c("ego_ret", "allo_ret")) %>% 
+  select(id, group, session, condition, trial, memory_score, 
+         time, excess_path_length, presence_alleys, initial_rotation_turns, rotation_turns_by_path_length) %>% 
+  group_by(id, group) %>% 
+  #group_by(id, group, session, condition) %>% 
+  summarise_at(vars(memory_score, time, excess_path_length, presence_alleys, 
+                 initial_rotation_turns, rotation_turns_by_path_length), mean, na.rm=T) %>% 
+  #arrange(group, id, condition)
+  arrange(group, id)
+
+# save as mat
+R.matlab::writeMat(con="../WP10_data/WP10_results/wp10_plsc_data.mat", m=as.matrix(plsc_data))
+
+# clear workspace
+rm(list = ls())
