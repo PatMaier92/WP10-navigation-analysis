@@ -174,7 +174,7 @@ is_outlier <- function(x) {
 rm(covariates, data)
 ## ---- 
 
-## ---- contrast_matrices 
+## ---- contrast_matrices
 con_list_session_condition <- list(
   "ego_vs_allo_in_T1" = c(1, 0, -1, 0),
   "ego_vs_allo_in_T2" = c(0, 1, 0, -1),
@@ -201,7 +201,7 @@ con_list_group_condition <- list(
   "9-10-yo_vs_adults_in_ego"  = c(0, 1, -1, 0, 0, 0),
   "6-7-yo_vs_9-10-yo_in_allo" = c(0, 0, 0, 1, -1, 0),
   "6-7-yo_vs_adults_in_allo"  = c(0, 0, 0, 1, 0, -1),
-  "9-10-yo_vs_adults_in_allo" = c(0, 0, 0, 0, 1, -1)) 
+  "9-10-yo_vs_adults_in_allo" = c(0, 0, 0, 0, 1, -1))
 
 con_list_group_session_condition <- list(
   "T1_vs_T2_in_6-7-yo_ego"          = c(1, 0, 0, -1, 0, 0, 0, 0, 0, 0, 0, 0),
@@ -210,14 +210,14 @@ con_list_group_session_condition <- list(
   "T1_vs_T2_in_6-7-yo_in_allo"      = c(0, 0, 0, 0, 0, 0, 1, 0, 0, -1, 0, 0),
   "T1_vs_T2_in_9-10-yo_in_allo"     = c(0, 0, 0, 0, 0, 0, 0, 1, 0, 0, -1, 0),
   "T1_vs_T2_in_adults_in_allo"      = c(0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, -1),
-  
+
   "ego_vs_allo_in_T1_6-7-yo"        = c(1, 0, 0, 0, 0, 0, -1, 0, 0, 0, 0, 0),
   "ego_vs_allo_in_T1_9-10-yo"       = c(0, 1, 0, 0, 0, 0, 0, -1, 0, 0, 0, 0),
   "ego_vs_allo_in_T1_adults"        = c(0, 0, 1, 0, 0, 0, 0, 0, -1, 0, 0, 0),
   "ego_vs_allo_in_T2_6-7-yo"        = c(0, 0, 0, 1, 0, 0, 0, 0, 0, -1, 0, 0),
   "ego_vs_allo_in_T2_9-10-yo"       = c(0, 0, 0, 0, 1, 0, 0, 0, 0, 0, -1, 0),
   "ego_vs_allo_in_T2_adults"        = c(0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, -1),
-  
+
   "6-7-yo_vs_9-10-yo_in_T1_ego"     = c(1, -1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0),
   "6-7-yo_vs_adults_in_T1_ego"      = c(1, 0, -1, 0, 0, 0, 0, 0, 0, 0, 0, 0),
   "9-10-yo_vs_adults_in_T1_ego"     = c(0, 1, -1, 0, 0, 0, 0, 0, 0, 0, 0, 0),
@@ -251,7 +251,7 @@ con_list_group_location_session <- list(
   "9-10-yo_vs_adults_in_l1_in_T1" = c(0, 1, -1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0),
   "9-10-yo_vs_adults_in_l2_in_T1" = c(0, 0, 0, 0, 1, -1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0),
   "9-10-yo_vs_adults_in_l3_in_T1" = c(0, 0, 0, 0, 0, 0, 0, 1, -1, 0, 0, 0, 0, 0, 0, 0, 0, 0),
-  
+
   "6-7-yo_vs_9-10-yo_in_l1_in_T2" = c(0, 0, 0, 0, 0, 0, 0, 0, 0, 1, -1, 0, 0, 0, 0, 0, 0, 0),
   "6-7-yo_vs_9-10-yo_in_l2_in_T2" = c(0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, -1, 0, 0, 0, 0),
   "6-7-yo_vs_9-10-yo_in_l3_in_T2" = c(0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, -1, 0),
@@ -308,7 +308,7 @@ con_list_condition_location <- list(
 
 # ::: probe trials ::: #
 
-# -- CORRECT FINAL ALLEY --#
+# -- CORRECT FINAL ALLEY IN ALL TRIALS --#
 
 ## ---- stats_probe_acc
 # full binomial model (with reduced random effects according to Bates (2015) & Matuschek (2017))
@@ -319,12 +319,11 @@ probe.acc <- mixed(correct_final_alley ~ group*session*condition + cov_location 
 
 # fixed effects
 probe.acc
-emm <- emmeans(probe.acc, ~ group*condition)
-contrast(emm, con_list_group_condition, type="response", adjust="bonferroni")
-emmeans(probe.acc, pairwise ~ session, type="response")$contrasts
+# emm <- emmeans(probe.acc, ~ group*condition)
+# summary(rbind(pairs(emm, simple="group"), pairs(emm, simple="condition")), by=NULL, adjust="Bonferroni")
 emmeans(probe.acc, pairwise ~ group, type="response", adjust="bonferroni")$contrasts
 emmeans(probe.acc, pairwise ~ condition, type="response")$contrasts
-# emmeans(probe.acc, pairwise ~ cov_location, type="response")$contrasts
+emmeans(probe.acc, pairwise ~ session, type="response")$contrasts
 
 # random effects
 VarCorr(probe.acc$full_model)
@@ -360,20 +359,6 @@ line_acc <- afex_plot(probe.acc, x="session", trace="group", panel="condition", 
 
 # ######################################################### #
 
-# # -- CHANGE IN ACCURACY -- #
-# # ::: METHOD: one aggregated value per person, therefore (robust) ANOVA ::: #  
-# 
-# ## ---- stats_probe_acc_change
-# # robust ANOVA (from WRS/WRS2 by Mair & Wilcox)
-# # sum contrasts set by default (I think)
-# bwtrim(change_acc ~ group*condition, id=id, data=data_prepost, tr=0.2)
-# # using one-way post-test lincon() 
-# # because there is no dedicated post-test for bwtrim() and there are no interactions
-# lincon(change_acc ~ group, data=data_prepost, tr=0.2, alpha=0.05, method="bonferroni")
-# ## ---- 
-
-# ######################################################### #
-
 # -- MEMORY SCORE IN ALL TRIALS -- # 
 
 ## ---- stats_probe_ms_simple
@@ -384,8 +369,6 @@ probe.memory_s <- mixed(memory_score ~ group*session*condition + cov_location + 
 ## ---- stats_probe_ms_outlier
 t <- data_p %>% mutate(flag=ifelse(is_outlier(memory_score), T, F))
 t <- t %>% filter(flag==F)
-# t <- t %>% filter(flag==F) %>% mutate(sessionC=as.numeric(session) - mean(as.numeric(session), na.rm=T))
-# ggplot(t, aes(x=memory_score, fill=flag)) + geom_histogram() + facet_wrap(~group)
 probe.memory_o <- mixed(memory_score ~ group*session*condition + cov_location + cov_object + cov_gender +
                           (session|id), data=t, expand_re=T)
 rm(t)
@@ -462,45 +445,12 @@ rm(line_memory, probe.memory_s)
          
 # ######################################################### #
 
-# # -- CHANGE IN MEMORY SCORE -- #
-# 
-# ## ---- stats_probe_ms_change_WRS2
-# # robust ANOVA (from WRS/WRS2 by Mair & Wilcox)
-# probe.change_ms_raov <- bwtrim(change_ms ~ group*condition, id=id, data=data_prepost, tr=0.2)
-# #probe.change_ms_raov2 <- sppba(change_ms ~ group*condition, id, data=data_prepost)
-# # using one-way post-test lincon() 
-# # because there is no dedicated post-test for bwtrim() and there are no interactions
-# probe.change_ms_raov_post <- lincon(change_ms ~ group, data=data_prepost, tr=0.2, alpha=0.05, method="bonferroni")
-# ## ----
-# 
-# ## ---- stats_probe_ms_change_KW
-# # kruskal-wallis 
-# probe.change_ms_kw <- kruskal.test(change_ms ~ group, data=data_prepost)
-# probe.change_ms_kw_post <- pairwise.wilcox.test(data_prepost$change_ms, data_prepost$group, p.adjust="bonferroni")
-# ## ----
-# 
-# ## ---- stats_probe_ms_change_AOV
-# # standard anova 
-# probe.change_ms_aov <- aov_ez("id", "change_ms", data_prepost, between=c("group"), within=c("condition"))
-# #probe.change_ms_aov_post <- emmeans(probe.change_ms_aov, pairwise ~ group, adjust="bonferroni")
-# ## ----
-# rm(probe.change_ms_raov, probe.change_ms_raov2, probe.change_ms_raov_post, probe.change_ms_kw, probe.change_ms_kw_post, probe.change_ms_aov, probe.change_ms_aov_post)
-
-# ######################################################### #
-
 # -- EXTENDED ANALYSIS WITH ROLE OF GOAL LOCATIONS -- # 
 
 ## ---- stats_probe_explore_goals
 probe.memory_goals <- mixed(memory_score ~ group*condition*session*cov_location + cov_object + cov_gender +
                               (session*condition*cov_location||id), data=data_p, expand_re=T)
 ## ---- 
-# probe.memory_goals <- mixed(memory_score ~ group*condition*sessionC*cov_location + cov_object + cov_gender +
-#                               (sessionC+cov_location|id), data=data_p, expand_re=T)
-
-# ## ---- stats_probe_explore_goals
-# probe.memory_goals <- mixed(memory_score ~ group*condition*session*cov_location + cov_object + cov_gender +
-#                               (session*cov_location*condition||id), data=data_p, expand_re=T)
-# ## ----
 
 # random effects
 VarCorr(probe.memory_goals$full_model)
@@ -517,7 +467,7 @@ c1 <- summary(rbind(e2, e4, e1, e3), by=NULL, adjust="bonferroni")
 c2 <- summary(rbind(e2, e4, e1), by=NULL, adjust="bonferroni")
 
 emm2 <- emmeans(probe.memory_goals, ~ condition*cov_location, lmer.df="satterthwaite")
-contrast(emm2, con_list_condition_location, adjust="bonferroni")
+summary(rbind(pairs(emm2, simple="condition"), pairs(emm2, simple="cov_location")), by=NULL, adjust="bonferroni")
 
 emm3 <- emmeans(probe.memory_goals, ~ group*cov_location, lmer.df="satterthwaite")
 summary(pairs(emm3, simple="group"), by=NULL, adjust="bonferroni")
@@ -542,45 +492,6 @@ line_explore_ms <- afex_plot(probe.memory_goals, x="session", trace="group", pan
   labs(x=l_session, y=l_memory_score)
 ## ---- 
 
-# ######################################################### #
-
-# # -- MEMORY SCORE IN CORRECT TRIALS -- # 
-# 
-# ## ---- stats_probe_ms_corr_simple
-# probe.memory_corr_s <- mixed(memory_score ~ group*session*condition + cov_location + cov_object + cov_gender +
-#                                (session|id), data=data_pc, expand_re=T)
-# # probe.memory_corr_s <- mixed(memory_score ~ group*sessionC*condition + cov_location + cov_object + cov_gender +
-# #                                (sessionC|id), data=data_pc, expand_re=T)
-# ## ----
-# 
-# # random effects 
-# VarCorr(probe.memory_corr_s$full_model)
-# # dotplot(ranef(probe.memory_corr_s$full_model))
-# 
-# # statistics on fixed effects 
-# probe.memory_corr_s
-# 
-# ## ---- plot_probe_ms_corr
-# line_memory_corr <- afex_plot(probe.memory_corr_s, x="session", trace="group", panel="condition", id="id", 
-#                               error="model", dodge=0.8,
-#                               mapping=c("shape", "fill", "color"),
-#                               factor_levels=list(group=group_labels, condition=condition_labels),
-#                               legend_title=NULL, 
-#                               data_geom=geom_boxplot, 
-#                               data_arg=list(width=0.5, color="black"),
-#                               point_arg=list(size=3), 
-#                               line_arg=list(size=1.25),
-#                               error_arg=list(size=1.25, width=0)) + 
-#   scale_fill_manual(values=group_colors) + 
-#   scale_color_manual(values=group_colors_o) +
-#   coord_cartesian(ylim=c(0.85,1)) + 
-#   theme_bw(base_size=15) + 
-#   theme(legend.position="top", legend.justification=c(0,0),
-#         panel.grid.major.x=element_blank()) +
-#   labs(x=l_session, y=l_memory_score)
-# ## ----
-# rm(line_memory_corr, probe.memory_corr_s)
-
 
 # ######################################################### #
 # ######################################################### #
@@ -593,14 +504,10 @@ line_explore_ms <- afex_plot(probe.memory_goals, x="session", trace="group", pan
 probe.time_s <- mixed(time ~ group*session*condition + cov_location + cov_object + cov_gender + cov_time + 
                         (session+condition|id), data=data_p, expand_re=T)
 ## ----
-# probe.time_s <- mixed(time ~ group*sessionC*condition + cov_location + cov_object + cov_gender + cov_time + 
-#                         (condition+sessionC|id), data=data_p, expand_re=T)
 
 ## ---- stats_probe_time_outlier
 t <- data_p %>% mutate(flag=ifelse(is_outlier(time), T, F))
 t <- t %>% filter(flag==F)
-# t <- t %>% filter(flag==F) %>% mutate(sessionC=as.numeric(session) - mean(as.numeric(session), na.rm=T))
-# ggplot(t, aes(x=time, fill=flag)) + geom_histogram() + facet_wrap(~group)
 probe.time_o <- mixed(time ~ group*session*condition + cov_location + cov_object + cov_gender + cov_time + 
                         (condition+session|id), data=t, expand_re=T)
 rm(t)
@@ -683,14 +590,10 @@ rm(line_probe.time_s)
 probe.excess_path_s <- mixed(excess_path_length ~ group*session*condition + cov_location + cov_object + cov_gender + cov_excess_path +  
                                (condition||id), data=data_p, expand_re=T)
 ## ----
-# probe.excess_path_s <- mixed(excess_path_length ~ group*sessionC*condition + cov_location + cov_object + cov_gender + cov_excess_path +  
-#                                (condition||id), data=data_p, expand_re=T)
 
 ## ---- stats_probe_excess_path_outlier
 t <- data_p %>% mutate(flag=ifelse(is_outlier(excess_path_length), T, F))
 t <- t %>% filter(flag==F)
-# t <- t %>% filter(flag==F) %>% mutate(sessionC=as.numeric(session) - mean(as.numeric(session), na.rm=T))
-# ggplot(t, aes(x=excess_path_length, fill=flag)) + geom_histogram() + facet_wrap(~group)
 probe.excess_path_o <- mixed(excess_path_length ~ group*session*condition + cov_location + cov_object + cov_gender + cov_excess_path +  
                                (condition||id), data=t, expand_re=T)
 rm(t)
@@ -774,14 +677,10 @@ rm(line_excess_path, probe.excess_path_s)
 probe.presence_alleys_s <- mixed(presence_alleys ~ group*session*condition + cov_location + cov_object + cov_gender +
                                    (condition||id), data=data_p, expand_re=T)
 ## ----
-# probe.presence_alleys_s <- mixed(presence_alleys ~ group*sessionC*condition + cov_location + cov_object + cov_gender +  
-#                                    (condition||id), data=data_p, expand_re=T)
 
 ## ---- stats_probe_presence_alleys_outlier
 t <- data_p %>% mutate(flag=ifelse(is_outlier(presence_alleys), T, F))
 t <- t %>% filter(flag==F) 
-# t <- t %>% filter(flag==F) %>% mutate(sessionC=as.numeric(session) - mean(as.numeric(session), na.rm=T))
-# ggplot(t, aes(x=presence_alleys, fill=flag)) + geom_histogram() + facet_wrap(~group)
 probe.presence_alleys_o <-  mixed(presence_alleys ~ group*session*condition + cov_location + cov_object + cov_gender + 
                                     (condition||id), data=t, expand_re=T)
 rm(t)
@@ -864,14 +763,10 @@ rm(line_presence_alleys, presence_alleys_s)
 probe.initial_rot_s <- mixed(initial_rotation_turns ~ group*session*condition + cov_location + cov_object + cov_gender + cov_rotation + cov_gender +
                                (condition||id), data=data_p, expand_re=T)
 ## ----
-# probe.initial_rot_s <- mixed(initial_rotation_turns ~ group*sessionC*condition + cov_location + cov_object + cov_gender + cov_rotation + cov_gender +
-#                                (condition||id), data=data_p, expand_re=T)
 
 ## ---- stats_probe_initial_rotation_outlier
 t <- data_p %>% mutate(flag=ifelse(is_outlier(initial_rotation_turns), T, F))
 t <- t %>% filter(flag==F)
-# t <- t %>% filter(flag==F) %>% mutate(sessionC=as.numeric(session) - mean(as.numeric(session), na.rm=T))
-# ggplot(t, aes(x=initial_rotation_turns, fill=flag)) + geom_histogram() + facet_wrap(~group)
 probe.initial_rot_o <-  mixed(initial_rotation_turns ~ group*session*condition + cov_location + cov_object + cov_gender + cov_rotation + cov_gender +
                                 (condition||id), data=t, expand_re=T)
 rm(t)
@@ -955,8 +850,6 @@ rm(line_initial_rotation, probe.initial_rot_s)
 probe.rotation_path_s <- mixed(rotation_turns_by_path_length ~ group*session*condition + cov_location + cov_object + cov_gender + cov_rotation + cov_gender + 
                                  (condition||id), data=data_p, expand_re=T)
 ## ----
-# probe.rotation_path_s <- mixed(rotation_turns_by_path_length ~ group*sessionC*condition + cov_location + cov_object + cov_gender + cov_rotation + cov_gender + 
-#                                  (condition||id), data=data_p, expand_re=T)
 
 ## ---- stats_probe_rotation_path_outlier
 t <- data_p %>% mutate(flag=ifelse(is_outlier(rotation_turns_by_path_length), T, F))
@@ -1060,23 +953,7 @@ data_agg_pr <- data_allo_pr %>% group_by(id, group, cond, session) %>%
 
 probe.allo_presence_aov  <- aov_ez("id", "presence", data=data_agg_pr, between=c("group"), within=c("cond", "session"))
 emm <- emmeans(probe.allo_presence_aov, ~ group*cond)
-con_list_group_cond <- list(
-  "original_v_ego_YCH"   = c(1, 0, 0, -1, 0, 0, 0, 0, 0),
-  "original_v_ego_OCH"   = c(0, 1, 0, 0, -1, 0, 0, 0, 0),
-  "original_v_ego_YAD"   = c(0, 0, 1, 0, 0, -1, 0, 0, 0),
-  "original_v_other_YCH" = c(1, 0, 0, 0, 0, 0, -1, 0, 0),
-  "original_v_other_OCH" = c(0, 1, 0, 0, 0, 0, 0, -1, 0),
-  "original_v_other_YAD" = c(0, 0, 1, 0, 0, 0, 0, 0, -1),
-  "ego_v_other_YCH"      = c(0, 0, 0, 1, 0, 0, -1, 0, 0),
-  "ego_v_other_OCH"      = c(0, 0, 0, 0, 1, 0, 0, -1, 0),
-  "ego_v_other_YAD"      = c(0, 0, 0, 0, 0, 1, 0, 0, -1),
-  "YCH_v_OCH_original"   = c(1, -1, 0, 0, 0, 0, 0, 0, 0),
-  "YCH_v_YAD_original"   = c(1, 0, -1, 0, 0, 0, 0, 0, 0),
-  "OCH_v_YAD_original"   = c(0, 1, -1, 0, 0, 0, 0, 0, 0),
-  "YCH_v_OCH_ego"        = c(0, 0, 0, 1, -1, 0, 0, 0, 0),
-  "YCH_v_YAD_ego"        = c(0, 0, 0, 1, 0, -1, 0, 0, 0),
-  "OCH_v_YAD_ego"        = c(0, 0, 0, 0, 1, -1, 0, 0, 0))
-con <- contrast(emm, con_list_group_cond, adjust="bonferroni")
+summary(rbind(pairs(emm, simple="group"), pairs(emm, simple="cond")), by=NULL, adjust="bonferroni")
 
 explore_pr <- afex_plot(probe.allo_presence_aov, x="session", trace="cond", panel="group", 
                         error="none", dodge=0.8,
@@ -1096,7 +973,7 @@ explore_pr <- afex_plot(probe.allo_presence_aov, x="session", trace="cond", pane
         panel.grid.major.x=element_blank()) +
   labs(x=l_session, y="presence in zones")
 
-rm(data_allo_pr, data_agg_pr, emm, probe.allo_presence_aov, explore_pr, con)
+rm(data_allo_pr, data_agg_pr, emm, probe.allo_presence_aov, explore_pr)
 
 
 # presence with triangles 
@@ -1109,7 +986,7 @@ data_agg_prT <- data_allo_prT %>% group_by(id, group, cond, session) %>%
 
 probe.allo_presenceT_aov  <- aov_ez("id", "presenceT", data=data_agg_prT, between=c("group"), within=c("cond", "session"))
 emm <- emmeans(probe.allo_presenceT_aov, ~ group*cond)
-con <- contrast(emm, con_list_group_cond, adjust="bonferroni")
+summary(rbind(pairs(emm, simple="group"), pairs(emm, simple="cond")), by=NULL, adjust="bonferroni")
 
 explore_prT <- afex_plot(probe.allo_presenceT_aov, x="session", trace="cond", panel="group", 
                          error="none", dodge=0.8,
@@ -1129,7 +1006,7 @@ explore_prT <- afex_plot(probe.allo_presenceT_aov, x="session", trace="cond", pa
         panel.grid.major.x=element_blank()) +
   labs(x=l_session, y="presence in zones")
 
-rm(data_allo_prT, data_agg_prT, emm, con_list_group_cond, probe.allo_presenceT_aov, con)
+rm(data_allo_prT, data_agg_prT, emm, probe.allo_presenceT_aov, explore_prT)
 # ----
 
 # ######################################################### #
@@ -1147,26 +1024,7 @@ data_agg_ms <- data_allo_ms %>% group_by(id, group, cond, session) %>%
 
 probe.allo_memory_aov <- aov_ez("id", "memory_score", data=data_agg_ms, between=c("group"), within=c("cond", "session"))
 emm <- emmeans(probe.allo_memory_aov, ~ group*cond)
-con_list_group_cond <- list(
-  "goal_v_ego_YCH"    = c(1, 0, 0, -1, 0, 0, 0, 0, 0),
-  "goal_v_ego_OCH"    = c(0, 1, 0, 0, -1, 0, 0, 0, 0),
-  "goal_v_ego_YAD"    = c(0, 0, 1, 0, 0, -1, 0, 0, 0),
-  "goal_v_other_YCH"  = c(1, 0, 0, 0, 0, 0, -1, 0, 0),
-  "goal_v_other_OCH"  = c(0, 1, 0, 0, 0, 0, 0, -1, 0),
-  "goal_v_other_YAD"  = c(0, 0, 1, 0, 0, 0, 0, 0, -1),
-  "ego_v_other_YCH"   = c(0, 0, 0, 1, 0, 0, -1, 0, 0),
-  "ego_v_other_OCH"   = c(0, 0, 0, 0, 1, 0, 0, -1, 0),
-  "ego_v_other_YAD"   = c(0, 0, 0, 0, 0, 1, 0, 0, -1),
-  "YCH_v_OCH_goal"    = c(1, -1, 0, 0, 0, 0, 0, 0, 0),
-  "YCH_v_YAD_goal"    = c(1, 0, -1, 0, 0, 0, 0, 0, 0),
-  "OCH_v_YAD_goal"    = c(0, 1, -1, 0, 0, 0, 0, 0, 0),
-  "YCH_v_OCH_ego"     = c(0, 0, 0, 1, -1, 0, 0, 0, 0),
-  "YCH_v_YAD_ego"     = c(0, 0, 0 ,1, 0, -1, 0, 0, 0),
-  "OCH_v_YAD_ego"     = c(0, 0, 0, 0, 1, -1, 0, 0, 0),
-  "YCH_v_OCH_other"   = c(0, 0, 0, 0, 0, 0, 1, -1, 0),
-  "YCH_v_YAD_other"   = c(0, 0, 0, 0, 0, 0, 1, 0, -1),
-  "OCH_v_YAD_other"   = c(0, 0, 0, 0, 0, 0, 0, 1, -1))
-contrast(emm, con_list_group_cond, adjust="bonferroni")
+summary(rbind(pairs(emm, simple="group"), pairs(emm, simple="cond")), by=NULL, adjust="bonferroni")
 
 explore_ms <- afex_plot(probe.allo_memory_aov, x="session", trace="cond", panel="group", 
                         error="none", dodge=0.8,
@@ -1186,7 +1044,7 @@ explore_ms <- afex_plot(probe.allo_memory_aov, x="session", trace="cond", panel=
         panel.grid.major.x=element_blank()) +
   labs(x=l_session, y="memory score to ...")
 
-rm(data_agg_ms, emm, con_list_group_cond, probe.allo_memory_aov, explore_ms)
+rm(data_agg_ms, emm, probe.allo_memory_aov, explore_ms)
 
 
 # only incorrect trials 
@@ -1200,48 +1058,7 @@ data_agg_incorr_ms <- data_allo_ms %>%
 
 probe.allo_memory_incorr_aov <- aov_ez("id", "memory_score", data=data_agg_incorr_ms, between=c("group"), within=c("cond", "session"))
 emm <- emmeans(probe.allo_memory_incorr_aov, ~ group*cond*session)
-con_list_group_cond_session <- list(
-  "YCH_vs_OCH_ego_1"   = c(1, -1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0),
-  "YCH_vs_YAD_ego_1"   = c(1, 0, -1, 0, 0, 0, 0, 0, 0, 0, 0, 0),
-  "OCH_vs_YAD_ego_1"   = c(0, 1, -1, 0, 0, 0, 0, 0, 0, 0, 0, 0),
-  "YCH_vs_OCH_other_1" = c(0, 0, 0, 1, -1, 0, 0, 0, 0, 0, 0, 0),
-  "YCH_vs_YAD_other_1" = c(0, 0, 0, 1, 0, -1, 0, 0, 0, 0, 0, 0),
-  "OCH_vs_YAD_other_1" = c(0, 0, 0, 0, 1, -1, 0, 0, 0, 0, 0, 0),
-  "YCH_vs_OCH_ego_2"   = c(0, 0, 0, 0, 0, 0, 1, -1, 0, 0, 0, 0),
-  "YCH_vs_YAD_ego_2"   = c(0, 0, 0, 0, 0, 0, 1, 0, -1, 0, 0, 0),
-  "OCH_vs_YAD_ego_2"   = c(0, 0, 0, 0, 0, 0, 0, 1, -1, 0, 0, 0),
-  "YCH_vs_OCH_other_2" = c(0, 0, 0, 0, 0, 0, 0, 0, 0, 1, -1, 0),
-  "YCH_vs_YAD_other_2" = c(0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, -1),
-  "OCH_vs_YAD_other_2" = c(0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, -1),
-  "ego_vs_other_YCH_1" = c(1, 0, 0, -1, 0, 0, 0, 0, 0, 0, 0, 0),
-  "ego_vs_other_OCH_1" = c(0, 1, 0, 0, -1, 0, 0, 0, 0, 0, 0, 0),
-  "ego_vs_other_YAD_1" = c(0, 0, 1, 0, 0, -1, 0, 0, 0, 0, 0, 0),
-  "ego_vs_other_YCH_2" = c(0, 0, 0, 0, 0, 0, 1, 0, 0, -1, 0, 0),
-  "ego_vs_other_OCH_2" = c(0, 0, 0, 0, 0, 0, 0, 1, 0, 0, -1, 0),
-  "ego_vs_other_YAD_2" = c(0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, -1),
-  "1_vs_2_ego_YCH"     = c(1, 0, 0, 0, 0, 0, -1, 0, 0, 0, 0, 0),
-  "1_vs_2_ego_OCH"     = c(0, 1, 0, 0, 0, 0, 0, -1, 0, 0, 0, 0),
-  "1_vs_2_ego_YAD"     = c(0, 0, 1, 0, 0, 0, 0, 0, -1, 0, 0, 0),
-  "1_vs_2_other_YCH"   = c(0, 0, 0, 1, 0, 0, 0, 0, 0, -1, 0, 0),
-  "1_vs_2_other_OCH"   = c(0, 0, 0, 0, 1, 0, 0, 0, 0, 0, -1, 0),
-  "1_vs_2_other_YAD"   = c(0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, -1))
-con_list_group_cond_session2 <- list(
-  "YCH_vs_OCH_ego_1"   = c(1, -1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0),
-  "YCH_vs_YAD_ego_1"   = c(1, 0, -1, 0, 0, 0, 0, 0, 0, 0, 0, 0),
-  "OCH_vs_YAD_ego_1"   = c(0, 1, -1, 0, 0, 0, 0, 0, 0, 0, 0, 0),
-  "YCH_vs_OCH_ego_2"   = c(0, 0, 0, 0, 0, 0, 1, -1, 0, 0, 0, 0),
-  "YCH_vs_YAD_ego_2"   = c(0, 0, 0, 0, 0, 0, 1, 0, -1, 0, 0, 0),
-  "OCH_vs_YAD_ego_2"   = c(0, 0, 0, 0, 0, 0, 0, 1, -1, 0, 0, 0),
-  "ego_vs_other_YCH_1" = c(1, 0, 0, -1, 0, 0, 0, 0, 0, 0, 0, 0),
-  "ego_vs_other_OCH_1" = c(0, 1, 0, 0, -1, 0, 0, 0, 0, 0, 0, 0),
-  "ego_vs_other_YAD_1" = c(0, 0, 1, 0, 0, -1, 0, 0, 0, 0, 0, 0),
-  "ego_vs_other_YCH_2" = c(0, 0, 0, 0, 0, 0, 1, 0, 0, -1, 0, 0),
-  "ego_vs_other_OCH_2" = c(0, 0, 0, 0, 0, 0, 0, 1, 0, 0, -1, 0),
-  "ego_vs_other_YAD_2" = c(0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, -1),
-  "1_vs_2_ego_YCH"     = c(1, 0, 0, 0, 0, 0, -1, 0, 0, 0, 0, 0),
-  "1_vs_2_ego_OCH"     = c(0, 1, 0, 0, 0, 0, 0, -1, 0, 0, 0, 0),
-  "1_vs_2_ego_YAD"     = c(0, 0, 1, 0, 0, 0, 0, 0, -1, 0, 0, 0))
-contrast(emm, con_list_group_cond_session, adjust="bonferroni")
+summary(rbind(pairs(emm, simple="group"), pairs(emm, simple="cond"), pairs(emm, simple="session")), by=NULL, adjust="bonferroni")
 
 explore_incor_ms <- afex_plot(probe.allo_memory_incorr_aov, x="session", trace="cond", panel="group", 
                               error="none", dodge=0.8,
@@ -1261,7 +1078,7 @@ explore_incor_ms <- afex_plot(probe.allo_memory_incorr_aov, x="session", trace="
         panel.grid.major.x=element_blank()) +
   labs(x=l_session, y="memory score in incorrect trials to ...")
 
-rm(data_allo_ms, data_agg_incorr_ms, emm, con_list_group_cond_session, probe.allo_memory_incorr_aov, explore_incor_ms)
+rm(data_allo_ms, data_agg_incorr_ms, emm, probe.allo_memory_incorr_aov, explore_incor_ms)
 # ----
 
 
@@ -1312,7 +1129,6 @@ learn.time_s <- mixed(time ~ group*trial_in_block + cov_block + cov_location + c
 
 ## ---- stats_learn_time_outlier
 t <- data_l %>% mutate(flag=ifelse(is_outlier(time), T, F))
-# ggplot(t, aes(x=time, fill=flag)) + geom_histogram() + facet_wrap(~group)
 learn.time_o <- mixed(time ~ group*trial_in_block + cov_block + cov_time + cov_gender + (trial_in_block|id), 
                       data=t %>% filter(flag==F), expand_re=T)
 rm(t)
@@ -1402,7 +1218,6 @@ learn.excess_path_s <- mixed(excess_path_length ~ group*trial_in_block + cov_blo
 
 ## ---- stats_learn_excess_path_outlier
 t <- data_l %>% mutate(flag=ifelse(is_outlier(excess_path_length), T, F))
-# ggplot(t, aes(x=excess_path_length, fill=flag)) + geom_histogram() + facet_wrap(~group)
 learn.excess_path_o <- mixed(excess_path_length ~ group*trial_in_block + cov_block + cov_excess_path + cov_gender + (trial_in_block|id), 
                              data=t %>% filter(flag==F), expand_re=T)
 rm(t)
@@ -1484,7 +1299,6 @@ learn.presence_alleys_s <- mixed(presence_alleys ~ group*trial_in_block + cov_bl
 
 ## ---- stats_learn_presence_outlier
 t <- data_l %>% mutate(flag=ifelse(is_outlier(presence_alleys), T, F))
-# ggplot(t, aes(x=presence_alleys, fill=flag)) + geom_histogram() + facet_wrap(~group)
 learn.presence_alleys_o <- mixed(presence_alleys ~ group*trial_in_block + cov_block + cov_gender + (trial_in_block|id), 
                                  data=t %>% filter(flag==F), expand_re=T)
 rm(t)
@@ -1566,7 +1380,6 @@ learn.initial_rot_s <- mixed(initial_rotation_turns ~ group*trial_in_block + cov
 
 ## ---- stats_learn_initial_rotation_outlier
 t <- data_l %>% mutate(flag=ifelse(is_outlier(initial_rotation_turns), T, F))
-# ggplot(t, aes(x=initial_rotation_turns, fill=flag)) + geom_histogram() + facet_wrap(~group)
 learn.initial_rot_o <- mixed(initial_rotation_turns ~ group*trial_in_block + cov_block + cov_rotation + cov_gender + (1|id), 
                              data=t %>% filter(flag==F), expand_re=T)
 rm(t)
@@ -1648,7 +1461,6 @@ learn.rotation_path_s <- mixed(rotation_turns_by_path_length ~ group*trial_in_bl
 
 ## ---- stats_learn_rotation_path_outlier
 t <- data_l %>% mutate(flag=ifelse(is_outlier(rotation_turns_by_path_length), T, F))
-# ggplot(t, aes(x=rotation_turns_by_path_length, fill=flag)) + geom_histogram() + facet_wrap(~group)
 learn.rotation_path_o <- mixed(rotation_turns_by_path_length ~ group*trial_in_block + cov_block + cov_rotation_path + cov_gender + (1|id), 
                                data=t %>% filter(flag==F), expand_re=T)
 rm(t)
