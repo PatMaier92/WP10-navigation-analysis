@@ -34,16 +34,24 @@ data = cell2table(m); clear m;
 %--------------------------------------------------------------------------
 % NOTE: all data needs to be sorted subjects X data
 % the behavioral output
-plsinput.y = cellfun(@str2num, data.m3); % the behavioral output we want to explain
+% plsinput.y = cellfun(@str2num, data.m3); % the behavioral output we want to explain
+plsinput.y = cellfun(@str2num, data.m4); % the behavioral output we want to explain
 
 % the explanatory behavioral data - remember the order of it!
+% plsinput.X = cellfun(@str2num, cat(1,...
+%     cat(2, ...
+%     data.m4,...
+%     data.m5,...
+%     data.m6,...
+%     data.m7,...
+%     data.m8))); 
 plsinput.X = cellfun(@str2num, cat(1,...
     cat(2, ...
-    data.m4,...
     data.m5,...
     data.m6,...
     data.m7,...
-    data.m8))); 
+    data.m8,...
+    data.m9))); 
 
 % % exclude all subjects with missings
 % A = find(isnan(plsinput.y)==1);  %find missing age values
@@ -65,8 +73,14 @@ plsinput.X = zscore(plsinput.X,0,1);
 % add the 'behavioral data'
 cfg.pls.stacked_behavdata = plsinput.y;
 
+cfg.pls.stacked_designdata = [cellfun(@str2num, data.m2) cellfun(@str2num, data.m3)]; 
+
 % input arguments: data, number of subjects, number of conditions, specific settings
-plsres = pls_analysis({plsinput.X},size(plsinput.y,1),1,cfg.pls);
+% plsres = pls_analysis({plsinput.X},size(plsinput.y,1),1,cfg.pls);
+
+% TBD datamat format in three groups 
+
+plsres = pls_analysis({plsinput.X},size(plsinput.y,1),3,cfg.pls);
 
 %--------------------------------------------------------------------------
 % PREPARE OUTPUT 

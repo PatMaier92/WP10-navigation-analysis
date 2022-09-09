@@ -143,11 +143,14 @@ plsc_data <- sm_data %>%
   select(id, group, session, condition, trial, memory_score, 
          time, excess_path_length, presence_alleys, initial_rotation_turns, rotation_turns_by_path_length) %>% 
   group_by(id, group) %>% 
+  group_by(id, group, condition) %>% 
   #group_by(id, group, session, condition) %>% 
   summarise_at(vars(memory_score, time, excess_path_length, presence_alleys, 
                  initial_rotation_turns, rotation_turns_by_path_length), mean, na.rm=T) %>% 
   #arrange(group, id, condition)
-  arrange(group, id)
+  arrange(group, id) %>% 
+  mutate(group=case_when(group == "YoungKids" ~ "1", group == "OldKids" ~ "2", T ~ "3"),
+         condition=case_when(condition == "ego_ret" ~ "1", T ~ "2"))
 
 # save as mat
 R.matlab::writeMat(con="../WP10_data/WP10_results/wp10_plsc_data.mat", m=as.matrix(plsc_data))
