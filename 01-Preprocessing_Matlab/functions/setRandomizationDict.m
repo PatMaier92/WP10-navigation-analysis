@@ -17,7 +17,7 @@ else
         id=str2double(line{3});
         if id ~= subject
             disp('Error: ID mismatch detected during log data randomization check. Please check the raw data.\n');
-            break
+            %break
         end
         key = line{5}; 
         
