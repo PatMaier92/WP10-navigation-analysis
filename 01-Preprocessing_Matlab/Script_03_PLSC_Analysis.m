@@ -26,8 +26,7 @@ cfg.pls.clim     = 95; % confidence interval level
 % LOAD DATA 
 %--------------------------------------------------------------------------
 path = '../WP10_data/WP10_results/';
-load([path, 'wp10_plsc_data.mat']);
-% load([path, 'wp10_plsc_data_cond.mat']);
+load([path, 'wp10_plsc_allo_s2.mat']);
 data = cellfun(@str2num, m);
 clear m;
 
@@ -37,12 +36,11 @@ clear m;
 % NOTE: all data needs to be sorted subjects X data
 % the behavioral output
 plsinput.y = data(:,3);  % the behavioral output we want to explain
-% plsinput.y = data(:,4);  % the behavioral output we want to explain
 
 % the explanatory behavioral data - remember the order of it!
-% with groups 
-plsinput.X = { data(data(:,2)==1, 4:end), ...
-    data(data(:,2)==2, 4:end), data(data(:,2)==3, 4:end) };
+% % with groups 
+% plsinput.X = { data(data(:,2)==1, 4:end), ...
+%     data(data(:,2)==2, 4:end), data(data(:,2)==3, 4:end) };
 % without groups 
 plsinput.X = data(:, 4:end);
 
@@ -67,14 +65,13 @@ plsinput.X = zscore(plsinput.X,0,1);
 cfg.pls.stacked_behavdata = plsinput.y;
 
 % add the 'design matrix' with conditions 
-% cfg.pls.stacked_designdata = [data(:,3) data(:,4)]; 
 % cfg.pls.stacked_designdata = [data(:,3)]; 
 
 % input arguments: data, number of subjects, number of conditions, specific settings
 % plsres = pls_analysis({plsinput.X},size(plsinput.y,1),1,cfg.pls);
-% with groups
-n_subj = [ size(plsinput.X{1},1) size(plsinput.X{2},1) size(plsinput.X{3},1) ];
-plsres = pls_analysis(plsinput.X, n_subj, 1, cfg.pls);
+% % with groups
+% n_subj = [ size(plsinput.X{1},1) size(plsinput.X{2},1) size(plsinput.X{3},1) ];
+% plsres = pls_analysis(plsinput.X, n_subj, 1, cfg.pls);
 % without groups 
 n_subj = size(plsinput.y,1); 
 plsres = pls_analysis({ plsinput.X }, n_subj, 1, cfg.pls);
@@ -85,30 +82,49 @@ plsres = pls_analysis({ plsinput.X }, n_subj, 1, cfg.pls);
 % Bootstrap ratios for included variables
 % get significance of extracted latent variable (should be < than 0.05) 
 plsres.perm_result.sprob 
-bar(plsres.perm_result.sprob)
 sig_LV = 1; % define the latent variable (here it is only one extracted latent variable) 
-
-% correlation of behavior with brain scores (???)
-bar(plsres.lvcorrs(:,1)); % unsure if row-wise or column-wise
 
 % write output table
 time = plsres.boot_result.compare_u(1,sig_LV);
 excess_path = plsres.boot_result.compare_u(2,sig_LV);
-presence= plsres.boot_result.compare_u(3,sig_LV);
+presence = plsres.boot_result.compare_u(3,sig_LV);
 initial_rotation = plsres.boot_result.compare_u(4,sig_LV);
 rotation = plsres.boot_result.compare_u(5,sig_LV);
+PLSC_LV = table(time, excess_path,presence,initial_rotation, rotation);
 
-PLSC_LV = table(time, excess_path,presence,initial_rotation, rotation); 
-bar(plsres.boot_result.compare_u(:,sig_LV));
+subplot(1,2,1);
+bar(plsres.boot_result.compare_u(:,sig_LV),'k'); hold on;
+set(gca,'xticklabels',{'time','path','presence','init. rot', 'rot'}, 'fontsize', 12);
+box off; grid on;
+lh = line([0,6],[2,2]);
+set(lh, 'color','r','linestyle','--');
+lh = line([0,6],[-2,-2]);
+set(lh, 'color','r','linestyle','--');
+title('LV profile');
+
+subplot(1,2,2);
+bar(plsres.boot_result.orig_corr(:,1),'k'); hold on;
+set(gca,'xticklabels',{''});
+box off; grid on; grid minor; ylim([-1,1]); xlim([0,2]);
+lh1 = line([1,1],[plsres.boot_result.llcorr_adj(1,1),plsres.boot_result.ulcorr_adj(1,1)]);
+set(lh1, 'color','r');
+title('LV correlation with memory score');
 
 %% Latent profile scores
 
-% subjects included in analysis 
-subjects_use = data(:,1); 
-% subjects_use (excl,:) = []; 
-
-% combine data & write output table
+% combine data and write table 
+subjects_use = data(:,1); % subjects_use (excl,:) = []; 
+group = data(:,2); 
 lp = plsres.usc;
-PLSC_LP = table(subjects_use, lp);
+PLSC_LP = table(subjects_use, group, lp);
+
+% scatter plot 
+figure; 
+gscatter(plsres.usc, plsinput.y, group); 
+set(gca,'fontsize', 12);
+xlabel(upper('LV profile score'),'fontweight','bold');
+ylabel(upper('memory score'),'fontweight','bold');
+[R,P]=corrcoef(plsres.usc, plsinput.y, 'rows', 'complete');
+title(strcat('r=',num2str(R(2,1)),', p=',num2str(P(2,1)))); 
 
 clear all; 

@@ -131,41 +131,83 @@ rm(list = ls())
 
 # ::: STARMAZE DATA FOR PLSC ANALYSIS ::: # 
 
+
 # read-in starmaze data 
 file_name <- "../WP10_data/WP10_results/wp10_navigation_data.RData"
 load(file_name)
 sm_data <- sm_data %>% filter(exclude_trial_matlab==0) 
 rm(file_name)
 
+
 # filter and aggregate for PLSC analysis 
-plsc_data_cond <- sm_data %>% 
-  filter(condition %in% c("ego_ret", "allo_ret")) %>% 
-  select(id, group, session, condition, trial, memory_score, 
-         time, excess_path_length, presence_alleys, initial_rotation_turns, rotation_turns_by_path_length) %>% 
-  group_by(id, group, condition) %>% 
-  #group_by(id, group, session, condition) %>% 
-  summarise_at(vars(memory_score, time, excess_path_length, presence_alleys, 
-                 initial_rotation_turns, rotation_turns_by_path_length), mean, na.rm=T) %>% 
-  #arrange(group, id, condition)
-  arrange(group, id) %>% 
-  mutate(group=case_when(group == "YoungKids" ~ "1", group == "OldKids" ~ "2", T ~ "3"),
-         condition=case_when(condition == "ego_ret" ~ "1", T ~ "2"))
 
-# save as mat
-R.matlab::writeMat(con="../WP10_data/WP10_results/wp10_plsc_data_cond.mat", m=as.matrix(plsc_data_cond))
+### tbd: add post-test measures, write function, compute T2/T1 with appropriate markers
 
-plsc_data <- sm_data %>% 
-  filter(condition %in% c("ego_ret", "allo_ret")) %>% 
-  select(id, group, session, condition, trial, memory_score, 
-         time, excess_path_length, presence_alleys, initial_rotation_turns, rotation_turns_by_path_length) %>% 
+# allo across sessions 
+plsc_allo <- sm_data %>% 
+  filter(condition %in% c("allo_ret")) %>% 
   group_by(id, group) %>% 
   summarise_at(vars(memory_score, time, excess_path_length, presence_alleys, 
                     initial_rotation_turns, rotation_turns_by_path_length), mean, na.rm=T) %>% 
   arrange(group, id) %>% 
   mutate(group=case_when(group == "YoungKids" ~ "1", group == "OldKids" ~ "2", T ~ "3"))
+R.matlab::writeMat(con="../WP10_data/WP10_results/wp10_plsc_allo.mat", m=as.matrix(plsc_allo))
+rm(plsc_allo)
 
-# save as mat
-R.matlab::writeMat(con="../WP10_data/WP10_results/wp10_plsc_data.mat", m=as.matrix(plsc_data))
+# allo split by sessions 
+plsc_allo_1 <- sm_data %>% 
+  filter(condition %in% c("allo_ret"), session==1) %>% 
+  group_by(id, group) %>% 
+  summarise_at(vars(memory_score, time, excess_path_length, presence_alleys, 
+                    initial_rotation_turns, rotation_turns_by_path_length), mean, na.rm=T) %>% 
+  arrange(group, id) %>% 
+  mutate(group=case_when(group == "YoungKids" ~ "1", group == "OldKids" ~ "2", T ~ "3"))
+R.matlab::writeMat(con="../WP10_data/WP10_results/wp10_plsc_allo_s1.mat", m=as.matrix(plsc_allo_1))
+rm(plsc_allo_1)
+
+plsc_allo_2 <- sm_data %>% 
+  filter(condition %in% c("allo_ret"), session==2) %>% 
+  group_by(id, group) %>% 
+  summarise_at(vars(memory_score, time, excess_path_length, presence_alleys, 
+                    initial_rotation_turns, rotation_turns_by_path_length), mean, na.rm=T) %>% 
+  arrange(group, id) %>% 
+  mutate(group=case_when(group == "YoungKids" ~ "1", group == "OldKids" ~ "2", T ~ "3"))
+R.matlab::writeMat(con="../WP10_data/WP10_results/wp10_plsc_allo_s2.mat", m=as.matrix(plsc_allo_2))
+rm(plsc_allo_2)
+
+
+# ego across sessions 
+plsc_ego <- sm_data %>% 
+  filter(condition %in% c("ego_ret")) %>% 
+  group_by(id, group) %>% 
+  summarise_at(vars(memory_score, time, excess_path_length, presence_alleys, 
+                    initial_rotation_turns, rotation_turns_by_path_length), mean, na.rm=T) %>% 
+  arrange(group, id) %>% 
+  mutate(group=case_when(group == "YoungKids" ~ "1", group == "OldKids" ~ "2", T ~ "3"))
+R.matlab::writeMat(con="../WP10_data/WP10_results/wp10_plsc_ego.mat", m=as.matrix(plsc_ego))
+rm(plsc_ego)
+
+# ego split by sessions 
+plsc_ego_1 <- sm_data %>% 
+  filter(condition %in% c("ego_ret"), session==1) %>% 
+  group_by(id, group) %>% 
+  summarise_at(vars(memory_score, time, excess_path_length, presence_alleys, 
+                    initial_rotation_turns, rotation_turns_by_path_length), mean, na.rm=T) %>% 
+  arrange(group, id) %>% 
+  mutate(group=case_when(group == "YoungKids" ~ "1", group == "OldKids" ~ "2", T ~ "3"))
+R.matlab::writeMat(con="../WP10_data/WP10_results/wp10_plsc_ego_s1.mat", m=as.matrix(plsc_ego_1))
+rm(plsc_ego_1)
+
+plsc_ego_2 <- sm_data %>% 
+  filter(condition %in% c("ego_ret"), session==2) %>% 
+  group_by(id, group) %>% 
+  summarise_at(vars(memory_score, time, excess_path_length, presence_alleys, 
+                    initial_rotation_turns, rotation_turns_by_path_length), mean, na.rm=T) %>% 
+  arrange(group, id) %>% 
+  mutate(group=case_when(group == "YoungKids" ~ "1", group == "OldKids" ~ "2", T ~ "3"))
+R.matlab::writeMat(con="../WP10_data/WP10_results/wp10_plsc_ego_s2.mat", m=as.matrix(plsc_ego_2))
+rm(plsc_ego_2)
+
 
 # clear workspace
 rm(list = ls())
