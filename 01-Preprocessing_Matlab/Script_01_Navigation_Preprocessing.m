@@ -257,11 +257,11 @@ tic;
             t=data.time; % time
             x=data.pos_x; % coordinates
             y=data.pos_z; % coordinates
-            r=data.rot_y; % yaw rotations
+            r=data.rot_y; R=deg2rad(r); Q=unwrap(R); Z=rad2deg(Q); r=Z; % yaw rotations
             if s==3
                 events=data.trialEvent; 
             end
-            clear data; 
+            clear data R Q Z; 
             
             % spatial normalization
             if s==3 % practise maze
@@ -269,6 +269,14 @@ tic;
             else % star maze
                 x=setNormalizedValues(x,sm.coord.xmin,sm.coord.xmax); y=setNormalizedValues(y,sm.coord.ymin,sm.coord.ymax);
             end
+            
+            % temporal normalization (currently only for rotation)
+            % set new sampling rate 
+            % (default of 0.05 corresponds to 20 frames per second)          
+            new_sampling_rate=0.05; 
+            [~, xi, yi, ri]=temporalNormalization(new_sampling_rate,...
+                t, x, y, r); 
+            clear r; 
             
             % save start and end points 
             sm.participant(p).session(s).trial(k).x_1=x(1); sm.participant(p).session(s).trial(k).y_1=y(1);
@@ -316,9 +324,9 @@ tic;
                     sm.coord.alley_full_x, sm.coord.alley_full_y, sm.coord.rec_x, sm.coord.rec_y, ...
                     sm.coord.central_poly, sm.coord.full_poly);
                                
-                % interpolate ideal path data for further analysis
-                % using 'interparc' function by John D'Errico (Matlab File Exchanger)
-                [xi_al,yi_al]=interpolateData(x_line, y_line, sm.participant(p).session(s).trial(k).ideal_path_length);
+%                 % interpolate ideal path data for further analysis
+%                 % using 'interparc' function by John D'Errico (Matlab File Exchanger)
+%                 [xi_al,yi_al]=interpolateData(x_line, y_line, sm.participant(p).session(s).trial(k).ideal_path_length);
                 
 %                 [xi_ch,yi_ch]=interpolateData(x_line_chosen, y_line_chosen, sm.participant(p).session(s).trial(k).ideal_chosen_path_length);
 %                 
@@ -373,15 +381,15 @@ tic;
                 sm.participant(p).session(s).trial(k).velocity=sm.participant(p).session(s).trial(k).path_length / ...
                     sm.participant(p).session(s).trial(k).time; 
                  
-                % AVERAGE DISTANCE to TARGET 
-                % target distance 
-                [sm.participant(p).session(s).trial(k).target_distance, ~]=computeTargetDistance(x,y,...
-                    sm.participant(p).session(s).trial(k).goal_x,sm.participant(p).session(s).trial(k).goal_y); 
-                 % ideal target distance 
-                [sm.participant(p).session(s).trial(k).ideal_target_distance, ~]=computeTargetDistance(xi_al,yi_al,...
-                    sm.participant(p).session(s).trial(k).goal_x,sm.participant(p).session(s).trial(k).goal_y);               
-                % target distance deviation 
-                sm.participant(p).session(s).trial(k).target_distance_deviation=sm.participant(p).session(s).trial(k).target_distance - sm.participant(p).session(s).trial(k).ideal_target_distance; 
+%                 % AVERAGE DISTANCE to TARGET 
+%                 % target distance 
+%                 [sm.participant(p).session(s).trial(k).target_distance, ~]=computeTargetDistance(x,y,...
+%                     sm.participant(p).session(s).trial(k).goal_x,sm.participant(p).session(s).trial(k).goal_y); 
+%                  % ideal target distance 
+%                 [sm.participant(p).session(s).trial(k).ideal_target_distance, ~]=computeTargetDistance(xi_al,yi_al,...
+%                     sm.participant(p).session(s).trial(k).goal_x,sm.participant(p).session(s).trial(k).goal_y);               
+%                 % target distance deviation 
+%                 sm.participant(p).session(s).trial(k).target_distance_deviation=sm.participant(p).session(s).trial(k).target_distance - sm.participant(p).session(s).trial(k).ideal_target_distance; 
                 
                 % PRESENCE (rel. time in zones)
                 % in inner pentagon (including triangle intersections) 
@@ -535,35 +543,32 @@ tic;
                       
                 %% rotation analysis
                 % TOTAL ROTATION
-                % calculate total rotation in degrees as change in yaw rotation (r)
+                % calculate total rotation in degrees and turns as change in yaw rotation (r)
                 % this value includes rotation due to x-/y-trajectory (i.e. left-forward movement)
-                rot=zeros(1,length(r)-1); 
-                for j=2:length(r)
-                    temp=abs(r(j)-r(j-1));
-                    if temp > 180 % correct errors due to switch at 0° to 360°
-                        temp=360-temp; 
-                    end 
-                    rot(j-1)=temp;
-                end
-                sm.participant(p).session(s).trial(k).rotation_turns=sum(rot)/360;
-                sm.participant(p).session(s).trial(k).rotation_turns_by_path_length=sum(rot)/360/sm.participant(p).session(s).trial(k).path_length; 
-                clear rot j temp;
+                [~, sm.participant(p).session(s).trial(k).rotation_turns]=computeRotation(ri); 
+                sm.participant(p).session(s).trial(k).rotation_turns_by_path_length=...
+                    sm.participant(p).session(s).trial(k).rotation_turns/sm.participant(p).session(s).trial(k).path_length; 
                     
-                % INITIAL ROTATION (in first start alley)
+                % INITIAL ROTATION in this trial's START AREA (alley plus triangle)
                 % same method as above 
                 % get rotation index (different method for inner/outer starts)
                 if mod(sm.participant(p).session(s).trial(k).start_i,2)
-                    [~, ~, ~, rot_index]=computePresence(sm.participant(p).session(s).trial(k).start_i,x,y,...
+                    [~, ~, ~, rot_index]=computePresence(sm.participant(p).session(s).trial(k).start_i,xi,yi,...
                         sm.coord.alley_poly, sm.coord.tri_poly, sm.participant(p).session(s).trial(k).time);
                 else 
-                    [~, ~, ~, rot_index]=computePresencePentagon(sm.participant(p).session(s).trial(k).start_i,x,y,...
+                    [~, ~, ~, rot_index]=computePresencePentagon(sm.participant(p).session(s).trial(k).start_i,xi,yi,...
                         sm.coord.rec_poly, sm.coord.tri_poly, sm.participant(p).session(s).trial(k).time); 
                 end 
-                % compute initial rotation 
-                [~, sm.participant(p).session(s).trial(k).initial_rotation_turns]=computeRotationInZone(rot_index, r);
+                [rot_index]=computeFirstSegment(rot_index); 
+                % compute initial rotation in degrees and turns
+                [~, sm.participant(p).session(s).trial(k).initial_rotation_turns]=computeRotation(ri(rot_index));
+
+                % ANGULAR VELOCITY in this trial's START AREA (alley plus triangle)
+                % uses rotation index from above 
+                % IdPhi = mean integrated absolute angular velocity in radians
+                [sm.participant(p).session(s).trial(k).initial_angular_velocity]=computeAngularVelocity(ri(rot_index));
                 clear rot_index;
-                    
-                % fprintf('Rotation analysis done for %d, session %d, file no %d.\n', id, s, k);       
+                % fprintf('Rotation analysis done for %d, session %d, file no %d.\n', id, s, k);   
                 
                 %% zone analysis for exploration behavior             
                 % compute path zone sequence (10 zones) for actual data 
@@ -638,38 +643,30 @@ tic;
                 % VELOCITY
                 sm.participant(p).session(s).trial(k).velocity=sm.participant(p).session(s).trial(k).path_length/sm.participant(p).session(s).trial(k).time;
                 
-                % AVERAGE DISTANCE to TARGET 
-                % target distance for all segments/goals 
-                target_distance=zeros(max(events),1); 
-                for b=0:max(events)-1 
-                    % next goal
-                    temp_goal_x=sm.coord.practise.goal_x(b+1); temp_goal_y=sm.coord.practise.goal_y(b+1); 
-                    
-                    % next path segment
-                    temp_x=x(events==b); temp_y=y(events==b); 
-
-                    % compute target distance of segment
-                    [temp_distance, ~]=computeTargetDistance(temp_x,temp_y,temp_goal_x,temp_goal_y);
-                    
-                    % sum 
-                    target_distance(b+1)=temp_distance; 
-                end
-                sm.participant(p).session(s).trial(k).target_distance=mean(target_distance);
-                clear target_distance temp* events b; 
+%                 % AVERAGE DISTANCE to TARGET 
+%                 % target distance for all segments/goals 
+%                 target_distance=zeros(max(events),1); 
+%                 for b=0:max(events)-1 
+%                     % next goal
+%                     temp_goal_x=sm.coord.practise.goal_x(b+1); temp_goal_y=sm.coord.practise.goal_y(b+1); 
+%                     
+%                     % next path segment
+%                     temp_x=x(events==b); temp_y=y(events==b); 
+% 
+%                     % compute target distance of segment
+%                     [temp_distance, ~]=computeTargetDistance(temp_x,temp_y,temp_goal_x,temp_goal_y);
+%                     
+%                     % sum 
+%                     target_distance(b+1)=temp_distance; 
+%                 end
+%                 sm.participant(p).session(s).trial(k).target_distance=mean(target_distance);
+%                 clear target_distance temp* events b; 
                 
                 % TOTAL ROTATION
-                rot=zeros(1,length(r)-1); 
-                for j=2:length(r)
-                    temp=abs(r(j)-r(j-1));
-                    if temp > 180 % correct errors due to switch at 0° to 360°
-                        temp=360-temp; 
-                    end 
-                    rot(j-1)=temp;
-                end
-                sm.participant(p).session(s).trial(k).rotation_turns=sum(rot)/360;
-                sm.participant(p).session(s).trial(k).rotation_turns_by_path_length=sum(rot)/360/sm.participant(p).session(s).trial(k).path_length; 
-                clear rot j temp;
-                
+                [~, sm.participant(p).session(s).trial(k).rotation_turns]=computeRotation(ri); 
+                sm.participant(p).session(s).trial(k).rotation_turns_by_path_length=...
+                    sm.participant(p).session(s).trial(k).rotation_turns/sm.participant(p).session(s).trial(k).path_length; 
+
                 % fprintf('Motor control analysis done for %d, session %d, file no %d.\n', id, s, k);
                 
                 %% set marker for excluded trials to zero
