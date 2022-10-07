@@ -315,9 +315,9 @@ tic;
                     sm.coord.alley_full_x, sm.coord.alley_full_y, sm.coord.rec_x, sm.coord.rec_y, ...
                     sm.coord.central_poly, sm.coord.full_poly);
                                
-%                 % interpolate ideal path data for further analysis
-%                 % using 'interparc' function by John D'Errico (Matlab File Exchanger)
-%                 [xi_al,yi_al]=interpolateData(x_line, y_line, sm.participant(p).session(s).trial(k).ideal_path_length);
+                % interpolate ideal path data for further analysis
+                % using 'interparc' function by John D'Errico (Matlab File Exchanger)
+                [xi_al,yi_al]=interpolateData(x_line, y_line, sm.participant(p).session(s).trial(k).ideal_path_length);
                 
 %                 [xi_ch,yi_ch]=interpolateData(x_line_chosen, y_line_chosen, sm.participant(p).session(s).trial(k).ideal_chosen_path_length);
 %                 
@@ -366,21 +366,22 @@ tic;
                 
                 % EXCESS PATH LENGTH (to chosen target) 
                 sm.participant(p).session(s).trial(k).excess_path_length=...
-                    sm.participant(p).session(s).trial(k).path_length-sm.participant(p).session(s).trial(k).ideal_chosen_path_length;
+                    sm.participant(p).session(s).trial(k).path_length - sm.participant(p).session(s).trial(k).ideal_chosen_path_length;
                 
                 % VELOCITY
                 sm.participant(p).session(s).trial(k).velocity=sm.participant(p).session(s).trial(k).path_length / ...
                     sm.participant(p).session(s).trial(k).time; 
                  
-%                 % AVERAGE DISTANCE to TARGET 
-%                 % target distance 
-%                 [sm.participant(p).session(s).trial(k).target_distance, ~]=computeTargetDistance(x,y,...
-%                     sm.participant(p).session(s).trial(k).goal_x,sm.participant(p).session(s).trial(k).goal_y); 
-%                  % ideal target distance 
-%                 [sm.participant(p).session(s).trial(k).ideal_target_distance, ~]=computeTargetDistance(xi_al,yi_al,...
-%                     sm.participant(p).session(s).trial(k).goal_x,sm.participant(p).session(s).trial(k).goal_y);               
-%                 % target distance deviation 
-%                 sm.participant(p).session(s).trial(k).target_distance_deviation=sm.participant(p).session(s).trial(k).target_distance - sm.participant(p).session(s).trial(k).ideal_target_distance; 
+                % AVERAGE PROXIMITY to TARGET 
+                % target proximity 
+                [sm.participant(p).session(s).trial(k).target_proximity, ~]=computeTargetProximity(x,y,...
+                    sm.participant(p).session(s).trial(k).goal_x,sm.participant(p).session(s).trial(k).goal_y); 
+                % ideal target proximity 
+                [sm.participant(p).session(s).trial(k).ideal_target_proximity, ~]=computeTargetProximity(xi_al,yi_al,...
+                    sm.participant(p).session(s).trial(k).goal_x,sm.participant(p).session(s).trial(k).goal_y);               
+                % target proximity deviation 
+                sm.participant(p).session(s).trial(k).target_proximity_deviation=...
+                    sm.participant(p).session(s).trial(k).ideal_target_proximity - sm.participant(p).session(s).trial(k).target_proximity; 
                 
                 % PRESENCE (rel. time in zones)
                 % in inner pentagon (including triangle intersections) 
@@ -634,24 +635,24 @@ tic;
                 % VELOCITY
                 sm.participant(p).session(s).trial(k).velocity=sm.participant(p).session(s).trial(k).path_length/sm.participant(p).session(s).trial(k).time;
                 
-%                 % AVERAGE DISTANCE to TARGET 
-%                 % target distance for all segments/goals 
-%                 target_distance=zeros(max(events),1); 
-%                 for b=0:max(events)-1 
-%                     % next goal
-%                     temp_goal_x=sm.coord.practise.goal_x(b+1); temp_goal_y=sm.coord.practise.goal_y(b+1); 
-%                     
-%                     % next path segment
-%                     temp_x=x(events==b); temp_y=y(events==b); 
-% 
-%                     % compute target distance of segment
-%                     [temp_distance, ~]=computeTargetDistance(temp_x,temp_y,temp_goal_x,temp_goal_y);
-%                     
-%                     % sum 
-%                     target_distance(b+1)=temp_distance; 
-%                 end
-%                 sm.participant(p).session(s).trial(k).target_distance=mean(target_distance);
-%                 clear target_distance temp* events b; 
+                % AVERAGE PROXIMITY to TARGET 
+                % target proximity for all segments/goals 
+                target_proximity=zeros(max(events),1); 
+                for b=0:max(events)-1 
+                    % next goal
+                    temp_goal_x=sm.coord.practise.goal_x(b+1); temp_goal_y=sm.coord.practise.goal_y(b+1); 
+                    
+                    % next path segment
+                    temp_x=x(events==b); temp_y=y(events==b); 
+
+                    % compute target proximity of segment
+                    [temp_proximity, ~]=computeTargetProximity(temp_x,temp_y,temp_goal_x,temp_goal_y);
+                    
+                    % sum 
+                    target_proximity(b+1)=temp_proximity; 
+                end
+                sm.participant(p).session(s).trial(k).target_proximity=mean(target_proximity);
+                clear target_proximity temp* events b; 
                 
                 % TOTAL ROTATION
                 [~, sm.participant(p).session(s).trial(k).rotation_turns]=computeRotation(ri); 

@@ -1,5 +1,6 @@
-function [avg_distance, total_distance]=computeTargetDistance(x, y, x_target, y_target)
-% computeTargetDistance Calculates sum of distance traveled between points.
+function [avg_distance, total_distance]=computeTargetProximity(x, y, x_target, y_target)
+% computeTargetProximity Calculates target proximity as averaged 
+% sum of distance traveled between points.
 %
 % Input: 
 % x, y are vectors with x-/y-coordinate points, i.e. a path. 
@@ -9,8 +10,8 @@ function [avg_distance, total_distance]=computeTargetDistance(x, y, x_target, y_
 % avg_distance (float) and total_distance (float).
 
 total_distance=0; 
-for i=1:length(x)-1
+for i=1:numel(x)-1
     total_distance=total_distance+computeDistance(x(i),x_target,y(i),y_target); 
 end
 
-avg_distance=total_distance/(length(x)-1);
+avg_distance=total_distance/(numel(x)-1);
