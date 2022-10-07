@@ -26,8 +26,11 @@ cfg.pls.clim     = 95; % confidence interval level
 % LOAD DATA 
 %--------------------------------------------------------------------------
 path = '../WP10_data/WP10_results/';
-load([path, 'wp10_plsc_allo_s2.mat']);
-data = cellfun(@str2num, m);
+load([path, 'wp10_plsc_allo.mat']);
+data_allo = cellfun(@str2num, m);
+clear m;
+load([path, 'wp10_plsc_ego.mat']);
+data_ego = cellfun(@str2num, m);
 clear m;
 
 %--------------------------------------------------------------------------
@@ -88,17 +91,21 @@ sig_LV = 1; % define the latent variable (here it is only one extracted latent v
 time = plsres.boot_result.compare_u(1,sig_LV);
 excess_path = plsres.boot_result.compare_u(2,sig_LV);
 presence = plsres.boot_result.compare_u(3,sig_LV);
-initial_rotation = plsres.boot_result.compare_u(4,sig_LV);
-rotation = plsres.boot_result.compare_u(5,sig_LV);
-PLSC_LV = table(time, excess_path,presence,initial_rotation, rotation);
+rotation = plsres.boot_result.compare_u(4,sig_LV);
+initial_rotation = plsres.boot_result.compare_u(5,sig_LV);
+initial_IdPhi = plsres.boot_result.compare_u(6,sig_LV);
+layout = plsres.boot_result.compare_u(7,sig_LV);
+landmark = plsres.boot_result.compare_u(8,sig_LV);
+position = plsres.boot_result.compare_u(9,sig_LV);
+PLSC_LV = table(time, excess_path,presence, rotation, initial_rotation, layout, landmark, position);
 
-subplot(1,2,1);
+figure; subplot(1,2,1);
 bar(plsres.boot_result.compare_u(:,sig_LV),'k'); hold on;
-set(gca,'xticklabels',{'time','path','presence','init. rot', 'rot'}, 'fontsize', 12);
+set(gca,'xticklabels',{'time','path','presence','rot', 'init. rot', 'init. IdPhi', 'layout', 'landmark', 'position'}, 'fontsize', 12);
 box off; grid on;
-lh = line([0,6],[2,2]);
+lh = line([0,10],[2,2]);
 set(lh, 'color','r','linestyle','--');
-lh = line([0,6],[-2,-2]);
+lh = line([0,10],[-2,-2]);
 set(lh, 'color','r','linestyle','--');
 title('LV profile');
 
@@ -113,10 +120,11 @@ title('LV correlation with memory score');
 %% Latent profile scores
 
 % combine data and write table 
-subjects_use = data(:,1); % subjects_use (excl,:) = []; 
+id = data(:,1); % subjects_use (excl,:) = []; 
 group = data(:,2); 
+ms = plsinput.y;
 lp = plsres.usc;
-PLSC_LP = table(subjects_use, group, lp);
+PLSC_LP = table(id, group, lp, ms);
 
 % scatter plot 
 figure; 
@@ -126,5 +134,11 @@ xlabel(upper('LV profile score'),'fontweight','bold');
 ylabel(upper('memory score'),'fontweight','bold');
 [R,P]=corrcoef(plsres.usc, plsinput.y, 'rows', 'complete');
 title(strcat('r=',num2str(R(2,1)),', p=',num2str(P(2,1)))); 
+
+%% save output 
+
+condition='allo'; condition='ego'; 
+writetable(PLSC_LV,[path, 'PLSC_LV_', condition, '.txt'])
+writetable(PLSC_LP,[path, 'PLSC_LP_', condition, '.txt'])
 
 clear all; 
