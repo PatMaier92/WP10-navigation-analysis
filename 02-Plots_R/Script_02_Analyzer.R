@@ -422,6 +422,10 @@ probe.memory_o
 anova.lme(probe.memory_h, type="marginal")
 rm(probe.memory_s, probe.memory_o, probe.memory_h)
 
+# test against chance level 
+emm <- emmeans(probe.memory_s, ~ group*condition*session, lmer.df="satterthwaite")
+summary(emm, null=0.5, adjust="bonferroni", infer=c(T,T))
+
 ## ---- plot_probe_ms
 line_memory <- afex_plot(probe.memory_s, x="session", trace="group", panel="condition", id="id", 
                          error="model", dodge=0.8,
