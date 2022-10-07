@@ -45,7 +45,8 @@ plsinput.y = data(:,3);  % the behavioral output we want to explain
 % plsinput.X = { data(data(:,2)==1, 4:end), ...
 %     data(data(:,2)==2, 4:end), data(data(:,2)==3, 4:end) };
 % without groups 
-plsinput.X = data(:, 4:end);
+plsinput.X = data(:, 4:end-1);
+% plsinput.X = data(:, 4:end);
 
 % % exclude all subjects with missings
 % A = find(isnan(plsinput.y)==1);  % find missing age values

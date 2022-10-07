@@ -138,6 +138,18 @@ load(file_name)
 sm_data <- sm_data %>% filter(exclude_trial_matlab==0) 
 rm(file_name)
 
+sm_change_data <- sm_data %>%
+  filter(session!=3, condition %in% c("ego_ret", "allo_ret")) %>% 
+  group_by(id, session, condition) %>% 
+  summarise_at(vars(memory_score), mean, na.rm=T) %>% 
+  pivot_wider(id_cols=c(id, condition),
+              names_from=session,
+              names_prefix="ms_",
+              values_from=memory_score) %>% 
+  mutate(change_memory_score=ms_2/ms_1) %>% 
+  select(-ms_1, -ms_2)
+
+# read-in post-test data 
 file_name <- "../WP10_data/WP10_results/wp10_post_nav_data.RData"
 load(file_name)
 rm(file_name)
@@ -151,20 +163,29 @@ pt_data <- pt_data %>%
 
 
 # filter and aggregate for PLSC analysis 
-data_for_plsc <- function(d){
-  d <- d %>% group_by(id, group) %>% 
+data_for_plsc <- function(d, add_change=FALSE){
+  d <- d %>% 
+    group_by(id, group, condition) %>% 
     summarise_at(vars(memory_score, time, excess_path_length, presence_alleys, 
                       rotation_turns_by_path_length, initial_rotation_turns, initial_angular_velocity), mean, na.rm=T) %>% 
     arrange(group, id) %>% 
     mutate(group=case_when(group == "YoungKids" ~ "1", group == "OldKids" ~ "2", T ~ "3")) %>% 
-    left_join(pt_data, by="id") %>% 
+    left_join(pt_data, by="id")
+    
+    if (add_change) {
+      d <- d %>% 
+        left_join(sm_change_data, by=c("id", "condition"))
+    }
+  
+  d <- d %>% 
+    select(-condition) %>% 
     drop_na()
   
   return(d)
 } 
 
 # allo across sessions 
-plsc_allo <- data_for_plsc(sm_data %>% filter(condition %in% c("allo_ret")))
+plsc_allo <- data_for_plsc(sm_data %>% filter(condition %in% c("allo_ret")), add_change=TRUE)
 writeMat(con="../WP10_data/WP10_results/wp10_plsc_allo.mat", m=as.matrix(plsc_allo))
 rm(plsc_allo)
 
@@ -179,7 +200,7 @@ rm(plsc_allo_2)
 
 
 # ego across sessions 
-plsc_ego <- data_for_plsc(sm_data %>% filter(condition %in% c("ego_ret")))
+plsc_ego <- data_for_plsc(sm_data %>% filter(condition %in% c("ego_ret")), add_change=TRUE)
 writeMat(con="../WP10_data/WP10_results/wp10_plsc_ego.mat", m=as.matrix(plsc_ego))
 rm(plsc_ego)
 
@@ -191,9 +212,6 @@ rm(plsc_ego_1)
 plsc_ego_2 <- data_for_plsc(sm_data %>% filter(condition %in% c("ego_ret"), session==2))
 writeMat(con="../WP10_data/WP10_results/wp10_plsc_ego_s2.mat", m=as.matrix(plsc_ego_2))
 rm(plsc_ego_2)
-
-
-### tbd:compute T2/T1 with appropriate markers
 
 
 # clear workspace
