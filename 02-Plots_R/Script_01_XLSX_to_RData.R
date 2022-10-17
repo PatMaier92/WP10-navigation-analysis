@@ -24,17 +24,13 @@ sm_data <- read_xlsx(file_path, col_names = T, na = "999")
 
 # tidy data 
 sm_data <- sm_data %>% 
-  mutate_at(c("sex", "session", "feedback", "goal_identity"), factor) %>% 
+  rename(goal=goal_s, start=start_s, chosen_alley=chosen_alley_s) %>% 
+  mutate_at(c("sex", "session", "feedback", "goal_identity", "goal", "start", "chosen_alley"), factor) %>% 
   mutate(group=factor(group, levels=c("YoungKids", "OldKids", "YoungAdults")),
          condition=factor(condition, levels=c("main_learn", "main_ret", "ego_ret", "allo_ret", "practise")),
          condition2=factor(case_when(condition %in% c("allo_ret", "ego_ret") ~ "learn", condition=="main_learn" ~ "probe", T ~ "other")),
-         goal=factor(goal_s),
-         start=factor(start_s),
-         chosen_alley=factor(chosen_alley_s),
          obj_at_chosen_loc=factor(obj_at_chosen_loc, levels=c("01-Fussball", "02-Globus", "03-Geige", "04-Stuhl")),
-         search_strategy=factor(search_strategy, levels=c("direct","detour","reorient"))) %>% 
-  select(-goal_s, -start_s, -chosen_alley_s)
-# if no renaming of variables: use mutate_at(cols, factor)
+         search_strategy=factor(search_strategy, levels=c("direct","detour","reorient")))
 
 assign_trial <- function(i, s, b, c, t){
   temp <- sm_data %>%

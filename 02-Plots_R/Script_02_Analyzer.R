@@ -1,8 +1,15 @@
-### --------------- WP10 Starmaze data  ----------------- ###
-### Script_02_Analyzer                                    ###
-### Author: Patrizia Maier                                ###
+# ######################################################### #
+# ######################################################### #
+#                                                           #
+# ------------------ WP10 Starmaze data  ------------------ #
+# Script_02_Analyzer                                        #
+# Author: Patrizia Maier                                    #
+#                                                           #
+# ######################################################### #
+# ######################################################### #
 
-# ::: get packages ::: #
+
+# ::: PACKAGES AND SETTINGS ::: #
 
 ## ---- analysis_packages_and_sum_coding
 library(tidyverse)
@@ -32,9 +39,12 @@ library(papaja)
 options(contrasts=c(unordered="contr.sum", ordered="contr.poly"))
 ## ----
 
+
+# ######################################################### #
 # ######################################################### #
 
-# ::: load data ::: #
+
+# ::: DATA SETUP::: #
 
 file_name <- "../WP10_data/WP10_results/wp10_navigation_data.RData"
 load(file_name)
@@ -46,9 +56,95 @@ file_name <- "../WP10_data/WP10_results/wp10_post_nav_data.RData"
 load(file_name)
 rm(file_name)
 
-# ######################################################### #
 
-# ::: plot settings ::: #
+## ---- data_prep
+# practise 
+practise <- sm_data %>%
+  filter(condition %in% c("practise")) %>%  
+  select(id, group, sex, time, excess_path_length, target_proximity, rotation_turns, rotation_turns_by_path_length) %>% 
+  droplevels()
+
+cov_data <- practise %>%  # TBD: target proximity deviation, angular velocity?
+  select(id, time, excess_path_length, target_proximity, rotation_turns, rotation_turns_by_path_length) %>% 
+  rename(cov_time=time, cov_excess_path=excess_path_length, cov_proximity=target_proximity, 
+         cov_rotation=rotation_turns, cov_rotation_path=rotation_turns_by_path_length)
+
+cov_names <- cov_data %>% select(-id) %>% names()
+
+# full data 
+data <- sm_data %>% 
+  left_join(cov_data, by="id") %>% 
+  mutate(trial_in_block_original=factor(trial_in_block)) %>% 
+  mutate_at(vars("goal_i", "block"), factor) %>% 
+  rename(cov_gender=sex, cov_location=goal_i, cov_block=block, cov_object=goal_identity)
+
+# learning
+data_l <- data %>%
+  filter(condition %in% c("main_learn")) %>% 
+  mutate_at(vars(all_of(cov_names)), 
+            ~ .x - mean(.x, na.rm=T)) %>% 
+  droplevels()
+
+# probe 
+data_p <- data %>% 
+  filter(condition %in% c("allo_ret", "ego_ret")) %>%
+  mutate_at(vars(all_of(cov_names)), 
+            ~ .x - mean(.x, na.rm=T)) %>% 
+  droplevels()
+
+# probe correct trials 
+data_pc <- data %>% 
+  filter(condition %in% c("allo_ret", "ego_ret"), correct_final_alley==1) %>%
+  mutate_at(vars(all_of(cov_names)), 
+            ~ .x - mean(.x, na.rm=T)) %>% 
+  droplevels()
+
+# # probe allo trials
+# data_allo_ms <- data %>%
+#   filter(condition=="allo_ret", ego_alley!=0) %>% 
+#   select(id, cov_gender, group, session, condition, trial, cov_location, cov_block, 
+#          correct_final_alley, correct_final_alley_ego, starts_with("memory_score")) %>% 
+#   rename(memory_score_goal=memory_score) %>% 
+#   pivot_longer(cols=starts_with("memory_score"), 
+#                names_to=c("variable", "cond"),
+#                names_pattern='(.*)_(\\w+)') %>% 
+#   pivot_wider(names_from=variable, values_from=value) %>% 
+#   mutate(cond=factor(cond, levels=c("goal", "ego", "other")),
+#          sessionC=as.numeric(session) - mean(as.numeric(session), na.rm=T)) %>% 
+#   droplevels()
+# 
+# data_allo_pr <- data %>%
+#   filter(condition=="allo_ret", ego_alley!=7) %>% 
+#   select(id, cov_gender, group, session, condition, trial, cov_location, cov_block, 
+#          time, starts_with("presence")) %>% 
+#   select(-presence_alleys, -presence_pentagon, -starts_with("presenceT")) %>% 
+#   pivot_longer(cols=starts_with("presence"), 
+#                names_to=c("variable", "cond"),
+#                names_pattern='(.*)_(\\w+)') %>% 
+#   pivot_wider(names_from=variable, values_from=value) %>% 
+#   mutate(time_in_zone=time*presence,  
+#          cond=factor(cond, levels=c("start", "goal", "original", "ego", "otherAVG", "otherMAX", "otherSUM"))) %>% 
+#   droplevels()
+# 
+# data_allo_prT <- data %>%
+#   filter(condition=="allo_ret", ego_alley!=7) %>% 
+#   select(id, cov_gender, group, session, condition, trial, cov_location, cov_block, 
+#          time, starts_with("presenceT")) %>% 
+#   pivot_longer(cols=starts_with("presenceT"), 
+#                names_to=c("variable", "cond"),
+#                names_pattern='(.*)_(\\w+)') %>% 
+#   pivot_wider(names_from=variable, values_from=value) %>% 
+#   mutate(time_in_zone=time*presenceT,  
+#          cond=factor(cond, levels=c("start", "goal", "original", "ego", "otherAVG", "otherMAX", "otherSUM"))) %>% 
+#   droplevels()
+
+# helper function for outlier check
+is_outlier <- function(x) {
+  return(x < quantile(x, 0.25) - 1.5 * IQR(x) | x > quantile(x, 0.75) + 1.5 * IQR(x))
+}
+
+rm(cov_data, cov_names, data)
+## ---- 
 
 ## ---- plot_settings
 # labels 
@@ -60,248 +156,152 @@ l_trial_in_block <- "trial"
 l_memory_score <- "memory score"
 l_correct_alley <- "correct in %"
 l_time <- "time (s)"
-l_velocity <- "velocity"
 l_excess_path_length <- "excess path length"
-l_presence <- "presence (%)"
-l_presence_alleys <- "presence in alleys (%)"
-l_time_in_zone <- "time in zone (s)"
+l_proximity <- "avg. target proximity"
+# l_presence <- "presence (%)"
+# l_presence_alleys <- "presence in alleys (%)"
+# l_time_in_zone <- "time in zone (s)"
 l_rotation <- "rotation/360"
 l_initial_rotation <- "initial rotation/360"
 l_rotation_by_path <- "rotation/360/path length"
+l_angular_velocity <- "angular velocity"
 
 # colors
 # scales::show_col()
-group_colors <- c("#FFE476", "#6699FF", "#000000")
-group_colors_o <-  c("#CC6600", "#003399", "#000000")
+group_colors <- c("#FFE476", "#6699FF", "#e19686")
+group_colors_o <-  c("#CC6600", "#003399", "#d56d56")
 type_colors <- c("#FDBF6F", "#C4CAC9", "#A6CEE3")
 type_colors_o <- c("#FF7F00", "#667270", "#1F78B4")
 # strategy_colors <- c("direct"="#E4534D", "detour"="#ED8E8A", "reorient"="#F9DAD9")
 # landmark_colors <- rev(RColorBrewer::brewer.pal(3,"Blues"))
 ## ---- 
 
-# ######################################################### #
-
-# ::: aggregate data ::: #
-
-## ---- analysis_data
-# practise 
-practise <- sm_data %>%
-  filter(condition %in% c("practise")) %>%  
-  select(id, group, sex, time, velocity, excess_path_length, rotation_turns, rotation_turns_by_path_length) %>% 
-  droplevels()
-
-covariates <- practise %>% 
-  select(id, time, velocity, excess_path_length, rotation_turns, rotation_turns_by_path_length) %>% 
-  rename(cov_time=time, cov_velocity=velocity, cov_excess_path=excess_path_length, 
-         cov_rotation=rotation_turns, cov_rotation_path=rotation_turns_by_path_length) %>% 
-  add_row(id=12018)
-
-# full data 
-data <- sm_data %>% 
-  filter(id!=12018) %>% 
-  full_join(covariates, by="id") %>% 
-  mutate(trial_in_block_original=factor(trial_in_block)) %>% 
-  mutate_at(vars("goal_i", "block"), factor) %>% 
-  rename(cov_gender=sex, cov_location=goal_i, cov_block=block, cov_object=goal_identity)
-
-# learning
-data_l <- data %>%
-  filter(condition %in% c("main_learn")) %>% 
-  mutate_at(vars("trial_in_block", "cov_time", "cov_velocity", "cov_excess_path", "cov_rotation", "cov_rotation_path"), 
-            ~ .x - mean(.x, na.rm=T)) %>% 
-  droplevels()
-
-# probe 
-data_p <- data %>% 
-  filter(condition %in% c("allo_ret", "ego_ret")) %>%
-  #mutate(sessionC=as.numeric(session) - mean(as.numeric(session), na.rm=T)) %>% 
-  mutate_at(vars("cov_time", "cov_velocity", "cov_excess_path", "cov_rotation", "cov_rotation_path"), 
-            ~ .x - mean(.x, na.rm=T)) %>% 
-  droplevels()
-
-# probe correct trials 
-data_pc <- data %>% 
-  filter(condition %in% c("allo_ret", "ego_ret"), correct_final_alley==1) %>%
-  #mutate(sessionC=as.numeric(session) - mean(as.numeric(session), na.rm=T)) %>% 
-  mutate_at(vars("cov_time", "cov_velocity", "cov_excess_path", "cov_rotation", "cov_rotation_path"), 
-            ~ .x - mean(.x, na.rm=T)) %>% 
-  droplevels()
-
-# probe allo trials
-data_allo_ms <- data %>%
-  filter(condition=="allo_ret", ego_alley!=0) %>% 
-  select(id, cov_gender, group, session, condition, trial, cov_location, cov_block, 
-         correct_final_alley, correct_final_alley_ego, starts_with("memory_score")) %>% 
-  rename(memory_score_goal=memory_score) %>% 
-  pivot_longer(cols=starts_with("memory_score"), 
-               names_to=c("variable", "cond"),
-               names_pattern='(.*)_(\\w+)') %>% 
-  pivot_wider(names_from=variable, values_from=value) %>% 
-  mutate(cond=factor(cond, levels=c("goal", "ego", "other")),
-         sessionC=as.numeric(session) - mean(as.numeric(session), na.rm=T)) %>% 
-  droplevels()
-
-data_allo_pr <- data %>%
-  filter(condition=="allo_ret", ego_alley!=7) %>% 
-  select(id, cov_gender, group, session, condition, trial, cov_location, cov_block, 
-         time, starts_with("presence")) %>% 
-  select(-presence_alleys, -presence_pentagon, -starts_with("presenceT")) %>% 
-  pivot_longer(cols=starts_with("presence"), 
-               names_to=c("variable", "cond"),
-               names_pattern='(.*)_(\\w+)') %>% 
-  pivot_wider(names_from=variable, values_from=value) %>% 
-  mutate(time_in_zone=time*presence,  
-         cond=factor(cond, levels=c("start", "goal", "original", "ego", "otherAVG", "otherMAX", "otherSUM"))) %>% 
-  droplevels()
-
-data_allo_prT <- data %>%
-  filter(condition=="allo_ret", ego_alley!=7) %>% 
-  select(id, cov_gender, group, session, condition, trial, cov_location, cov_block, 
-         time, starts_with("presenceT")) %>% 
-  pivot_longer(cols=starts_with("presenceT"), 
-               names_to=c("variable", "cond"),
-               names_pattern='(.*)_(\\w+)') %>% 
-  pivot_wider(names_from=variable, values_from=value) %>% 
-  mutate(time_in_zone=time*presenceT,  
-         cond=factor(cond, levels=c("start", "goal", "original", "ego", "otherAVG", "otherMAX", "otherSUM"))) %>% 
-  droplevels()
-
-# helper function for outlier check
-is_outlier <- function(x) {
-  return(x < quantile(x, 0.25) - 1.5 * IQR(x) | x > quantile(x, 0.75) + 1.5 * IQR(x))
-}
-
-rm(covariates, data)
-## ---- 
-
-## ---- contrast_matrices
-con_list_session_condition <- list(
-  "ego_vs_allo_in_T1" = c(1, 0, -1, 0),
-  "ego_vs_allo_in_T2" = c(0, 1, 0, -1),
-  "T1_vs_T2_in_ego"   = c(1, -1, 0, 0),
-  "T1_vs_T2_in_allo"  = c(0, 0, 1, -1))
-
-con_list_group_session <- list(
-  "T1_vs_T2_in_6-7-yo"      = c(1, 0, 0, -1, 0, 0),
-  "T1_vs_T2_in_9-10-yo"     = c(0, 1, 0, 0, -1, 0),
-  "T1_vs_T2_in_adults"      = c(0, 0, 1, 0, 0, -1),
-  "6-7-yo_vs_9-10-yo_in_T1" = c(1, -1, 0, 0, 0, 0),
-  "6-7-yo_vs_adults_in_T1"  = c(1, 0, -1, 0, 0, 0),
-  "9-10-yo_vs_adults_in_T1" = c(0, 1, -1, 0, 0, 0),
-  "6-7-yo_vs_9-10-yo_in_T2" = c(0, 0, 0, 1, -1, 0),
-  "6-7-yo_vs_adults_in_T2"  = c(0, 0, 0, 1, 0, -1),
-  "9-10-yo_vs_adults_in_T2" = c(0, 0, 0, 0, 1, -1))
-
-con_list_group_condition <- list(
-  "ego_vs_allo_in_6-7-yo"     = c(1, 0, 0, -1, 0, 0),
-  "ego_vs_allo_in_9-10-yo"    = c(0, 1, 0, 0, -1, 0),
-  "ego_vs_allo_in_adults"     = c(0, 0, 1, 0, 0, -1),
-  "6-7-yo_vs_9-10-yo_in_ego"  = c(1, -1, 0, 0, 0, 0),
-  "6-7-yo_vs_adults_in_ego"   = c(1, 0, -1, 0, 0, 0),
-  "9-10-yo_vs_adults_in_ego"  = c(0, 1, -1, 0, 0, 0),
-  "6-7-yo_vs_9-10-yo_in_allo" = c(0, 0, 0, 1, -1, 0),
-  "6-7-yo_vs_adults_in_allo"  = c(0, 0, 0, 1, 0, -1),
-  "9-10-yo_vs_adults_in_allo" = c(0, 0, 0, 0, 1, -1))
-
-con_list_group_session_condition <- list(
-  "T1_vs_T2_in_6-7-yo_ego"          = c(1, 0, 0, -1, 0, 0, 0, 0, 0, 0, 0, 0),
-  "T1_vs_T2_in_9-10-yo_ego"         = c(0, 1, 0, 0, -1, 0, 0, 0, 0, 0, 0, 0),
-  "T1_vs_T2_in_adults_ego"          = c(0, 0, 1, 0, 0, -1, 0, 0, 0, 0, 0, 0),
-  "T1_vs_T2_in_6-7-yo_in_allo"      = c(0, 0, 0, 0, 0, 0, 1, 0, 0, -1, 0, 0),
-  "T1_vs_T2_in_9-10-yo_in_allo"     = c(0, 0, 0, 0, 0, 0, 0, 1, 0, 0, -1, 0),
-  "T1_vs_T2_in_adults_in_allo"      = c(0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, -1),
-
-  "ego_vs_allo_in_T1_6-7-yo"        = c(1, 0, 0, 0, 0, 0, -1, 0, 0, 0, 0, 0),
-  "ego_vs_allo_in_T1_9-10-yo"       = c(0, 1, 0, 0, 0, 0, 0, -1, 0, 0, 0, 0),
-  "ego_vs_allo_in_T1_adults"        = c(0, 0, 1, 0, 0, 0, 0, 0, -1, 0, 0, 0),
-  "ego_vs_allo_in_T2_6-7-yo"        = c(0, 0, 0, 1, 0, 0, 0, 0, 0, -1, 0, 0),
-  "ego_vs_allo_in_T2_9-10-yo"       = c(0, 0, 0, 0, 1, 0, 0, 0, 0, 0, -1, 0),
-  "ego_vs_allo_in_T2_adults"        = c(0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, -1),
-
-  "6-7-yo_vs_9-10-yo_in_T1_ego"     = c(1, -1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0),
-  "6-7-yo_vs_adults_in_T1_ego"      = c(1, 0, -1, 0, 0, 0, 0, 0, 0, 0, 0, 0),
-  "9-10-yo_vs_adults_in_T1_ego"     = c(0, 1, -1, 0, 0, 0, 0, 0, 0, 0, 0, 0),
-  "6-7-yo_vs_9-10-yo_in_T2_ego"     = c(0, 0, 0, 1, -1, 0, 0, 0, 0, 0, 0, 0),
-  "6-7-yo_vs_adults_in_T2_ego"      = c(0, 0, 0, 1, 0, -1, 0, 0, 0, 0, 0, 0),
-  "9-10-yo_vs_adults_in_T2_ego"     = c(0, 0, 0, 0, 1, -1, 0, 0, 0, 0, 0, 0),
-  "6-7-yo_vs_9-10-yo_in_T1_in_allo" = c(0, 0, 0, 0, 0, 0, 1, -1, 0, 0, 0, 0),
-  "6-7-yo_vs_adults_in_T1_in_allo"  = c(0, 0, 0, 0, 0, 0, 1, 0, -1, 0, 0, 0),
-  "9-10-yo_vs_adults_in_T1_in_allo" = c(0, 0, 0, 0, 0, 0, 0, 1, -1, 0, 0, 0),
-  "6-7-yo_vs_9-10-yo_in_T2_in_allo" = c(0, 0, 0, 0, 0, 0, 0, 0, 0, 1, -1, 0),
-  "6-7-yo_vs_adults_in_T2_in_allo"  = c(0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, -1),
-  "9-10-yo_vs_adults_in_T2_in_allo" = c(0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, -1))
-
-con_list_group_location_session <- list(
-  "T1_vs_T2_in_6-7-yo_in_l1"      = c(1, 0, 0, 0, 0, 0, 0, 0, 0, -1, 0, 0, 0, 0, 0, 0, 0, 0),
-  "T1_vs_T2_in_9-10-yo_in_l1"     = c(0, 1, 0, 0, 0, 0, 0, 0, 0, 0, -1, 0, 0, 0, 0, 0, 0, 0),
-  "T1_vs_T2_in_adults_in_l1"      = c(0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, -1, 0, 0, 0, 0, 0, 0),
-  "T1_vs_T2_in_6-7-yo_in_l2"      = c(0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, -1, 0, 0, 0, 0, 0),
-  "T1_vs_T2_in_9-10-yo_in_l2"     = c(0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, -1, 0, 0, 0, 0),
-  "T1_vs_T2_in_adults_in_l2"      = c(0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, -1, 0, 0, 0),
-  "T1_vs_T2_in_6-7-yo_in_l3"      = c(0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, -1, 0, 0),
-  "T1_vs_T2_in_9-10-yo_in_l3"     = c(0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, -1, 0),
-  "T1_vs_T2_in_adults_in_l3"      = c(0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, -1),
-
-  "6-7-yo_vs_9-10-yo_in_l1_in_T1" = c(1, -1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0),
-  "6-7-yo_vs_9-10-yo_in_l2_in_T1" = c(0, 0, 0, 1, -1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0),
-  "6-7-yo_vs_9-10-yo_in_l3_in_T1" = c(0, 0, 0, 0, 0, 0, 1, -1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0),
-  "6-7-yo_vs_adults_in_l1_in_T1"  = c(1, 0, -1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0),
-  "6-7-yo_vs_adults_in_l2_in_T1"  = c(0, 0, 0, 1, 0, -1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0),
-  "6-7-yo_vs_adults_in_l3_in_T1"  = c(0, 0, 0, 0, 0, 0, 1, 0, -1, 0, 0, 0, 0, 0, 0, 0, 0, 0),
-  "9-10-yo_vs_adults_in_l1_in_T1" = c(0, 1, -1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0),
-  "9-10-yo_vs_adults_in_l2_in_T1" = c(0, 0, 0, 0, 1, -1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0),
-  "9-10-yo_vs_adults_in_l3_in_T1" = c(0, 0, 0, 0, 0, 0, 0, 1, -1, 0, 0, 0, 0, 0, 0, 0, 0, 0),
-
-  "6-7-yo_vs_9-10-yo_in_l1_in_T2" = c(0, 0, 0, 0, 0, 0, 0, 0, 0, 1, -1, 0, 0, 0, 0, 0, 0, 0),
-  "6-7-yo_vs_9-10-yo_in_l2_in_T2" = c(0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, -1, 0, 0, 0, 0),
-  "6-7-yo_vs_9-10-yo_in_l3_in_T2" = c(0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, -1, 0),
-  "6-7-yo_vs_adults_in_l1_in_T2"  = c(0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, -1, 0, 0, 0, 0, 0, 0),
-  "6-7-yo_vs_adults_in_l2_in_T2"  = c(0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, -1, 0, 0, 0),
-  "6-7-yo_vs_adults_in_l3_in_T2"  = c(0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, -1),
-  "9-10-yo_vs_adults_in_l1_in_T2" = c(0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, -1, 0, 0, 0, 0, 0, 0),
-  "9-10-yo_vs_adults_in_l2_in_T2" = c(0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, -1, 0, 0, 0),
-  "9-10-yo_vs_adults_in_l3_in_T2" = c(0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, -1))
-
-con_list_group_location <- list(
-  "l1_vs_l2_in_6-7-yo"      = c(1, 0, 0, -1, 0, 0, 0, 0, 0),
-  "l1_vs_l3_in_6-7-yo"      = c(1, 0, 0, 0, 0, 0, -1, 0, 0),
-  "l2_vs_l3_in_6-7-yo"      = c(0, 0, 0, 1, 0, 0, -1, 0, 0),
-  "l1_vs_l2_in_9-10-yo"     = c(0, 1, 0, 0, -1, 0, 0, 0, 0),
-  "l1_vs_l3_in_9-10-yo"     = c(0, 1, 0, 0, 0, 0, 0, -1, 0),
-  "l2_vs_l3_in_9-10-yo"     = c(0, 0, 0, 0, 1, 0, 0, -1, 0),
-  "l1_vs_l2_in_adults"      = c(0, 0, 1, 0, 0, -1, 0, 0, 0),
-  "l1_vs_l3_in_adults"      = c(0, 0, 1, 0, 0, 0, 0, 0, -1),
-  "l2_vs_l3_in_adults"      = c(0, 0, 0, 0, 0, 1, 0, 0, -1),
-  "6-7-yo_vs_9-10-yo_in_l1" = c(1, -1, 0, 0, 0, 0, 0, 0, 0),
-  "6-7-yo_vs_9-10-yo_in_l2" = c(0, 0, 0, 1, -1, 0, 0, 0, 0),
-  "6-7-yo_vs_9-10-yo_in_l3" = c(0, 0, 0, 0, 0, 0, 1, -1, 0),
-  "6-7-yo_vs_adults_in_l1"  = c(1, 0, -1, 0, 0, 0, 0, 0, 0),
-  "6-7-yo_vs_adults_in_l2"  = c(0, 0, 0, 1, 0, -1, 0, 0, 0),
-  "6-7-yo_vs_adults_in_l3"  = c(0, 0, 0, 0, 0, 0, 1, 0, -1),
-  "9-10-yo_vs_adults_in_l1" = c(0, 1, -1, 0, 0, 0, 0, 0, 0),
-  "9-10-yo_vs_adults_in_l2" = c(0, 0, 0, 0, 1, -1, 0, 0, 0),
-  "9-10-yo_vs_adults_in_l3" = c(0, 0, 0,  0, 0, 0, 0, 1, -1))
-
-con_list_condition_location <- list(
-  "l1_vs_l2_in_ego"   = c(1, 0, -1, 0, 0, 0),
-  "l1_vs_l3_in_ego"   = c(1, 0, 0, 0, -1, 0),
-  "l2_vs_l3_in_ego"   = c(0, 0, 1, 0, -1, 0),
-  "l1_vs_l2_in_allo"  = c(0, 1, 0, -1, 0, 0),
-  "l1_vs_l3_in_allo"  = c(0, 1, 0, 0, 0, -1),
-  "l2_vs_l3_in_allo"  = c(0, 0, 0, 1, 0, -1),
-  "ego_vs_allo_in_l1" = c(1, -1, 0, 0, 0, 0),
-  "ego_vs_allo_in_l2" = c(0, 0, 1, -1, 0, 0),
-  "ego_vs_allo_in_l3" = c(0, 0, 0, 0, 1, -1))
-## ----
+# ## ---- contrast_matrices
+# con_list_session_condition <- list(
+#   "ego_vs_allo_in_T1" = c(1, 0, -1, 0),
+#   "ego_vs_allo_in_T2" = c(0, 1, 0, -1),
+#   "T1_vs_T2_in_ego"   = c(1, -1, 0, 0),
+#   "T1_vs_T2_in_allo"  = c(0, 0, 1, -1))
+# 
+# con_list_group_session <- list(
+#   "T1_vs_T2_in_6-7-yo"      = c(1, 0, 0, -1, 0, 0),
+#   "T1_vs_T2_in_9-10-yo"     = c(0, 1, 0, 0, -1, 0),
+#   "T1_vs_T2_in_adults"      = c(0, 0, 1, 0, 0, -1),
+#   "6-7-yo_vs_9-10-yo_in_T1" = c(1, -1, 0, 0, 0, 0),
+#   "6-7-yo_vs_adults_in_T1"  = c(1, 0, -1, 0, 0, 0),
+#   "9-10-yo_vs_adults_in_T1" = c(0, 1, -1, 0, 0, 0),
+#   "6-7-yo_vs_9-10-yo_in_T2" = c(0, 0, 0, 1, -1, 0),
+#   "6-7-yo_vs_adults_in_T2"  = c(0, 0, 0, 1, 0, -1),
+#   "9-10-yo_vs_adults_in_T2" = c(0, 0, 0, 0, 1, -1))
+# 
+# con_list_group_condition <- list(
+#   "ego_vs_allo_in_6-7-yo"     = c(1, 0, 0, -1, 0, 0),
+#   "ego_vs_allo_in_9-10-yo"    = c(0, 1, 0, 0, -1, 0),
+#   "ego_vs_allo_in_adults"     = c(0, 0, 1, 0, 0, -1),
+#   "6-7-yo_vs_9-10-yo_in_ego"  = c(1, -1, 0, 0, 0, 0),
+#   "6-7-yo_vs_adults_in_ego"   = c(1, 0, -1, 0, 0, 0),
+#   "9-10-yo_vs_adults_in_ego"  = c(0, 1, -1, 0, 0, 0),
+#   "6-7-yo_vs_9-10-yo_in_allo" = c(0, 0, 0, 1, -1, 0),
+#   "6-7-yo_vs_adults_in_allo"  = c(0, 0, 0, 1, 0, -1),
+#   "9-10-yo_vs_adults_in_allo" = c(0, 0, 0, 0, 1, -1))
+# 
+# con_list_group_session_condition <- list(
+#   "T1_vs_T2_in_6-7-yo_ego"          = c(1, 0, 0, -1, 0, 0, 0, 0, 0, 0, 0, 0),
+#   "T1_vs_T2_in_9-10-yo_ego"         = c(0, 1, 0, 0, -1, 0, 0, 0, 0, 0, 0, 0),
+#   "T1_vs_T2_in_adults_ego"          = c(0, 0, 1, 0, 0, -1, 0, 0, 0, 0, 0, 0),
+#   "T1_vs_T2_in_6-7-yo_in_allo"      = c(0, 0, 0, 0, 0, 0, 1, 0, 0, -1, 0, 0),
+#   "T1_vs_T2_in_9-10-yo_in_allo"     = c(0, 0, 0, 0, 0, 0, 0, 1, 0, 0, -1, 0),
+#   "T1_vs_T2_in_adults_in_allo"      = c(0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, -1),
+# 
+#   "ego_vs_allo_in_T1_6-7-yo"        = c(1, 0, 0, 0, 0, 0, -1, 0, 0, 0, 0, 0),
+#   "ego_vs_allo_in_T1_9-10-yo"       = c(0, 1, 0, 0, 0, 0, 0, -1, 0, 0, 0, 0),
+#   "ego_vs_allo_in_T1_adults"        = c(0, 0, 1, 0, 0, 0, 0, 0, -1, 0, 0, 0),
+#   "ego_vs_allo_in_T2_6-7-yo"        = c(0, 0, 0, 1, 0, 0, 0, 0, 0, -1, 0, 0),
+#   "ego_vs_allo_in_T2_9-10-yo"       = c(0, 0, 0, 0, 1, 0, 0, 0, 0, 0, -1, 0),
+#   "ego_vs_allo_in_T2_adults"        = c(0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, -1),
+# 
+#   "6-7-yo_vs_9-10-yo_in_T1_ego"     = c(1, -1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0),
+#   "6-7-yo_vs_adults_in_T1_ego"      = c(1, 0, -1, 0, 0, 0, 0, 0, 0, 0, 0, 0),
+#   "9-10-yo_vs_adults_in_T1_ego"     = c(0, 1, -1, 0, 0, 0, 0, 0, 0, 0, 0, 0),
+#   "6-7-yo_vs_9-10-yo_in_T2_ego"     = c(0, 0, 0, 1, -1, 0, 0, 0, 0, 0, 0, 0),
+#   "6-7-yo_vs_adults_in_T2_ego"      = c(0, 0, 0, 1, 0, -1, 0, 0, 0, 0, 0, 0),
+#   "9-10-yo_vs_adults_in_T2_ego"     = c(0, 0, 0, 0, 1, -1, 0, 0, 0, 0, 0, 0),
+#   "6-7-yo_vs_9-10-yo_in_T1_in_allo" = c(0, 0, 0, 0, 0, 0, 1, -1, 0, 0, 0, 0),
+#   "6-7-yo_vs_adults_in_T1_in_allo"  = c(0, 0, 0, 0, 0, 0, 1, 0, -1, 0, 0, 0),
+#   "9-10-yo_vs_adults_in_T1_in_allo" = c(0, 0, 0, 0, 0, 0, 0, 1, -1, 0, 0, 0),
+#   "6-7-yo_vs_9-10-yo_in_T2_in_allo" = c(0, 0, 0, 0, 0, 0, 0, 0, 0, 1, -1, 0),
+#   "6-7-yo_vs_adults_in_T2_in_allo"  = c(0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, -1),
+#   "9-10-yo_vs_adults_in_T2_in_allo" = c(0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, -1))
+# 
+# con_list_group_location_session <- list(
+#   "T1_vs_T2_in_6-7-yo_in_l1"      = c(1, 0, 0, 0, 0, 0, 0, 0, 0, -1, 0, 0, 0, 0, 0, 0, 0, 0),
+#   "T1_vs_T2_in_9-10-yo_in_l1"     = c(0, 1, 0, 0, 0, 0, 0, 0, 0, 0, -1, 0, 0, 0, 0, 0, 0, 0),
+#   "T1_vs_T2_in_adults_in_l1"      = c(0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, -1, 0, 0, 0, 0, 0, 0),
+#   "T1_vs_T2_in_6-7-yo_in_l2"      = c(0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, -1, 0, 0, 0, 0, 0),
+#   "T1_vs_T2_in_9-10-yo_in_l2"     = c(0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, -1, 0, 0, 0, 0),
+#   "T1_vs_T2_in_adults_in_l2"      = c(0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, -1, 0, 0, 0),
+#   "T1_vs_T2_in_6-7-yo_in_l3"      = c(0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, -1, 0, 0),
+#   "T1_vs_T2_in_9-10-yo_in_l3"     = c(0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, -1, 0),
+#   "T1_vs_T2_in_adults_in_l3"      = c(0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, -1),
+# 
+#   "6-7-yo_vs_9-10-yo_in_l1_in_T1" = c(1, -1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0),
+#   "6-7-yo_vs_9-10-yo_in_l2_in_T1" = c(0, 0, 0, 1, -1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0),
+#   "6-7-yo_vs_9-10-yo_in_l3_in_T1" = c(0, 0, 0, 0, 0, 0, 1, -1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0),
+#   "6-7-yo_vs_adults_in_l1_in_T1"  = c(1, 0, -1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0),
+#   "6-7-yo_vs_adults_in_l2_in_T1"  = c(0, 0, 0, 1, 0, -1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0),
+#   "6-7-yo_vs_adults_in_l3_in_T1"  = c(0, 0, 0, 0, 0, 0, 1, 0, -1, 0, 0, 0, 0, 0, 0, 0, 0, 0),
+#   "9-10-yo_vs_adults_in_l1_in_T1" = c(0, 1, -1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0),
+#   "9-10-yo_vs_adults_in_l2_in_T1" = c(0, 0, 0, 0, 1, -1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0),
+#   "9-10-yo_vs_adults_in_l3_in_T1" = c(0, 0, 0, 0, 0, 0, 0, 1, -1, 0, 0, 0, 0, 0, 0, 0, 0, 0),
+# 
+#   "6-7-yo_vs_9-10-yo_in_l1_in_T2" = c(0, 0, 0, 0, 0, 0, 0, 0, 0, 1, -1, 0, 0, 0, 0, 0, 0, 0),
+#   "6-7-yo_vs_9-10-yo_in_l2_in_T2" = c(0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, -1, 0, 0, 0, 0),
+#   "6-7-yo_vs_9-10-yo_in_l3_in_T2" = c(0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, -1, 0),
+#   "6-7-yo_vs_adults_in_l1_in_T2"  = c(0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, -1, 0, 0, 0, 0, 0, 0),
+#   "6-7-yo_vs_adults_in_l2_in_T2"  = c(0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, -1, 0, 0, 0),
+#   "6-7-yo_vs_adults_in_l3_in_T2"  = c(0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, -1),
+#   "9-10-yo_vs_adults_in_l1_in_T2" = c(0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, -1, 0, 0, 0, 0, 0, 0),
+#   "9-10-yo_vs_adults_in_l2_in_T2" = c(0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, -1, 0, 0, 0),
+#   "9-10-yo_vs_adults_in_l3_in_T2" = c(0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, -1))
+# 
+# con_list_group_location <- list(
+#   "l1_vs_l2_in_6-7-yo"      = c(1, 0, 0, -1, 0, 0, 0, 0, 0),
+#   "l1_vs_l3_in_6-7-yo"      = c(1, 0, 0, 0, 0, 0, -1, 0, 0),
+#   "l2_vs_l3_in_6-7-yo"      = c(0, 0, 0, 1, 0, 0, -1, 0, 0),
+#   "l1_vs_l2_in_9-10-yo"     = c(0, 1, 0, 0, -1, 0, 0, 0, 0),
+#   "l1_vs_l3_in_9-10-yo"     = c(0, 1, 0, 0, 0, 0, 0, -1, 0),
+#   "l2_vs_l3_in_9-10-yo"     = c(0, 0, 0, 0, 1, 0, 0, -1, 0),
+#   "l1_vs_l2_in_adults"      = c(0, 0, 1, 0, 0, -1, 0, 0, 0),
+#   "l1_vs_l3_in_adults"      = c(0, 0, 1, 0, 0, 0, 0, 0, -1),
+#   "l2_vs_l3_in_adults"      = c(0, 0, 0, 0, 0, 1, 0, 0, -1),
+#   "6-7-yo_vs_9-10-yo_in_l1" = c(1, -1, 0, 0, 0, 0, 0, 0, 0),
+#   "6-7-yo_vs_9-10-yo_in_l2" = c(0, 0, 0, 1, -1, 0, 0, 0, 0),
+#   "6-7-yo_vs_9-10-yo_in_l3" = c(0, 0, 0, 0, 0, 0, 1, -1, 0),
+#   "6-7-yo_vs_adults_in_l1"  = c(1, 0, -1, 0, 0, 0, 0, 0, 0),
+#   "6-7-yo_vs_adults_in_l2"  = c(0, 0, 0, 1, 0, -1, 0, 0, 0),
+#   "6-7-yo_vs_adults_in_l3"  = c(0, 0, 0, 0, 0, 0, 1, 0, -1),
+#   "9-10-yo_vs_adults_in_l1" = c(0, 1, -1, 0, 0, 0, 0, 0, 0),
+#   "9-10-yo_vs_adults_in_l2" = c(0, 0, 0, 0, 1, -1, 0, 0, 0),
+#   "9-10-yo_vs_adults_in_l3" = c(0, 0, 0,  0, 0, 0, 0, 1, -1))
+# 
+# con_list_condition_location <- list(
+#   "l1_vs_l2_in_ego"   = c(1, 0, -1, 0, 0, 0),
+#   "l1_vs_l3_in_ego"   = c(1, 0, 0, 0, -1, 0),
+#   "l2_vs_l3_in_ego"   = c(0, 0, 1, 0, -1, 0),
+#   "l1_vs_l2_in_allo"  = c(0, 1, 0, -1, 0, 0),
+#   "l1_vs_l3_in_allo"  = c(0, 1, 0, 0, 0, -1),
+#   "l2_vs_l3_in_allo"  = c(0, 0, 0, 1, 0, -1),
+#   "ego_vs_allo_in_l1" = c(1, -1, 0, 0, 0, 0),
+#   "ego_vs_allo_in_l2" = c(0, 0, 1, -1, 0, 0),
+#   "ego_vs_allo_in_l3" = c(0, 0, 0, 0, 1, -1))
+# ## ----
 
 
-# ######################################################### #
 # ######################################################### #
 # ######################################################### #
 
 # ::: ANALYSIS ::: #
 
-# ######################################################### #
 # ######################################################### #
 # ######################################################### #
 
@@ -1687,17 +1687,18 @@ plot(rcorr)
 # ######################################################### #
 # ######################################################### #
 
+
 # ::: motor control task ::: #
 
 ## ---- stats_motor_control
 # time: GROUPS DIFFER SIGNIFICANTLY 
 aov_ez("id", "time", practise, between=c("group"))
 
-# velocity: trend 
-aov_ez("id", "velocity", practise, between=c("group"))
-
 # excess path length: DIFFER SIGNIFICANTLY
 aov_ez("id", "excess_path_length", practise, between=c("group"))
+
+# target proximity: ns  
+aov_ez("id", "target_proximity", practise, between=c("group"))
 
 # rotation: GROUPS DIFFER SIGNIFICANTLY  
 aov_ez("id", "rotation_turns", practise, between=c("group"))
