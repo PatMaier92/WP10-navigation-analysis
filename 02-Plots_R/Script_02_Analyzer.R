@@ -1,17 +1,19 @@
-# ######################################################### #
-# ######################################################### #
-#                                                           #
-# ------------------ WP10 Starmaze data  ------------------ #
-# Script_02_Analyzer                                        #
-# Author: Patrizia Maier                                    #
-#                                                           #
-# ######################################################### #
-# ######################################################### #
+# ############################################################################ #
+# ############################################################################ #
+#                                                                              #
+# ------------------------- WP10 Starmaze data ------------------------------- #
+# Script_02_Analyzer                                                           #
+# Author: Patrizia Maier                                                       #
+#                                                                              #
+# ############################################################################ #
+# ############################################################################ #
 
 
-# ::: PACKAGES AND SETTINGS ::: #
+# ------------------------------------------------------------------------------
+# ::: LOAD PACKAGES ::: #
+# ------------------------------------------------------------------------------
 
-## ---- analysis_packages_and_sum_coding
+## ---- load_analysis_packages
 library(tidyverse)
 library(janitor)
 library(patchwork)
@@ -33,18 +35,12 @@ library(lattice)
 # library(DHARMa)
 # library(sjPlot)
 library(papaja)
-
-# set contrast coding 
-# options("contrasts")
-options(contrasts=c(unordered="contr.sum", ordered="contr.poly"))
 ## ----
 
 
-# ######################################################### #
-# ######################################################### #
-
-
+# ------------------------------------------------------------------------------
 # ::: DATA SETUP::: #
+# ------------------------------------------------------------------------------
 
 file_name <- "../WP10_data/WP10_results/wp10_navigation_data.RData"
 load(file_name)
@@ -146,11 +142,13 @@ is_outlier <- function(x) {
 rm(cov_data, cov_names, data)
 ## ---- 
 
+
 ## ---- plot_settings
-# labels 
+# factor level labels 
 group_labels <- c("YoungKids"="6-7yo", "OldKids"="9-10yo", "YoungAdults"="adults")
 condition_labels <- c("ego_ret"="Egocentric", "allo_ret"="Allocentric")
 
+# variable labels 
 l_session <- "session"
 l_trial_in_block <- "trial"
 l_memory_score <- "memory score"
@@ -174,7 +172,39 @@ type_colors <- c("#FDBF6F", "#C4CAC9", "#A6CEE3")
 type_colors_o <- c("#FF7F00", "#667270", "#1F78B4")
 # strategy_colors <- c("direct"="#E4534D", "detour"="#ED8E8A", "reorient"="#F9DAD9")
 # landmark_colors <- rev(RColorBrewer::brewer.pal(3,"Blues"))
+
+# plot function 
+afex_plot_wrapper <- function(model, xv, tv, pv, ylabel) {
+  
+  p <- afex_plot(model, x=xv, trace=tv, panel=pv, id="id", 
+                 error="model", dodge=0.8,
+                 mapping=c("shape", "fill", "color"),
+                 factor_levels=list(group=group_labels, condition=condition_labels),
+                 legend_title=NULL, 
+                 data_geom=geom_boxplot, 
+                 data_arg=list(width=0.5, color="black"),
+                 point_arg=list(size=3), 
+                 line_arg=list(size=1.25),
+                 error_arg=list(size=1.25, width=0)) + 
+    scale_fill_manual(values=group_colors) + 
+    scale_color_manual(values=group_colors_o) +
+    coord_cartesian(ylim=c(0,1)) + 
+    theme_bw(base_size=15) + 
+    theme(legend.position="top", legend.justification=c(0,0),
+          panel.grid.major.x=element_blank()) +
+    labs(x=l_session, y=ylabel)
+  
+  return(p)
+  
+}
 ## ---- 
+
+
+## ---- analysis_settings
+# options("contrasts")
+options(contrasts=c(unordered="contr.sum", ordered="contr.poly"))
+## ---- 
+
 
 # ## ---- contrast_matrices
 # con_list_session_condition <- list(
@@ -297,172 +327,120 @@ type_colors_o <- c("#FF7F00", "#667270", "#1F78B4")
 # ## ----
 
 
-# ######################################################### #
-# ######################################################### #
-
-# ::: ANALYSIS ::: #
-
-# ######################################################### #
-# ######################################################### #
+# ############################################################################ #
+# ############################################################################ #
 
 
-# ::: probe trials ::: #
+# ------------------------------------------------------------------------------
+# ::: MAIN ANALYSIS: MEMORY ACCURACY (PROBE TRIALS) ::: #
+# ------------------------------------------------------------------------------
 
-# -- CORRECT FINAL ALLEY IN ALL TRIALS --#
-
-## ---- stats_probe_acc
-# full binomial model (with reduced random effects according to Bates (2015) & Matuschek (2017))
-probe.acc <- mixed(correct_final_alley ~ group*session*condition + cov_location + cov_object + cov_gender +
-                     (session|id), data=data_p, expand_re=T, family=binomial(link="logit"), method="LRT",
-                   control=glmerControl(optimizer="bobyqa", optCtrl=list(maxfun=1e6)))
-## ---- 
-
-# fixed effects
-probe.acc
-# emm <- emmeans(probe.acc, ~ group*condition)
-# summary(rbind(pairs(emm, simple="group"), pairs(emm, simple="condition")), by=NULL, adjust="Bonferroni")
-emmeans(probe.acc, pairwise ~ group, type="response", adjust="bonferroni")$contrasts
-emmeans(probe.acc, pairwise ~ condition, type="response")$contrasts
-emmeans(probe.acc, pairwise ~ session, type="response")$contrasts
-
-# random effects
-VarCorr(probe.acc$full_model)
-# dotplot(ranef(probe.acc$full_model))
-
-# check model: ok 
-simulationOutput <- simulateResiduals(fittedModel=probe.acc$full_model, plot=F)
-testResiduals(simulationOutput) 
-plotResiduals(simulationOutput) 
-testCategorical(simulationOutput, catPred=data_p$group[data_p$exclude_trial_matlab==0])
-testCategorical(simulationOutput, catPred=data_p$session[data_p$exclude_trial_matlab==0])
-testCategorical(simulationOutput, catPred=data_p$condition[data_p$exclude_trial_matlab==0])
-
-## ---- plot_probe_acc
-line_acc <- afex_plot(probe.acc, x="session", trace="group", panel="condition", id="id", 
-                      error="model", dodge=0.8,
-                      mapping=c("shape", "fill", "color"),
-                      factor_levels=list(group=group_labels, condition=condition_labels),
-                      legend_title=NULL, 
-                      data_geom=geom_boxplot, 
-                      data_arg=list(width=0.5, color="black"),
-                      point_arg=list(size=3), 
-                      line_arg=list(size=1.25),
-                      error_arg=list(size=1.25, width=0)) + 
-  scale_fill_manual(values=group_colors) + 
-  scale_color_manual(values=group_colors_o) +
-  coord_cartesian(ylim=c(0,1)) + 
-  theme_bw(base_size=15) + 
-  theme(legend.position="top", legend.justification=c(0,0),
-        panel.grid.major.x=element_blank()) +
-  labs(x=l_session, y=l_correct_alley)
-## ----
-
-# ######################################################### #
-
-# -- MEMORY SCORE IN ALL TRIALS -- # 
-
-## ---- stats_probe_ms_simple
-probe.memory_s <- mixed(memory_score ~ group*session*condition + cov_location + cov_object + cov_gender +
+# --- MEMORY SCORE (ALL PROBE TRIALS) --- # 
+## ---- model_probe_ms
+# note: random effects structure was determined according to Bates (2015) & Matuschek et al. (2017) 
+model.ms <- mixed(memory_score ~ group*session*condition + cov_location + cov_object + cov_gender +
                           (session|id), data=data_p, expand_re=T)
 ## ----
 
-## ---- stats_probe_ms_outlier
-t <- data_p %>% mutate(flag=ifelse(is_outlier(memory_score), T, F))
-t <- t %>% filter(flag==F)
-probe.memory_o <- mixed(memory_score ~ group*session*condition + cov_location + cov_object + cov_gender +
-                          (session|id), data=t, expand_re=T)
-rm(t)
-## ----
-
-# -- heteroscedasticity
-probe.memory <- lme(memory_score ~ group*session*condition + cov_location + cov_object + cov_gender, 
-                    random=~session | id, data=data_p, method="ML")
-probe.memory_var1 <- update(probe.memory, weights=varIdent(form=~1 | group))
-probe.memory_var2 <- update(probe.memory, weights=varComb(varIdent(form=~1 | group),
-                                                          varIdent(form=~1 | condition)))
-probe.memory_var3 <- update(probe.memory, weights=varComb(varIdent(form=~1 | group),
-                                                          varIdent(form=~1 | condition),
-                                                          varIdent(form=~1 | session)))
-anova(probe.memory, probe.memory_var1, probe.memory_var2, probe.memory_var3) # chose model 3
-rm(probe.memory, probe.memory_var1, probe.memory_var2, probe.memory_var3)
-## ---- stats_probe_ms_hetero
-# re-fit final model with with REML
-probe.memory_h <- lme(memory_score ~ group*session*condition + cov_location + cov_object + cov_gender, 
-                      random=~session | id,
-                      weights=varComb(varIdent(form=~1 | group),
-                                      varIdent(form=~1 | condition),
-                                      varIdent(form=~1 | session)),
-                      data=data_p, method="REML")
-## ----
-
-# check models 
-plot(probe.memory_s$full_model, resid(., type="pearson") ~ fitted(.))
-plot(probe.memory_s$full_model, group ~ residuals(., type="pearson"))
-qqnorm(resid(probe.memory_s$full_model))
-qqline(resid(probe.memory_s$full_model))
-
-plot(probe.memory_o$full_model, resid(., type="pearson") ~ fitted(.))
-plot(probe.memory_o$full_model, group ~ residuals(., type="pearson"))
-qqnorm(resid(probe.memory_o$full_model))
-qqline(resid(probe.memory_o$full_model))
-
-plot(probe.memory_h, resid(., type="pearson") ~ fitted(.))
-plot(probe.memory_h, group ~ residuals(., type="pearson"))
-qqnorm(resid(probe.memory_h))
-qqline(resid(probe.memory_h))
-
 # random effects
-VarCorr(probe.memory_s$full_model)
-VarCorr(probe.memory_o$full_model)
-probe.memory_h$modelStruct$reStruct 
+VarCorr(model.ms$full_model)
 
-# statistics on fixed effects 
-probe.memory_s
-probe.memory_o
-anova.lme(probe.memory_h, type="marginal")
-rm(probe.memory_s, probe.memory_o, probe.memory_h)
+# fixed effects
+model.ms
+
+## ---- post_hoc_probe_ms
+# group effect
+emmeans(model.ms, pairwise ~ group, lmer.df="satterthwaite", adjust="bonferroni")
+
+# session effect
+emmeans(model.ms, pairwise ~ session, lmer.df="satterthwaite")
+
+# condition effect
+emmeans(model.ms, pairwise ~ condition, lmer.df="satterthwaite")
 
 # test against chance level 
-emm <- emmeans(probe.memory_s, ~ group*condition*session, lmer.df="satterthwaite")
+emm <- emmeans(model.ms, ~ group*condition*session, lmer.df="satterthwaite")
 summary(emm, null=0.5, adjust="bonferroni", infer=c(T,T))
+## ----
 
 ## ---- plot_probe_ms
-line_memory <- afex_plot(probe.memory_s, x="session", trace="group", panel="condition", id="id", 
-                         error="model", dodge=0.8,
-                         mapping=c("shape", "fill", "color"),
-                         factor_levels=list(group=group_labels, condition=condition_labels),
-                         legend_title=NULL, 
-                         data_geom=geom_boxplot, 
-                         data_arg=list(width=0.5, color="black"),
-                         point_arg=list(size=3), 
-                         line_arg=list(size=1.25),
-                         error_arg=list(size=1.25, width=0)) + 
-  scale_fill_manual(values=group_colors) + 
-  scale_color_manual(values=group_colors_o) +
-  coord_cartesian(ylim=c(0,1)) + 
-  theme_bw(base_size=15) + 
-  theme(legend.position="top", legend.justification=c(0,0),
-        panel.grid.major.x=element_blank()) +
-  labs(x=l_session, y=l_memory_score)
+plot.ms <- afex_plot_wrapper(model.ms, "session", "group", "condition", l_memory_score)
 ## ----
-rm(line_memory, probe.memory_s)
-         
-# ######################################################### #
 
-# -- EXTENDED ANALYSIS WITH ROLE OF GOAL LOCATIONS -- # 
+## ---- control_probe_ms
+# 1) model with outliers removed
+t <- data_p %>% mutate(flag=ifelse(is_outlier(memory_score), T, F))
+t <- t %>% filter(flag==F)
+model.ms_outlier <- mixed(memory_score ~ group*session*condition + cov_location + cov_object + cov_gender +
+                            (session|id), data=t, expand_re=T)
+rm(t)
 
-## ---- stats_probe_explore_goals
-probe.memory_goals <- mixed(memory_score ~ group*condition*session*cov_location + cov_object + cov_gender +
+# 2) model with heteroscedastic variances 
+model.ms_h1 <- lme(memory_score ~ group*session*condition + cov_location + cov_object + cov_gender, 
+                   random=~session | id, data=data_p, method="ML")
+model.ms_h2 <- update(model.ms_h1, weights=varIdent(form=~1 | group))
+model.ms_h3 <- update(model.ms_h1, weights=varComb(varIdent(form=~1 | group),
+                                                   varIdent(form=~1 | condition)))
+model.ms_h4 <- update(model.ms_h1, weights=varComb(varIdent(form=~1 | group),
+                                                   varIdent(form=~1 | condition),
+                                                   varIdent(form=~1 | session)))
+anova(model.ms_h1, model.ms_h2, model.ms_h3, model.ms_h4) # chose model h4
+rm(model.ms_h1, model.ms_h2, model.ms_h3, model.ms_h4)
+model.ms_hetero <- lme(memory_score ~ group*session*condition + cov_location + cov_object + cov_gender, 
+                       random=~session | id,
+                       weights=varComb(varIdent(form=~1 | group),
+                                       varIdent(form=~1 | condition),
+                                       varIdent(form=~1 | session)),
+                       data=data_p, method="REML")
+
+# check model plots 
+plot(model.ms$full_model, resid(., type="pearson") ~ fitted(.))
+plot(model.ms$full_model, group ~ residuals(., type="pearson"))
+qqnorm(resid(model.ms$full_model))
+qqline(resid(model.ms$full_model))
+
+plot(model.ms_outlier$full_model, resid(., type="pearson") ~ fitted(.))
+plot(model.ms_outlier$full_model, group ~ residuals(., type="pearson"))
+qqnorm(resid(model.ms_outlier$full_model))
+qqline(resid(model.ms_outlier$full_model))
+
+plot(model.ms_hetero, resid(., type="pearson") ~ fitted(.))
+plot(model.ms_hetero, group ~ residuals(., type="pearson"))
+qqnorm(resid(model.ms_hetero))
+qqline(resid(model.ms_hetero))
+
+# random effects
+VarCorr(model.ms$full_model)
+VarCorr(model.ms_outlier$full_model)
+model.ms_hetero$modelStruct$reStruct 
+
+# statistics on fixed effects 
+model.ms
+model.ms_outlier
+anova.lme(model.ms_hetero, type="marginal")
+rm(model.ms, model.ms_outlier, model.ms_hetero)
+## ---- 
+
+
+# ------------------------------------------------------------------------------
+# ::: SUPPLEMENT ANALYSIS: MEMORY ACCURACY (PROBE TRIALS) ::: #
+# ------------------------------------------------------------------------------
+
+# --- MEMORY SCORE (ALL PROBE TRIALS) EXTENDED WITH GOAL LOCATIONS --- # 
+## ---- model_probe_ms_extended
+model.ms_ext <- mixed(memory_score ~ group*condition*session*cov_location + cov_object + cov_gender +
                               (session*condition*cov_location||id), data=data_p, expand_re=T)
 ## ---- 
 
 # random effects
-VarCorr(probe.memory_goals$full_model)
-dotplot(ranef(probe.memory_goals$full_model))
+VarCorr(model.ms_ext$full_model)
+dotplot(ranef(model.ms_ext$full_model))
 
 # fixed effects 
-probe.memory_goals
-emm1 <- emmeans(probe.memory_goals, ~ group*cov_location*session, lmer.df="satterthwaite")
+model.ms_ext
+
+## ---- post_hoc_probe_ms_extended
+emm1 <- emmeans(model.ms_ext, ~ group*cov_location*session, lmer.df="satterthwaite")
 e1 <- pairs(emm1, simple="group")
 e2 <- pairs(emm1, simple="session")
 e3 <- pairs(emm1, simple="cov_location")
@@ -470,36 +448,195 @@ e4 <- pairs(emm1, interaction="pairwise", by="cov_location")
 c1 <- summary(rbind(e2, e4, e1, e3), by=NULL, adjust="bonferroni")
 c2 <- summary(rbind(e2, e4, e1), by=NULL, adjust="bonferroni")
 
-emm2 <- emmeans(probe.memory_goals, ~ condition*cov_location, lmer.df="satterthwaite")
+emm2 <- emmeans(model.ms_ext, ~ condition*cov_location, lmer.df="satterthwaite")
 summary(rbind(pairs(emm2, simple="condition"), pairs(emm2, simple="cov_location")), by=NULL, adjust="bonferroni")
 
-emm3 <- emmeans(probe.memory_goals, ~ group*cov_location, lmer.df="satterthwaite")
+emm3 <- emmeans(model.ms_ext, ~ group*cov_location, lmer.df="satterthwaite")
 summary(pairs(emm3, simple="group"), by=NULL, adjust="bonferroni")
+## ----
 
-## ---- plot_probe_explore_ms
-line_explore_ms <- afex_plot(probe.memory_goals, x="session", trace="group", panel=~ cov_location + condition, id="id", 
-                             error="model", dodge=0.8,
-                             mapping=c("shape", "fill", "color"),
-                             factor_levels=list(group=group_labels),
-                             legend_title=NULL, 
-                             data_geom=geom_boxplot, 
-                             data_arg=list(width=0.5, color="black"),
-                             point_arg=list(size=3), 
-                             line_arg=list(size=1.25),
-                             error_arg=list(size=1.25, width=0)) + 
-  scale_fill_manual(values=group_colors) + 
-  scale_color_manual(values=group_colors_o) +
-  coord_cartesian(ylim=c(0,1)) + 
-  theme_bw(base_size=15) + 
-  theme(legend.position="top", legend.justification=c(0,0),
-        panel.grid.major.x=element_blank()) +
-  labs(x=l_session, y=l_memory_score)
+## ---- plot_probe_ms_extended
+plot.ms_ext <- afex_plot_wrapper(model.ms_ext, "session", "group", ~ cov_location + condition, l_memory_score)
 ## ---- 
 
 
-# ######################################################### #
-# ######################################################### #
+# --- MEMORY SCORE (CORRECT PROBE TRIALS ONLY) --- # 
+## ---- model_probe_ms_correct
+model.ms_cor <- mixed(memory_score ~ group*session*condition + cov_location + cov_object + cov_gender +
+                        (session|id), data=data_pc, expand_re=T)
+## ---- 
 
+# random effects
+VarCorr(model.ms_cor$full_model)
+
+# fixed effects
+model.ms_cor
+
+## ---- post_hoc_probe_ms_correct
+emmeans(model.ms_cor, pairwise ~ group, lmer.df="satterthwaite", adjust="bonferroni")$contrasts
+emmeans(model.ms_cor, pairwise ~ session, lmer.df="satterthwaite")$contrasts
+## ----
+
+## ---- plot_probe_ms_correct
+plot.ms_cor <- afex_plot_wrapper(model.ms_cor, "session", "group", "condition", l_memory_score)
+## ----
+
+
+# --- CORRECT FINAL ALLEY (ALL PROBE TRIALS) --- #
+## ---- model_probe_ca
+# full binomial model (with reduced random effects according to Bates (2015) & Matuschek (2017))
+model.ca <- mixed(correct_final_alley ~ group*session*condition + cov_location + cov_object + cov_gender +
+                    (session|id), data=data_p, expand_re=T, family=binomial(link="logit"), method="LRT",
+                  control=glmerControl(optimizer="bobyqa", optCtrl=list(maxfun=1e6)))
+## ---- 
+
+# random effects
+VarCorr(model.ca$full_model)
+# dotplot(ranef(model.ca$full_model))
+
+# fixed effects
+model.ca
+
+# check model: ok 
+simulationOutput <- simulateResiduals(fittedModel=model.ca$full_model, plot=F)
+testResiduals(simulationOutput) 
+plotResiduals(simulationOutput) 
+testCategorical(simulationOutput, catPred=data_p$group[data_p$exclude_trial_matlab==0])
+testCategorical(simulationOutput, catPred=data_p$session[data_p$exclude_trial_matlab==0])
+testCategorical(simulationOutput, catPred=data_p$condition[data_p$exclude_trial_matlab==0])
+
+## ---- post_hoc_probe_ca
+emmeans(model.ca, pairwise ~ group, type="response", adjust="bonferroni")$contrasts
+emmeans(model.ca, pairwise ~ condition, type="response")$contrasts
+emmeans(model.ca, pairwise ~ session, type="response")$contrasts
+## ----
+
+## ---- plot_probe_ca
+plot.ca <- afex_plot_wrapper(model.ca, "session", "group", "condition", l_correct_alley)
+## ----
+
+
+# ############################################################################ #
+# ############################################################################ #
+
+
+# ------------------------------------------------------------------------------
+# ::: MAIN ANALYSIS: POST-NAVIGATION TESTS ::: #
+# ------------------------------------------------------------------------------
+
+
+# --- LAYOUT RECOGNITION (1 out of 6 options) --- #
+## ---- model_post_layout
+temp_data <- pt_data %>% 
+  filter(condition=="layout") %>% 
+  drop_na(score)
+
+# fisher test: tests independence of rows and columns in a contingency table with fixed marginals.
+model.layout <- fisher.test(table(temp_data$score, temp_data$group))
+post.layout <- pairwise_fisher_test(table(temp_data$score, temp_data$group), p.adjust.method="bonferroni")
+rm(temp_data)
+## ---- 
+
+
+# --- LANDMARK RECOGNITION (5 out of 15 options) --- #
+## ---- model_post_landmark
+temp_data <- pt_data %>% 
+  filter(condition=="landmarks") %>% 
+  drop_na(score)
+
+model.landmark <- aov_ez("id", "score", temp_data, between=c("group"))
+## ---- 
+
+## ---- plot_post_landmark
+plot.landmark <- afex_plot(model.landmark, x="group", error="model",
+                           mapping=c("shape", "color"),
+                           factor_levels=list(group=group_labels),
+                           legend_title=NULL, 
+                           data_geom=ggbeeswarm::geom_quasirandom,
+                           data_arg=list(color="darkgrey"),
+                           point_arg=list(size=3), 
+                           line_arg=list(size=1),
+                           error_arg=list(size=1, width=0.25)) +
+  scale_color_manual(values=group_colors) + 
+  coord_cartesian(ylim=c(0,1)) + 
+  theme_bw(base_size=15) + 
+  theme(legend.position="top", legend.justification=c(0,0),
+        panel.grid.major.x=element_blank(),
+        axis.text.x=element_blank(),
+        axis.ticks.x=element_blank()) +
+  labs(x=NULL, y="landmark score")
+rm(temp_data)
+## ---- 
+
+
+# --- LANDMARK AND GOAL POSITIONING (scored with GMDA; Gardony, 2016) --- # 
+## ---- model_post_position
+temp_data <- pt_data %>% 
+  filter(condition=="position") %>% 
+  drop_na(score)
+
+model.position <- aov_ez("id", "score", temp_data, between=c("group"))
+post.position <- emmeans(model.position, pairwise ~ group, adjust="bonferroni")
+## ---- 
+
+## ---- plot_post_position
+plot.position <- afex_plot(model.position, x="group", error="model",
+                       mapping=c("shape", "color"),
+                       factor_levels=list(group=group_labels),
+                       legend_title=NULL, 
+                       data_geom=ggbeeswarm::geom_quasirandom,
+                       data_arg=list(color="darkgrey"),
+                       point_arg=list(size=3), 
+                       line_arg=list(size=1),
+                       error_arg=list(size=1, width=0.25)) +
+  scale_color_manual(values=group_colors) + 
+  coord_cartesian(ylim=c(0,1)) + 
+  theme_bw(base_size=15) + 
+  theme(legend.position="top", legend.justification=c(0,0),
+        panel.grid.major.x=element_blank(),
+        axis.text.x=element_blank(),
+        axis.ticks.x=element_blank()) +
+  labs(x=NULL, y="landmark score")
+rm(temp_data)
+## ---- 
+
+
+# ------------------------------------------------------------------------------
+# ::: SUPPLEMENT ANALYSIS: POST-NAVIGATION TESTS ::: #
+# ------------------------------------------------------------------------------
+
+# detailed positioning data
+file_name <- "../WP10_data/WP10_results/wp10_GMDA_data_220705.Rdata"
+load(file_name)
+rm(file_name)
+
+# individual scores
+CanAcc <- data_gmda %>% filter(gmda_measure=="CanAcc")
+DistAcc <- data_gmda %>% filter(gmda_measure=="DistAcc")
+AngleAcc <- data_gmda %>% filter(gmda_measure=="AngleAcc")
+
+boxplot <- function(d){
+  ggplot(data=d, aes(x=group, y=score, fill=group)) +
+    geom_boxplot(outlier.shape=NA) +
+    geom_point()
+}
+
+boxplot(CanAcc)
+
+boxplot(DistAcc)
+
+boxplot(AngleAcc)
+
+rm(data_gmda, CanAcc, DistAcc, AngleAcc, boxplot)
+
+
+# ############################################################################ #
+# ############################################################################ #
+
+
+# ------------------------------------------------------------------------------
+# ::: MAIN ANALYSIS: NAVIGATION BEHAVIOR (PROBE TRIALS) ::: #
+# ------------------------------------------------------------------------------
 
 # -- NAVIGATION BEHAVIOR -- # 
 # -- TIME -- # 
@@ -1118,11 +1255,14 @@ rm(data_allo_ms, data_agg_incorr_ms, emm, probe.allo_memory_incorr_aov, explore_
 # rm(t)
 
 
-# ######################################################### #
-# ######################################################### #
+# ############################################################################ #
+# ############################################################################ #
 
 
-# ::: learning trials ::: #
+# ------------------------------------------------------------------------------
+# ::: SUPPLEMENT ANALYSIS: NAVIGATION BEHAVIOR (LEARNING TRIALS) ::: #
+# ------------------------------------------------------------------------------
+
 
 # -- TIME -- #
 
@@ -1534,115 +1674,6 @@ line_rotation_path <- afex_plot(learn.rotation_path_plot, x="trial_in_block_orig
 
 rm(learn.rotation_path_plot)
 ## ----
-
-
-# ######################################################### #
-# ######################################################### #
-
-
-# ::: Post-navigation memory tests ::: #
-
-# -- LAYOUT RECOGNITION (1 out of 6 options) -- #
-## ---- stats_layout
-p_dt <- pt_data %>% 
-  filter(condition=="layout") %>% 
-  drop_na(score)
-
-# fisher test: tests independence of rows and columns in a contingency table with fixed marginals.
-layout_fisher <- fisher.test(table(p_dt$score, p_dt$group))
-layout_post <- pairwise_fisher_test(table(p_dt$score, p_dt$group), p.adjust.method="bonferroni")
-## ---- 
-# alternative discANOVA from WRS2: tests hypothesis that independent groups have identical multinomial distributions. 
-discANOVA(score ~ group, data=p_dt, nboot=2000)
-discmcp(score ~ group, data=p_dt, alpha=0.05, nboot=2000, method="bonferroni") 
-
-# ######################################################### #
-
-# -- LANDMARK RECOGNITION (5 out of 15 options) -- #
-## ---- stats_landmark
-p_dt <- pt_data %>% 
-  filter(condition=="landmarks") %>% 
-  drop_na(score)
-
-landmark_aov <- aov_ez("id", "score", p_dt, between=c("group"))
-## ---- 
-
-## ---- plot_landmarks
-afex_landmark <- afex_plot(landmark_aov, x="group", error="model",
-                           mapping=c("shape", "color"),
-                           factor_levels=list(group=group_labels),
-                           legend_title=NULL, 
-                           data_geom=ggbeeswarm::geom_quasirandom,
-                           data_arg=list(color="darkgrey"),
-                           point_arg=list(size=3), 
-                           line_arg=list(size=1),
-                           error_arg=list(size=1, width=0.25)) +
-  scale_color_manual(values=group_colors) + 
-  coord_cartesian(ylim=c(0,1)) + 
-  theme_bw(base_size=15) + 
-  theme(legend.position="top", legend.justification=c(0,0),
-        panel.grid.major.x=element_blank(),
-        axis.text.x=element_blank(),
-        axis.ticks.x=element_blank()) +
-  labs(x=NULL, y="landmark score")
-## ---- 
-
-# ######################################################### #
-
-# -- LANDMARK AND GOAL POSITIONING (scored with GMDA software; Gardony, 2016) -- # 
-## ---- stats_gmda
-p_dt <- pt_data %>% 
-  filter(condition=="position") %>% 
-  drop_na(score)
-
-position_aov <- aov_ez("id", "score", p_dt, between=c("group"))
-## ---- 
-emm <- emmeans(position_aov, pairwise ~ group, adjust="bonferroni")
-
-## ---- plot_gmda
-afex_gmda <- afex_plot(position_aov, x="group", error="model",
-                       mapping=c("shape", "color"),
-                       factor_levels=list(group=group_labels),
-                       legend_title=NULL, 
-                       data_geom=ggbeeswarm::geom_quasirandom,
-                       data_arg=list(color="darkgrey"),
-                       point_arg=list(size=3), 
-                       line_arg=list(size=1),
-                       error_arg=list(size=1, width=0.25)) +
-  scale_color_manual(values=group_colors) + 
-  coord_cartesian(ylim=c(0,1)) + 
-  theme_bw(base_size=15) + 
-  theme(legend.position="top", legend.justification=c(0,0),
-        panel.grid.major.x=element_blank(),
-        axis.text.x=element_blank(),
-        axis.ticks.x=element_blank()) +
-  labs(x=NULL, y="landmark score")
-## ---- 
-
-
-# detailed analysis
-file_name <- "../WP10_data/WP10_results/wp10_GMDA_data_220705.Rdata"
-load(file_name)
-rm(file_name)
-
-# individual scores
-CanAcc <- data_gmda %>% filter(gmda_measure=="CanAcc")
-DistAcc <- data_gmda %>% filter(gmda_measure=="DistAcc")
-AngleAcc <- data_gmda %>% filter(gmda_measure=="AngleAcc")
-
-boxplot <- function(d){
-  ggplot(data=d, aes(x=group, y=score, fill=group)) +
-    geom_boxplot(outlier.shape=NA) +
-    geom_point()
-}
-
-boxplot(CanAcc)
-
-boxplot(DistAcc)
-
-boxplot(AngleAcc)
-
-rm(data_gmda, CanAcc, DistAcc, AngleAcc, boxplot)
 
 
 # ######################################################### #

@@ -1,5 +1,5 @@
 ---
-title: "Preliminary Descriptives & Plots of Starmaze Data"
+title: "Analysis Overview for WP10 Starmaze Data"
 author: "Patrizia Maier"
 date: "`r format(Sys.time(), '%d %B, %Y')`"
 output: 
@@ -39,14 +39,14 @@ knitr::read_chunk('Script_02_Analyzer.R')
 knitr::opts_chunk$set(warning=FALSE, message=FALSE) 
 ```
 
-```{r, analysis_packages_and_sum_coding, include=FALSE, cache=FALSE}
+```{r, load_analysis_packages, include=FALSE, cache=FALSE}
 ```
 
 ```{r, include=FALSE}
 file_name <- "../WP10_data/WP10_results/wp10_navigation_data.RData"
 load(file_name)
 sm_orig <- sm_data 
-sm_data <- sm_data %>% filter(exclude_trial_matlab==0, id!=12018)
+sm_data <- sm_data %>% filter(exclude_trial_matlab==0)
 rm(file_name)
 
 nn_YK <- length(unique(sm_data$id[sm_data$group=="YoungKids"]))
@@ -62,10 +62,13 @@ np_OK <- length(unique(pt_data$id[pt_data$group=="OldKids"]))
 np_AD <- length(unique(pt_data$id[pt_data$group=="YoungAdults"]))
 ```
 
+```{r, data_prep, include=FALSE}
+```
+
 ```{r, plot_settings, include=FALSE}
 ```
 
-```{r, analysis_data, include=FALSE}
+```{r, analysis_settings, include=FALSE}
 ```
 
 # Sample
@@ -164,29 +167,33 @@ rm(dots_allo)
 
 \newpage 
 
-### **Memory score (all trials)**
+### **Memory score (all probe trials)**
 
-```{r, stats_probe_ms_simple }
+```{r, model_probe_ms }
 ```
 
 ```{r, plot_probe_ms, include=F }
 ```
 
 ```{r, echo=F, fig.height=5, fig.width=5, fig.cap="Memory score for probe trials." }
-line_memory
-rm(line_memory)
+plot.ms
+rm(plot.ms)
 ```
 
 ```{r apa_probe_ms, include=F}
-R2 <- r2beta(probe.memory_s$full_model, method='nsj', partial=F) %>% mutate_all(apa_num)
+R2 <- r2beta(model.ms$full_model, method='nsj', partial=F) %>% mutate_all(apa_num)
 
-apa_lmm <- apa_print(probe.memory_s)
+apa_lmm <- apa_print(model.ms)
 apa_lmm <- apa_lmm$table %>% mutate(term=str_replace_all(term, c(" c| f"), ''))
 
-emm1 <- emmeans(probe.memory_s$full_model, pairwise ~ group, lmer.df="satterthwaite", adjust="bonferroni")$contrasts
+emm1 <- emmeans(model.ms$full_model, pairwise ~ group, lmer.df="satterthwaite", adjust="bonferroni")$contrasts
 apa_emm1 <- apa_print(emm1)
 apa_emm1 <- apa_emm1$table %>% remove_rownames()
 rm(emm1)
+
+# # test against chance level 
+# emm <- emmeans(model.ms, ~ group*condition*session, lmer.df="satterthwaite")
+# summary(emm, null=0.5, adjust="bonferroni", infer=c(T,T))
 
 rm(emm1)
 ```
@@ -223,90 +230,17 @@ apa_table(
 rm(probe.memory_s, R2, apa_lmm, apa_emm1)
 ```
 
-\newpage 
-
-### **EXTENDED: Memory score (all trials) with interactions with goal locations**
-
-```{r, stats_probe_explore_goals }
-```
-
-```{r, plot_probe_explore_ms, include=F }
-```
-
-```{r, echo=F, fig.height=7, fig.width=8, fig.cap="Memory score split for goal locations." }
-line_explore_ms
-rm(line_explore_ms)
-```
-
-```{r apa_probe_explore_ms, include=F}
-R2 <- r2beta(probe.memory_goals$full_model, method='nsj', partial=F) %>% mutate_all(apa_num)
-
-apa_lmm <- apa_print(probe.memory_goals)
-apa_lmm <- apa_lmm$table %>% mutate(term=str_replace_all(term, c(" c| f"), ''))
-
-# group x session x location 
-emm1 <- emmeans(probe.memory_goals, ~ group*cov_location*session, lmer.df="satterthwaite")
-con1 <- summary(rbind(pairs(emm1, simple="group"), pairs(emm1, simple="session"), 
-                      pairs(emm1, interaction="pairwise", by="cov_location")), infer=c(T,T), by=NULL, adjust="bonferroni")
-apa_emm1 <- apa_print(con1)
-apa_emm1 <- apa_emm1$table %>% remove_rownames() 
-rm(emm1, con1)
-
-# condition x location 
-emm2 <- emmeans(probe.memory_goals, ~ condition*cov_location, lmer.df="satterthwaite")
-con2 <- summary(rbind(pairs(emm2, simple="condition"), pairs(emm2, simple="cov_location")), infer=c(T,T), by=NULL, adjust="bonferroni")
-apa_emm2 <- apa_print(con2)
-apa_emm2 <- apa_emm2$table %>% remove_rownames()
-rm(emm2, con2)
-```
-
-The model had a fit of $R2 = `r R2$Rsq`, [CI: `r R2$upper.CL`, `r R2$lower.CL`$].
-
-* *group x session x location* interaction: 
-* *condition x location* interaction: 
-(Table\ \@ref(tab:table-probe-ex-ms0)). 
-
-(ref:p-ex-ms-caption0) Fixed effects for memory score in probe (interactions with goal location).
-
-```{r table-probe-ex-ms0, echo=F}
-apa_table(
-  apa_lmm,
-  caption="(ref:p-ex-ms-caption0)",
-  placement="h")
-```
-
-(ref:p-ex-ms-caption1) Post-hoc contrasts for group x session x location interaction.
-
-```{r table-probe-ex-ms1, echo=F}
-apa_table(
-  apa_emm1,
-  caption="(ref:p-ex-ms-caption1)",
-  placement="h")
-```
-
-(ref:p-ex-ms-caption2) Post-hoc contrasts for condition x location interaction.
-
-```{r table-probe-ex-ms2, echo=F}
-apa_table(
-  apa_emm2,
-  caption="(ref:p-ex-ms-caption2)",
-  placement="h")
-```
-
-```{r, include=F}
-rm(probe.memory_goals, R2, apa_lmm, apa_emm1, apa_emm2)
-```
-
 \newpage
 
 ## Memory accuracy: Non-navigational memory tasks at Day 14
 
 ![Task overview](./pics/Overview_Session2_PostTest.jpg){width=500px}
 
-```{r, stats_layout, include=F }
+```{r, model_post_layout, include=F }
 ```
 
-```{r, plot_layout, include=F }
+```{r, plot_post_layout, include=F }
+
 # detailed 
 layout_data <- pt_data %>% 
   filter(condition=="layout") %>% 
@@ -317,7 +251,7 @@ layout_data <- pt_data %>%
   mutate(n_per_group=sum(n),
          perc=n/n_per_group)
 
-layout_detail <- ggplot(layout_data, aes(x=group, y=perc, fill=layout_obj_1)) + 
+plot.layout_detailed <- ggplot(layout_data, aes(x=group, y=perc, fill=layout_obj_1)) + 
   geom_bar(stat="identity", position=position_dodge()) +
   scale_x_discrete(labels=group_labels) + 
   scale_fill_brewer(palette="Pastel1", direction=-1, name=NULL) + 
@@ -330,8 +264,8 @@ layout_detail <- ggplot(layout_data, aes(x=group, y=perc, fill=layout_obj_1)) +
 rm(layout_data)
 
 # averaged 
-layout_avg <- ggplot(pt_data %>% filter(condition=="layout"), 
-                     aes(x=group, y=score, shape=group, color=group)) + 
+plot.layout <- ggplot(pt_data %>% filter(condition=="layout"), 
+                      aes(x=group, y=score, shape=group, color=group)) + 
   geom_point(position=position_jitter(h=0, seed=100), color="darkgrey") + 
   stat_summary(fun=mean, na.rm=T, geom="point", size=5) + 
   scale_shape_manual(values=c(16, 17, 15), labels=group_labels, name=NULL) + 
@@ -347,26 +281,26 @@ layout_avg <- ggplot(pt_data %>% filter(condition=="layout"),
   labs(x=NULL, y="layout accuracy (%)")
 ```
 
-```{r, stats_landmark, include=F }
+```{r, model_post_landmark, include=F }
 ```
 
-```{r, plot_landmarks, include=F }
+```{r, plot_post_landmark, include=F }
 ```
 
-```{r, stats_gmda, include=F }
+```{r, model_post_position, include=F }
 ```
 
-```{r, plot_gmda, include=F }
+```{r, plot_post_position, include=F }
 ```
 
 ```{r, echo=F, fig.height=5, fig.width=8, fig.cap="Scores in non-navigational memory tests." }
-layout_avg + 
-  (afex_landmark + guides(color="none", shape="none")) + 
-  (afex_gmda + guides(color="none", shape="none")) + 
+  plot.layout + 
+  (plot.landmark + guides(color="none", shape="none")) + 
+  (plot.position + guides(color="none", shape="none")) + 
   plot_annotation(title="Non-navigational memory tests") +
   plot_layout(guides="collect") & theme(legend.position="bottom", legend.justification=c(0,0))
 
-rm(layout_detail, layout_avg, afex_landmark, afex_gmda)
+rm(plot.layout, plot.landmark, plot.position)
 ```
 
 ### **Layout**
@@ -376,19 +310,19 @@ Significant age-related *group* differences in layout recognition.
 Fisher Test for layout recognition.
 
 ```{r table-layout0, echo=F}
-layout_fisher
+model.layout
 ```
 
 Post-hoc contrasts for factor group.
 
 ```{r table-layout1, echo=F}
-layout_post
+post.layout
 ```
 
 ### **Landmarks**
 
 ```{r apa_landmark, include=F}
-apa_aov <- apa_print(landmark_aov)
+apa_aov <- apa_print(model.landmark)
 ```
 
 No significant age-related *group* differences in landmark recognition.  
@@ -410,9 +344,9 @@ rm(landmark_aov, apa_aov)
 ### **Positioning**
 
 ```{r apa_gmda, include=F}
-apa_aov <- apa_print(position_aov)
+apa_aov <- apa_print(model.position)
 
-emm1 <- emmeans(position_aov, pairwise ~ group, adjust="bonferroni")$contrasts
+emm1 <- emmeans(model.position, pairwise ~ group, adjust="bonferroni")$contrasts
 apa_emm1 <- apa_print(emm1)
 apa_emm1 <- apa_emm1$table %>% remove_rownames()
 rm(emm1)
@@ -873,6 +807,83 @@ Caution: this is exploratory and based on few trials!
 
 
 ## Appendix
+
+\newpage 
+
+### Memory score (all trials) with interactions with goal locations**
+
+```{r, model_probe_ms_extended }
+```
+
+```{r, plot_probe_ms_extended, include=F }
+```
+
+```{r, echo=F, fig.height=7, fig.width=8, fig.cap="Memory score split for goal locations." }
+plot.ms_ext
+rm(plot.ms_ext)
+```
+
+```{r apa_probe_ms_extended, include=F}
+R2 <- r2beta(model.ms_ext$full_model, method='nsj', partial=F) %>% mutate_all(apa_num)
+
+apa_lmm <- apa_print(model.ms_ext)
+apa_lmm <- apa_lmm$table %>% mutate(term=str_replace_all(term, c(" c| f"), ''))
+
+# group x session x location 
+emm1 <- emmeans(model.ms_ext, ~ group*cov_location*session, lmer.df="satterthwaite")
+con1 <- summary(rbind(pairs(emm1, simple="group"), pairs(emm1, simple="session"), 
+                      pairs(emm1, interaction="pairwise", by="cov_location")), infer=c(T,T), by=NULL, adjust="bonferroni")
+apa_emm1 <- apa_print(con1)
+apa_emm1 <- apa_emm1$table %>% remove_rownames() 
+rm(emm1, con1)
+
+# condition x location 
+emm2 <- emmeans(model.ms_ext, ~ condition*cov_location, lmer.df="satterthwaite")
+con2 <- summary(rbind(pairs(emm2, simple="condition"), pairs(emm2, simple="cov_location")), infer=c(T,T), by=NULL, adjust="bonferroni")
+apa_emm2 <- apa_print(con2)
+apa_emm2 <- apa_emm2$table %>% remove_rownames()
+rm(emm2, con2)
+```
+
+The model had a fit of $R2 = `r R2$Rsq`, [CI: `r R2$upper.CL`, `r R2$lower.CL`$].
+
+* *group x session x location* interaction: 
+* *condition x location* interaction: 
+(Table\ \@ref(tab:table-probe-ex-ms0)). 
+
+(ref:p-ex-ms-caption0) Fixed effects for memory score in probe (interactions with goal location).
+
+```{r table-probe-ex-ms0, echo=F}
+apa_table(
+  apa_lmm,
+  caption="(ref:p-ex-ms-caption0)",
+  placement="h")
+```
+
+(ref:p-ex-ms-caption1) Post-hoc contrasts for group x session x location interaction.
+
+```{r table-probe-ex-ms1, echo=F}
+apa_table(
+  apa_emm1,
+  caption="(ref:p-ex-ms-caption1)",
+  placement="h")
+```
+
+(ref:p-ex-ms-caption2) Post-hoc contrasts for condition x location interaction.
+
+```{r table-probe-ex-ms2, echo=F}
+apa_table(
+  apa_emm2,
+  caption="(ref:p-ex-ms-caption2)",
+  placement="h")
+```
+
+```{r, include=F}
+rm(model.ms_ext, R2, apa_lmm, apa_emm1, apa_emm2)
+```
+
+\newpage
+
 
 ### Correlations 
 
