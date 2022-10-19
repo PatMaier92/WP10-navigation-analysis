@@ -88,45 +88,6 @@ data_p <- data %>%
             ~ .x - mean(.x, na.rm=T)) %>% 
   droplevels()
 
-# # probe allo trials
-# data_allo_ms <- data %>%
-#   filter(condition=="allo_ret", ego_alley!=0) %>% 
-#   select(id, cov_gender, group, session, condition, trial, cov_location, cov_block, 
-#          correct_final_alley, correct_final_alley_ego, starts_with("memory_score")) %>% 
-#   rename(memory_score_goal=memory_score) %>% 
-#   pivot_longer(cols=starts_with("memory_score"), 
-#                names_to=c("variable", "cond"),
-#                names_pattern='(.*)_(\\w+)') %>% 
-#   pivot_wider(names_from=variable, values_from=value) %>% 
-#   mutate(cond=factor(cond, levels=c("goal", "ego", "other")),
-#          sessionC=as.numeric(session) - mean(as.numeric(session), na.rm=T)) %>% 
-#   droplevels()
-# 
-# data_allo_pr <- data %>%
-#   filter(condition=="allo_ret", ego_alley!=7) %>% 
-#   select(id, cov_gender, group, session, condition, trial, cov_location, cov_block, 
-#          time, starts_with("presence")) %>% 
-#   select(-presence_alleys, -presence_pentagon, -starts_with("presenceT")) %>% 
-#   pivot_longer(cols=starts_with("presence"), 
-#                names_to=c("variable", "cond"),
-#                names_pattern='(.*)_(\\w+)') %>% 
-#   pivot_wider(names_from=variable, values_from=value) %>% 
-#   mutate(time_in_zone=time*presence,  
-#          cond=factor(cond, levels=c("start", "goal", "original", "ego", "otherAVG", "otherMAX", "otherSUM"))) %>% 
-#   droplevels()
-# 
-# data_allo_prT <- data %>%
-#   filter(condition=="allo_ret", ego_alley!=7) %>% 
-#   select(id, cov_gender, group, session, condition, trial, cov_location, cov_block, 
-#          time, starts_with("presenceT")) %>% 
-#   pivot_longer(cols=starts_with("presenceT"), 
-#                names_to=c("variable", "cond"),
-#                names_pattern='(.*)_(\\w+)') %>% 
-#   pivot_wider(names_from=variable, values_from=value) %>% 
-#   mutate(time_in_zone=time*presenceT,  
-#          cond=factor(cond, levels=c("start", "goal", "original", "ego", "otherAVG", "otherMAX", "otherSUM"))) %>% 
-#   droplevels()
-
 # helper function for outlier check
 is_outlier <- function(x) {
   return(x < quantile(x, 0.25) - 1.5 * IQR(x) | x > quantile(x, 0.75) + 1.5 * IQR(x))
@@ -145,7 +106,7 @@ condition_labels <- c("ego_ret"="Egocentric", "allo_ret"="Allocentric")
 l_session <- "session"
 l_trial_in_block <- "trial"
 l_memory_score <- "memory score"
-l_correct_alley <- "alleybaccuracy (%)"
+l_correct_alley <- "alley accuracy (%)"
 l_time <- "time (sec)"
 l_excess_path_length <- "excess path length"
 l_proximity <- "avg. target proximity"
@@ -1131,39 +1092,6 @@ plot.rotation_path_learn <- afex_plot_wrapper(model.rotation_path_learn, "trial_
 ## ----
 rm(plot.rotation_path_learn, model.rotation_path_learn)
 
-# ############################################################################ #
-# ############################################################################ #
-
-
-# ------------------------------------------------------------------------------
-# ::: SUPPLEMENT ANALYSIS: SEARcH STRATEGIES ::: #
-# ------------------------------------------------------------------------------
-
-# ## ---- stats_probe_path_strategy
-# table(data_p$search_strategy, data_p$group)
-# da1 <- data_p %>% filter(condition=="allo_ret", session==1)
-# table(da1$search_strategy, da1$group)
-# da2 <- data_p %>% filter(condition=="allo_ret", session==2)
-# table(da2$search_strategy, da2$group)
-# de1 <- data_p %>% filter(condition=="ego_ret", session==1)
-# table(de1$search_strategy, de1$group)
-# de2 <- data_p %>% filter(condition=="ego_ret", session==2)
-# table(de2$search_strategy, de2$group)
-# 
-# # discANOVA from WRS2: tests hypothesis that independent groups have identical multinomial distributions. 
-# discANOVA(search_strategy ~ group, data=data_p, nboot=500) 
-# discmcp(search_strategy ~ group, data=data_p, alpha=0.05, nboot=2000)
-# 
-# discmcp(search_strategy ~ group, data=da1, alpha=0.05, nboot=2000)
-# discmcp(search_strategy ~ group, data=da2, alpha=0.05, nboot=2000)
-# discmcp(search_strategy ~ group, data=de1, alpha=0.05, nboot=2000)
-# discmcp(search_strategy ~ group, data=de2, alpha=0.05, nboot=2000)
-# ## ---- 
-# # helper plots
-# t <- data_p %>% group_by(group, session, condition) %>% count(search_strategy) %>% mutate(percent=n/sum(n))
-# ggplot(t, aes(x=group, y=percent, fill=search_strategy)) + geom_col(position=position_stack()) + facet_wrap(~condition + session, nrow=1)
-# rm(t)
-
 
 # ############################################################################ #
 # ############################################################################ #
@@ -1231,151 +1159,36 @@ aov_ez("id", "rotation_turns", practise, between=c("group"))
 aov_ez("id", "rotation_turns_by_path_length", practise, between=c("group"))
 ## ---- 
 
+
 # ############################################################################ #
 # ############################################################################ #
 
 
-# -- EXPLORATION BEHAVIOR IN ALLOCENTRIC -- # 
+# ------------------------------------------------------------------------------
+# ::: SUPPLEMENT ANALYSIS: SEARcH STRATEGIES ::: #
+# ------------------------------------------------------------------------------
 
-# -- PRESENCE -- # 
-
-# ---- stats_probe_presence_in_allo_simple 
-# LMM with only random intercept does not converge -> go ANOVA 
-
-# presence without triangles 
-# aggregate data & ANOVA 
-data_agg_pr <- data_allo_pr %>% group_by(id, group, cond, session) %>% 
-  summarise(presence=mean(presence, na.rm=T), 
-            time_in_zone=mean(time_in_zone, na.rm=T)) %>% 
-  filter(cond %in% c("original", "ego", "otherAVG")) %>% 
-  droplevels()
-
-probe.allo_presence_aov  <- aov_ez("id", "presence", data=data_agg_pr, between=c("group"), within=c("cond", "session"))
-emm <- emmeans(probe.allo_presence_aov, ~ group*cond)
-summary(rbind(pairs(emm, simple="group"), pairs(emm, simple="cond")), by=NULL, adjust="bonferroni")
-
-explore_pr <- afex_plot(probe.allo_presence_aov, x="session", trace="cond", panel="group", 
-                        error="none", dodge=0.8,
-                        mapping=c("fill", "color"),
-                        factor_levels=list(group=group_labels, session=c(1,2)),
-                        legend_title=NULL, 
-                        data_geom=geom_boxplot, 
-                        data_arg=list(width=0.5, color="black"),
-                        point_arg=list(size=3), 
-                        line_arg=list(size=1.25),
-                        error_arg=list(size=1.25, width=0)) + 
-  scale_fill_manual(values=type_colors) + 
-  scale_color_manual(values=type_colors_o) +
-  coord_cartesian(ylim=c(0,0.3)) + 
-  theme_bw(base_size=15) + 
-  theme(legend.position="top", legend.justification=c(0,0),
-        panel.grid.major.x=element_blank()) +
-  labs(x=l_session, y="presence in zones")
-
-rm(data_allo_pr, data_agg_pr, emm, probe.allo_presence_aov, explore_pr)
-
-
-# presence with triangles 
-# aggregate data & ANOVA 
-data_agg_prT <- data_allo_prT %>% group_by(id, group, cond, session) %>% 
-  summarise(presenceT=mean(presenceT, na.rm=T), 
-            time_in_zone=mean(time_in_zone, na.rm=T)) %>% 
-  filter(cond %in% c("original", "ego", "otherAVG")) %>% 
-  droplevels()
-
-probe.allo_presenceT_aov  <- aov_ez("id", "presenceT", data=data_agg_prT, between=c("group"), within=c("cond", "session"))
-emm <- emmeans(probe.allo_presenceT_aov, ~ group*cond)
-summary(rbind(pairs(emm, simple="group"), pairs(emm, simple="cond")), by=NULL, adjust="bonferroni")
-
-explore_prT <- afex_plot(probe.allo_presenceT_aov, x="session", trace="cond", panel="group", 
-                         error="none", dodge=0.8,
-                         mapping=c("fill", "color"),
-                         factor_levels=list(group=group_labels, session=c(1,2)),
-                         legend_title=NULL, 
-                         data_geom=geom_boxplot, 
-                         data_arg=list(width=0.5, color="black"),
-                         point_arg=list(size=3), 
-                         line_arg=list(size=1.25),
-                         error_arg=list(size=1.25, width=0)) + 
-  scale_fill_manual(values=type_colors) + 
-  scale_color_manual(values=type_colors_o) +
-  coord_cartesian(ylim=c(0,0.3)) + 
-  theme_bw(base_size=15) + 
-  theme(legend.position="top", legend.justification=c(0,0),
-        panel.grid.major.x=element_blank()) +
-  labs(x=l_session, y="presence in zones")
-
-rm(data_allo_prT, data_agg_prT, emm, probe.allo_presenceT_aov, explore_prT)
-# ----
-
-# ######################################################### #
-
-# -- MEMORY SCORE TO OTHER LOCATIONS -- # 
-
-# ---- stats_probe_memory_in_allo_simple
-# LMM with only random intercept does not converge -> go ANOVA 
-
-# all trials 
-# aggregate data & ANOVA 
-data_agg_ms <- data_allo_ms %>% group_by(id, group, cond, session) %>% 
-  summarise(memory_score=mean(memory_score, na.rm=T)) %>% 
-  droplevels()
-
-probe.allo_memory_aov <- aov_ez("id", "memory_score", data=data_agg_ms, between=c("group"), within=c("cond", "session"))
-emm <- emmeans(probe.allo_memory_aov, ~ group*cond)
-summary(rbind(pairs(emm, simple="group"), pairs(emm, simple="cond")), by=NULL, adjust="bonferroni")
-
-explore_ms <- afex_plot(probe.allo_memory_aov, x="session", trace="cond", panel="group", 
-                        error="none", dodge=0.8,
-                        mapping=c("fill", "color"),
-                        factor_levels=list(group=group_labels, session=c(1,2)),
-                        legend_title=NULL, 
-                        data_geom=geom_boxplot, 
-                        data_arg=list(width=0.5, color="black"),
-                        point_arg=list(size=3), 
-                        line_arg=list(size=1.25),
-                        error_arg=list(size=1.25, width=0)) + 
-  scale_fill_manual(values=type_colors) + 
-  scale_color_manual(values=type_colors_o) +
-  coord_cartesian(ylim=c(0,1)) + 
-  theme_bw(base_size=15) + 
-  theme(legend.position="top", legend.justification=c(0,0),
-        panel.grid.major.x=element_blank()) +
-  labs(x=l_session, y="memory score to ...")
-
-rm(data_agg_ms, emm, probe.allo_memory_aov, explore_ms)
-
-
-# only incorrect trials 
-# aggregate data & ANOVA 
-data_agg_incorr_ms <- data_allo_ms %>% 
-  filter(!correct_final_alley) %>% 
-  group_by(id, group, cond, session) %>% 
-  summarise(memory_score=mean(memory_score, na.rm=T)) %>% 
-  filter(cond!= "goal") %>% 
-  droplevels()
-
-probe.allo_memory_incorr_aov <- aov_ez("id", "memory_score", data=data_agg_incorr_ms, between=c("group"), within=c("cond", "session"))
-emm <- emmeans(probe.allo_memory_incorr_aov, ~ group*cond*session)
-summary(rbind(pairs(emm, simple="group"), pairs(emm, simple="cond"), pairs(emm, simple="session")), by=NULL, adjust="bonferroni")
-
-explore_incor_ms <- afex_plot(probe.allo_memory_incorr_aov, x="session", trace="cond", panel="group", 
-                              error="none", dodge=0.8,
-                              mapping=c("fill", "color"),
-                              factor_levels=list(group=group_labels, session=c(1,2)),
-                              legend_title=NULL, 
-                              data_geom=geom_boxplot, 
-                              data_arg=list(width=0.5, color="black"),
-                              point_arg=list(size=3), 
-                              line_arg=list(size=1.25),
-                              error_arg=list(size=1.25, width=0)) + 
-  scale_fill_manual(values=type_colors) + 
-  scale_color_manual(values=type_colors_o) +
-  coord_cartesian(ylim=c(0,1)) + 
-  theme_bw(base_size=15) + 
-  theme(legend.position="top", legend.justification=c(0,0),
-        panel.grid.major.x=element_blank()) +
-  labs(x=l_session, y="memory score in incorrect trials to ...")
-
-rm(data_allo_ms, data_agg_incorr_ms, emm, probe.allo_memory_incorr_aov, explore_incor_ms)
-# ----
+# ## ---- stats_probe_path_strategy
+# table(data_p$search_strategy, data_p$group)
+# da1 <- data_p %>% filter(condition=="allo_ret", session==1)
+# table(da1$search_strategy, da1$group)
+# da2 <- data_p %>% filter(condition=="allo_ret", session==2)
+# table(da2$search_strategy, da2$group)
+# de1 <- data_p %>% filter(condition=="ego_ret", session==1)
+# table(de1$search_strategy, de1$group)
+# de2 <- data_p %>% filter(condition=="ego_ret", session==2)
+# table(de2$search_strategy, de2$group)
+# 
+# # discANOVA from WRS2: tests hypothesis that independent groups have identical multinomial distributions. 
+# discANOVA(search_strategy ~ group, data=data_p, nboot=500) 
+# discmcp(search_strategy ~ group, data=data_p, alpha=0.05, nboot=2000)
+# 
+# discmcp(search_strategy ~ group, data=da1, alpha=0.05, nboot=2000)
+# discmcp(search_strategy ~ group, data=da2, alpha=0.05, nboot=2000)
+# discmcp(search_strategy ~ group, data=de1, alpha=0.05, nboot=2000)
+# discmcp(search_strategy ~ group, data=de2, alpha=0.05, nboot=2000)
+# ## ---- 
+# # helper plots
+# t <- data_p %>% group_by(group, session, condition) %>% count(search_strategy) %>% mutate(percent=n/sum(n))
+# ggplot(t, aes(x=group, y=percent, fill=search_strategy)) + geom_col(position=position_stack()) + facet_wrap(~condition + session, nrow=1)
+# rm(t)
