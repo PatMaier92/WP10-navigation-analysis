@@ -300,14 +300,15 @@ tic;
             if sm.participant(p).session(s).trial(k).condition~="practise"
                 %% compute support variables depending on this trial's settings
                 % ideal path coordinates & ideal path length
-                % Caveat: default values for egocentric from inner starts
                 % Requires Matlab 2021a for 'shortestpath' function and
                 % 'interparc' function by John D'Errico (Matlab File Exchanger)
                 [x_line, y_line, origin_x_line, origin_y_line, x_line_chosen, y_line_chosen,...
-                    x_line_ego, y_line_ego,~, ~, ~, ~, ~, ~, ~, ~, ~, ~, sm.participant(p).session(s).trial(k).goal_x_ego,...
-                    sm.participant(p).session(s).trial(k).goal_y_ego, sm.participant(p).session(s).trial(k).ego_alley,...
+                    ~, ~, ... # formerly x/y_line_ego
+                    ~, ~, ~, ~, ~, ~, ~, ~, ~, ~, ... # formerly lines to all alleys
+                    ~, ~, ~,... # formerly x/y_ego & ego_alley
                     sm.participant(p).session(s).trial(k).ideal_path_length,...
-                    sm.participant(p).session(s).trial(k).ideal_chosen_path_length, ~, ~, ~, ~, ~, ~]=computeStartDependentIdealVariables(...
+                    sm.participant(p).session(s).trial(k).ideal_chosen_path_length,...
+                    ~, ~, ~, ~, ~, ~]=computeStartDependentIdealVariables(...
                     sm.coord.graph, sm.coord.graph_x, sm.coord.graph_y,...
                     sm.participant(p).session(s).trial(k).start_i, sm.participant(p).session(s).trial(k).goal_i,...
                     sm.participant(p).session(s).trial(k).x_n, sm.participant(p).session(s).trial(k).y_n,...
@@ -320,13 +321,10 @@ tic;
                 [xi_al,yi_al]=interpolateData(x_line, y_line, sm.participant(p).session(s).trial(k).ideal_path_length);
                 
 %                 [xi_ch,yi_ch]=interpolateData(x_line_chosen, y_line_chosen, sm.participant(p).session(s).trial(k).ideal_chosen_path_length);
-%                 
-%                 [xi_eg,yi_eg]=interpolateData(x_line_ego, y_line_ego, sm.participant(p).session(s).trial(k).ideal_ego_path_length);
                 
 %                 % test plot
 %                 figure; plot(sm.coord.full_poly); hold on; 
 %                 plot(x, y, 'k-', x_line, y_line, 'k+', xi_al, yi_al, 'k-',...
-%                     x_line_ego, y_line_ego, 'rx',...
 %                     x_line_chosen, y_line_chosen, 'bx',...
 %                     origin_x_line, origin_y_line, 'm--');
 %                 xlim([0 1]); ylim([0 1]); hold off; 
@@ -350,9 +348,7 @@ tic;
                     sm.participant(p).session(s).trial(k).x_n, sm.participant(p).session(s).trial(k).y_n);
                  
                 % evaluate accuracy of chosen location
-                sm.participant(p).session(s).trial(k).correct_final_alley=sm.participant(p).session(s).trial(k).goal_alley==sm.participant(p).session(s).trial(k).chosen_alley_i; 
-                sm.participant(p).session(s).trial(k).correct_final_alley_ego=sm.participant(p).session(s).trial(k).ego_alley==sm.participant(p).session(s).trial(k).chosen_alley_i ...
-                    && sm.participant(p).session(s).trial(k).correct_final_alley==0;        
+                sm.participant(p).session(s).trial(k).correct_final_alley=sm.participant(p).session(s).trial(k).goal_alley==sm.participant(p).session(s).trial(k).chosen_alley_i;        
 
                 % fprintf('Accuracy analysis done for %d, session %d, file no %d.\n', id, s, k);   
                 
@@ -411,128 +407,6 @@ tic;
                 
                 % fprintf('Additional analysis to chosen target done for %d, session %d, file no %d.\n', id, s, k);
           
-                %% additional explorative analysis for allocentric probe trials
-                % MEMORY SCORE 
-                if sm.participant(p).session(s).trial(k).condition=="allo_ret" && sm.participant(p).session(s).trial(k).ego_alley~=0
-                    % memory score to EGOCENTRIC target
-                    % compute final distance
-                    final_distance_ego=computeDistance(...
-                        sm.participant(p).session(s).trial(k).goal_x_ego, sm.participant(p).session(s).trial(k).x_n,...
-                        sm.participant(p).session(s).trial(k).goal_y_ego, sm.participant(p).session(s).trial(k).y_n);
-                    
-                    % compute memory score 
-                    sm.participant(p).session(s).trial(k).memory_score_ego=computeMemoryScore(sm.coord.final_distance_distribution,...
-                        final_distance_ego, sm.participant(p).session(s).trial(k).goal_i, sm.participant(p).session(s).trial(k).ego_alley);
-                    
-                    % memory score to OTHER target(s) as BASELINE
-                    % get baseline alley integer
-                    base_alleys=[1 3 5 7 9];
-                    base_alleys(base_alleys==sm.participant(p).session(s).trial(k).goal_alley)=[];
-                    base_alleys(base_alleys==sm.participant(p).session(s).trial(k).ego_alley)=[];
-                    base_i=(base_alleys+1)/2; 
-                    
-                    % compute final distance & memory score  
-                    fd=zeros(numel(base_alleys),1); ms=zeros(numel(base_alleys),1); 
-                    for a=1:numel(base_alleys)
-                        fd(a)=computeDistance(sm.coord.goal_x_in_alleys(sm.participant(p).session(s).trial(k).goal_i, base_i(a)), sm.participant(p).session(s).trial(k).x_n,...
-                            sm.coord.goal_y_in_alleys(sm.participant(p).session(s).trial(k).goal_i, base_i(a)), sm.participant(p).session(s).trial(k).y_n);
-                        ms(a)=computeMemoryScore(sm.coord.final_distance_distribution,...
-                            fd(a), sm.participant(p).session(s).trial(k).goal_i, base_alleys(a));
-                    end
-                    sm.participant(p).session(s).trial(k).memory_score_other=max(ms);
-                    clear final_distance_ego fd ms base_* a; 
-                else
-                    % default values 
-                    sm.participant(p).session(s).trial(k).memory_score_ego=999;
-                    sm.participant(p).session(s).trial(k).memory_score_other=999;
-                end
-                
-                % DETAILED PRESENCE in ALLEYS
-                if sm.participant(p).session(s).trial(k).condition=="allo_ret" && sm.participant(p).session(s).trial(k).ego_alley~=7 
-                    % presence in START ALLEY
-                    if mod(sm.participant(p).session(s).trial(k).start_i,2)~=0
-                        [~, sm.participant(p).session(s).trial(k).presence_start, ~, ~]=computePresence(...
-                            sm.participant(p).session(s).trial(k).start_i,x,y,...
-                            sm.coord.alley_poly, sm.coord.alley_poly, sm.participant(p).session(s).trial(k).time);
-                        [~, sm.participant(p).session(s).trial(k).presenceT_start, ~, ~]=computePresence(...
-                            sm.participant(p).session(s).trial(k).start_i,x,y,...
-                            sm.coord.alley_poly, sm.coord.tri_poly, sm.participant(p).session(s).trial(k).time);
-                    else 
-                        sm.participant(p).session(s).trial(k).presence_start=999;
-                        sm.participant(p).session(s).trial(k).presenceT_start=999;
-                    end 
-                    
-                    % presence in ORIGINAL START ALLEY
-                    [~, sm.participant(p).session(s).trial(k).presence_original, ~, ~]=computePresence(7,x,y,...
-                        sm.coord.alley_poly, sm.coord.alley_poly, sm.participant(p).session(s).trial(k).time);  
-                    [~, sm.participant(p).session(s).trial(k).presenceT_original, ~, ~]=computePresence(7,x,y,...
-                        sm.coord.alley_poly, sm.coord.tri_poly, sm.participant(p).session(s).trial(k).time); 
-                    
-                    % presence in EGO ALLEY
-                    if sm.participant(p).session(s).trial(k).ego_alley~=0
-                        [~, sm.participant(p).session(s).trial(k).presence_ego, ~, ~]=computePresence(...
-                            sm.participant(p).session(s).trial(k).ego_alley,x,y,...
-                            sm.coord.alley_poly, sm.coord.alley_poly, sm.participant(p).session(s).trial(k).time);
-                        [~, sm.participant(p).session(s).trial(k).presenceT_ego, ~, ~]=computePresence(...
-                            sm.participant(p).session(s).trial(k).ego_alley,x,y,...
-                            sm.coord.alley_poly, sm.coord.tri_poly, sm.participant(p).session(s).trial(k).time);
-                    else
-                        sm.participant(p).session(s).trial(k).presence_ego=999;
-                        sm.participant(p).session(s).trial(k).presenceT_ego=999;
-                    end 
-                    
-                    % presence in GOAL ALLEY
-                    [~, sm.participant(p).session(s).trial(k).presence_goal, ~, ~]=computePresence(...
-                        sm.participant(p).session(s).trial(k).goal_alley,x,y,...
-                        sm.coord.alley_poly, sm.coord.alley_poly, sm.participant(p).session(s).trial(k).time); 
-                    [~, sm.participant(p).session(s).trial(k).presenceT_goal, ~, ~]=computePresence(...
-                        sm.participant(p).session(s).trial(k).goal_alley,x,y,...
-                        sm.coord.alley_poly, sm.coord.tri_poly, sm.participant(p).session(s).trial(k).time);
-  
-                    % presence in all OTHER ALLEY(s) as BASELINE 
-                    % get baseline alley integer
-                    base_alleys=[1 3 5 7 9];
-                    base_alleys(base_alleys==7)=[];
-                    base_alleys(base_alleys==sm.participant(p).session(s).trial(k).start_i)=[];
-                    base_alleys(base_alleys==sm.participant(p).session(s).trial(k).goal_alley)=[];
-                    base_alleys(base_alleys==sm.participant(p).session(s).trial(k).ego_alley)=[];
-                    base_i=(base_alleys+1)/2; 
-                    
-                    % compute values 
-                    pr=zeros(numel(base_alleys),1); prT=zeros(numel(base_alleys),1);  
-                    for a=1:numel(base_alleys)
-                        [~, pr(a), ~, ~]=computePresence(base_alleys(a),x,y,sm.coord.alley_poly,...
-                            sm.coord.alley_poly, sm.participant(p).session(s).trial(k).time);
-                        [~, prT(a), ~, ~]=computePresence(base_alleys(a),x,y,sm.coord.alley_poly,...
-                            sm.coord.tri_poly, sm.participant(p).session(s).trial(k).time);
-                    end
-                    sm.participant(p).session(s).trial(k).presence_otherSUM=sum(pr);
-                    sm.participant(p).session(s).trial(k).presenceT_otherSUM=sum(prT);
-                    sm.participant(p).session(s).trial(k).presence_otherAVG=mean(pr);
-                    sm.participant(p).session(s).trial(k).presenceT_otherAVG=mean(prT);
-                    sm.participant(p).session(s).trial(k).presence_otherMAX=max(pr);
-                    sm.participant(p).session(s).trial(k).presenceT_otherMAX=max(prT);
-                    clear pr* base* a;    
-                else
-                    % default values
-                    sm.participant(p).session(s).trial(k).presence_start=999;
-                    sm.participant(p).session(s).trial(k).presence_original=999;
-                    sm.participant(p).session(s).trial(k).presence_ego=999; 
-                    sm.participant(p).session(s).trial(k).presence_goal=999;
-                    sm.participant(p).session(s).trial(k).presence_otherSUM=999;
-                    sm.participant(p).session(s).trial(k).presence_otherAVG=999;
-                    sm.participant(p).session(s).trial(k).presence_otherMAX=999;
-                    sm.participant(p).session(s).trial(k).presenceT_start=999;
-                    sm.participant(p).session(s).trial(k).presenceT_original=999;
-                    sm.participant(p).session(s).trial(k).presenceT_ego=999; 
-                    sm.participant(p).session(s).trial(k).presenceT_goal=999;
-                    sm.participant(p).session(s).trial(k).presenceT_otherSUM=999;
-                    sm.participant(p).session(s).trial(k).presenceT_otherAVG=999;
-                    sm.participant(p).session(s).trial(k).presenceT_otherMAX=999;
-                end
-                
-                % fprintf('Additional analysis for allocentric probe trials done for %d, session %d, file no %d.\n', id, s, k);
-                      
                 %% rotation analysis
                 % TOTAL ROTATION
                 % calculate total rotation in degrees and turns as change in yaw rotation (r)
