@@ -359,14 +359,7 @@ tic;
                 sm.participant(p).session(s).trial(k).target_proximity_deviation=...
                     sm.participant(p).session(s).trial(k).ideal_target_proximity - sm.participant(p).session(s).trial(k).target_proximity; 
                 
-                % PRESENCE (rel. time in zones)
-                % in inner pentagon (including triangle intersections) 
-                pent_index=inpolygon(x,y,sm.coord.central_poly.Vertices(:,1),sm.coord.central_poly.Vertices(:,2));
-                sm.participant(p).session(s).trial(k).presence_pentagon=numel(x(pent_index))/length(x); clear pent_index; 
-                % in outer alleys (excluding triangle intersections)
-                sm.participant(p).session(s).trial(k).presence_alleys=1-sm.participant(p).session(s).trial(k).presence_pentagon; 
-
-                % fprintf('Standard time, path, distance & presence analysis done for %d, session %d, file no %d.\n', id, s, k);
+                % fprintf('Standard time, path & distance analysis done for %d, session %d, file no %d.\n', id, s, k);
                 
                 %% accuracy analysis (for probe trials) 
                 % compute chosen goal location
