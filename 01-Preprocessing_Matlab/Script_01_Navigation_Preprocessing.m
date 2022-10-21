@@ -237,11 +237,11 @@ tic;
             t=data.time; % time
             x=data.pos_x; % coordinates
             y=data.pos_z; % coordinates
-            r=data.rot_y; R=deg2rad(r); Q=unwrap(R); Z=rad2deg(Q); r=Z; % yaw rotations
+            r=data.rot_y; R=deg2rad(r); Q=unwrap(R); r=Q; % Z=rad2deg(Q); r=Z; % yaw rotations
             if s==3
                 events=data.trialEvent; 
             end
-            clear data R Q Z; 
+            clear data R Q Z;  
             
             % spatial normalization
             if s==3 % practise maze
@@ -376,12 +376,15 @@ tic;
           
                 %% rotation analysis using z-rotation
                 % TOTAL ROTATION
-                % calculate total rotation in degrees and turns as change in yaw rotation (r)
+                % calculate total rotation as cumulative absolute change in yaw rotation (r)
                 % this value includes rotation due to x-/y-trajectory (i.e. left-forward movement)
-                [~, sm.participant(p).session(s).trial(k).rotation_turns]=computeRotation(ri); 
-                sm.participant(p).session(s).trial(k).rotation_turns_by_path_length=...
-                    sm.participant(p).session(s).trial(k).rotation_turns/sm.participant(p).session(s).trial(k).path_length; 
-                    
+                %[~, sm.participant(p).session(s).trial(k).rotation_turns]=computeRotation(ri); % TBD 
+                [sm.participant(p).session(s).trial(k).rotation, ~]=computeRotation(ri); 
+                sm.participant(p).session(s).trial(k).rotation_velocity=...
+                    sm.participant(p).session(s).trial(k).rotation/(numel(ri)-1);
+                sm.participant(p).session(s).trial(k).rotation_by_path_length=...
+                    sm.participant(p).session(s).trial(k).rotation/sm.participant(p).session(s).trial(k).path_length; 
+
                 % INITIAL ROTATION in this trial's START AREA (alley plus triangle)
                 % same method as above 
                 % get rotation index (different method for inner/outer starts)
@@ -393,13 +396,22 @@ tic;
                         sm.coord.rec_poly, sm.coord.tri_poly, sm.participant(p).session(s).trial(k).time); 
                 end 
                 [rot_index]=computeFirstSegment(rot_index); 
-                % compute initial rotation in degrees and turns
-                [~, sm.participant(p).session(s).trial(k).initial_rotation_turns]=computeRotation(ri(rot_index));
-
-                % ANGULAR VELOCITY in this trial's START AREA (alley plus triangle)
-                % uses rotation index from above 
-                % IdPhi = mean integrated absolute angular velocity in radians
-                [sm.participant(p).session(s).trial(k).initial_angular_velocity]=computeAngularVelocity(ri(rot_index));
+                % compute initial rotation
+                %[~, sm.participant(p).session(s).trial(k).initial_rotation_turns]=computeRotation(ri(rot_index));
+                [sm.participant(p).session(s).trial(k).initial_rotation, ~]=computeRotation(ri(rot_index));
+                sm.participant(p).session(s).trial(k).initial_rotation_velocity=...
+                    sm.participant(p).session(s).trial(k).initial_rotation/(numel(ri(rot_index))-1); 
+                sm.participant(p).session(s).trial(k).time_in_initial=numel(ri(rot_index))/numel(ri) * ...
+                    sm.participant(p).session(s).trial(k).time; 
+                sm.participant(p).session(s).trial(k).path_length_in_initial=computePathLength(xi(rot_index),yi(rot_index));
+                sm.participant(p).session(s).trial(k).initial_rotation_by_path_length=...
+                    sm.participant(p).session(s).trial(k).initial_rotation/sm.participant(p).session(s).trial(k).path_length_in_initial; 
+            
+%                 % ANGULAR VELOCITY in this trial's START AREA (alley plus triangle)
+%                 % uses rotation index from above 
+%                 % IdPhi = mean integrated absolute angular velocity in radians
+%                 [sm.participant(p).session(s).trial(k).initial_angular_velocity]=computeAngularVelocity(ri(rot_index));
+                
                 clear rot_index;
                 % fprintf('Rotation analysis done for %d, session %d, file no %d.\n', id, s, k);   
                 
@@ -439,7 +451,7 @@ tic;
                     sm.participant(p).session(s).trial(k).exclude_trial_matlab=1; 
                     fprintf('Trial %d marked for exclusion due to timeout.\n',k);
                 elseif (sm.participant(p).session(s).trial(k).path_length<=0.1 ...
-                        || sm.participant(p).session(s).trial(k).rotation_turns==0 ...
+                        || sm.participant(p).session(s).trial(k).rotation==0 ...
                         || sm.participant(p).session(s).trial(k).time<3)
                         sm.participant(p).session(s).trial(k).exclude_trial_matlab=1;
                         fprintf('Trial %d marked for exclusion due lack of movement or trial time < 3 sec.\n',k);
@@ -453,7 +465,7 @@ tic;
                     sm.participant(p).session(s).trial(k).time,...
                     sm.participant(p).session(s).trial(k).excess_path_length,...
                     sm.participant(p).session(s).trial(k).excess_target_distance,...
-                    sm.participant(p).session(s).trial(k).rotation_turns,...
+                    sm.participant(p).session(s).trial(k).rotation,...
                     sm.coord.full_poly, xi, yi, x_line, y_line, x_line_chosen, y_line_chosen,...
                     sm.participant(p).session(s).trial(k).goal_x,...
                     sm.participant(p).session(s).trial(k).goal_y, output_folder);
@@ -478,7 +490,8 @@ tic;
                     sm.participant(p).session(s).trial(k).path_length-ideal_motor_path_length;
 
                 % TOTAL ROTATION
-                [~, sm.participant(p).session(s).trial(k).rotation_turns]=computeRotation(ri); 
+                %[~, sm.participant(p).session(s).trial(k).rotation_turns]=computeRotation(ri); 
+                [sm.participant(p).session(s).trial(k).rotation, ~]=computeRotation(ri);
 
                 % fprintf('Motor control analysis done for %d, session %d, file no %d.\n', id, s, k);
                 
@@ -489,7 +502,7 @@ tic;
                 plotMotorControlTrack(sm.participant(p).id, s, sm.participant(p).session(s).trial(k).trial,...
                     sm.participant(p).session(s).trial(k).time,...
                     sm.participant(p).session(s).trial(k).excess_path_length,...
-                    sm.participant(p).session(s).trial(k).rotation_turns,...
+                    sm.participant(p).session(s).trial(k).rotation,...
                     sm.coord.practise.practise_poly, sm.coord.practise.goal_x, sm.coord.practise.goal_y,...
                     sm.coord.practise.start_x, sm.coord.practise.start_y,...
                     sm.coord.practise.practise_goal_names, xi, yi , x_line_motor, y_line_motor, output_folder);
