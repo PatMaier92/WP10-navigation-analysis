@@ -333,7 +333,7 @@ tic;
                     sm.coord.rec_x, sm.coord.rec_y, sm.coord.tri_x, sm.coord.tri_y, 10);
                                
                 %% Block 3: Data analysis, i.e. calculcation of variables     
-                %% accuracy analysis (for probe trials)
+                %% accuracy analysis (only for probe trials)
                 % compute chosen goal location
                 [sm.participant(p).session(s).trial(k).chosen_goal_i, sm.participant(p).session(s).trial(k).chosen_alley_s, ...
                     sm.participant(p).session(s).trial(k).chosen_alley_i, sm.participant(p).session(s).trial(k).obj_at_chosen_loc]=computeChosenGoals(...
@@ -376,20 +376,22 @@ tic;
                 sm.participant(p).session(s).trial(k).excess_path_length=...
                     sm.participant(p).session(s).trial(k).path_length - sm.participant(p).session(s).trial(k).ideal_chosen_path_length;
                                  
-                % AVERAGE PROXIMITY to TARGET 
-                % target proximity 
-                [sm.participant(p).session(s).trial(k).target_proximity, ~]=computeTargetProximity(x,y,...
+                % AVERAGE DISTANCE to TARGET / PROXIMITY
+                [sm.participant(p).session(s).trial(k).target_distance, ~]=computeTargetProximity(x,y,...
                     sm.participant(p).session(s).trial(k).goal_x,sm.participant(p).session(s).trial(k).goal_y); 
-                % ideal target proximity 
-                [sm.participant(p).session(s).trial(k).ideal_target_proximity, ~]=computeTargetProximity(xi_al,yi_al,...
+                
+                % EXCESS AVERAGE DISTANCE to TARGET / PROXIMITY 
+                % approximation for 'ideal value' on shortest path with equally spaced steps
+                [sm.participant(p).session(s).trial(k).ideal_target_distance, ~]=computeTargetProximity(xi_al,yi_al,...
                     sm.participant(p).session(s).trial(k).goal_x,sm.participant(p).session(s).trial(k).goal_y);               
-                % target proximity deviation 
-                sm.participant(p).session(s).trial(k).target_proximity_deviation=...
-                    sm.participant(p).session(s).trial(k).ideal_target_proximity - sm.participant(p).session(s).trial(k).target_proximity; 
+                % excess value 
+                % (value < 0 is possible and indicates more time was spend close to goal than necessary)
+                sm.participant(p).session(s).trial(k).excess_target_distance=...
+                    sm.participant(p).session(s).trial(k).target_distance - sm.participant(p).session(s).trial(k).ideal_target_distance; 
                 
                 % fprintf('Standard time, path & distance analysis done for %d, session %d, file no %d.\n', id, s, k);
           
-                %% rotation analysis
+                %% rotation analysis using z-rotation
                 % TOTAL ROTATION
                 % calculate total rotation in degrees and turns as change in yaw rotation (r)
                 % this value includes rotation due to x-/y-trajectory (i.e. left-forward movement)
