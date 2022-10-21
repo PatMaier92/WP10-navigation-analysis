@@ -1,56 +1,51 @@
-function plotTrialTrack(trial,session,condition,start,id,Group,...
-    correct_alley,strategy,...
-    polyshape,x,y,x_line,y_line,x_line_ego,y_line_ego,...
-    x_line_chosen,y_line_chosen,goal_x,goal_y,folder)
+function plotTrialTrack(id, session, trial, condition,...
+    memory_score, time, excess_path, excess_distance, rotation, ...
+    polyshape, x, y, x_line, y_line, x_line_chosen, y_line_chosen,...
+    goal_x, goal_y, folder)
 % plotTrialTrack Creates track plots for each individual trial.
 %
-% Input: Information for creating and naming the plot
+% Input: Information for creating and naming the plot.
 %
 % Returns: A nice trial track plot.
 
-Trial=int2str(trial);
-Session=num2str(session);
 ID=num2str(id);
-Accuracy=num2str(correct_alley); 
-Strategy=char(strategy);
+Session=num2str(session);
+Trial=int2str(trial);
+MS=num2str(round(memory_score,1)); 
+TI=num2str(round(time,1)); 
+EP=num2str(round(excess_path,2)); 
+ED=num2str(round(excess_distance,2)); 
+RP=num2str(round(rotation,2)); 
 
 wfig=figure('visible','off');
 plot(polyshape,'FaceColor',[0.6 0.6 0.6],'FaceAlpha',0.1);
 axis([0 1 0 1]); xticks(0:0.1:1); yticks(0:0.1:1); 
 hold on;
 
-viscircles([goal_x goal_y],0.01); 
+viscircles([goal_x goal_y],0.01);
 
-if condition=="main_learn" || condition=="main_ret" || condition=="ego_ret" ||(condition=="allo_ret" && ~mod(start,2))
-    line1=plot(x,y,'k -', 'LineWidth', 1);
-    line2=plot(x_line,y_line,'r -.', 'LineWidth', 1);
-    line3=plot(x_line_chosen,y_line_chosen,'b .:', 'LineWidth', 1);
-    legend([line1 line2 line3],{'actual path','ideal path target','ideal path chosen'});
-else % allocentric outer starts
-    line1=plot(x,y,'k -', 'LineWidth', 1);
-    line2=plot(x_line,y_line,'r -.', 'LineWidth', 1);
-    line3=plot(x_line_chosen,y_line_chosen,'b .:', 'LineWidth', 1);
-    line4=plot(x_line_ego,y_line_ego,'g .:', 'LineWidth', 1);
-    legend([line1 line2 line3 line4],{'actual path','ideal path target','ideal path chosen','ideal path ego'});
-end
+line1=plot(x,y,'k -', 'LineWidth', 1);
+line2=plot(x_line,y_line,'r -.', 'LineWidth', 1);
+line3=plot(x_line_chosen,y_line_chosen,'b .:', 'LineWidth', 1);
+legend([line1 line2 line3],{'actual path','ideal path target','ideal path chosen'});
 
 if condition=="main_learn"
-    type = ' (Training)'; 
+    Type = 'Training'; 
 elseif condition=="allo_ret"
-    type = ' (Allocentric Probe)';
+    Type = 'Allo Probe';
 elseif condition=="ego_ret"
-    type = ' (Egocentric Probe)';
+    Type = 'Ego Probe';
 elseif condition=="main_ret"
-    type = ' (Training Probe)';
+    Type = 'Training Probe';
 else
-    type = ' (XXXXX)'; 
+    Type = ' (XXXXX)'; 
 end
-title({[ID ' (' Group ') Session: ' Session ', Trial: ' Trial type]; ...
-    ['Acc.: ', Accuracy, ', Strategy: ' Strategy]});
+title({[ID ', Session: ' Session ', Trial: ' Trial ', Condition: ' Type]; ...
+    ['memory: ', MS, ', time: ' TI, ', ex. path: ' EP, ', ex. distance: ' ED, ', rotation: ' RP]});
 hold off; 
 
 % save plot
-file_name = ['Plot_' Group '_' ID '_' Session '_' Trial '.jpeg'];
+file_name = ['Plot_' ID '_' Session '_' Trial '.jpeg'];
 file_path = fullfile(folder, file_name);
 saveas(wfig,file_path);
 
