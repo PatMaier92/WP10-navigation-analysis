@@ -363,11 +363,7 @@ tic;
                 % EXCESS PATH LENGTH (to chosen target) 
                 sm.participant(p).session(s).trial(k).excess_path_length=...
                     sm.participant(p).session(s).trial(k).path_length - sm.participant(p).session(s).trial(k).ideal_chosen_path_length;
-                
-                % VELOCITY
-                sm.participant(p).session(s).trial(k).velocity=sm.participant(p).session(s).trial(k).path_length / ...
-                    sm.participant(p).session(s).trial(k).time; 
-                 
+                                 
                 % AVERAGE PROXIMITY to TARGET 
                 % target proximity 
                 [sm.participant(p).session(s).trial(k).target_proximity, ~]=computeTargetProximity(x,y,...
@@ -498,40 +494,16 @@ tic;
                 % TIME
                 sm.participant(p).session(s).trial(k).time=computeTime(t(1),t(end));
 
-                %% standard coordinate analysis using x-/y-coordinates
+                %% standard coordinate analysis using x-/y-coordinates and z-rotation
                 % PATH LENGTH to all targets
                 sm.participant(p).session(s).trial(k).path_length=computePathLength(x,y); 
                               
-                % EXCESS PATH LENGTH (to chosen target) 
+                % EXCESS PATH LENGTH to all targets
                 sm.participant(p).session(s).trial(k).excess_path_length=...
                     sm.participant(p).session(s).trial(k).path_length-ideal_motor_path_length;
 
-                % VELOCITY
-                sm.participant(p).session(s).trial(k).velocity=sm.participant(p).session(s).trial(k).path_length/sm.participant(p).session(s).trial(k).time;
-                
-                % AVERAGE PROXIMITY to TARGET 
-                % target proximity for all segments/goals 
-                target_proximity=zeros(max(events),1); 
-                for b=0:max(events)-1 
-                    % next goal
-                    temp_goal_x=sm.coord.practise.goal_x(b+1); temp_goal_y=sm.coord.practise.goal_y(b+1); 
-                    
-                    % next path segment
-                    temp_x=x(events==b); temp_y=y(events==b); 
-
-                    % compute target proximity of segment
-                    [temp_proximity, ~]=computeTargetProximity(temp_x,temp_y,temp_goal_x,temp_goal_y);
-                    
-                    % sum 
-                    target_proximity(b+1)=temp_proximity; 
-                end
-                sm.participant(p).session(s).trial(k).target_proximity=mean(target_proximity);
-                clear target_proximity temp* events b; 
-                
                 % TOTAL ROTATION
                 [~, sm.participant(p).session(s).trial(k).rotation_turns]=computeRotation(ri); 
-                sm.participant(p).session(s).trial(k).rotation_turns_by_path_length=...
-                    sm.participant(p).session(s).trial(k).rotation_turns/sm.participant(p).session(s).trial(k).path_length; 
 
                 % fprintf('Motor control analysis done for %d, session %d, file no %d.\n', id, s, k);
                 
