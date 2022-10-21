@@ -84,24 +84,28 @@ In training trials, the goal is visible, i.e. the trial is always completed succ
 
 *Memory accuracy*: 
 
-* **Memory score** (metric): Euclidean distance between x-/y-coordinates of the chosen and the correct goal location. Memory score normalizes the Euclidean distance value as a score from 0 to 1 (chance level 0.5) by comparing final distance to the final distance of 1000 randomly sampled and uniformly distributed locations in the maze (Jacobs 2016; Bellmund 2019)
-$$\text{Euclidean distance} = \sqrt{(x_{correct}-x_{chosen})^2 + (y_{correct}-y_{chosen})^2}$$
-$$\text{Memory score} = 1 - \text{percentage of random Euclidean distance values that are smaller than Euclidean distance}$$
+* **Memory score** (metric): Euclidean distance between x-/y-coordinates of the remembered and the correct goal location. Memory score normalizes the Euclidean distance value as a score from 0 to 1 (chance level 0.5) by comparing final distance to the final distance of 1000 randomly sampled locations within the maze (Jacobs 2016; Bellmund 2019)
+$$\text{Euclidean distance} = \sqrt{(x_{correct}-x_{remembered})^2 + (y_{correct}-y_{remembered})^2}$$
+$$\text{Memory score} = \text{percentile rank of the Euclidean distance value in relation the the distribution of Euclidean distance values from 1000 random locations}$$
 * **Correct trial** (yes/no): Finding the correct goal alley, defined as the correct outer alley or intersection right in front.
 
 *Navigation behavior*: 
 
 * **Time**: Time to complete the trial in seconds.
-* **Excess path length** (metric): The travelled path length minus the ideal path length to the chosen location. The path lengths are calculated as summation of Euclidean distances between x-/y-coordinates over time (Suthana 2012; Jacobs 2016; Bellmund 2019)
-$$\text{(Ideal) path length} = \sum \sqrt{(x_{t}-x_{t+1})^2 + (y_{t}-y_{t+1})^2}$$
+* **Excess path length** (metric): This measure reflects how directly participants navigated to the remembered goal location (Suthana 2012; Jacobs 2016; Bellmund 2019). It is calculated as the travelled path length minus the ideal path length to the remembered location. The path lengths are calculated as summation of Euclidean distances between x-/y-coordinates over time. 
+$$\text{(Ideal) path length} = \sum_{i=1}^{n} \sqrt{(x_{i}-x_{i+1})^2 + (y_{i}-y_{i+1})^2}$$
 $$\text{Excess path length} = (path-path_{ideal})$$
-* **Presence in zone** (metric): Proportion of time/data points spend in a defined zone (tbd: add reference Water maze literature). 
-$$\text{Presence in zone} = \frac {n(xy_{zone})} {n(xy)} $$
-* **Rotation**: The sum of absolute z-rotations over time divided by 360° (i.e. full turns; the calculation takes into account the switch at 0/360°). Variants of this measure are 1. Rotation in the initial area (start alley plus first intersecion), 2. Rotation normalized by path length (because longer paths automatically involve more rotation in the Starmaze environment). This measure is supposed to reflect intentional visual exploration. 
-$$\text{Rotation in initial area} = \frac {\sum |(z_{t}-z_{t+1})|} {360} $$
-$$\text{Rotation by path length} = \frac {\sum |(z_{t}-z_{t+1})|} {path} * \frac {1} {360} $$
+* **Avg. target proximity** (metric): This measure reflects if participants tended to stay closer or further away from the correct goal location (TBD REFERENCES). It is calculated as the cumulative Euclidean distance between the the player’s x-/y-coordinates along their path and the correct goal location, averaged by the number of x-/y data points. 
+– TBD Variation: Deviation to "ideal" value
+$$\text{Avg. target proximity} = \frac {\sum_{i=1}^{n}\sqrt{(x_{i}-x_{correct})^2 + (y_{i}-y_{correct})^2}} {n}$$
+* **Angular velocity** (metric): **TBD: IdPhi, VTE-behavior (REFERENCES)**. z-rotations from the initial area (start alley plus first intersection) were transformed from degrees to radians and unwrapped (i.e. discontinuities removed due to switch at 360°). We then calculated the sum of absolute z-rotations in the initial area (via the first derivative), divided by the number of data points to obtain the averaged angular velocity. (REFERENCES)
+$$\text{Angular Velocity (radians)} = \frac {\sum_{i=1}^{n_{initial}} | (z_{i}-z_{i+1})|} {n_{initial}}$$
+* **Initial and total rotation**: **meaning (REFERENCES)**. z-rotations were transformed from degrees to radians, unwrapped (i.e. discontinuities removed due to switch at 360°), and back-transformed to degrees. We then calculated the sum of absolute z-rotations over time divided by 360° for full turns. Variants of this measure are 1. Rotation in the initial area (start alley plus first intersection), 2. Rotation normalized by path length (because longer paths automatically involve more rotation in the Starmaze).
+$$\text{Initial Rotation (degree)} = \frac {\sum_{i=1}^{n_{initial}} | (z_{i}-z_{i+1}) |} {360}$$ 
+$$\text{Total rotation by path length (degree)} = \frac {\sum_{i=1}^{n} | (z_{i}-z_{i+1})|} {path} * \frac {1} {360}$$ 
 
-![Visualization of variables of interest](./pics/Var_all.jpg){width=300px,height=500x}
+TBD Update plots
+![Visualization of variables of interest](./pics/Var_all.jpg){width=300px,height=500x}  
 
 # Statistical analysis
 

@@ -70,8 +70,8 @@ cov_names <- cov_data %>% select(-id) %>% names()
 # full data 
 data <- sm_data %>% 
   left_join(cov_data, by="id") %>% 
-  mutate_at(vars("goal_i", "block"), factor) %>% 
-  rename(cov_gender=sex, cov_location=goal_i, cov_block=block, cov_object=goal_identity)
+  mutate_at(vars("goal_i"), factor) %>% 
+  rename(cov_gender=sex, cov_location=goal_i, cov_object=goal_identity)
 
 # learning
 data_l <- data %>%
@@ -119,14 +119,9 @@ l_angular_velocity <- "angular velocity (IdPhi)"
 # scales::show_col()
 group_colors <- c("#FFE476", "#6699FF", "#e19686")
 group_colors_o <-  c("#CC6600", "#003399", "#d56d56")
-type_colors <- c("#FDBF6F", "#C4CAC9", "#A6CEE3")
-type_colors_o <- c("#FF7F00", "#667270", "#1F78B4")
-# strategy_colors <- c("direct"="#E4534D", "detour"="#ED8E8A", "reorient"="#F9DAD9")
-# landmark_colors <- rev(RColorBrewer::brewer.pal(3,"Blues"))
 
 # plot function 
 afex_plot_wrapper <- function(model, xv, tv, pv, ylabel, xlabel=l_session, ymin=0, ymax=1) {
-  
   p <- afex_plot(model, x=xv, trace=tv, panel=pv, id="id", 
                  error="model", dodge=0.8,
                  mapping=c("shape", "fill", "color"),
@@ -146,7 +141,6 @@ afex_plot_wrapper <- function(model, xv, tv, pv, ylabel, xlabel=l_session, ymin=
     labs(x=xlabel, y=ylabel)
   
   return(p)
-  
 }
 ## ---- 
 
@@ -198,6 +192,7 @@ dots_allo <- dot_plots(data_p %>% filter(condition=="allo_ret"), "x_n", "y_n",
 
 rm(dot_plots)
 ## ----
+rm(dots_ego, dots_allo)
 
 
 # --- MEMORY SCORE (ALL PROBE TRIALS) --- # 
@@ -701,9 +696,7 @@ rm(model.path, model.path_outlier, model.path_hetero)
 # --- AVERAGE PROXIMITY TO TARGET (ALL PROBE TRIALS) --- # 
 ## ---- model_probe_proximity
 # note: random effects structure was determined according to Bates (2015) & Matuschek et al. (2017) 
-# TBD choose outcome & add to Rmd
-model.proximity <- mixed(target_proximity ~ group*session*condition + cov_location + cov_object + cov_gender + cov_proximity +  
-                           (session|id), data=data_p, expand_re=T)
+# TBD add to Rmd
 model.proximity <- mixed(target_proximity_deviation ~ group*session*condition + cov_location + cov_object + cov_gender + cov_proximity +  
                            (session*condition||id), data=data_p, expand_re=T)
 ## ----
@@ -715,11 +708,13 @@ VarCorr(model.proximity$full_model)
 model.proximity
 
 ## ---- post_hoc_probe_proximity
-# TBD effects: session*condition & group | group, session, condition 
+emmeans(model.proximity, pairwise ~ group, lmer.df="satterthwaite", adjust="bonferroni")$contrasts 
+emmeans(model.proximity, pairwise ~ session, lmer.df="satterthwaite")$contrasts 
+emmeans(model.proximity, pairwise ~ condition, lmer.df="satterthwaite")$contrasts
 ## ----
 
 ## ---- plot_probe_proximity
-plot.proximity <- afex_plot_wrapper(model.proximity, "session", "group", "condition", l_proximity, ymin=-0.25, ymax=0.25)
+plot.proximity <- afex_plot_wrapper(model.proximity, "session", "group", "condition", l_proximity, ymin=0.25, ymax=-0.25)
 ## ----
 
 ## ---- control_probe_proximity 
@@ -944,6 +939,26 @@ rm(model.rotation_path, model.rotation_path_outlier, model.rotation_path_hetero)
 
 # TBD add discarded analyses from above here 
 
+# --- EXCESS PATH EDIT DISTANCE (ALL PROBE TRIALS) --- # 
+## ---- model_probe_path_edit
+model.path_edit <- mixed(chosen_path_edit_distance ~ group*session*condition + cov_gender + 
+                           (condition|id), data=data_p, expand_re=T)
+## ----
+
+# random effects
+VarCorr(model.path_edit$full_model)
+
+# fixed effects 
+model.path_edit
+
+## ---- post_hoc_probe_path_edit
+# TBD 
+## ----
+
+## ---- plot_probe_path_edit
+plot.path_edit <- afex_plot_wrapper(model.path_edit, "session", "group", "condition", "path edit distance", ymin=0, ymax=8)
+## ---- 
+
 
 # ------------------------------------------------------------------------------
 # ::: SUPPLEMENT ANALYSIS: NAVIGATION BEHAVIOR (LEARNING TRIALS) ::: #
@@ -1100,6 +1115,16 @@ rm(plot.rotation_path_learn, model.rotation_path_learn)
 # ------------------------------------------------------------------------------
 # ::: SUPPLEMENT ANALYSIS: CORRELATIONS ::: #
 # ------------------------------------------------------------------------------
+
+# tbd aggregate data first 
+corr_data <- data_p %>%
+  select(memory_score, time, excess_path_length, target_proximity, target_proximity_deviation, 
+         initial_rotation_turns, initial_angular_velocity, rotation_turns, rotation_turns_by_path_length) %>% 
+  drop_na() %>% 
+  cor()
+
+corrplot::corrplot(corr_data, method="number", tl.col="black", tl.srt=45)
+rm(corr_data)
 
 ## ---- stats_corr_allo_ego_trad
 # aggregated standard spearman correlation
