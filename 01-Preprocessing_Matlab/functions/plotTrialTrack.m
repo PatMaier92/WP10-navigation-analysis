@@ -11,7 +11,7 @@ function plotTrialTrack(id, session, trial, condition,...
 ID=num2str(id);
 Session=num2str(session);
 Trial=int2str(trial);
-MS=num2str(round(memory_score,1)); 
+MS=num2str(round(memory_score,2)); 
 TI=num2str(round(time,1)); 
 EP=num2str(round(excess_path,2)); 
 ED=num2str(round(excess_distance,2)); 
