@@ -265,8 +265,7 @@ tic;
             % set new sampling rate 
             % (default of 0.05 corresponds to 20 frames per second)          
             new_sampling_rate=0.05; 
-            [~, xi, yi, ri]=temporalNormalization(new_sampling_rate,...
-                t, x, y, r); 
+            [~, xi, yi, ri]=temporalNormalization(new_sampling_rate, t, x, y, r); 
             clear r; 
             
             % save start and end points 
@@ -302,7 +301,7 @@ tic;
                 % ideal path coordinates & ideal path length
                 % Requires Matlab 2021a for 'shortestpath' function and
                 % 'interparc' function by John D'Errico (Matlab File Exchanger)
-                [x_line, y_line, origin_x_line, origin_y_line, x_line_chosen, y_line_chosen,...
+                [x_line, y_line, origin_x_line, origin_y_line, x_line_chosen, y_line_chosen,... # TBD check if can be removed
                     ~, ~, ... # formerly x/y_line_ego
                     ~, ~, ~, ~, ~, ~, ~, ~, ~, ~, ... # formerly lines to all alleys
                     ~, ~, ~,... # formerly x/y_ego & ego_alley
@@ -319,9 +318,7 @@ tic;
                 % interpolate ideal path data for further analysis
                 % using 'interparc' function by John D'Errico (Matlab File Exchanger)
                 [xi_al,yi_al]=interpolateData(x_line, y_line, sm.participant(p).session(s).trial(k).ideal_path_length);
-                
-%                 [xi_ch,yi_ch]=interpolateData(x_line_chosen, y_line_chosen, sm.participant(p).session(s).trial(k).ideal_chosen_path_length);
-                
+                                
 %                 % test plot
 %                 figure; plot(sm.coord.full_poly); hold on; 
 %                 plot(x, y, 'k-', x_line, y_line, 'k+', xi_al, yi_al, 'k-',...
@@ -338,20 +335,7 @@ tic;
                     sm.coord.alley_half_out_x, sm.coord.alley_half_out_y, sm.coord.alley_half_in_x, sm.coord.alley_half_in_y,...
                     sm.coord.rec_x, sm.coord.rec_y, sm.coord.tri_x, sm.coord.tri_y, 10);
                                
-                %% Block 3: Data analysis, i.e. calculcation of variables  
-                %% accuracy analysis
-                % compute chosen goal location
-                [sm.participant(p).session(s).trial(k).chosen_goal_i, sm.participant(p).session(s).trial(k).chosen_alley_s, ...
-                    sm.participant(p).session(s).trial(k).chosen_alley_i, sm.participant(p).session(s).trial(k).obj_at_chosen_loc]=computeChosenGoals(...
-                    sm.participant(p).rand_dict, char(trial_data.chosen_goal(k,1)), ...
-                    sm.coord.alley_poly, sm.coord.rec_poly, sm.coord.tri_poly, sm.coord.alley_names, sm.coord.goal_names,...
-                    sm.participant(p).session(s).trial(k).x_n, sm.participant(p).session(s).trial(k).y_n);
-                 
-                % evaluate accuracy of chosen location
-                sm.participant(p).session(s).trial(k).correct_final_alley=sm.participant(p).session(s).trial(k).goal_alley==sm.participant(p).session(s).trial(k).chosen_alley_i;        
-
-                % fprintf('Accuracy analysis done for %d, session %d, file no %d.\n', id, s, k);   
-                
+                %% Block 3: Data analysis, i.e. calculcation of variables                 
                 %% time analysis
                 % TIME
                 sm.participant(p).session(s).trial(k).time=computeTime(t(1),t(end));  
@@ -384,24 +368,36 @@ tic;
 
                 % fprintf('Standard time, path, distance & presence analysis done for %d, session %d, file no %d.\n', id, s, k);
                 
-                %% additional analysis for probe trials  
+                %% accuracy analysis (for probe trials) 
+                % compute chosen goal location
+                [sm.participant(p).session(s).trial(k).chosen_goal_i, sm.participant(p).session(s).trial(k).chosen_alley_s, ...
+                    sm.participant(p).session(s).trial(k).chosen_alley_i, sm.participant(p).session(s).trial(k).obj_at_chosen_loc]=computeChosenGoals(...
+                    sm.participant(p).rand_dict, char(trial_data.chosen_goal(k,1)), ...
+                    sm.coord.alley_poly, sm.coord.rec_poly, sm.coord.tri_poly, sm.coord.alley_names, sm.coord.goal_names,...
+                    sm.participant(p).session(s).trial(k).x_n, sm.participant(p).session(s).trial(k).y_n);
+
+                % evaluate chosen goal location
                 if sm.participant(p).session(s).trial(k).feedback=="false"  
                     % FINAL DISTANCE to TARGET 
                     sm.participant(p).session(s).trial(k).final_distance=computeDistance(...
                         sm.participant(p).session(s).trial(k).goal_x, sm.participant(p).session(s).trial(k).x_n, ...
                         sm.participant(p).session(s).trial(k).goal_y, sm.participant(p).session(s).trial(k).y_n);
                    
-                    % MEMORY SCORE (final distance in relation to distribution of final distance for random points)
+                    % MEMORY SCORE (final distance in relation to distribution from random points)
                     sm.participant(p).session(s).trial(k).memory_score=computeMemoryScore(sm.coord.final_distance_distribution,...
                         sm.participant(p).session(s).trial(k).final_distance, sm.participant(p).session(s).trial(k).goal_i,...
                         sm.participant(p).session(s).trial(k).goal_alley); 
+                    
+                    % CORRECT FINAL ALLEY 
+                    sm.participant(p).session(s).trial(k).correct_final_alley=...
+                        sm.participant(p).session(s).trial(k).goal_alley==sm.participant(p).session(s).trial(k).chosen_alley_i;
                 else
                     % default values
                     sm.participant(p).session(s).trial(k).final_distance=999;
                     sm.participant(p).session(s).trial(k).memory_score=999; 
+                    sm.participant(p).session(s).trial(k).correct_final_alley=999; 
                 end
-                
-                % fprintf('Additional analysis to chosen target done for %d, session %d, file no %d.\n', id, s, k);
+                % fprintf('Accuracy analysis done for %d, session %d, file no %d.\n', id, s, k);
           
                 %% rotation analysis
                 % TOTAL ROTATION
