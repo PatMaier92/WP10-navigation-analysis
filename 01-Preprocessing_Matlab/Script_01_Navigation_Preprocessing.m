@@ -335,33 +335,8 @@ tic;
                     sm.coord.alley_half_out_x, sm.coord.alley_half_out_y, sm.coord.alley_half_in_x, sm.coord.alley_half_in_y,...
                     sm.coord.rec_x, sm.coord.rec_y, sm.coord.tri_x, sm.coord.tri_y, 10);
                                
-                %% Block 3: Data analysis, i.e. calculcation of variables                 
-                %% time analysis
-                % TIME
-                sm.participant(p).session(s).trial(k).time=computeTime(t(1),t(end));  
-                                             
-                %% standard coordinate analysis using x-/y-coordinates
-                % PATH LENGTH 
-                sm.participant(p).session(s).trial(k).path_length=computePathLength(x,y); 
-                
-                % EXCESS PATH LENGTH (to chosen target) 
-                sm.participant(p).session(s).trial(k).excess_path_length=...
-                    sm.participant(p).session(s).trial(k).path_length - sm.participant(p).session(s).trial(k).ideal_chosen_path_length;
-                                 
-                % AVERAGE PROXIMITY to TARGET 
-                % target proximity 
-                [sm.participant(p).session(s).trial(k).target_proximity, ~]=computeTargetProximity(x,y,...
-                    sm.participant(p).session(s).trial(k).goal_x,sm.participant(p).session(s).trial(k).goal_y); 
-                % ideal target proximity 
-                [sm.participant(p).session(s).trial(k).ideal_target_proximity, ~]=computeTargetProximity(xi_al,yi_al,...
-                    sm.participant(p).session(s).trial(k).goal_x,sm.participant(p).session(s).trial(k).goal_y);               
-                % target proximity deviation 
-                sm.participant(p).session(s).trial(k).target_proximity_deviation=...
-                    sm.participant(p).session(s).trial(k).ideal_target_proximity - sm.participant(p).session(s).trial(k).target_proximity; 
-                
-                % fprintf('Standard time, path & distance analysis done for %d, session %d, file no %d.\n', id, s, k);
-                
-                %% accuracy analysis (for probe trials) 
+                %% Block 3: Data analysis, i.e. calculcation of variables     
+                %% accuracy analysis (for probe trials)
                 % compute chosen goal location
                 [sm.participant(p).session(s).trial(k).chosen_goal_i, sm.participant(p).session(s).trial(k).chosen_alley_s, ...
                     sm.participant(p).session(s).trial(k).chosen_alley_i, sm.participant(p).session(s).trial(k).obj_at_chosen_loc]=computeChosenGoals(...
@@ -391,6 +366,31 @@ tic;
                     sm.participant(p).session(s).trial(k).correct_final_alley=999; 
                 end
                 % fprintf('Accuracy analysis done for %d, session %d, file no %d.\n', id, s, k);
+                
+                %% time analysis
+                % TIME
+                sm.participant(p).session(s).trial(k).time=computeTime(t(1),t(end));  
+                                             
+                %% standard coordinate analysis using x-/y-coordinates
+                % PATH LENGTH 
+                sm.participant(p).session(s).trial(k).path_length=computePathLength(x,y); 
+                
+                % EXCESS PATH LENGTH (to chosen target) 
+                sm.participant(p).session(s).trial(k).excess_path_length=...
+                    sm.participant(p).session(s).trial(k).path_length - sm.participant(p).session(s).trial(k).ideal_chosen_path_length;
+                                 
+                % AVERAGE PROXIMITY to TARGET 
+                % target proximity 
+                [sm.participant(p).session(s).trial(k).target_proximity, ~]=computeTargetProximity(x,y,...
+                    sm.participant(p).session(s).trial(k).goal_x,sm.participant(p).session(s).trial(k).goal_y); 
+                % ideal target proximity 
+                [sm.participant(p).session(s).trial(k).ideal_target_proximity, ~]=computeTargetProximity(xi_al,yi_al,...
+                    sm.participant(p).session(s).trial(k).goal_x,sm.participant(p).session(s).trial(k).goal_y);               
+                % target proximity deviation 
+                sm.participant(p).session(s).trial(k).target_proximity_deviation=...
+                    sm.participant(p).session(s).trial(k).ideal_target_proximity - sm.participant(p).session(s).trial(k).target_proximity; 
+                
+                % fprintf('Standard time, path & distance analysis done for %d, session %d, file no %d.\n', id, s, k);
           
                 %% rotation analysis
                 % TOTAL ROTATION
