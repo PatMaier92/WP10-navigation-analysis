@@ -232,18 +232,7 @@ tic;
             % read-in and clean trial tracker data
             data=readtable(fullfile(input_folder, name));
             data=cleanTrialTrackerFile(data,s); 
-        
-            % get sampling rate 
-            % (if sampling rate differs, data needs to be corrected and 
-            % interpolated before further analysis, however,
-            % sampling rate seems pretty consistent in WP10 data)
-            sampling_rate_original=zeros(length(data.time)-1,1);
-            for i=1:length(data.time)-1
-                sampling_rate_original(i)=data.time(i+1)-data.time(i);
-            end
-            sm.participant(p).session(s).trial(k).sampling_rate=sum(sampling_rate_original)/length(sampling_rate_original);
-            clear sampling_rate_original i; 
-            
+                    
             % extract data 
             t=data.time; % time
             x=data.pos_x; % coordinates
@@ -260,17 +249,17 @@ tic;
             else % star maze
                 x=setNormalizedValues(x,sm.coord.xmin,sm.coord.xmax); y=setNormalizedValues(y,sm.coord.ymin,sm.coord.ymax);
             end
-            
-            % temporal normalization (currently only for rotation)
-            % set new sampling rate 
-            % (default of 0.05 corresponds to 20 frames per second)          
-            new_sampling_rate=0.05; 
-            [~, xi, yi, ri]=temporalNormalization(new_sampling_rate, t, x, y, r); 
-            clear r; 
-            
-            % save start and end points 
+            % save start and end points
             sm.participant(p).session(s).trial(k).x_1=x(1); sm.participant(p).session(s).trial(k).y_1=y(1);
             sm.participant(p).session(s).trial(k).x_n=x(end); sm.participant(p).session(s).trial(k).y_n=y(end);
+            
+            % temporal normalization
+            % get original sampling rate 
+            original_sampling_rate=(t(end)-t(1))/length(t); 
+            % set new sampling rate (default 0.05 corresponds to 20 frames per second)          
+            new_sampling_rate=0.05; 
+            [ti, xi, yi, ri]=temporalNormalization(new_sampling_rate, t, x, y, r); 
+            clear t x y r *sampling_rate; 
                                   
             %% get single trial info from trial_results
             sm.participant(p).session(s).session_duration=round(minutes(trial_data.timestamp(numel(files),1) - trial_data.timestamp(1,1))); 
@@ -316,7 +305,7 @@ tic;
                                 
 %                 % test plot
 %                 figure; plot(sm.coord.full_poly); hold on; 
-%                 plot(x, y, 'k-', x_line, y_line, 'k+', xi_al, yi_al, 'b-',...
+%                 plot(xi, yi, 'k-', x_line, y_line, 'k+', xi_al, yi_al, 'b-',...
 %                     x_line_chosen, y_line_chosen, 'm--');
 %                 xlim([0 1]); ylim([0 1]); hold off; 
 
@@ -360,18 +349,18 @@ tic;
                 
                 %% time analysis
                 % TIME
-                sm.participant(p).session(s).trial(k).time=computeTime(t(1),t(end));  
+                sm.participant(p).session(s).trial(k).time=computeTime(ti(1),ti(end));  
                                              
                 %% standard coordinate analysis using x-/y-coordinates
                 % PATH LENGTH 
-                sm.participant(p).session(s).trial(k).path_length=computePathLength(x,y); 
+                sm.participant(p).session(s).trial(k).path_length=computePathLength(xi,yi); 
                 
                 % EXCESS PATH LENGTH (to chosen target) 
                 sm.participant(p).session(s).trial(k).excess_path_length=...
                     sm.participant(p).session(s).trial(k).path_length - sm.participant(p).session(s).trial(k).ideal_path_length_to_chosen;
                                  
                 % AVERAGE DISTANCE to TARGET / PROXIMITY
-                [sm.participant(p).session(s).trial(k).target_distance, ~]=computeTargetProximity(x,y,...
+                [sm.participant(p).session(s).trial(k).target_distance, ~]=computeTargetProximity(xi,yi,...
                     sm.participant(p).session(s).trial(k).goal_x,sm.participant(p).session(s).trial(k).goal_y); 
                 
                 % EXCESS AVERAGE DISTANCE to TARGET / PROXIMITY 
@@ -416,12 +405,12 @@ tic;
                 
                 %% zone analysis          
                 % compute path zone sequence (10 zones) for actual data 
-                [seq_10]=computeZoneSequence(x, y, sm.coord.alley_full_x, sm.coord.alley_full_y,...
+                [seq_10]=computeZoneSequence(xi, yi, sm.coord.alley_full_x, sm.coord.alley_full_y,...
                     sm.coord.alley_half_out_x, sm.coord.alley_half_out_y, sm.coord.alley_half_in_x, sm.coord.alley_half_in_y,...
                     sm.coord.rec_x, sm.coord.rec_y, sm.coord.tri_x, sm.coord.tri_y, 10); 
                 
                 % compute path zone sequence (20 zones) for actual data 
-                [seq_20]=computeZoneSequence(x, y, sm.coord.alley_full_x, sm.coord.alley_full_y,...
+                [seq_20]=computeZoneSequence(xi, yi, sm.coord.alley_full_x, sm.coord.alley_full_y,...
                     sm.coord.alley_half_out_x, sm.coord.alley_half_out_y, sm.coord.alley_half_in_x, sm.coord.alley_half_in_y,...
                     sm.coord.rec_x, sm.coord.rec_y, sm.coord.tri_x, sm.coord.tri_y, 20); 
   
@@ -465,7 +454,7 @@ tic;
                     sm.participant(p).session(s).trial(k).excess_path_length,...
                     sm.participant(p).session(s).trial(k).excess_target_distance,...
                     sm.participant(p).session(s).trial(k).rotation_turns,...
-                    sm.coord.full_poly, x, y, x_line, y_line, x_line_chosen, y_line_chosen,...
+                    sm.coord.full_poly, xi, yi, x_line, y_line, x_line_chosen, y_line_chosen,...
                     sm.participant(p).session(s).trial(k).goal_x,...
                     sm.participant(p).session(s).trial(k).goal_y, output_folder);
 
@@ -478,11 +467,11 @@ tic;
                                
                 %% time analysis
                 % TIME
-                sm.participant(p).session(s).trial(k).time=computeTime(t(1),t(end));
+                sm.participant(p).session(s).trial(k).time=computeTime(ti(1),ti(end));
 
                 %% standard coordinate analysis using x-/y-coordinates and z-rotation
                 % PATH LENGTH to all targets
-                sm.participant(p).session(s).trial(k).path_length=computePathLength(x,y); 
+                sm.participant(p).session(s).trial(k).path_length=computePathLength(xi,yi); 
                               
                 % EXCESS PATH LENGTH to all targets
                 sm.participant(p).session(s).trial(k).excess_path_length=...
@@ -503,11 +492,11 @@ tic;
                     sm.participant(p).session(s).trial(k).rotation_turns,...
                     sm.coord.practise.practise_poly, sm.coord.practise.goal_x, sm.coord.practise.goal_y,...
                     sm.coord.practise.start_x, sm.coord.practise.start_y,...
-                    sm.coord.practise.practise_goal_names, x, y , x_line_motor, y_line_motor, output_folder);
+                    sm.coord.practise.practise_goal_names, xi, yi , x_line_motor, y_line_motor, output_folder);
                 clear x_line_motor y_line_motor;     
             end
             
-            clear x* y* t r ideal_path* origin* *seq* zones* name;             
+            clear x* y* ti ri ideal_path* origin* *seq* zones* name;             
         end
         
         clear files trial_data input_folder; 

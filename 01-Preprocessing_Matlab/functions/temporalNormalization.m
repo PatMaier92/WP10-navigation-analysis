@@ -15,6 +15,9 @@ xi=[interp1(t,x,ti,'linear'); x(end)];
 yi=[interp1(t,y,ti,'linear'); y(end)];
 ri=[interp1(t,r,ti,'linear'); r(end)];
 
+% add end point
+ti=[ti; t(end)]; 
+
 % % test plot xy
 % figure; plot(sm.coord.full_poly); hold on;
 % plot(x, y, 'k+');
