@@ -326,11 +326,8 @@ tic;
 %                     origin_x_line, origin_y_line, 'm--');
 %                 xlim([0 1]); ylim([0 1]); hold off; 
 
-                % compute ideal path zone sequences
-                [ideal_seq_10]=computeZoneSequence(x_line, y_line, sm.coord.alley_full_x, sm.coord.alley_full_y,...
-                    sm.coord.alley_half_out_x, sm.coord.alley_half_out_y, sm.coord.alley_half_in_x, sm.coord.alley_half_in_y,...
-                    sm.coord.rec_x, sm.coord.rec_y, sm.coord.tri_x, sm.coord.tri_y, 10);
-                
+                % compute ideal path zone sequence (10 zones)
+                % to chosen goal location               
                 [ideal_seq_10_chosen]=computeZoneSequence(x_line_chosen, y_line_chosen, sm.coord.alley_full_x, sm.coord.alley_full_y,...
                     sm.coord.alley_half_out_x, sm.coord.alley_half_out_y, sm.coord.alley_half_in_x, sm.coord.alley_half_in_y,...
                     sm.coord.rec_x, sm.coord.rec_y, sm.coord.tri_x, sm.coord.tri_y, 10);
@@ -421,7 +418,7 @@ tic;
                 clear rot_index;
                 % fprintf('Rotation analysis done for %d, session %d, file no %d.\n', id, s, k);   
                 
-                %% zone analysis for exploration behavior             
+                %% zone analysis          
                 % compute path zone sequence (10 zones) for actual data 
                 [seq_10]=computeZoneSequence(x, y, sm.coord.alley_full_x, sm.coord.alley_full_y,...
                     sm.coord.alley_half_out_x, sm.coord.alley_half_out_y, sm.coord.alley_half_in_x, sm.coord.alley_half_in_y,...
@@ -438,21 +435,20 @@ tic;
                 % number of entered zones (i.e. re-entries counted) 
                 zones_entered=length(seq_20);
                 
-                % EDIT DISTANCE 
+                % EXCESS PATH EDIT DISTANCE 
                 % compute edit distance costs (i.e. deviation between ideal and actual path zone sequence) 
                 % method: Levenshtein - lowest number of insertions, deletions, and substitutions
-                sm.participant(p).session(s).trial(k).path_edit_distance=editDistance(seq_10, ideal_seq_10);
-                sm.participant(p).session(s).trial(k).chosen_path_edit_distance=editDistance(seq_10, ideal_seq_10_chosen);
+                sm.participant(p).session(s).trial(k).excess_path_edit_distance=editDistance(seq_10, ideal_seq_10_chosen);
                                                                  
                 % SEARCH STRATEGY category
                 [sm.participant(p).session(s).trial(k).search_strategy]=computeSearchStrategy(...
                     zones_explored, zones_entered,...
-                    sm.participant(p).session(s).trial(k).chosen_path_edit_distance); 
+                    sm.participant(p).session(s).trial(k).excess_path_edit_distance); 
                 
                 % fprintf('Zone analysis done for %d, session %d, file no %d.\n', id, s, k);
                 
                 %% set marker for excluded trials
-                % criteria: timeout, or no movement/very short trial time (i.e. path_length=0, rotation=0, or time < 3)
+                % criteria: timeout, or no movement, or very short trial time 
                 sm.participant(p).session(s).trial(k).exclude_trial_matlab=0;
                 if sm.participant(p).session(s).trial(k).chosen_alley_i==999
                     sm.participant(p).session(s).trial(k).exclude_trial_matlab=1; 
