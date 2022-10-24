@@ -57,13 +57,12 @@ rm(file_name)
 # practise 
 practise <- sm_data %>%
   filter(condition %in% c("practise")) %>%  
-  select(id, group, sex, time, excess_path_length, target_proximity, rotation_turns, rotation_turns_by_path_length) %>% 
+  select(id, group, sex, time, excess_path_length, excess_target_distance, rotation) %>% 
   droplevels()
 
-cov_data <- practise %>%  # TBD: target proximity deviation, angular velocity?
-  select(id, time, excess_path_length, target_proximity, rotation_turns, rotation_turns_by_path_length) %>% 
-  rename(cov_time=time, cov_excess_path=excess_path_length, cov_proximity=target_proximity, 
-         cov_rotation=rotation_turns, cov_rotation_path=rotation_turns_by_path_length)
+cov_data <- practise %>% 
+  select(id, time, excess_path_length) %>% 
+  rename(cov_time=time, cov_excess_path=excess_path_length)
 
 cov_names <- cov_data %>% select(-id) %>% names()
 
@@ -109,11 +108,13 @@ l_memory_score <- "memory score"
 l_correct_alley <- "alley accuracy (%)"
 l_time <- "time (sec)"
 l_excess_path_length <- "excess path length"
-l_proximity <- "avg. target proximity"
-l_rotation <- "sum of rotation (full turns)"
-l_initial_rotation <- "sum of initial rotation (full turns)"
-l_rotation_by_path <- "sum of rotation (full turns) / path length"
-l_angular_velocity <- "angular velocity (IdPhi)"
+l_excess_target_distance <- "excess avg. target distance"
+l_rotation <- "sum of rotation"
+l_rotation_velocity <- "rotation velocity"
+l_rotation_by_path <- "sum of rotation / path length"
+l_initial_rotation <- "sum of initial rotation"
+l_initial_rotation_velocity <- "initial rotation velocity"
+l_initial_rotation_by_path <- "sum of initial rotation / path length"
 
 # colors
 # scales::show_col()
@@ -693,32 +694,82 @@ rm(model.path, model.path_outlier, model.path_hetero)
 ## ----
 
 
-# --- AVERAGE PROXIMITY TO TARGET (ALL PROBE TRIALS) --- # 
-## ---- model_probe_proximity
+# --- EXCESS AVERAGE DISTANCE TO TARGET (ALL PROBE TRIALS) --- # 
+## ---- model_probe_target_distance
 # note: random effects structure was determined according to Bates (2015) & Matuschek et al. (2017) 
-# TBD add to Rmd
-model.proximity <- mixed(target_proximity_deviation ~ group*session*condition + cov_location + cov_object + cov_gender + cov_proximity +  
-                           (session*condition||id), data=data_p, expand_re=T)
+model.target_distance <- mixed(excess_target_distance ~ group*session*condition + cov_location + cov_object + cov_gender +  
+                                 (session*condition||id), data=data_p, expand_re=T)
 ## ----
 
 # random effects
-VarCorr(model.proximity$full_model)
+VarCorr(model.target_distance$full_model)
 
 # fixed effects 
-model.proximity
+model.target_distance
 
-## ---- post_hoc_probe_proximity
-emmeans(model.proximity, pairwise ~ group, lmer.df="satterthwaite", adjust="bonferroni")$contrasts 
-emmeans(model.proximity, pairwise ~ session, lmer.df="satterthwaite")$contrasts 
-emmeans(model.proximity, pairwise ~ condition, lmer.df="satterthwaite")$contrasts
+## ---- post_hoc_probe_target_distance
+emmeans(model.target_distance, pairwise ~ group, lmer.df="satterthwaite", adjust="bonferroni")$contrasts 
+emmeans(model.target_distance, pairwise ~ session, lmer.df="satterthwaite")$contrasts 
+emmeans(model.target_distance, pairwise ~ condition, lmer.df="satterthwaite")$contrasts
 ## ----
 
-## ---- plot_probe_proximity
-plot.proximity <- afex_plot_wrapper(model.proximity, "session", "group", "condition", l_proximity, ymin=0.25, ymax=-0.25)
+## ---- plot_probe_target_distance
+plot.target_distance <- afex_plot_wrapper(model.target_distance, "session", "group", "condition", l_excess_target_distance, ymin=-0.25, ymax=0.25)
 ## ----
+rm(plot.target_distance)
 
-## ---- control_probe_proximity 
-# tbd 
+## ---- control_probe_target_distance 
+t <- data_p %>% mutate(flag=ifelse(is_outlier(excess_target_distance), T, F))
+t <- t %>% filter(flag==F)
+model.target_distance_outlier <- mixed(excess_target_distance ~ group*session*condition + cov_location + cov_object + cov_gender +  
+                                         (session*condition||id), data=t, expand_re=T)
+rm(t)
+
+# 2) model with heteroscedastic variances
+model.target_distance_h1 <- lme(excess_target_distance ~ group*session*condition + cov_location + cov_object + cov_gender, 
+                                random=list(id=pdDiag(~ session * condition)),
+                                na.action=na.omit, data=data_p, method="ML")
+model.target_distance_h2 <- update(model.target_distance_h1, weights=varIdent(form=~1 | group))
+model.target_distance_h3 <- update(model.target_distance_h1, weights=varComb(varIdent(form=~1 | group),
+                                                                             varIdent(form=~1 | condition)))
+model.target_distance_h4 <- update(model.target_distance_h1, weights=varComb(varIdent(form=~1 | group),
+                                                                             varIdent(form=~1 | condition),
+                                                                             varIdent(form=~1 | session)))
+anova(model.target_distance_h1, model.target_distance_h2, model.target_distance_h3, model.target_distance_h4) # chose model h4 
+rm(model.target_distance_h1, model.target_distance_h2, model.target_distance_h3, model.target_distance_h4)
+model.target_distance_hetero <- lme(excess_target_distance ~ group*session*condition + cov_location + cov_object + cov_gender,  
+                                    random=list(id=pdDiag(~ session * condition)),
+                                    weights=varComb(varIdent(form=~1 | group),
+                                                    varIdent(form=~1 | condition),
+                                                    varIdent(form=~1 | session)),
+                                    na.action=na.omit, data=data_p, method="REML")
+
+# check models 
+plot(model.target_distance$full_model, resid(., type="pearson") ~ fitted(.))
+plot(model.target_distance$full_model, group ~ residuals(., type="pearson"))
+qqnorm(resid(model.target_distance$full_model))
+qqline(resid(model.target_distance$full_model))
+
+plot(model.target_distance_outlier$full_model, resid(., type="pearson") ~ fitted(.))
+plot(model.target_distance_outlier$full_model, group ~ residuals(., type="pearson"))
+qqnorm(resid(model.target_distance_outlier$full_model))
+qqline(resid(model.target_distance_outlier$full_model))
+
+plot(model.target_distance_hetero, resid(., type="pearson") ~ fitted(.))
+plot(model.target_distance_hetero, group ~ residuals(., type="pearson"))
+qqnorm(resid(model.target_distance_hetero))
+qqline(resid(model.target_distance_hetero))
+
+# random effects
+VarCorr(model.target_distance$full_model)
+VarCorr(model.target_distance_outlier$full_model)
+model.target_distance_hetero$modelStruct$reStruct 
+
+# statistics on fixed effects 
+model.target_distance
+model.target_distance_outlier
+anova.lme(model.target_distance_hetero, type="marginal")
+rm(model.target_distance, model.target_distance_outlier, model.target_distance_hetero)
 ## ----
 
 
@@ -1012,31 +1063,29 @@ plot.path_learn <- afex_plot_wrapper(model.path_learn, "trial_in_block", "group"
 rm(plot.path_learn, model.path_learn)
 
 
-# --- AVERAGE PROXIMITY TO TARGET (LEARNING TRIALS) --- # 
-## ---- model_learn_proximity
+# --- EXCESS AVERAGE DISTANCE TO TARGET (LEARNING TRIALS) --- # 
+## ---- model_learn_target_distance
 # note: random effects structure was determined according to Bates (2015) & Matuschek et al. (2017) 
 # TBD choose outcome & add to Rmd
-model.proximity_learn <- mixed(target_proximity ~ group*trial_in_block + cov_location + cov_object + cov_gender + cov_proximity +
-                                 (1|id), data=data_l, expand_re=T)
-model.proximity_learn <- mixed(target_proximity_deviation ~ group*trial_in_block + cov_location + cov_object + cov_gender + cov_proximity + 
+model.target_distance_learn <- mixed(excess_target_distance ~ group*trial_in_block + cov_location + cov_object + cov_gender +
                                  (1|id), data=data_l, expand_re=T)
 ## ----
 
 # random effects
-VarCorr(model.proximity_learn$full_model)
+VarCorr(model.target_distance_learn$full_model)
 
 # fixed effects
-model.proximity_learn
+model.target_distance_learn
 
-## ---- post_hoc_learn_proximity 
-emmeans(model.proximity_learn, pairwise ~ group, lmer.df="satterthwaite", adjust="bonferroni")
-emmeans(model.proximity_learn, pairwise ~ trial_in_block, lmer.df="satterthwaite", adjust="bonferroni")
+## ---- post_hoc_learn_target_distance 
+emmeans(model.target_distance_learn, pairwise ~ group, lmer.df="satterthwaite", adjust="bonferroni")
+emmeans(model.target_distance_learn, pairwise ~ trial_in_block, lmer.df="satterthwaite", adjust="bonferroni")
 ## ----
 
-## ---- plot_learn_proximity
-plot.proximity_learn <- afex_plot_wrapper(model.proximity_learn, "trial_in_block", "group", NULL, l_proximity, xlabel=l_trial_in_block, ymin=-0.25, ymax=0.25)
+## ---- plot_learn_target_distance
+plot.target_distance_learn <- afex_plot_wrapper(model.target_distance_learn, "trial_in_block", "group", NULL, l_excess_target_distance, xlabel=l_trial_in_block, ymin=-0.15, ymax=0.15)
 ## ----
-rm(plot.proximity_learn, model.proximity_learn)
+rm(plot.target_distance_learn, model.target_distance_learn)
 
 
 # --- INITIAL ROTATION (LEARNING TRIALS) --- # 
@@ -1118,7 +1167,7 @@ rm(plot.rotation_path_learn, model.rotation_path_learn)
 
 # tbd aggregate data first 
 corr_data <- data_p %>%
-  select(memory_score, time, excess_path_length, target_proximity, target_proximity_deviation, 
+  select(memory_score, time, excess_path_length, excess_target_distance,  
          initial_rotation_turns, initial_angular_velocity, rotation_turns, rotation_turns_by_path_length) %>% 
   drop_na() %>% 
   cor()
@@ -1174,8 +1223,8 @@ aov_ez("id", "time", practise, between=c("group"))
 # excess path length: DIFFER SIGNIFICANTLY
 aov_ez("id", "excess_path_length", practise, between=c("group"))
 
-# target proximity: ns  
-aov_ez("id", "target_proximity", practise, between=c("group"))
+# excess target distance: ns  
+aov_ez("id", "excess_target_distance", practise, between=c("group"))
 
 # rotation: GROUPS DIFFER SIGNIFICANTLY  
 aov_ez("id", "rotation_turns", practise, between=c("group"))

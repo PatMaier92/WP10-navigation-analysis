@@ -95,9 +95,9 @@ $$\text{Memory score} = \text{percentile rank of the Euclidean distance value in
 * **Excess path length** (metric): This measure reflects how directly participants navigated to the remembered goal location (Suthana 2012; Jacobs 2016; Bellmund 2019). It is calculated as the travelled path length minus the ideal path length to the remembered location. The path lengths are calculated as summation of Euclidean distances between x-/y-coordinates over time. 
 $$\text{(Ideal) path length} = \sum_{i=1}^{n} \sqrt{(x_{i}-x_{i+1})^2 + (y_{i}-y_{i+1})^2}$$
 $$\text{Excess path length} = (path-path_{ideal})$$
-* **Avg. target proximity** (metric): This measure reflects if participants tended to stay closer or further away from the correct goal location (TBD REFERENCES). It is calculated as the cumulative Euclidean distance between the the player’s x-/y-coordinates along their path and the correct goal location, averaged by the number of x-/y data points. 
-– TBD Variation: Deviation to "ideal" value
-$$\text{Avg. target proximity} = \frac {\sum_{i=1}^{n}\sqrt{(x_{i}-x_{correct})^2 + (y_{i}-y_{correct})^2}} {n}$$
+* **Excess avg. target distance** (metric): This measure reflects if participants tended to stay closer or further away from the correct goal location (TBD REFERENCES). It is calculated as the avg. target distance minus the ideal avg. target distance to the goal location. The avg. target distance is calculated as the cumulative Euclidean distance between the the player’s x-/y-coordinates along their path and the correct goal location, averaged by the number of x-/y data points. 
+$$\text{Avg. target distance} = \frac {\sum_{i=1}^{n}\sqrt{(x_{i}-x_{correct})^2 + (y_{i}-y_{correct})^2}} {n}$$
+$$\text{Excess avg. target distance} = (distance-distance_{ideal})$$
 * **Angular velocity** (metric): **TBD: IdPhi, VTE-behavior (REFERENCES)**. z-rotations from the initial area (start alley plus first intersection) were transformed from degrees to radians and unwrapped (i.e. discontinuities removed due to switch at 360°). We then calculated the sum of absolute z-rotations in the initial area (via the first derivative), divided by the number of data points to obtain the averaged angular velocity. (REFERENCES)
 $$\text{Angular Velocity (radians)} = \frac {\sum_{i=1}^{n_{initial}} | (z_{i}-z_{i+1})|} {n_{initial}}$$
 * **Initial and total rotation**: **meaning (REFERENCES)**. z-rotations were transformed from degrees to radians, unwrapped (i.e. discontinuities removed due to switch at 360°), and back-transformed to degrees. We then calculated the sum of absolute z-rotations over time divided by 360° for full turns. Variants of this measure are 1. Rotation in the initial area (start alley plus first intersection), 2. Rotation normalized by path length (because longer paths automatically involve more rotation in the Starmaze).
@@ -445,11 +445,11 @@ The model had a fit of $R2 = `r R2$Rsq`, [CI: `r R2$upper.CL`, `r R2$lower.CL`$]
 * *group x session* interaction: for all groups no significant change of time across sessions (slopes not different from zero); the slopes differed only between 6-7-year-old children (numerical decrease across sessions) and both 9-10-year-old children and adults (numerical increase across sessions).
 * *group x condition* interaction: all groups had longer excess paths in allocentric compared to egocentric trials; in allocentric trials both groups of children had significantly longer excess paths than young adults, in egocentric trials only 6-7-year-old children had longer excess paths than young adults. 
 * *session x condition* interaction: only for allocentric condition significant change (increase) in excess path length across sessions, but not in egocentric; the slopes differed between egocentric (numerical decrease across sessions) and allocentric (increase across sessions).
-(Table\ \@ref(tab:table-probe-excess0)). 
+(Table\ \@ref(tab:table-probe-excess-path0)). 
 
 (ref:p-ep-caption0) Fixed effects for excess path in probe trials.
 
-```{r table-probe-excess0, echo=F}
+```{r table-probe-excess-path0, echo=F}
 apa_table(
   apa_lmm,
   caption="(ref:p-ep-caption0)",
@@ -458,7 +458,7 @@ apa_table(
 
 (ref:p-ep-caption1) Post-hoc contrasts for group x session interaction.
 
-```{r table-probe-excess1, echo=F}
+```{r table-probe-excess-path1, echo=F}
 apa_table(
   apa_emm1,
   caption="(ref:p-ep-caption1)",
@@ -467,7 +467,7 @@ apa_table(
 
 (ref:p-ep-caption2) Post-hoc contrasts for group x condition interaction.
 
-```{r table-probe-excess2, echo=F}
+```{r table-probe-excess-path2, echo=F}
 apa_table(
   apa_emm2,
   caption="(ref:p-ep-caption2)",
@@ -476,7 +476,7 @@ apa_table(
 
 (ref:p-ep-caption3) Post-hoc contrasts for session x condition interaction.
 
-```{r table-probe-excess3, echo=F}
+```{r table-probe-excess-path3, echo=F}
 apa_table(
   apa_emm3,
   caption="(ref:p-ep-caption3)",
@@ -489,23 +489,86 @@ rm(model.path, apa_lmm, apa_emm1, apa_emm2, apa_emm3)
 
 \newpage 
 
-### **Average target proximity**
+### **Excess average target distance**
 
-```{r, model_probe_proximity }
+```{r, model_probe_target_distance }
 ```
 
-```{r, plot_probe_proximity, include=F }
+```{r, plot_probe_target_distance, include=F }
 ```
 
 ```{r, echo=F, fig.height=5, fig.width=5, fig.cap="Excess path in probe trials." }
-plot.proximity
-rm(plot.proximity)
+plot.target_distance
+rm(plot.target_distance)
 ```
 
-TBD 
+```{r apa_probe_target_distance, include=F}
+R2 <- r2beta(model.target_distance$full_model, method='nsj', partial=F) %>% mutate_all(apa_num)
+
+apa_lmm <- apa_print(model.target_distance)
+apa_lmm <- apa_lmm$table %>% mutate(term=str_replace_all(term, c(" c| f"), ''))
+
+con1 <- emmeans(model.target_distance, pairwise ~ group, lmer.df="satterthwaite", adjust="satterthwaite")$contrasts
+apa_emm1 <- apa_print(con1)
+apa_emm1 <- apa_emm1$table %>% remove_rownames()
+rm(con1)
+
+con2 <- emmeans(model.target_distance, pairwise ~ condition, lmer.df="satterthwaite")$contrasts
+apa_emm2 <- apa_print(con2)
+apa_emm2 <- apa_emm2$table %>% remove_rownames()
+rm(con2)
+
+con3 <- emmeans(model.target_distance, pairwise ~ session, lmer.df="satterthwaite")$contrasts
+apa_emm3 <- apa_print(con3)
+apa_emm3 <- apa_emm3$table %>% remove_rownames()
+rm(con13)
+```
+
+The model had a fit of $R2 = `r R2$Rsq`, [CI: `r R2$upper.CL`, `r R2$lower.CL`$].
+
+* *group* main effect: Younger participants navigate further away from the correct goal location. 
+* *condition* main effect: In allocentric, participants navigate further away from the from the correct goal location than in egocentric.  
+* *session* main effect: In session 2, participants navigate further away from the from the correct goal location than in session 1
+(Table\ \@ref(tab:table-probe-excess-distance0)). 
+
+(ref:p-ed-caption0) Fixed effects for excess target distance in probe trials.
+
+```{r table-probe-excess-distance0, echo=F}
+apa_table(
+  apa_lmm,
+  caption="(ref:p-ed-caption0)",
+  placement="h")
+```
+
+(ref:p-ed-caption1) Post-hoc contrasts for factor group.
+
+```{r table-probe-excess-distance1, echo=F}
+apa_table(
+  apa_emm1,
+  caption="(ref:p-ed-caption1)",
+  placement="h")
+```
+
+(ref:p-ed-caption2) Post-hoc contrasts for factor condition.
+
+```{r table-probe-excess-distance2, echo=F}
+apa_table(
+  apa_emm2,
+  caption="(ref:p-ed-caption2)",
+  placement="h")
+```
+
+(ref:p-ed-caption3) Post-hoc contrasts for factor session. 
+
+```{r table-probe-excess-distance3, echo=F}
+apa_table(
+  apa_emm3,
+  caption="(ref:p-ed-caption3)",
+  placement="h")
+```
 
 ```{r, include=F}
-rm(model.proximity, apa_lmm, apa_emm1, apa_emm2, apa_emm3)
+rm(model.target_distance, apa_lmm, apa_emm1, apa_emm2, apa_emm3)
 ```
 
 \newpage 
@@ -797,11 +860,11 @@ apa_emm <- apa_emm$table %>% remove_rownames()
 The model had a fit of $R2 = `r R2$Rsq`, [CI: `r R2$upper.CL`, `r R2$lower.CL`$].
 
 The excess path length decreased across trials (main effect *trial in block*) but there were no group differences in the slope of the decrease (no interaction *group x trial in block* ). The groups differed in excess path length (main effect *group*). More specifically younger participants had longer excess paths, meaning they took less direct routes, compare to older participants (all groups differed from each other). 
-(Table\ \@ref(tab:table-learn-excess0))
+(Table\ \@ref(tab:table-learn-excess-path0))
 
 (ref:l-ep-caption0) Fixed effects for excess path length in training.
 
-```{r table-learn-excess0, echo=F}
+```{r table-learn-excess-path0, echo=F}
 apa_table(
   apa_lmm,
   caption="(ref:l-ep-caption0)",
@@ -810,7 +873,7 @@ apa_table(
 
 (ref:l-ep-caption1) Post-hoc contrasts for factor group.
 
-```{r table-learn-excess1, echo=F}
+```{r table-learn-excess-path1, echo=F}
 apa_table(
   apa_emm,
   caption="(ref:l-ep-caption1)",
@@ -823,25 +886,56 @@ rm(model.path_learn, R2, apa_lmm, apa_emm, emm)
 
 \newpage
 
-#### **Target proximity**
+#### **Excess average target distance**
 
-```{r, model_learn_proximity }
+```{r, model_learn_target_distance }
 ```
 
-```{r, plot_learn_proximity, include=F}
+```{r, plot_learn_target_distance, include=F}
 ```
 
 ```{r, echo=F, fig.height=4, fig.width=5, fig.cap="Trial curve for excess path in training." }
-plot.proximity_learn
-rm(plot.proximity_learn)
+plot.target_distance_learn
+rm(plot.target_distance_learn)
 ```
 
-TBD
+```{r apa_learn_target_distance, include=F}
+R2 <- r2beta(model.target_distance_learn$full_model, method='nsj', partial=F) %>% mutate_all(apa_num)
+
+apa_lmm <- apa_print(model.target_distance_learn)
+apa_lmm <- apa_lmm$table %>% mutate(term=str_replace_all(term, c(" c| f"), ''))
+
+emm <- emmeans(model.target_distance_learn, pairwise ~ group, lmer.df="satterthwaite", adjust="bonferroni")$contrasts
+apa_emm <- apa_print(emm) 
+apa_emm <- apa_emm$table %>% remove_rownames()
+```
+
+The model had a fit of $R2 = `r R2$Rsq`, [CI: `r R2$upper.CL`, `r R2$lower.CL`$].
+
+The excess avg. target distance decreased across trials (main effect *trial in block*) but there were no group differences in the slope of the decrease (no interaction *group x trial in block* ). The groups differed in excess avg. target distance length (main effect *group*). More specifically 6-7 year-old children had higher excess avg. distance to target than the other two groups, meaning they navigated further away from the correct goal location during the course of the trial.
+(Table\ \@ref(tab:table-learn-excess-distance0))
+
+(ref:l-ed-caption0) Fixed effects for excess avg. target distance in training.
+
+```{r table-learn-excess-distance0, echo=F}
+apa_table(
+  apa_lmm,
+  caption="(ref:l-ed-caption0)",
+  placement="h")
+```
+
+(ref:l-ed-caption1) Post-hoc contrasts for factor group.
+
+```{r table-learn-excess-distance1, echo=F}
+apa_table(
+  apa_emm,
+  caption="(ref:l-ed-caption1)",
+  placement="h")
+```
 
 ```{r, include=F}
-rm(model.proximity_learn, R2, apa_lmm, apa_emm, emm)
+rm(model.target_distance_learn, R2, apa_lmm, apa_emm, emm)
 ```
-
 
 \newpage
 
@@ -855,13 +949,13 @@ rm(model.proximity_learn, R2, apa_lmm, apa_emm, emm)
 
 ```{r, echo=F, fig.height=4, fig.width=5, fig.cap="Trial curve for excess path in training." }
 plot.angular_velocity_learn
-rm(plot.proximity_learn)
+rm(plot.angular_velocity_learn)
 ```
 
 TBD
 
 ```{r, include=F}
-rm(model.proximity_learn, R2, apa_lmm, apa_emm, emm)
+rm(model.angular_velocity_learn, R2, apa_lmm, apa_emm, emm)
 ```
 
 \newpage
