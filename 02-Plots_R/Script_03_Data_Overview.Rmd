@@ -86,7 +86,7 @@ In training trials, the goal is visible, i.e. the trial is always completed succ
 
 * **Memory score** (metric): Euclidean distance between x-/y-coordinates of the remembered and the correct goal location. Memory score normalizes the Euclidean distance value as a score from 0 to 1 (chance level 0.5) by comparing final distance to the final distance of 1000 randomly sampled locations within the maze (Jacobs 2016; Bellmund 2019)
 $$\text{Euclidean distance} = \sqrt{(x_{correct}-x_{remembered})^2 + (y_{correct}-y_{remembered})^2}$$
-$$\text{Memory score} = \text{percentile rank of the Euclidean distance value in relation the the distribution of Euclidean distance values from 1000 random locations}$$
+$$\text{Memory score} = \text{percentile rank of the Euclidean distance value on random distribution}$$
 * **Correct trial** (yes/no): Finding the correct goal alley, defined as the correct outer alley or intersection right in front.
 
 *Navigation behavior*: 
@@ -95,16 +95,13 @@ $$\text{Memory score} = \text{percentile rank of the Euclidean distance value in
 * **Excess path length** (metric): This measure reflects how directly participants navigated to the remembered goal location (Suthana 2012; Jacobs 2016; Bellmund 2019). It is calculated as the travelled path length minus the ideal path length to the remembered location. The path lengths are calculated as summation of Euclidean distances between x-/y-coordinates over time. 
 $$\text{(Ideal) path length} = \sum_{i=1}^{n} \sqrt{(x_{i}-x_{i+1})^2 + (y_{i}-y_{i+1})^2}$$
 $$\text{Excess path length} = (path-path_{ideal})$$
-* **Excess avg. target distance** (metric): This measure reflects if participants tended to stay closer or further away from the correct goal location (TBD REFERENCES). It is calculated as the avg. target distance minus the ideal avg. target distance to the goal location. The avg. target distance is calculated as the cumulative Euclidean distance between the the player’s x-/y-coordinates along their path and the correct goal location, averaged by the number of x-/y data points. 
-$$\text{Avg. target distance} = \frac {\sum_{i=1}^{n}\sqrt{(x_{i}-x_{correct})^2 + (y_{i}-y_{correct})^2}} {n}$$
-$$\text{Excess avg. target distance} = (distance-distance_{ideal})$$
-* **Angular velocity** (metric): **TBD: IdPhi, VTE-behavior (REFERENCES)**. z-rotations from the initial area (start alley plus first intersection) were transformed from degrees to radians and unwrapped (i.e. discontinuities removed due to switch at 360°). We then calculated the sum of absolute z-rotations in the initial area (via the first derivative), divided by the number of data points to obtain the averaged angular velocity. (REFERENCES)
-$$\text{Angular Velocity (radians)} = \frac {\sum_{i=1}^{n_{initial}} | (z_{i}-z_{i+1})|} {n_{initial}}$$
-* **Initial and total rotation**: **meaning (REFERENCES)**. z-rotations were transformed from degrees to radians, unwrapped (i.e. discontinuities removed due to switch at 360°), and back-transformed to degrees. We then calculated the sum of absolute z-rotations over time divided by 360° for full turns. Variants of this measure are 1. Rotation in the initial area (start alley plus first intersection), 2. Rotation normalized by path length (because longer paths automatically involve more rotation in the Starmaze).
-$$\text{Initial Rotation (degree)} = \frac {\sum_{i=1}^{n_{initial}} | (z_{i}-z_{i+1}) |} {360}$$ 
-$$\text{Total rotation by path length (degree)} = \frac {\sum_{i=1}^{n} | (z_{i}-z_{i+1})|} {path} * \frac {1} {360}$$ 
+* **Excess distance to goal** (metric): This measure reflects if participants searched further away from or near the correct goal location (Maei et al., 2009). It is calculated as the avg. distance to goal minus the ideal avg. distance to goal to the goal location. The distance to goal is calculated as the cumulative Euclidean distance between the the player’s x-/y-coordinates along their path and the correct goal location, averaged by the number of x-/y data points. 
+$$\text{(Ideal) distance to goal} = \frac {\sum_{i=1}^{n}\sqrt{(x_{i}-x_{correct})^2 + (y_{i}-y_{correct})^2}} {n}$$
+$$\text{Excess distance to goal} = (distance-distance_{ideal})$$
+* **Initial rotation velocity** (metric): A modified version of the integrated absolute angular velocity (IdPhi, also called vicarious-trial-and-error (VTE) behavior, Papale et al., 2012; Santos-Pata et al., 2018; Hasz & Redish, 2020; Miles et al., 2021). This value indicates the degree of deliberation and visual exploration at the first decision point of the trial and has been associated with allocentric strategy use and spatial conflict resolution (Schmidt et al., 2013; Jeung, Iggena et al., 2023). We used the z-rotation data from the beginning of the trial up until when the participant left the first intersection. The z-rotation raw data was transformed from degrees to radians and unwrapped (to avoid circular transitions when calculating change). Then, we computed the summation of absolute change in rotation across the initial segment, divided by path length in the initial segment OR divided by the number of data point (TBD).
+$$\text{Initial rotation Velocity} = \frac {\sum_{i=1}^{n_{initial}} | (z_{i}-z_{i+1})|} {n_{initial}}$$
+$$\text{Initial rotation Velocity} = \frac {\sum_{i=1}^{n_{initial}} | (z_{i}-z_{i+1})|} {path_{initial}}$$
 
-TBD Update plots
 ![Visualization of variables of interest](./pics/Var_all.jpg){width=300px,height=500x}  
 
 # Statistical analysis
@@ -196,7 +193,7 @@ apa_table(
 ```
 
 ```{r, include=F}
-rm(probe.memory_s, R2, apa_lmm, apa_emm1)
+rm(model.ms, R2, apa_lmm, apa_emm1)
 ```
 
 \newpage
@@ -268,7 +265,7 @@ apa_table(
 ```
 
 ```{r, include=F}
-rm(landmark_aov, apa_aov)
+rm(model.landmark, apa_aov)
 ```
 
 ### **Positioning**
@@ -304,7 +301,7 @@ apa_table(
 ```
 
 ```{r, include=F}
-rm(position_aov, apa_aov, apa_emm1)
+rm(model.position, apa_aov, apa_emm1)
 ```
 
 \newpage 
@@ -489,7 +486,7 @@ rm(model.path, apa_lmm, apa_emm1, apa_emm2, apa_emm3)
 
 \newpage 
 
-### **Excess average target distance**
+### **Excess distance to goal**
 
 ```{r, model_probe_target_distance }
 ```
@@ -508,7 +505,7 @@ R2 <- r2beta(model.target_distance$full_model, method='nsj', partial=F) %>% muta
 apa_lmm <- apa_print(model.target_distance)
 apa_lmm <- apa_lmm$table %>% mutate(term=str_replace_all(term, c(" c| f"), ''))
 
-con1 <- emmeans(model.target_distance, pairwise ~ group, lmer.df="satterthwaite", adjust="satterthwaite")$contrasts
+con1 <- emmeans(model.target_distance, pairwise ~ group, lmer.df="satterthwaite", adjust="bonferroni")$contrasts
 apa_emm1 <- apa_print(con1)
 apa_emm1 <- apa_emm1$table %>% remove_rownames()
 rm(con1)
@@ -531,7 +528,7 @@ The model had a fit of $R2 = `r R2$Rsq`, [CI: `r R2$upper.CL`, `r R2$lower.CL`$]
 * *session* main effect: In session 2, participants navigate further away from the from the correct goal location than in session 1
 (Table\ \@ref(tab:table-probe-excess-distance0)). 
 
-(ref:p-ed-caption0) Fixed effects for excess target distance in probe trials.
+(ref:p-ed-caption0) Fixed effects for excess distance to goal in probe trials.
 
 ```{r table-probe-excess-distance0, echo=F}
 apa_table(
@@ -573,60 +570,32 @@ rm(model.target_distance, apa_lmm, apa_emm1, apa_emm2, apa_emm3)
 
 \newpage 
 
-### **Angular velocity (IdPhi)**
+### **Initial rotation velocity**
 
-```{r, model_probe_angular_velocity }
+```{r, model_probe_rotation_velocity }
 ```
 
-```{r, plot_probe_angular_velocity, include=F }
+```{r, plot_probe_rotation_velocity, include=F }
 ```
 
 ```{r, echo=F, fig.height=5, fig.width=5, fig.cap="Excess path in probe trials." }
-plot.angular_velocity
-rm(plot.angular_velocity)
+plot.rotation_velocity
+rm(plot.rotation_velocity)
 ```
 
-TBD 
+```{r apa_probe_rotation_velocity, include=F }
+R2 <- r2beta(model.rotation_velocity$full_model, method='nsj', partial=F) %>% mutate_all(apa_num)
 
-```{r, include=F}
-rm(model.angular_velocity, apa_lmm, apa_emm2, apa_emm3)
-```
-
-\newpage 
-
-### **Initial rotation**
-
-```{r, model_probe_initial_rotation }
-```
-
-```{r, plot_probe_initial_rotation, include=F }
-```
-
-```{r, echo=F, fig.height=5, fig.width=5, fig.cap="Initial rotation in probe trials." }
-plot.initial_rotation
-rm(plot.initial_rotation)
-```
-
-```{r apa_probe_initial_rotation, include=F }
-R2 <- r2beta(model.initial_rotation$full_model, method='nsj', partial=F) %>% mutate_all(apa_num)
-
-apa_lmm <- apa_print(model.initial_rotation)
+apa_lmm <- apa_print(model.rotation_velocity)
 apa_lmm <- apa_lmm$table %>% mutate(term=str_replace_all(term, c(" c| f"), ''))
 
-emm1 <- emmeans(model.initial_rotation, ~ group * session, lmer.df="satterthwaite")
-con1 <- summary(rbind(pairs(emm1, simple="group"), pairs(emm1, simple="session"), pairs(emm1, interaction="pairwise")), 
-                infer=c(T,T), by=NULL, adjust="bonferroni")
-apa_emm1 <- apa_print(con1)
-apa_emm1 <- apa_emm1$table %>% remove_rownames()
-rm(emm1, con1)
-
-emm2 <- emmeans(model.initial_rotation, ~ group * condition, lmer.df="satterthwaite")
+emm2 <- emmeans(model.rotation_velocity, ~ group * condition, lmer.df="satterthwaite")
 con2 <- summary(rbind(pairs(emm2, simple="group"), pairs(emm2, simple="condition")), infer=c(T,T), by=NULL, adjust="bonferroni")
 apa_emm2 <- apa_print(con2)
 apa_emm2 <- apa_emm2$table %>% remove_rownames()
 rm(emm2, con2)
 
-emm3 <- emmeans(model.initial_rotation, ~ session * condition, lmer.df="satterthwaite")
+emm3 <- emmeans(model.rotation_velocity, ~ session * condition, lmer.df="satterthwaite")
 con3 <- summary(rbind(pairs(emm3, simple="session"), pairs(emm3, simple="condition"), pairs(emm3, interaction="pairwise")), 
                 infer=c(T,T), by=NULL, adjust="bonferroni")
 apa_emm3 <- apa_print(con3)
@@ -636,57 +605,45 @@ rm(emm3, con3)
 
 The model had a fit of $R2 = `r R2$Rsq`, [CI: `r R2$upper.CL`, `r R2$lower.CL`$].
 
-* *group x session* interaction: 
 * *group x condition* interaction:  
 * *session x condition* interaction:
 
-**In the allocentric condition both 6-7-yo children and adults had a significant increase in initial rotation across sessions (slope differed from zero) whereas this was not the case for 9-10-year-old children. In the egocentric condition there were no changes in initial rotation across sessions for all groups (slope did not differ from zero). For adults the increase in initial rotation across sessions was significantly larger for allocentric compared to egocentric, there was a trend for 6-7-year-old children. For adults the increase in initial rotation across session was significantly larger compared to 9-10-year-old children but not 6-7-year-old children.**
+(Table\ \@ref(tab:table-probe-init-rot-vel0)). 
 
-(Table\ \@ref(tab:table-probe-init-rot0)). 
+(ref:p-irv-caption0) Fixed effects for initial rotation veloctiy in probe trials.
 
-(ref:p-ir-caption0) Fixed effects for initial rotation in probe trials.
-
-```{r table-probe-init-rot0, echo=F}
+```{r table-probe-init-rot-vel0, echo=F}
 apa_table(
   apa_lmm,
-  caption="(ref:p-ir-caption0)",
+  caption="(ref:p-irv-caption0)",
   placement="h")
 ```
 
-(ref:p-ir-caption1) Post-hoc contrasts for group x session interaction.
+(ref:p-irv-caption2) Post-hoc contrasts for group x condition interaction.
 
-```{r table-probe-init-rot1, echo=F}
-apa_table(
-  apa_emm1,
-  caption="(ref:p-ir-caption1)",
-  placement="h")
-```
-
-(ref:p-ir-caption2) Post-hoc contrasts for group x condition interaction.
-
-```{r table-probe-init-rot2, echo=F}
+```{r table-probe-init-rot-vel2, echo=F}
 apa_table(
   apa_emm2,
-  caption="(ref:p-ir-caption2)",
+  caption="(ref:p-irv-caption2)",
   placement="h")
 ```
 
-(ref:p-ir-caption3) Post-hoc contrasts for session x condition interaction.
+(ref:p-irv-caption3) Post-hoc contrasts for session x condition interaction.
 
-```{r table-probe-init-rot3, echo=F}
+```{r table-probe-init-rot-vel3, echo=F}
 apa_table(
   apa_emm3,
-  caption="(ref:p-ir-caption3)",
+  caption="(ref:p-irv-caption3)",
   placement="h")
 ```
 
 ```{r, include=F}
-rm(model.initial_rotation, apa_lmm, apa_emm1, apa_emm2, apa_emm3)
+rm(model.rotation_velocity, apa_lmm, apa_emm2, apa_emm3)
 ```
 
-\newpage
+\newpage 
 
-### **Rotation by path length**
+### **Initial rotation by path length**
 
 ```{r, model_probe_rotation_path}
 ```
@@ -705,13 +662,6 @@ R2 <- r2beta(model.rotation_path$full_model, method='nsj', partial=F) %>% mutate
 apa_lmm <- apa_print(model.rotation_path)
 apa_lmm <- apa_lmm$table %>% mutate(term=str_replace_all(term, c(" c| f"), ''))
 
-emm1 <- emmeans(model.rotation_path, ~ group * session, lmer.df="satterthwaite")
-con1 <- summary(rbind(pairs(emm1, simple="group"), pairs(emm1, simple="session"), pairs(emm1, interaction="pairwise")), 
-                infer=c(T,T), by=NULL, adjust="bonferroni")
-apa_emm1 <- apa_print(con1)
-apa_emm1 <- apa_emm1$table %>% remove_rownames()
-rm(emm1, con1)
-
 emm2 <- emmeans(model.rotation_path, ~ group * condition, lmer.df="satterthwaite")
 con2 <- summary(rbind(pairs(emm2, simple="group"), pairs(emm2, simple="condition")), infer=c(T,T), by=NULL, adjust="bonferroni")
 apa_emm2 <- apa_print(con2)
@@ -728,49 +678,38 @@ rm(emm3, con3)
 
 The model had a fit of $R2 = `r R2$Rsq`, [CI: `r R2$upper.CL`, `r R2$lower.CL`$].
 
-* *group x session* interaction: for 6-7-year-old children and adults significant increase in rotation across sessions (slopes differed from zero) but not for 9-10-year-old children (although numerically present). The increase in rotation across sessions was significantly larger for adults compared to 9-10-year-old children. 
-* *group x condition* interaction: all groups rotated significantly more in allocentric compared to egocentric trials; adults rotated significantly more than 6-7-year-old children in allocentric trials, whereas there were no group differences in rotation in egocentric trials (although trend for significantly more rotation in 6-7-year-old children compared to adults). 
-* *session x condition* interaction: only for allocentric condition significant change (increase) in rotation across sessions, but not in egocentric; the slopes differed between egocentric (no change) and allocentric (increase).
-(Table\ \@ref(tab:table-probe-rot0)). 
+* *group x condition* interaction: 
+* *session x condition* interaction: 
 
-(ref:p-r-caption0) Fixed effects for normalized rotation in probe trials.
+(ref:p-irp-caption0) Fixed effects for initial rotation by path length in probe trials.
 
-```{r table-probe-rot0, echo=F}
+```{r table-probe-rot-p0, echo=F}
 apa_table(
   apa_lmm,
-  caption="(ref:p-r-caption0)",
+  caption="(ref:p-irp-caption0)",
   placement="h")
 ```
 
-(ref:p-r-caption1) Post-hoc contrasts for group x session interaction.
+(ref:p-irp-caption2) Post-hoc contrasts for group x condition interaction.
 
-```{r table-probe-rot1, echo=F}
-apa_table(
-  apa_emm1,
-  caption="(ref:p-r-caption1)",
-  placement="h")
-```
-
-(ref:p-r-caption2) Post-hoc contrasts for group x condition interaction.
-
-```{r table-probe-rot2, echo=F}
+```{r table-probe-rot-p2, echo=F}
 apa_table(
   apa_emm2,
-  caption="(ref:p-r-caption2)",
+  caption="(ref:p-irp-caption2)",
   placement="h")
 ```
 
-(ref:p-r-caption3) Post-hoc contrasts for session x condition interaction.
+(ref:p-irp-caption3) Post-hoc contrasts for session x condition interaction.
 
-```{r table-probe-rot3, echo=F}
+```{r table-probe-rot-p3, echo=F}
 apa_table(
   apa_emm3,
-  caption="(ref:p-r-caption3)",
+  caption="(ref:p-irp-caption3)",
   placement="h")
 ```
 
 ```{r, include=F}
-rm(model.rotation_path, apa_lmm, apa_emm1, apa_emm2, apa_emm3)
+rm(model.rotation_path, apa_lmm, apa_emm2, apa_emm3)
 ```
 
 \newpage 
@@ -886,7 +825,7 @@ rm(model.path_learn, R2, apa_lmm, apa_emm, emm)
 
 \newpage
 
-#### **Excess average target distance**
+#### **Excess distance to goal**
 
 ```{r, model_learn_target_distance }
 ```
@@ -912,10 +851,10 @@ apa_emm <- apa_emm$table %>% remove_rownames()
 
 The model had a fit of $R2 = `r R2$Rsq`, [CI: `r R2$upper.CL`, `r R2$lower.CL`$].
 
-The excess avg. target distance decreased across trials (main effect *trial in block*) but there were no group differences in the slope of the decrease (no interaction *group x trial in block* ). The groups differed in excess avg. target distance length (main effect *group*). More specifically 6-7 year-old children had higher excess avg. distance to target than the other two groups, meaning they navigated further away from the correct goal location during the course of the trial.
+The excess distance to goal decreased across trials (main effect *trial in block*) but there were no group differences in the slope of the decrease (no interaction *group x trial in block* ). The groups differed in excess distance to goal length (main effect *group*). More specifically 6-7 year-old children had higher excess avg. distance to goal than the other two groups, meaning they navigated further away from the correct goal location during the course of the trial.
 (Table\ \@ref(tab:table-learn-excess-distance0))
 
-(ref:l-ed-caption0) Fixed effects for excess avg. target distance in training.
+(ref:l-ed-caption0) Fixed effects for excess distance to goal in training.
 
 ```{r table-learn-excess-distance0, echo=F}
 apa_table(
@@ -939,80 +878,46 @@ rm(model.target_distance_learn, R2, apa_lmm, apa_emm, emm)
 
 \newpage
 
-#### **Angular velocity**
+#### **Initial rotation velocity**
 
-```{r, model_learn_angular_velocity }
+```{r, model_learn_rotation_velocity }
 ```
 
-```{r, plot_learn_angular_velocity, include=F}
+```{r, plot_learn_rotation_velocity, include=F}
 ```
 
 ```{r, echo=F, fig.height=4, fig.width=5, fig.cap="Trial curve for excess path in training." }
-plot.angular_velocity_learn
-rm(plot.angular_velocity_learn)
+plot.rotation_velocity_learn
+rm(plot.rotation_velocity_learn)
 ```
 
-TBD
+```{r apa_learn_rotation_velocity, include=F}
+R2 <- r2beta(model.rotation_velocity_learn$full_model, method='nsj', partial=F) %>% mutate_all(apa_num)
 
-```{r, include=F}
-rm(model.angular_velocity_learn, R2, apa_lmm, apa_emm, emm)
-```
-
-\newpage
-
-#### **Initial Rotation**
-
-```{r, model_learn_initial_rotation }
-```
-
-```{r, plot_learn_initial_rotation, include=F}
-```
-
-```{r,echo=F, fig.height=4, fig.width=5, fig.cap="Trial curve for initial rotation in training." }
-plot.initial_rotation_learn
-rm(plot.initial_rotation_learn)
-```
-
-```{r apa_learn_initial_rotation, include=F}
-R2 <- r2beta(model.initial_rotation_learn$full_model, method='nsj', partial=F) %>% mutate_all(apa_num)
-
-apa_lmm <- apa_print(model.initial_rotation_learn)
+apa_lmm <- apa_print(model.rotation_velocity_learn)
 apa_lmm <- apa_lmm$table %>% mutate(term=str_replace_all(term, c(" c| f"), ''))
-
-# TBD 
 
 ```
 
 The model had a fit of $R2 = `r R2$Rsq`, [CI: `r R2$upper.CL`, `r R2$lower.CL`$].
+(Table\ \@ref(tab:table-learn-init-rot-vel0))
 
-Rotation in the initial area did not change generally across trials (no main effect *trial in block*) but there was an interaction *group x trial in block*. More specifically, adults had a stronger decrease in initial rotation across trials compared to 6-7-year-old children (who displayed no change). The slopes did not differ for any other group comparisons.
-(Table\ \@ref(tab:table-learn-init-rot0))
+(ref:l-irv-caption0)  Fixed effects for factor initial rotation velocity. 
 
-(ref:l-ir-caption0)  Fixed effects for factor initial rotation.
-
-```{r table-learn-init-rot0, echo=F}
+```{r table-learn-init-rot-vel0, echo=F}
 apa_table(
   apa_lmm,
-  caption="(ref:l-ir-caption0)",
+  caption="(ref:l-irv-caption0)",
   placement="h")
 ```
 
-(ref:l-ir-caption1) Post-hoc contrasts for group x trial in block interaction.
-
-```{r table-learn-init-rot1, echo=F}
-# apa_table(
-#   apa_emm,
-#   caption="(ref:l-ir-caption1)",
-#   placement="h")
-```
-
 ```{r, include=F}
-rm(model.initial_rotation_learn, R2, apa_lmm, apa_emm, emm)
+rm(model.rotation_velocity_learn, R2, apa_lmm)
 ```
 
 \newpage
 
-#### **Rotation normalized by path length**
+#### **Initial rotation by path length**
 
 ```{r, model_learn_rotation_path }
 ```
@@ -1032,30 +937,18 @@ apa_lmm <- apa_print(model.rotation_path_learn)
 apa_lmm <- apa_lmm$table %>% mutate(term=str_replace_all(term, c(" c| f"), ''))
 
 # TBD 
-
 ```
 
 The model had a fit of $R2 = `r R2$Rsq`, [CI: `r R2$upper.CL`, `r R2$lower.CL`$].
+(Table\ \@ref(tab:table-learn-init-rot-p0))
 
-There was an interaction *group x trial in block* for the overall rotation (normalized by path length). More specifically, adults had a stronger decrease in rotation (normalized by path length) across trials compared to 6-7-year-old children and 9-10-year old children. The slopes did not differ between the two children groups.
-(Table\ \@ref(tab:table-learn-rot0))
+ref:l-irp-caption0) Fixed effects for initial rotation by path length in training.
 
-(ref:l-r-caption0) Fixed effects for normalized rotation in training.
-
-```{r table-learn-rot0, echo=F}
+```{r table-learn-rot-p0, echo=F}
 apa_table(
   apa_lmm,
-  caption="(ref:l-r-caption0)",
+  caption="(ref:l-irp-caption0)",
   placement="h")
-```
-
-(ref:l-r-caption1) Post-hoc contrasts for group x trial in block interaction.
-
-```{r table-learn-rot1, echo=F}
-# apa_table(
-#   apa_emm,
-#   caption="(ref:l-r-caption1)",
-#   placement="h")
 ```
 
 ```{r, include=F}
@@ -1070,7 +963,7 @@ TBD
 
 \newpage
 
-### PLS-C Analysis 
+### PLSC Analysis 
 
 TBD, siehe Powerpoint Iryna 
 
@@ -1080,7 +973,7 @@ TBD, siehe Powerpoint Iryna
 
 ![Motor control practise task](./pics/Motor_Control.jpg){width=600px}
 
-```{r, echo=F, fig.height=6, fig.width=6, fig.cap="Navigation behavior in practise trials." }
+```{r, echo=F, fig.height=3, fig.width=6, fig.cap="Navigation behavior in practise trials." }
 
 mc_plot <- function(data, xvar, yvar, my_colors, my_labels, y_label){
   p <- ggplot(data, aes(x=get(xvar), y=get(yvar), color=get(xvar), shape=get(xvar))) + 
@@ -1101,16 +994,15 @@ mc_plot <- function(data, xvar, yvar, my_colors, my_labels, y_label){
   return(p)
 }
 
-mc_time <- mc_plot(practise, "group", "excess_path_length", group_colors, group_labels, l_time)
-mc_excess_path <- mc_plot(practise, "group", "time", group_colors, group_labels, l_excess_path_length)
-mc_rotation <- mc_plot(practise, "group", "rotation_turns", group_colors, group_labels, l_rotation)
-mc_rotation_path <- mc_plot(practise, "group", "rotation_turns_by_path_length", group_colors, group_labels, l_rotation_by_path)
+mc_time <- mc_plot(practise, "group", "time", group_colors, group_labels, l_time)
+mc_excess_path <- mc_plot(practise, "group", "excess_path_length", group_colors, group_labels, l_excess_path_length)
+mc_rotation <- mc_plot(practise, "group", "rotation", group_colors, group_labels, l_rotation)
 
-mc_time + mc_excess_path + mc_rotation + mc_rotation_path + 
+mc_time + mc_excess_path + mc_rotation + 
   plot_annotation("Navigation behavior in motor control task") + 
   plot_layout(guides="collect") & theme(legend.position="top", legend.justification=c(0,0))
 
-rm(mc_time, mc_excess_path, mc_rotation, mc_rotation_path, mc_plot, practise)
+rm(mc_time, mc_excess_path, mc_rotation, mc_plot, practise)
 ```
 
 ### Excluded trials 
