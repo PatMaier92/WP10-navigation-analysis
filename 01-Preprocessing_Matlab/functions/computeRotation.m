@@ -1,4 +1,4 @@
-function [rotation_degrees, rotation_turns]=computeRotation(r)
+function [sum_rotation]=computeRotation(r)
 % computeRotation: Calculates total rotation in degrees as sum of
 % absolute change in yaw rotation (first derivative). This value includes 
 % rotation due to x-/y-trajectory (i.e. left-forward movement).
@@ -7,9 +7,8 @@ function [rotation_degrees, rotation_turns]=computeRotation(r)
 % r is vector with unwrapped (!) z-coordinates with yaw rotation (float) 
 % 
 % Returns:
-% rotation_degrees (float), rotation_turns (float) 
+% sum_rotation (float)
 
-rotation_degrees=sum(abs(diff(r)));
-rotation_turns=rotation_degrees/360;
+sum_rotation=sum(abs(diff(r)));
                 
 end

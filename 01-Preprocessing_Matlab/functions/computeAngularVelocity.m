@@ -9,18 +9,18 @@ function [IdPhi]=computeAngularVelocity(r)
 % Returns:
 % IdPhi as mean integrated absolute angular velocity (float)
 
-rotation_vector_rad=deg2rad(r); % convert r (in degrees) back to radians 
-IdPhi=mean(abs(diff(rotation_vector_rad)));
-
-% additional code from Deetje (windowing approach)
+% rotation_vector_rad=deg2rad(r); % convert r (in degrees) back to radians 
+% IdPhi=mean(abs(diff(rotation_vector_rad)));
 % 
-% nSamples = 10;
-% vector = NaN(1,nSamples);
-% for Wi = 1:nSamples
-%     vector(Wi) = mean(rotation_vector_rad(round((Wi-1)*...
-%         numel(rotation_vector_rad)/nSamples+1):floor(Wi*numel(rotation_vector_rad)/nSamples)));
-% end
-% 
-% iPhi = vector;
+% % additional code from Deetje (windowing approach)
+% % 
+% % nSamples = 10;
+% % vector = NaN(1,nSamples);
+% % for Wi = 1:nSamples
+% %     vector(Wi) = mean(rotation_vector_rad(round((Wi-1)*...
+% %         numel(rotation_vector_rad)/nSamples+1):floor(Wi*numel(rotation_vector_rad)/nSamples)));
+% % end
+% % 
+% % iPhi = vector;
              
 end
