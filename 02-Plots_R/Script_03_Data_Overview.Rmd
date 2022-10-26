@@ -3,7 +3,7 @@ title: "Analysis Overview for WP10 Starmaze Data"
 author: "Patrizia Maier"
 date: "`r format(Sys.time(), '%d %B, %Y')`"
 output: 
-  bookdown::html_document2:
+  bookdown::word_document2:
     fig_caption: yes
     global_numbering: TRUE
     number_sections: TRUE
@@ -37,6 +37,7 @@ Navigating a star-shaped maze environment ("Starmaze") with three goal locations
 ```{r setup, include=FALSE, cache=FALSE}
 knitr::read_chunk('Script_02_Analyzer.R')
 knitr::opts_chunk$set(warning=FALSE, message=FALSE) 
+options(knitr.kable.NA='')
 ```
 
 ```{r, load_analysis_packages, include=FALSE, cache=FALSE}
@@ -71,6 +72,9 @@ np_AD <- length(unique(pt_data$id[pt_data$group=="YoungAdults"]))
 ```{r, analysis_settings, include=FALSE}
 ```
 
+```{r, papaja_output_helper, include=FALSE}
+```
+
 # Sample
 Cross-sectional comparison between
 
@@ -98,9 +102,8 @@ $$\text{Excess path length} = (path-path_{ideal})$$
 * **Excess distance to goal** (metric): This measure reflects if participants searched further away from or near the correct goal location (Maei et al., 2009). It is calculated as the avg. distance to goal minus the ideal avg. distance to goal to the goal location. The distance to goal is calculated as the cumulative Euclidean distance between the the player’s x-/y-coordinates along their path and the correct goal location, averaged by the number of x-/y data points. 
 $$\text{(Ideal) distance to goal} = \frac {\sum_{i=1}^{n}\sqrt{(x_{i}-x_{correct})^2 + (y_{i}-y_{correct})^2}} {n}$$
 $$\text{Excess distance to goal} = (distance-distance_{ideal})$$
-* **Initial rotation velocity** (metric): A modified version of the integrated absolute angular velocity (IdPhi, also called vicarious-trial-and-error (VTE) behavior, Papale et al., 2012; Santos-Pata et al., 2018; Hasz & Redish, 2020; Miles et al., 2021). This value indicates the degree of deliberation and visual exploration at the first decision point of the trial and has been associated with allocentric strategy use and spatial conflict resolution (Schmidt et al., 2013; Jeung, Iggena et al., 2023). We used the z-rotation data from the beginning of the trial up until when the participant left the first intersection. The z-rotation raw data was transformed from degrees to radians and unwrapped (to avoid circular transitions when calculating change). Then, we computed the summation of absolute change in rotation across the initial segment, divided by path length in the initial segment OR divided by the number of data point (TBD).
+* **Initial rotation velocity** (metric): A modified version of the integrated absolute angular velocity (IdPhi, also called vicarious-trial-and-error (VTE) behavior, Papale et al., 2012; Santos-Pata et al., 2018; Hasz & Redish, 2020; Miles et al., 2021). This value indicates the degree of deliberation and visual exploration at the first decision point of the trial and has been associated with allocentric strategy use and spatial conflict resolution (Schmidt et al., 2013; Jeung, Iggena et al., 2023). We used the z-rotation data from the beginning of the trial up until when the participant left the first intersection. The z-rotation raw data was transformed from degrees to radians and unwrapped (to avoid circular transitions when calculating change). Then, we computed the summation of absolute change in rotation across the initial segment, divided by the number of data points to obtain velocity.
 $$\text{Initial rotation Velocity} = \frac {\sum_{i=1}^{n_{initial}} | (z_{i}-z_{i+1})|} {n_{initial}}$$
-$$\text{Initial rotation Velocity} = \frac {\sum_{i=1}^{n_{initial}} | (z_{i}-z_{i+1})|} {path_{initial}}$$
 
 ![Visualization of variables of interest](./pics/Var_all.jpg){width=300px,height=500x}  
 
@@ -150,50 +153,41 @@ rm(plot.ms)
 R2 <- r2beta(model.ms$full_model, method='nsj', partial=F) %>% mutate_all(apa_num)
 
 apa_lmm <- apa_print(model.ms)
-apa_lmm <- apa_lmm$table %>% mutate(term=str_replace_all(term, c(" c| f"), ''))
 
-emm1 <- emmeans(model.ms$full_model, pairwise ~ group, lmer.df="satterthwaite", adjust="bonferroni")$contrasts
-apa_emm1 <- apa_print(emm1)
-apa_emm1 <- apa_emm1$table %>% remove_rownames()
-rm(emm1)
+apa_emm1 <- emmeans(model.ms$full_model, pairwise ~ group, 
+                    lmer.df="satterthwaite", adjust="bonferroni")$contrasts %>% 
+  apa_print() %>% bonferroni_fix()
 
-# # test against chance level 
-# emm <- emmeans(model.ms, ~ group*condition*session, lmer.df="satterthwaite")
-# summary(emm, null=0.5, adjust="bonferroni", infer=c(T,T))
+apa_emm1b <- summary(emmeans(model.ms, ~ group, lmer.df="satterthwaite"),
+                     null=0.5, adjust="bonferroni", infer=c(T,T)) %>% 
+    apa_print() %>% bonferroni_fix()
 
-rm(emm1)
+apa_emm2 <- emmeans(model.ms$full_model, pairwise ~ condition, lmer.df="satterthwaite")$contrasts %>% apa_print()
+
+apa_emm3 <- emmeans(model.ms$full_model, pairwise ~ session, lmer.df="satterthwaite")$contrasts %>% apa_print()
 ```
-
-The model had a fit of $R2 = `r R2$Rsq`, [CI: `r R2$upper.CL`, `r R2$lower.CL`$].
-
-* *group* main effect: age-related differences in memory performance. 
-* *session* main effect: memory accuracy declines over 2-week period.
-* *condition* main effect: egocentric slightly better than allocentric. 
-* no *group x condition* interaction, i.e. no age-specific condition differences.
-* no *group x session* interaction, i.e. similar forgetting for all groups. 
-* no *session x condition* interaction, i.e. similar forgetting for both conditions. 
-(Table\ \@ref(tab:table-probe-ms0)). 
 
 (ref:p-ms-caption0) Fixed effects for memory score in probe.
 
-```{r table-probe-ms0, echo=F}
+```{r table-probe-ms-f0, echo=F}
 apa_table(
-  apa_lmm,
+  apa_lmm$table, 
   caption="(ref:p-ms-caption0)",
   placement="h")
 ```
 
-(ref:p-ms-caption1) Post-hoc contrasts for factor group.
+*Random effects for memory score in probe.* 
 
-```{r table-probe-ms1, echo=F}
-apa_table(
-  apa_emm1,
-  caption="(ref:p-ms-caption1)",
-  placement="h")
+```{r table-probe-ms-r0, echo=F}
+apa_random_table(VarCorr(model.ms$full_model))
 ```
 
+The model had a fit of $R2 = `r R2$Rsq`, [CI: `r R2$upper.CL`, `r R2$lower.CL`$].
+
+We found significant main effects of *age group* (`r apa_lmm$statistic$group`), *condition* (`r apa_lmm$statistic$condition`), and *session* (`r apa_lmm$statistic$session`) for the memory score in probe trials, but no significant two-way or three-way interactions (Table\ \@ref(tab:table-probe-ms-f0)). All age groups performed significantly above chance level (6-7-yo: `r apa_emm1b$statistic$YoungKids`; 9-10-yo: `r apa_emm1b$statistic$OldKids`; adults: `r apa_emm1b$statistic$YoungAdults`) and there was a gradual increase in memory with increasing age (`r apa_emm1$statistic$YoungKids_OldKids`; `r apa_emm1$statistic$YoungKids_YoungAdults`; `r apa_emm1$statistic$OldKids_YoungAdults`). The memory score was slightly higher in the egocentric than the allocentric condition (`r apa_emm2$full_result`) and spatial memory deteriorated significantly over the 2-week period between the sessions (`r apa_emm3$full_result`). 
+
 ```{r, include=F}
-rm(model.ms, R2, apa_lmm, apa_emm1)
+rm(model.ms, R2, apa_lmm, apa_emm1, apa_emm1b, apa_emm2, apa_emm3)
 ```
 
 \newpage
@@ -325,7 +319,7 @@ rm(plot.time)
 R2 <- r2beta(model.time$full_model, method='nsj', partial=F) %>% mutate_all(apa_num)
 
 apa_lmm <- apa_print(model.time)
-apa_lmm <- apa_lmm$table %>% mutate(term=str_replace_all(term, c(" c| f"), ''))
+apa_lmm <- apa_lmm$table 
 
 emm1 <- emmeans(model.time, ~ group*session, lmer.df="satterthwaite")
 con1 <- summary(rbind(pairs(emm1, simple="group"), pairs(emm1, simple="session"), pairs(emm1, interaction="pairwise")), 
@@ -405,7 +399,7 @@ rm(model.time, apa_lmm, apa_emm1, apa_emm2, apa_emm3)
 ```{r, plot_probe_path, include=F }
 ```
 
-```{r, echo=F, fig.height=5, fig.width=5, fig.cap="Excess path in probe trials." }
+```{r, echo=F, fig.height=5, fig.width=5, fig.cap="Excess path length in probe trials." }
 plot.path
 rm(plot.path)
 ```
@@ -414,7 +408,7 @@ rm(plot.path)
 R2 <- r2beta(model.path$full_model, method='nsj', partial=F) %>% mutate_all(apa_num)
 
 apa_lmm <- apa_print(model.path)
-apa_lmm <- apa_lmm$table %>% mutate(term=str_replace_all(term, c(" c| f"), ''))
+apa_lmm <- apa_lmm$table 
 
 emm1 <- emmeans(model.path, ~ group * session, lmer.df="satterthwaite")
 con1 <- summary(rbind(pairs(emm1, simple="group"), pairs(emm1, simple="session"), pairs(emm1, interaction="pairwise")), 
@@ -494,7 +488,7 @@ rm(model.path, apa_lmm, apa_emm1, apa_emm2, apa_emm3)
 ```{r, plot_probe_target_distance, include=F }
 ```
 
-```{r, echo=F, fig.height=5, fig.width=5, fig.cap="Excess path in probe trials." }
+```{r, echo=F, fig.height=5, fig.width=5, fig.cap="Excess distance to goal in probe trials." }
 plot.target_distance
 rm(plot.target_distance)
 ```
@@ -503,7 +497,7 @@ rm(plot.target_distance)
 R2 <- r2beta(model.target_distance$full_model, method='nsj', partial=F) %>% mutate_all(apa_num)
 
 apa_lmm <- apa_print(model.target_distance)
-apa_lmm <- apa_lmm$table %>% mutate(term=str_replace_all(term, c(" c| f"), ''))
+apa_lmm <- apa_lmm$table 
 
 con1 <- emmeans(model.target_distance, pairwise ~ group, lmer.df="satterthwaite", adjust="bonferroni")$contrasts
 apa_emm1 <- apa_print(con1)
@@ -518,7 +512,7 @@ rm(con2)
 con3 <- emmeans(model.target_distance, pairwise ~ session, lmer.df="satterthwaite")$contrasts
 apa_emm3 <- apa_print(con3)
 apa_emm3 <- apa_emm3$table %>% remove_rownames()
-rm(con13)
+rm(con1)
 ```
 
 The model had a fit of $R2 = `r R2$Rsq`, [CI: `r R2$upper.CL`, `r R2$lower.CL`$].
@@ -570,6 +564,61 @@ rm(model.target_distance, apa_lmm, apa_emm1, apa_emm2, apa_emm3)
 
 \newpage 
 
+### **Initial rotation**
+
+```{r, model_probe_rotation}
+```
+
+```{r, plot_probe_rotation, include=F }
+```
+
+```{r, echo=F, fig.height=5, fig.width=5, fig.cap="Initial rotation in probe trials." }
+plot.rotation
+rm(plot.rotation)
+```
+
+```{r apa_probe_rotation, include=F}
+R2 <- r2beta(model.rotation$full_model, method='nsj', partial=F) %>% mutate_all(apa_num)
+
+apa_lmm <- apa_print(model.rotation)
+apa_lmm <- apa_lmm$table 
+
+emm4 <- emmeans(model.rotation, ~ group * session * condition, lmer.df="satterthwaite")
+con4 <- summary(rbind(pairs(emm4, simple="group"), pairs(emm4, simple="session"), pairs(emm4, simple="condition")), 
+                infer=c(T,T), by=NULL, adjust="bonferroni")
+apa_emm4 <- apa_print(con4)
+apa_emm4 <- apa_emm4$table %>% remove_rownames()
+rm(emm4, con4)
+```
+
+The model had a fit of $R2 = `r R2$Rsq`, [CI: `r R2$upper.CL`, `r R2$lower.CL`$].
+
+* *group x session x condition* interaction: 
+
+(ref:p-ir-caption0) Fixed effects for initial rotation in probe trials.
+
+```{r table-probe-rot-p0, echo=F}
+apa_table(
+  apa_lmm,
+  caption="(ref:p-ir-caption0)",
+  placement="h")
+```
+
+(ref:p-ir-caption2) Post-hoc contrasts for group x session x condition interaction.
+
+```{r table-probe-rot-p2, echo=F}
+apa_table(
+  apa_emm4,
+  caption="(ref:p-ir-caption2)",
+  placement="h")
+```
+
+```{r, include=F}
+rm(model.rotation, apa_lmm, apa_emm4)
+```
+
+\newpage 
+
 ### **Initial rotation velocity**
 
 ```{r, model_probe_rotation_velocity }
@@ -578,7 +627,7 @@ rm(model.target_distance, apa_lmm, apa_emm1, apa_emm2, apa_emm3)
 ```{r, plot_probe_rotation_velocity, include=F }
 ```
 
-```{r, echo=F, fig.height=5, fig.width=5, fig.cap="Excess path in probe trials." }
+```{r, echo=F, fig.height=5, fig.width=5, fig.cap="Initial rotation velocity in probe trials." }
 plot.rotation_velocity
 rm(plot.rotation_velocity)
 ```
@@ -587,7 +636,7 @@ rm(plot.rotation_velocity)
 R2 <- r2beta(model.rotation_velocity$full_model, method='nsj', partial=F) %>% mutate_all(apa_num)
 
 apa_lmm <- apa_print(model.rotation_velocity)
-apa_lmm <- apa_lmm$table %>% mutate(term=str_replace_all(term, c(" c| f"), ''))
+apa_lmm <- apa_lmm$table 
 
 emm2 <- emmeans(model.rotation_velocity, ~ group * condition, lmer.df="satterthwaite")
 con2 <- summary(rbind(pairs(emm2, simple="group"), pairs(emm2, simple="condition")), infer=c(T,T), by=NULL, adjust="bonferroni")
@@ -643,77 +692,6 @@ rm(model.rotation_velocity, apa_lmm, apa_emm2, apa_emm3)
 
 \newpage 
 
-### **Initial rotation by path length**
-
-```{r, model_probe_rotation_path}
-```
-
-```{r, plot_probe_rotation_path, include=F }
-```
-
-```{r, echo=F, fig.height=5, fig.width=5, fig.cap="Normalized rotation in probe trials." }
-plot.rotation_path
-rm(plot.rotation_path)
-```
-
-```{r apa_probe_rotation_path, include=F}
-R2 <- r2beta(model.rotation_path$full_model, method='nsj', partial=F) %>% mutate_all(apa_num)
-
-apa_lmm <- apa_print(model.rotation_path)
-apa_lmm <- apa_lmm$table %>% mutate(term=str_replace_all(term, c(" c| f"), ''))
-
-emm2 <- emmeans(model.rotation_path, ~ group * condition, lmer.df="satterthwaite")
-con2 <- summary(rbind(pairs(emm2, simple="group"), pairs(emm2, simple="condition")), infer=c(T,T), by=NULL, adjust="bonferroni")
-apa_emm2 <- apa_print(con2)
-apa_emm2 <- apa_emm2$table %>% remove_rownames()
-rm(emm2, con2)
-
-emm3 <- emmeans(model.rotation_path, ~ session * condition, lmer.df="satterthwaite")
-con3 <- summary(rbind(pairs(emm3, simple="session"), pairs(emm3, simple="condition"), pairs(emm3, interaction="pairwise")), 
-                infer=c(T,T), by=NULL, adjust="bonferroni")
-apa_emm3 <- apa_print(con3)
-apa_emm3 <- apa_emm3$table %>% remove_rownames()
-rm(emm3, con3)
-```
-
-The model had a fit of $R2 = `r R2$Rsq`, [CI: `r R2$upper.CL`, `r R2$lower.CL`$].
-
-* *group x condition* interaction: 
-* *session x condition* interaction: 
-
-(ref:p-irp-caption0) Fixed effects for initial rotation by path length in probe trials.
-
-```{r table-probe-rot-p0, echo=F}
-apa_table(
-  apa_lmm,
-  caption="(ref:p-irp-caption0)",
-  placement="h")
-```
-
-(ref:p-irp-caption2) Post-hoc contrasts for group x condition interaction.
-
-```{r table-probe-rot-p2, echo=F}
-apa_table(
-  apa_emm2,
-  caption="(ref:p-irp-caption2)",
-  placement="h")
-```
-
-(ref:p-irp-caption3) Post-hoc contrasts for session x condition interaction.
-
-```{r table-probe-rot-p3, echo=F}
-apa_table(
-  apa_emm3,
-  caption="(ref:p-irp-caption3)",
-  placement="h")
-```
-
-```{r, include=F}
-rm(model.rotation_path, apa_lmm, apa_emm2, apa_emm3)
-```
-
-\newpage 
-
 ## Supplementary material 
 
 ### Navigation behavior: Training trials at Day 2 
@@ -735,7 +713,7 @@ rm(plot.time_learn)
 R2 <- r2beta(model.time_learn$full_model, method='nsj', partial=F) %>% mutate_all(apa_num)
 
 apa_lmm <- apa_print(model.time_learn)
-apa_lmm <- apa_lmm$table %>% mutate(term=str_replace_all(term, c(" c| f"), ''))
+apa_lmm <- apa_lmm$table 
 
 emm <- emmeans(model.time_learn, pairwise ~ group, lmer.df="satterthwaite", adjust="bonferroni")$contrasts
 apa_emm <- apa_print(emm) 
@@ -780,7 +758,7 @@ rm(model.time_learn, R2, apa_lmm, apa_emm, emm)
 ```{r, plot_learn_path, include=F}
 ```
 
-```{r, echo=F, fig.height=4, fig.width=5, fig.cap="Trial curve for excess path in training." }
+```{r, echo=F, fig.height=4, fig.width=5, fig.cap="Trial curve for excess path length in training." }
 plot.path_learn
 rm(plot.path_learn)
 ```
@@ -789,7 +767,7 @@ rm(plot.path_learn)
 R2 <- r2beta(model.path_learn$full_model, method='nsj', partial=F) %>% mutate_all(apa_num)
 
 apa_lmm <- apa_print(model.path_learn)
-apa_lmm <- apa_lmm$table %>% mutate(term=str_replace_all(term, c(" c| f"), ''))
+apa_lmm <- apa_lmm$table 
 
 emm <- emmeans(model.path_learn, pairwise ~ group, lmer.df="satterthwaite", adjust="bonferroni")$contrasts
 apa_emm <- apa_print(emm) 
@@ -833,7 +811,7 @@ rm(model.path_learn, R2, apa_lmm, apa_emm, emm)
 ```{r, plot_learn_target_distance, include=F}
 ```
 
-```{r, echo=F, fig.height=4, fig.width=5, fig.cap="Trial curve for excess path in training." }
+```{r, echo=F, fig.height=4, fig.width=5, fig.cap="Trial curve for excess distance to goal in training." }
 plot.target_distance_learn
 rm(plot.target_distance_learn)
 ```
@@ -842,7 +820,7 @@ rm(plot.target_distance_learn)
 R2 <- r2beta(model.target_distance_learn$full_model, method='nsj', partial=F) %>% mutate_all(apa_num)
 
 apa_lmm <- apa_print(model.target_distance_learn)
-apa_lmm <- apa_lmm$table %>% mutate(term=str_replace_all(term, c(" c| f"), ''))
+apa_lmm <- apa_lmm$table 
 
 emm <- emmeans(model.target_distance_learn, pairwise ~ group, lmer.df="satterthwaite", adjust="bonferroni")$contrasts
 apa_emm <- apa_print(emm) 
@@ -878,6 +856,47 @@ rm(model.target_distance_learn, R2, apa_lmm, apa_emm, emm)
 
 \newpage
 
+#### **Initial rotation**
+
+```{r, model_learn_rotation }
+```
+
+```{r, plot_learn_rotation, include=F}
+```
+
+```{r, echo=F, fig.height=4, fig.width=5, fig.cap="Trial curve for initial rotation in training." }
+plot.rotation_learn 
+rm(plot.rotation_learn)
+```
+
+```{r apa_learn_rotation, include=F}
+R2 <- r2beta(model.rotation_learn$full_model, method='nsj', partial=F) %>% mutate_all(apa_num)
+
+apa_lmm <- apa_print(model.rotation_learn)
+apa_lmm <- apa_lmm$table 
+
+# TBD 
+
+```
+
+The model had a fit of $R2 = `r R2$Rsq`, [CI: `r R2$upper.CL`, `r R2$lower.CL`$].
+(Table\ \@ref(tab:table-learn-rot-p0))
+
+ref:l-irp-caption0) Fixed effects for initial rotation in training.
+
+```{r table-learn-rot-p0, echo=F}
+apa_table(
+  apa_lmm,
+  caption="(ref:l-irp-caption0)",
+  placement="h")
+```
+
+```{r, include=F}
+rm(model.rotation_learn, R2, apa_lmm)
+```
+
+\newpage
+
 #### **Initial rotation velocity**
 
 ```{r, model_learn_rotation_velocity }
@@ -886,7 +905,7 @@ rm(model.target_distance_learn, R2, apa_lmm, apa_emm, emm)
 ```{r, plot_learn_rotation_velocity, include=F}
 ```
 
-```{r, echo=F, fig.height=4, fig.width=5, fig.cap="Trial curve for excess path in training." }
+```{r, echo=F, fig.height=4, fig.width=5, fig.cap="Trial curve for initial rotation velocity in training." }
 plot.rotation_velocity_learn
 rm(plot.rotation_velocity_learn)
 ```
@@ -895,7 +914,9 @@ rm(plot.rotation_velocity_learn)
 R2 <- r2beta(model.rotation_velocity_learn$full_model, method='nsj', partial=F) %>% mutate_all(apa_num)
 
 apa_lmm <- apa_print(model.rotation_velocity_learn)
-apa_lmm <- apa_lmm$table %>% mutate(term=str_replace_all(term, c(" c| f"), ''))
+apa_lmm <- apa_lmm$table 
+
+# TBD 
 
 ```
 
@@ -916,46 +937,6 @@ rm(model.rotation_velocity_learn, R2, apa_lmm)
 ```
 
 \newpage
-
-#### **Initial rotation by path length**
-
-```{r, model_learn_rotation_path }
-```
-
-```{r, plot_learn_rotation_path, include=F}
-```
-
-```{r, echo=F, fig.height=4, fig.width=5, fig.cap="Trial curve for normalized rotation in training." }
-plot.rotation_path_learn 
-rm(plot.rotation_path_learn)
-```
-
-```{r apa_learn_rotation_path, include=F}
-R2 <- r2beta(model.rotation_path_learn$full_model, method='nsj', partial=F) %>% mutate_all(apa_num)
-
-apa_lmm <- apa_print(model.rotation_path_learn)
-apa_lmm <- apa_lmm$table %>% mutate(term=str_replace_all(term, c(" c| f"), ''))
-
-# TBD 
-```
-
-The model had a fit of $R2 = `r R2$Rsq`, [CI: `r R2$upper.CL`, `r R2$lower.CL`$].
-(Table\ \@ref(tab:table-learn-init-rot-p0))
-
-ref:l-irp-caption0) Fixed effects for initial rotation by path length in training.
-
-```{r table-learn-rot-p0, echo=F}
-apa_table(
-  apa_lmm,
-  caption="(ref:l-irp-caption0)",
-  placement="h")
-```
-
-```{r, include=F}
-rm(model.rotation_path_learn, R2, apa_lmm, apa_emm, emm)
-```
-
-\newpage 
 
 ### Correlations 
 
