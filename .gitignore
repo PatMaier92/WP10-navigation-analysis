@@ -3,9 +3,9 @@
 # Do not upload test data or actual data
 WP10_testfiles
 WP10_data
-02-Plots_R/Script_03_Data_Overview*.pdf
-02-Plots_R/Script_03_Data_Overview*.html
-02-Plots_R/Script_03_Data_Overview*.docx
+*/Script_03_Data_Overview*.pdf
+*/Script_03_Data_Overview*.html
+*/Script_03_Data_Overview*.docx
 03-Scoring_GMDA/_old
 03-Scoring_GMDA/Data
 03-Scoring_GMDA/GMDA/Data
