@@ -109,7 +109,7 @@ $$\text{Initial rotation Velocity} = \frac {\sum_{i=1}^{n_{initial}} | (z_{i}-z_
 
 # Statistical analysis
 
-All linear mixed models (LMM) were computed using the mixed() function from the afex package (Singmann et al., 2022), which is based on lmer() from the lme4 package (Bates et al., 2015). The random effects structure was set up according to Bates et al. (2015) and Matuschek et al. (2017). The diagnostic plots showed non-normality, outliers and heteroscedastic variances (especially larger variance in children compared to adults). To account for this, we computed additional models 1. excluding outliers (defined as above/below the upper/lower quantile plus/minus 1.5 * IQR, similar to Bellmund et al., 2019) and 2. models with heterogeneous variances with lme() from the nlme package (Pinheiro & Bates, 2022). The results did not change substantially, which is why we decided to use the most simple LMM approach. 
+All linear mixed models (LMM) were computed using the mixed() function from the afex package (Singmann et al., 2022), which is based on lmer() from the lme4 package (Bates et al., 2015). We used the maximum random effects structure as recommended by Barr (2013) and simplified according to Bates et al. (2015) and Matuschek et al. (2017) in case of non-convergence. The diagnostic plots showed non-normality, outliers and heteroscedastic variances (especially larger variance in children compared to adults). To account for this, we computed additional models 1. excluding outliers (defined as above/below the upper/lower quantile plus/minus 1.5 * IQR, similar to Bellmund et al., 2019) and 2. models with heterogeneous variances with lme() from the nlme package (Pinheiro & Bates, 2022). The results did not change substantially, which is why we decided to use the most simple LMM approach. 
 
 For evaluating the general fit, we calculated a (pseudo) R^2^ for each model according to Nakagawa and Schielzeth's (2013) approach with the r2beta() function from the r2glmm package (Jaeger, 2017). However, R^2^ for LMM should be interpreted with caution and do not directly correspond to a traditional R^2^. We computed degrees of freedom for the LMM with Sattherthwaites method using the lmerTest package (Kuznetsova et al., 2017; via afex package). For all significant main effects and interactions, we computed post-hoc planned contrasts with the emmeans package (Lenth, 2022), using Bonferroni-corrections for multiple comparisons.
 
@@ -167,30 +167,33 @@ apa_emm2 <- emmeans(model.ms$full_model, pairwise ~ condition, lmer.df="satterth
 apa_emm3 <- emmeans(model.ms$full_model, pairwise ~ session, lmer.df="satterthwaite")$contrasts %>% apa_print()
 ```
 
-(ref:p-ms-caption0) Fixed effects for memory score in probe.
+(ref:p-ms-f-caption0) Fixed effects for memory score in probe.
 
 ```{r table-probe-ms-f0, echo=F}
 apa_table(
   apa_lmm$table, 
-  caption="(ref:p-ms-caption0)",
+  caption="(ref:p-ms-f-caption0)",
   placement="h")
 ```
 
-*Random effects for memory score in probe.* 
+(ref:p-ms-r-caption0) Random effects for memory score in probe.
 
 ```{r table-probe-ms-r0, echo=F}
-apa_random_table(VarCorr(model.ms$full_model))
+apa_random_table(VarCorr(model.ms$full_model)) %>% 
+  knitr::kable(
+    caption="(ref:p-ms-r-caption0)")
 ```
 
 The model had a fit of $R2 = `r R2$Rsq`, [CI: `r R2$upper.CL`, `r R2$lower.CL`$].
 
 We found significant main effects of *age group* (`r apa_lmm$statistic$group`), *condition* (`r apa_lmm$statistic$condition`), and *session* (`r apa_lmm$statistic$session`) for the memory score in probe trials, but no significant two-way or three-way interactions (Table\ \@ref(tab:table-probe-ms-f0)). All age groups performed significantly above chance level (6-7-yo: `r apa_emm1b$statistic$YoungKids`; 9-10-yo: `r apa_emm1b$statistic$OldKids`; adults: `r apa_emm1b$statistic$YoungAdults`) and there was a gradual increase in memory with increasing age (`r apa_emm1$statistic$YoungKids_OldKids`; `r apa_emm1$statistic$YoungKids_YoungAdults`; `r apa_emm1$statistic$OldKids_YoungAdults`). The memory score was slightly higher in the egocentric than the allocentric condition (`r apa_emm2$full_result`) and spatial memory deteriorated significantly over the 2-week period between the sessions (`r apa_emm3$full_result`). 
 
+[OPTIONAL, MAYBE CIRCULAR LOGIC] The random effects can give us additional insights into the data, specifically the correlations between the intercepts and the random slopes for session and for condition. There was a negative correlation between intercepts and the session slope. As the session effect was negative (decline of memory across sessions), this means that individuals with lower average performance had stronger decline across session. Likewise, there was a negative correlation between intercepts and the condition slope. Condition was coded with egocentric as first and allocentric as second level and the condition effect was negative (i.e. egocentric better than allocentric). This means that individuals with lower average performance showed stronger performance difference between conditions. 
+
 ```{r, include=F}
 rm(model.ms, R2, apa_lmm, apa_emm1, apa_emm1b, apa_emm2, apa_emm3)
 ```
 
-\newpage
 
 ## Memory accuracy: Non-navigational memory tasks at Day 14
 
@@ -215,7 +218,7 @@ rm(model.ms, R2, apa_lmm, apa_emm1, apa_emm1b, apa_emm2, apa_emm3)
 ```
 
 ```{r, echo=F, fig.height=5, fig.width=8, fig.cap="Scores in non-navigational memory tests." }
-  plot.layout + 
+plot.layout + 
   (plot.landmark + guides(color="none", shape="none")) + 
   (plot.position + guides(color="none", shape="none")) + 
   plot_annotation(title="Non-navigational memory tests") +
@@ -226,79 +229,43 @@ rm(plot.layout, plot.layout_detailed, plot.landmark, plot.position)
 
 ### **Layout**
 
-Significant age-related *group* differences in layout recognition.
-
-Fisher Test for layout recognition.
-
-```{r table-layout0, echo=F}
-model.layout
+```{r apa_layout, include=F}
+apa_p.layout <- model.layout %>% pluck("p.value") %>% apa_p(add_equals=T)
+apa_post_p.layout_young_vs_old <- post.layout$p.adj[1] %>% apa_p(add_equals=T)
+apa_post_p.layout_young_vs_adult <- post.layout$p.adj[2] %>% apa_p(add_equals=T)
+apa_post_p.layout_old_vs_adult <- post.layout$p.adj[3] %>% apa_p(add_equals=T)
 ```
 
-Post-hoc contrasts for factor group.
+We found significant *age-related group* differences in the ability to correctly identify the maze layout (Fisher's exact test $p$`r apa_p.layout`). Post-hoc contrasts showed that all age groups differed significantly from each other and that there was a gradual increase in performance with increasing age (Bonferroni-adjusted pairwise Fisher test: 6-7-yo vs. 9-10-yo $p$ `r apa_post_p.layout_young_vs_old`; 6-7-yo vs. adults $p$ `r apa_post_p.layout_young_vs_adult`; 9-10-yo vs. adults $p$ `r apa_post_p.layout_old_vs_adult`).
 
-```{r table-layout1, echo=F}
-post.layout
+```{r, include=F}
+rm(model.layout, apa_p.layout, post.layout, apa_post_p.layout_young_vs_old, apa_post_p.layout_young_vs_adult, apa_post_p.layout_old_vs_adult)
 ```
 
 ### **Landmarks**
 
 ```{r apa_landmark, include=F}
-apa_aov <- apa_print(model.landmark)
+apa_aov.landmark <- apa_print(model.landmark)
 ```
 
-No significant age-related *group* differences in landmark recognition.  
-(Table\ \@ref(tab:table-lm0)). 
-
-(ref:lm-caption0) ANOVA for landmark recognition.
-
-```{r table-lm0, echo=F}
-apa_table(
-  apa_aov,
-  caption="(ref:lm-caption0)",
-  placement="h")
-```
+There were no significant *age-related group* in the ability to correctly identify the landmarks (`r apa_aov.landmark$statistic$group`). 
 
 ```{r, include=F}
-rm(model.landmark, apa_aov)
+rm(model.landmark, apa_aov.landmark)
 ```
 
 ### **Positioning**
 
-```{r apa_gmda, include=F}
-apa_aov <- apa_print(model.position)
-
-emm1 <- emmeans(model.position, pairwise ~ group, adjust="bonferroni")$contrasts
-apa_emm1 <- apa_print(emm1)
-apa_emm1 <- apa_emm1$table %>% remove_rownames()
-rm(emm1)
+```{r apa_position, include=F}
+apa_aov.position <- apa_print(model.position)
+apa_post_p.position <- post.position$contrasts %>% apa_print() %>% bonferroni_fix()
 ```
 
-Significant age-related *group* differences in positioning.  
-(Table\ \@ref(tab:table-gmda0)). 
-
-(ref:gmda-caption0) ANOVA for positioning task.
-
-```{r table-gmda0, echo=F}
-apa_table(
-  apa_aov,
-  caption="(ref:gmda-caption0)",
-  placement="h")
-```
-
-(ref:gmda-caption1) Post-hoc contrasts for factor group.
-
-```{r table-gmda2, echo=F}
-apa_table(
-  apa_emm1,
-  caption="(ref:gmda-caption0)",
-  placement="h")
-```
+There were significant *age-related group* differences in the ability to correctly position the landmarks and goal locations in a 2D map (`r apa_aov.position$statistic$group`). Post-hoc contrasts showed that adults performed significantly better than both groups of children (6-7-yo vs. adults `r apa_post_p.position$statistic$YoungKids_YoungAdults`; 9-10-yo vs. adults `r apa_post_p.position$statistic$OldKids_YoungAdults`) but that the children groups did not differ (6-7-yo vs. 9-10-yo `r apa_post_p.position$statistic$YoungKids_OldKids`). 
 
 ```{r, include=F}
-rm(model.position, apa_aov, apa_emm1)
+rm(model.position, apa_aov.position, apa_post_p.position)
 ```
-
-\newpage 
 
 ## Navigation behaviour: Probe trials at Day 2 & Day 14
 

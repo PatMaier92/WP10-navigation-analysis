@@ -171,8 +171,7 @@ apa_random_table <- function(varcor) {
     unite('Slope/Correlation', var1:var2, sep=" x ", remove=T, na.rm=T) %>% 
     mutate_at(vars(`Slope/Correlation`), str_replace_all, pattern="re1.", replacement="") %>% 
     mutate_at(vars(-SD, -r), str_to_title) %>% 
-    rename(`Grouping`=grp) %>% 
-    knitr::kable()
+    rename(`Grouping`=grp)
 }
 ## ----
 
@@ -223,13 +222,13 @@ rm(dots_ego, dots_allo)
 
 # --- MEMORY SCORE (ALL PROBE TRIALS) --- # 
 ## ---- model_probe_ms
-# note: random effects structure was determined according to Bates (2015) & Matuschek et al. (2017) 
 model.ms <- mixed(memory_score ~ group*session*condition + cov_sex + cov_motor_score + 
-                          (session+condition|id), data=data_p, expand_re=T)
+                    (session*condition|id), data=data_p, expand_re=T)
 ## ----
 
 # random effects
 VarCorr(model.ms$full_model)
+# dotplot(ranef(model.ms$full_model))
 
 # fixed effects
 model.ms
@@ -260,22 +259,22 @@ rm(plot.ms)
 t <- data_p %>% mutate(flag=ifelse(is_outlier(memory_score), T, F))
 t <- t %>% filter(flag==F)
 model.ms_outlier <- mixed(memory_score ~ group*session*condition + cov_sex + cov_motor_score + 
-                            (session+condition|id), data=t, expand_re=T)
+                            (session*condition|id), data=t, expand_re=T)
 rm(t)
 
 # 2) model with heteroscedastic variances 
 model.ms_h1 <- lme(memory_score ~ group*session*condition + cov_sex + cov_motor_score, 
-                   random=list(id=pdDiag(~ condition + session)), data=data_p, method="ML")
+                   random=list(id=pdDiag(~ condition * session)), data=data_p, method="ML")
 model.ms_h2 <- update(model.ms_h1, weights=varIdent(form=~1 | group))
 model.ms_h3 <- update(model.ms_h1, weights=varComb(varIdent(form=~1 | group),
                                                    varIdent(form=~1 | condition)))
 model.ms_h4 <- update(model.ms_h1, weights=varComb(varIdent(form=~1 | group),
                                                    varIdent(form=~1 | condition),
                                                    varIdent(form=~1 | session)))
-anova(model.ms_h1, model.ms_h2, model.ms_h3, model.ms_h4) # chose model h4
+anova(model.ms_h1, model.ms_h2, model.ms_h3, model.ms_h4, test=F) # chose model h4
 rm(model.ms_h1, model.ms_h2, model.ms_h3, model.ms_h4)
 model.ms_hetero <- lme(memory_score ~ group*session*condition + cov_sex + cov_motor_score, 
-                       random=list(id=pdDiag(~ condition + session)),
+                       random=list(id=pdDiag(~ condition * session)),
                        weights=varComb(varIdent(form=~1 | group),
                                        varIdent(form=~1 | condition),
                                        varIdent(form=~1 | session)),
@@ -324,7 +323,6 @@ rm(model.ms, model.ms_outlier, model.ms_hetero)
 
 # --- CORRECT FINAL ALLEY (ALL PROBE TRIALS) --- #
 ## ---- model_probe_ca
-# full binomial model (with reduced random effects according to Bates (2015) & Matuschek (2017))
 model.ca <- mixed(correct_final_alley ~ group*session*condition + cov_sex + cov_motor_score + 
                     (session|id), data=data_p, expand_re=T, family=binomial(link="logit"), method="LRT",
                   control=glmerControl(optimizer="bobyqa", optCtrl=list(maxfun=1e6)))
