@@ -234,20 +234,16 @@ VarCorr(model.ms$full_model)
 model.ms
 
 ## ---- post_hoc_probe_ms
-# group effect
-emmeans(model.ms, pairwise ~ group, lmer.df="satterthwaite", adjust="bonferroni")
+emm.ms_group <- emmeans(model.ms, ~ group, lmer.df="satterthwaite")
+post.ms_group <- pairs(emm.ms_group, adjust="bonferroni")
+post.ms_group_chance <- summary(emm.ms_group, null=0.5, adjust="bonferroni", infer=c(T,T))
+rm(emm.ms_group)
 
-# session effect
-emmeans(model.ms, pairwise ~ session, lmer.df="satterthwaite")
+post.ms_session <- emmeans(model.ms, pairwise ~ session, lmer.df="satterthwaite")$contrasts
 
-# condition effect
-emmeans(model.ms, pairwise ~ condition, lmer.df="satterthwaite")
-
-# test against chance level 
-emm <- emmeans(model.ms, ~ group*condition*session, lmer.df="satterthwaite")
-summary(emm, null=0.5, adjust="bonferroni", infer=c(T,T))
+post.ms_condition <- emmeans(model.ms, pairwise ~ condition, lmer.df="satterthwaite")$contrasts
 ## ----
-rm(emm)
+rm(post.ms_group, post.ms_group_chance, post.ms_session, post.ms_condition)
 
 ## ---- plot_probe_ms
 plot.ms <- afex_plot_wrapper(model.ms, "session", "group", "condition", l_memory_score)
@@ -544,7 +540,6 @@ rm(data_gmda, CanAcc, DistAcc, AngleAcc, boxplot)
 
 # --- TIME (ALL PROBE TRIALS) --- # 
 ## ---- model_probe_time
-# note: random effects structure was determined according to Bates (2015) & Matuschek et al. (2017) 
 model.time <- mixed(time ~ group*session*condition + cov_sex + cov_motor_score + 
                       (session+condition|id), data=data_p, expand_re=T)
 ## ----
@@ -556,18 +551,25 @@ VarCorr(model.time$full_model)
 model.time
 
 ## ---- post_hoc_probe_time
-emm1 <- emmeans(model.time, ~ group * session, lmer.df="satterthwaite")
-con1 <- summary(rbind(pairs(emm1, simple="group"), pairs(emm1, simple="session"), pairs(emm1, interaction="pairwise")), 
-                infer=c(T,T), by=NULL, adjust="bonferroni")
+emm.time_group_session <- emmeans(model.time, ~ group * session, lmer.df="satterthwaite")
+post.time_group_session <- summary(rbind(pairs(emm.time_group_session, simple="group"), pairs(emm.time_group_session, simple="session")),
+                                         infer=c(T,T), by=NULL, adjust="bonferroni")
+# post.time_group_session <- summary(rbind(pairs(emm.time_group_session, simple="group"), pairs(emm.time_group_session, simple="session"), 
+#                                          pairs(emm.time_group_session, interaction="pairwise")), 
+#                                    infer=c(T,T), by=NULL, adjust="bonferroni")
+rm(emm.time_group_session)
 
-emm2 <- emmeans(model.time, ~ group * condition, lmer.df="satterthwaite")
-con2 <- summary(rbind(pairs(emm2, simple="group"), pairs(emm2, simple="condition")), infer=c(T,T), by=NULL, adjust="bonferroni")
+emm.time_group_condition <-  emmeans(model.time, ~ group * condition, lmer.df="satterthwaite")
+post.time_group_condition <- summary(rbind(pairs(emm.time_group_condition, simple="group"), pairs(emm.time_group_condition, simple="condition")), 
+                                     infer=c(T,T), by=NULL, adjust="bonferroni")
+rm(emm.time_group_condition)
 
-emm3 <- emmeans(model.time, ~ session * condition, lmer.df="satterthwaite")
-con3 <- summary(rbind(pairs(emm3, simple="session"), pairs(emm3, simple="condition"), pairs(emm3, interaction="pairwise")), 
-                infer=c(T,T), by=NULL, adjust="bonferroni")
+emm.time_session_condition <-  emmeans(model.time, ~ session * condition, lmer.df="satterthwaite")
+post.time_session_condition <- summary(rbind(pairs(emm.time_session_condition, simple="session"), pairs(emm.time_session_condition, simple="condition")),  
+                                      infer=c(T,T), by=NULL, adjust="bonferroni")
+rm(emm.time_session_condition)
 ## ----
-rm(emm1, con1, emm2, con2, emm3, con3)
+rm(post.time_group_session, post.time_group_condition, post.time_session_condition)
 
 ## ---- plot_probe_time 
 plot.time <- afex_plot_wrapper(model.time, "session", "group", "condition", l_time, ymin=0, ymax=40)
@@ -631,9 +633,8 @@ rm(model.time, model.time_outlier, model.time_hetero)
 
 # --- EXCESS PATH LENGTH TO CHOSEN TARGET (ALL PROBE TRIALS) --- # 
 ## ---- model_probe_path
-# note: random effects structure was determined according to Bates (2015) & Matuschek et al. (2017) 
 model.path <- mixed(excess_path_length ~ group*session*condition + cov_sex + cov_motor_score + 
-                      (condition||id), data=data_p, expand_re=T)
+                      (session+condition||id), data=data_p, expand_re=T)
 ## ----
 
 # random effects
@@ -643,18 +644,22 @@ VarCorr(model.path$full_model)
 model.path
 
 ## ---- post_hoc_probe_path
-emm1 <- emmeans(model.path, ~ group * session, lmer.df="satterthwaite")
-con1 <- summary(rbind(pairs(emm1, simple="group"), pairs(emm1, simple="session"), pairs(emm1, interaction="pairwise")), 
-                infer=c(T,T), by=NULL, adjust="bonferroni")
+emm.path_group_session <- emmeans(model.path, ~ group * session, lmer.df="satterthwaite")
+post.path_group_session <- summary(rbind(pairs(emm.path_group_session, simple="group"), pairs(emm.path_group_session, simple="session")), 
+                                   infer=c(T,T), by=NULL, adjust="bonferroni")
+rm(emm.path_group_session)
 
-emm2 <- emmeans(model.path, ~ group * condition, lmer.df="satterthwaite")
-con2 <- summary(rbind(pairs(emm2, simple="group"), pairs(emm2, simple="condition")), infer=c(T,T), by=NULL, adjust="bonferroni")
+emm.path_group_condition <- emmeans(model.path, ~ group * condition, lmer.df="satterthwaite")
+post.path_group_condition <- summary(rbind(pairs(emm.path_group_condition, simple="group"), pairs(emm.path_group_condition, simple="condition")),
+                                     infer=c(T,T), by=NULL, adjust="bonferroni")
+rm(emm.path_group_condition)
 
-emm3 <- emmeans(model.path, ~ session * condition, lmer.df="satterthwaite")
-con3 <- summary(rbind(pairs(emm3, simple="session"), pairs(emm3, simple="condition"), pairs(emm3, interaction="pairwise")), 
-                infer=c(T,T), by=NULL, adjust="bonferroni")
+emm.path_session_condition <- emmeans(model.path, ~ session * condition, lmer.df="satterthwaite")
+post.path_session_condition <- summary(rbind(pairs(emm.path_session_condition, simple="session"), pairs(emm.path_session_condition, simple="condition")), 
+                                       infer=c(T,T), by=NULL, adjust="bonferroni")
+rm(emm.path_session_condition)
 ## ---- 
-rm(emm1, con1, emm2, con2, emm3, con3)
+rm(post.path_group_session, post.path_group_condition, post.path_session_condition)
 
 ## ---- plot_probe_path
 plot.path <- afex_plot_wrapper(model.path, "session", "group", "condition", l_excess_path_length, ymin=0, ymax=1.5)
@@ -666,12 +671,12 @@ rm(plot.path)
 t <- data_p %>% mutate(flag=ifelse(is_outlier(excess_path_length), T, F))
 t <- t %>% filter(flag==F)
 model.path_outlier <- mixed(excess_path_length ~ group*session*condition + cov_sex + cov_motor_score +   
-                              (condition||id), data=t, expand_re=T)
+                              (session+condition||id), data=t, expand_re=T)
 rm(t)
 
 # 2) model with heteroscedastic variances
 model.path_h1 <- lme(excess_path_length ~ group*session*condition + cov_sex + cov_motor_score,
-                     random=list(id=pdDiag(~ condition)),
+                     random=list(id=pdDiag(~ session + condition)),
                      na.action=na.omit, data=data_p, method="ML")
 model.path_h2 <- update(model.path_h1, weights=varIdent(form=~1 | group))
 model.path_h3 <- update(model.path_h1, weights=varComb(varIdent(form=~1 | group),
@@ -682,7 +687,7 @@ model.path_h4 <- update(model.path_h1, weights=varComb(varIdent(form=~1 | group)
 anova(model.path_h1, model.path_h2, model.path_h3, model.path_h4) # chose model h4 
 rm(model.path_h1, model.path_h2, model.path_h3, model.path_h4)
 model.path_hetero <- lme(excess_path_length ~ group*session*condition + cov_sex + cov_motor_score,  
-                         random=list(id=pdDiag(~ condition)),
+                         random=list(id=pdDiag(~ session + condition)),
                          weights=varComb(varIdent(form=~1 | group),
                                          varIdent(form=~1 | condition),
                                          varIdent(form=~1 | session)),
@@ -719,9 +724,8 @@ rm(model.path, model.path_outlier, model.path_hetero)
 
 # --- EXCESS AVERAGE DISTANCE TO TARGET (ALL PROBE TRIALS) --- # 
 ## ---- model_probe_target_distance
-# note: random effects structure was determined according to Bates (2015) & Matuschek et al. (2017) 
 model.target_distance <- mixed(excess_target_distance ~ group*session*condition + cov_sex + cov_motor_score + 
-                                 (session*condition||id), data=data_p, expand_re=T)
+                                 (session*condition|id), data=data_p, expand_re=T)
 ## ----
 
 # random effects
@@ -731,10 +735,15 @@ VarCorr(model.target_distance$full_model)
 model.target_distance
 
 ## ---- post_hoc_probe_target_distance
-emmeans(model.target_distance, pairwise ~ group, lmer.df="satterthwaite", adjust="bonferroni")$contrasts 
-emmeans(model.target_distance, pairwise ~ session, lmer.df="satterthwaite")$contrasts 
-emmeans(model.target_distance, pairwise ~ condition, lmer.df="satterthwaite")$contrasts
+emm.distance_group <- emmeans(model.target_distance, ~ group, lmer.df="satterthwaite")
+post.distance_group <- pairs(emm.distance_group, adjust="bonferroni")
+rm(emm.distance_group)
+
+post.distance_session <- emmeans(model.target_distance, pairwise ~ session, lmer.df="satterthwaite")$contrasts
+
+post.distance_condition <- emmeans(model.target_distance, pairwise ~ condition, lmer.df="satterthwaite")$contrasts
 ## ----
+rm(post.distance_group, post.distance_session, post.distance_condition)
 
 ## ---- plot_probe_target_distance
 plot.target_distance <- afex_plot_wrapper(model.target_distance, "session", "group", "condition", l_excess_target_distance, ymin=-0.25, ymax=0.25)
@@ -745,7 +754,7 @@ rm(plot.target_distance)
 t <- data_p %>% mutate(flag=ifelse(is_outlier(excess_target_distance), T, F))
 t <- t %>% filter(flag==F)
 model.target_distance_outlier <- mixed(excess_target_distance ~ group*session*condition + cov_sex + cov_motor_score + 
-                                         (session*condition||id), data=t, expand_re=T)
+                                         (session*condition|id), data=t, expand_re=T)
 rm(t)
 
 # 2) model with heteroscedastic variances
@@ -798,9 +807,8 @@ rm(model.target_distance, model.target_distance_outlier, model.target_distance_h
 
 # --- INITIAL ROTATION (ALL PROBE TRIALS) --- # 
 ## ---- model_probe_rotation
-# note: random effects structure was determined according to Bates (2015) & Matuschek et al. (2017) 
 model.rotation <- mixed(initial_rotation ~ group*session*condition- + cov_sex + cov_motor_score + 
-                          (condition||id), data=data_p, expand_re=T)
+                          (session*condition||id), data=data_p, expand_re=T)
 ## ----
 
 # random effects
@@ -810,11 +818,22 @@ VarCorr(model.rotation$full_model)
 model.rotation
 
 ## ---- post_hoc_probe_rotation
-emm4 <- emmeans(model.rotation, ~ group * session * condition, lmer.df="satterthwaite")
-con4 <- summary(rbind(pairs(emm4, simple="group"), pairs(emm4, simple="session"), pairs(emm4, simple="condition")), 
-                infer=c(T,T), by=NULL, adjust="bonferroni")
+emm.init_rot_group_session <- emmeans(model.rotation, ~ group * session, lmer.df="satterthwaite")
+post.init_rot_group_session <- summary(rbind(pairs(emm.init_rot_group_session, simple="group"), pairs(emm.init_rot_group_session, simple="session")), 
+                                       infer=c(T,T), by=NULL, adjust="bonferroni")
+rm(emm.init_rot_group_session)
+
+emm.init_rot_group_condition <- emmeans(model.rotation, ~ group * condition, lmer.df="satterthwaite")
+post.init_rot_group_condition <- summary(rbind(pairs(emm.init_rot_group_condition, simple="group"), pairs(emm.init_rot_group_condition, simple="condition")),
+                                         infer=c(T,T), by=NULL, adjust="bonferroni")
+rm(emm.init_rot_group_condition)
+
+emm.init_rot_session_condition <- emmeans(model.rotation, ~ session * condition, lmer.df="satterthwaite")
+post.init_rot_session_condition <- summary(rbind(pairs(emm.init_rot_session_condition, simple="session"), pairs(emm.init_rot_session_condition, simple="condition")), 
+                                           infer=c(T,T), by=NULL, adjust="bonferroni")
+rm(emm.init_rot_session_condition)
 ## ---- 
-rm(emm4, con4)
+rm(post.init_rot_group_session, post.init_rot_group_condition, post.init_rot_session_condition)
 
 ## ---- plot_probe_rotation
 plot.rotation <- afex_plot_wrapper(model.rotation, "session", "group", "condition", l_initial_rotation, ymin=0, ymax=6)
@@ -826,13 +845,13 @@ rm(plot.rotation)
 t <- data_p %>% mutate(flag=ifelse(is_outlier(initial_rotation), T, F))
 t <- t %>% filter(flag==F)
 model.rotation_outlier <-  mixed(initial_rotation ~ group*session*condition + cov_sex + cov_motor_score + 
-                                   (condition||id), data=t %>% filter(flag==F), expand_re=T)
+                                   (session*condition||id), data=t %>% filter(flag==F), expand_re=T)
 rm(t)
 
 
 # 1) model with outliers removed
 model.rotation_h1 <- lme(initial_rotation ~ group*session*condition + cov_sex + cov_motor_score,  
-                         random=list(id=pdDiag(~ condition)),
+                         random=list(id=pdDiag(~ session * condition)),
                          na.action=na.omit, data=data_p, method="ML")
 model.rotation_h2 <- update(model.rotation_h1, weights=varIdent(form=~1 | condition))
 model.rotation_h3 <- update(model.rotation_h1, weights=varComb(varIdent(form=~1 | condition),
@@ -843,7 +862,7 @@ model.rotation_h4 <- update(model.rotation_h1, weights=varComb(varIdent(form=~1 
 anova(model.rotation_h1, model.rotation_h2, model.rotation_h3, model.rotation_h4) # chose model h4
 rm(model.rotation_h1, model.rotation_h2, model.rotation_h3, model.rotation_h4) 
 model.rotation_hetero <-  lme(initial_rotation ~  group*session*condition + cov_sex + cov_motor_score,  
-                              random=list(id=pdDiag(~ condition)),
+                              random=list(id=pdDiag(~ session * condition)),
                               weights=varComb(varIdent(form=~1 | condition),
                                               varIdent(form=~1 | group),
                                               varIdent(form=~1 | session)),
