@@ -245,7 +245,7 @@ apa_post.layout_old_vs_adult <- post.layout$p.adj[3] %>% apa_p(add_equals=T)
 rm(post.layout)
 ```
 
-We found significant *age-related group* differences in the ability to correctly identify the maze layout (Fisher's exact test $p$`r apa_fisher.layout`). Post-hoc contrasts showed that all age groups differed significantly from each other and that there was a gradual increase in performance with increasing age (Bonferroni-adjusted pairwise Fisher test: 6-7-yo vs. 9-10-yo $p$ `r apa_post.layout_young_vs_old`; 6-7-yo vs. adults $p$ `r apa_post.layout_young_vs_adult`; 9-10-yo vs. adults $p$ `r apa_post.layout_old_vs_adult`).
+We found significant *age-related group* differences in the ability to correctly identify the maze layout (Fisher's exact test $p$ `r apa_fisher.layout`). Post-hoc contrasts showed that all age groups differed significantly from each other and that there was a gradual increase in performance with increasing age (Bonferroni-adjusted pairwise Fisher test: 6-7-yo vs. 9-10-yo $p$ `r apa_post.layout_young_vs_old`; 6-7-yo vs. adults $p$ `r apa_post.layout_young_vs_adult`; 9-10-yo vs. adults $p$ `r apa_post.layout_old_vs_adult`).
 
 ```{r, include=F}
 rm(model.layout, apa_fisher.layout, apa_post.layout_young_vs_old, apa_post.layout_young_vs_adult, apa_post.layout_old_vs_adult)
@@ -489,10 +489,10 @@ rm(model.target_distance, apa_lmm.distance, apa_post.distance_group, apa_post.di
 
 ### **Initial rotation**
 
-```{r, model_probe_rotation}
+```{r, model_probe_rotation }
 ```
 
-```{r, post_hoc_probe_rotation}
+```{r, post_hoc_probe_rotation, include=F}
 ```
 
 ```{r, plot_probe_rotation, include=F }
@@ -536,14 +536,28 @@ apa_random_table(VarCorr(model.rotation$full_model)) %>%
 
 The model had a fit of $R2 = `r R2$Rsq`, [CI: `r R2$upper.CL`, `r R2$lower.CL`$].
 
+For initial rotation in probe trials, all two-way interactions were significant (Table\ \@ref(tab:table-probe-init-rot-f0)). Post-hoc contrasts on the *group x session* interaction (`r apa_lmm.init_rot$statistic$group_session`) revealed that initial rotation increased across sessions for 6-7-yo children (`r apa_post.init_rot_group_session$statistic$YoungKids_Session1_session2`) and adults only (`r apa_post.init_rot_group_session$statistic$YoungAdults_Session1_session2`). There were no significant age group differences within sessions. Post-hoc contrasts on the *group x condition* interaction (`r apa_lmm.init_rot$statistic$group_condition`) found that initial rotation was increase in the allocentric compared to egocentric condition for all age groups (egocentric vs. allocentric for 6-7-yo `r apa_post.init_rot_group_condition$statistic$YoungKids_Egoret_alloret`; 9-10-yo `r apa_post.init_rot_group_condition$statistic$OldKids_Egoret_alloret`; adults `r apa_post.init_rot_group_condition$statistic$YoungAdults_Egoret_alloret`). There were no significant age group differences within conditions. The *session x condition* interaction (`r apa_lmm.init_rot$statistic$session_condition`) added that the age-independent increase in initial rotation for the allocentric condition was present in both sessions (egocentric vs. allocentric in first session `r apa_post.init_rot_session_condition$statistic$X1_Egoret_alloret`; second session `r apa_post.init_rot_session_condition$statistic$X2_Egoret_alloret`) and that initial rotation increased across sessions only in the allocentric (`r apa_post.init_rot_session_condition$statistic$Alloret_Session1_session2`) but not egocentric condition. 
 
-(Table\ \@ref(tab:table-probe-init-rot-f0))
- 
+```{r table-probe-init-rot1, echo=F}
+apa_table(
+  apa_post.init_rot_group_session$table %>% remove_rownames(),
+  placement="h")
+```
 
+```{r table-probe-init-rot2, echo=F}
+apa_table(
+  apa_post.init_rot_group_condition$table %>% remove_rownames(),
+  placement="h")
+```
 
+```{r table-probe-init-rot3, echo=F}
+apa_table(
+  apa_post.init_rot_session_condition$table %>% remove_rownames(),
+  placement="h")
+```
 
 ```{r, include=F}
-rm(model.rotation, apa_lmm.init_rot)
+rm(model.rotation, apa_lmm.init_rot, apa_post.init_rot_group_session, apa_post.init_rot_group_condition, apa_post.init_rot_session_condition)
 ```
 
 \newpage 
@@ -551,6 +565,9 @@ rm(model.rotation, apa_lmm.init_rot)
 ### **Initial rotation velocity**
 
 ```{r, model_probe_rotation_velocity }
+```
+
+```{r, post_hoc_probe_rotation_velocity, include=F }
 ```
 
 ```{r, plot_probe_rotation_velocity, include=F }
@@ -564,59 +581,50 @@ rm(plot.rotation_velocity)
 ```{r apa_probe_rotation_velocity, include=F }
 R2 <- r2beta(model.rotation_velocity$full_model, method='nsj', partial=F) %>% mutate_all(apa_num)
 
-apa_lmm <- apa_print(model.rotation_velocity)
-apa_lmm <- apa_lmm$table 
+apa_lmm.init_vel <- apa_print(model.rotation_velocity)
 
-emm2 <- emmeans(model.rotation_velocity, ~ group * condition, lmer.df="satterthwaite")
-con2 <- summary(rbind(pairs(emm2, simple="group"), pairs(emm2, simple="condition")), infer=c(T,T), by=NULL, adjust="bonferroni")
-apa_emm2 <- apa_print(con2)
-apa_emm2 <- apa_emm2$table %>% remove_rownames()
-rm(emm2, con2)
+apa_post.init_vel_group_condition <- post.init_vel_group_condition %>% apa_print() %>% bonferroni_fix()
 
-emm3 <- emmeans(model.rotation_velocity, ~ session * condition, lmer.df="satterthwaite")
-con3 <- summary(rbind(pairs(emm3, simple="session"), pairs(emm3, simple="condition"), pairs(emm3, interaction="pairwise")), 
-                infer=c(T,T), by=NULL, adjust="bonferroni")
-apa_emm3 <- apa_print(con3)
-apa_emm3 <- apa_emm3$table %>% remove_rownames()
-rm(emm3, con3)
+apa_post.init_vel_session_condition <- post.init_vel_session_condition %>% apa_print() %>% bonferroni_fix()
+
+rm(post.init_vel_group_condition, post.init_vel_session_condition)
+```
+
+(ref:p-init-vel-f-caption0) Fixed effects for initial rotation veloctiy in probe trials.
+
+```{r table-probe-init-vel-f0, echo=F}
+apa_table(
+  apa_lmm.init_vel$table,
+  caption="(ref:p-init-vel-f-caption0)",
+  placement="h")
+```
+
+(ref:p-init-vel-r-caption-r0) Random effects for initial rotation veloctiy in probe trials.
+
+```{r table-probe-init-vel-r0, echo=F}
+apa_random_table(VarCorr(model.rotation_velocity$full_model)) %>% 
+  knitr::kable(
+    caption="(ref:p-init-vel-r-caption-r0)")
 ```
 
 The model had a fit of $R2 = `r R2$Rsq`, [CI: `r R2$upper.CL`, `r R2$lower.CL`$].
 
-* *group x condition* interaction:  
-* *session x condition* interaction:
+For initial rotation velocity in probe trials, we found two significant two-way interactions (Table\ \@ref(tab:table-probe-init-vel-f0)). Post-hoc contrasts for the *group x session* interaction (`r apa_lmm.init_vel$statistic$group_condition`) showed significant age group differences only in the allocentric condition, where 6-7-yo children had a significantly lower initial rotation velocity than both 9-10-yo (`r apa_post.init_vel_group_condition$statistic$Alloret_YoungKids_OldKids`) and adults (`r apa_post.init_vel_group_condition$statistic$Alloret_YoungKids_YoungAdults`). All groups had significantly higher initial rotation velocity for the allocentric than egocentric condition (6-7-yo `r apa_post.init_vel_group_condition$statistic$YoungKids_Egoret_alloret`; 9-10-yo `r apa_post.init_vel_group_condition$statistic$OldKids_Egoret_alloret`; adults `r apa_post.init_vel_group_condition$statistic$YoungAdults_Egoret_alloret`). The *session x condition* interaction (`r apa_lmm.init_vel$statistic$session_condition`) added that this age-independent increase in initial rotation velocity for the allocentric condition was present in both sessions (egocentric vs. allocentric in first session `r apa_post.init_vel_session_condition$statistic$X1_Egoret_alloret`; second session `r apa_post.init_vel_session_condition$statistic$X2_Egoret_alloret`) and that initial rotation velocity increased across sessions only in the allocentric (`r apa_post.init_vel_session_condition$statistic$Alloret_Session1_session2`) but not egocentric condition. 
 
-(Table\ \@ref(tab:table-probe-init-rot-vel0)). 
-
-(ref:p-irv-caption0) Fixed effects for initial rotation veloctiy in probe trials.
-
-```{r table-probe-init-rot-vel0, echo=F}
+```{r table-probe-init-vel2, echo=F}
 apa_table(
-  apa_lmm,
-  caption="(ref:p-irv-caption0)",
+  apa_post.init_vel_group_condition$table %>% remove_rownames(),
   placement="h")
 ```
 
-(ref:p-irv-caption2) Post-hoc contrasts for group x condition interaction.
-
-```{r table-probe-init-rot-vel2, echo=F}
+```{r table-probe-init-vel3, echo=F}
 apa_table(
-  apa_emm2,
-  caption="(ref:p-irv-caption2)",
-  placement="h")
-```
-
-(ref:p-irv-caption3) Post-hoc contrasts for session x condition interaction.
-
-```{r table-probe-init-rot-vel3, echo=F}
-apa_table(
-  apa_emm3,
-  caption="(ref:p-irv-caption3)",
+  apa_post.init_vel_session_condition$table %>% remove_rownames(),
   placement="h")
 ```
 
 ```{r, include=F}
-rm(model.rotation_velocity, apa_lmm, apa_emm2, apa_emm3)
+rm(model.rotation_velocity, apa_lmm.init_vel, apa_post.init_vel_group_condition, apa_post.init_vel_session_condition)
 ```
 
 \newpage 

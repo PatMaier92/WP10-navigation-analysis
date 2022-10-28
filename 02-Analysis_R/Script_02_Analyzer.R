@@ -899,7 +899,6 @@ rm(model.rotation, model.rotation_outlier, model.rotation_hetero)
 
 # --- INITIAL ROTATION VELOCITY (ALL PROBE TRIALS) --- # 
 ## ---- model_probe_rotation_velocity
-# note: random effects structure was determined according to Bates (2015) & Matuschek et al. (2017) 
 model.rotation_velocity <- mixed(initial_rotation_velocity ~ group*session*condition + cov_sex + cov_motor_score +  
                                    (condition||id), data=data_p, expand_re=T)
 ## ----
@@ -911,14 +910,17 @@ VarCorr(model.rotation_velocity$full_model)
 model.rotation_velocity
 
 ## ---- post_hoc_probe_rotation_velocity
-emm2 <- emmeans(model.rotation_velocity, ~ group * condition, lmer.df="satterthwaite")
-con2 <- summary(rbind(pairs(emm2, simple="group"), pairs(emm2, simple="condition")), infer=c(T,T), by=NULL, adjust="bonferroni")
+emm.init_vel_group_condition <- emmeans(model.rotation_velocity, ~ group * condition, lmer.df="satterthwaite")
+post.init_vel_group_condition <- summary(rbind(pairs(emm.init_vel_group_condition, simple="group"), pairs(emm.init_vel_group_condition, simple="condition")),
+                                         infer=c(T,T), by=NULL, adjust="bonferroni")
+rm(emm.init_vel_group_condition)
 
-emm3 <- emmeans(model.rotation_velocity, ~ session * condition, lmer.df="satterthwaite")
-con3 <- summary(rbind(pairs(emm3, simple="session"), pairs(emm3, simple="condition"), pairs(emm3, interaction="pairwise")), 
-                infer=c(T,T), by=NULL, adjust="bonferroni")
+emm.init_vel_session_condition <- emmeans(model.rotation_velocity, ~ session * condition, lmer.df="satterthwaite")
+post.init_vel_session_condition <- summary(rbind(pairs(emm.init_vel_session_condition, simple="session"), pairs(emm.init_vel_session_condition, simple="condition")), 
+                                           infer=c(T,T), by=NULL, adjust="bonferroni")
+rm(emm.init_vel_session_condition)
 ## ----
-rm(emm2, con2, emm3, con3)
+rm(post.init_vel_group_condition, post.init_vel_session_condition)
 
 ## ---- plot_probe_rotation_velocity
 plot.rotation_velocity <- afex_plot_wrapper(model.rotation_velocity, "session", "group", "condition", l_initial_rotation_velocity, ymin=0, ymax=0.025)
