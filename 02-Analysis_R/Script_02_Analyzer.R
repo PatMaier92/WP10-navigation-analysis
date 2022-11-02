@@ -989,9 +989,8 @@ rm(model.rotation_velocity, model.rotation_velocity_outlier, model.rotation_velo
 
 # --- EXCESS PATH EDIT DISTANCE (ALL PROBE TRIALS) --- # 
 ## ---- model_probe_path_edit
-# note: random effects structure was determined according to Bates (2015) & Matuschek et al. (2017) 
 model.path_edit <- mixed(excess_path_edit_distance ~ group*session*condition + cov_sex + cov_motor_score + 
-                           (condition|id), data=data_p, expand_re=T)
+                           (session+condition||id), data=data_p, expand_re=T)
 ## ----
 
 # random effects
@@ -1001,18 +1000,22 @@ VarCorr(model.path_edit$full_model)
 model.path_edit
 
 ## ---- post_hoc_probe_path_edit
-emm1 <- emmeans(model.path_edit, ~ group * session, lmer.df="satterthwaite")
-con1 <- summary(rbind(pairs(emm1, simple="group"), pairs(emm1, simple="session"), pairs(emm1, interaction="pairwise")), 
-                infer=c(T,T), by=NULL, adjust="bonferroni")
+emm.path_edit_group_session <- emmeans(model.path_edit, ~ group * session, lmer.df="satterthwaite")
+post.path_edit_group_session <- summary(rbind(pairs(emm.path_edit_group_session, simple="group"), pairs(emm.path_edit_group_session, simple="session")), 
+                                        infer=c(T,T), by=NULL, adjust="bonferroni")
+rm(emm.path_edit_group_session)
 
-emm2 <- emmeans(model.path_edit, ~ group * condition, lmer.df="satterthwaite")
-con2 <- summary(rbind(pairs(emm2, simple="group"), pairs(emm2, simple="condition")), infer=c(T,T), by=NULL, adjust="bonferroni")
+emm.path_edit_group_condition <- emmeans(model.path_edit, ~ group * condition, lmer.df="satterthwaite")
+post.path_edit_group_condition <- summary(rbind(pairs(emm.path_edit_group_condition, simple="group"), pairs(emm.path_edit_group_condition, simple="condition")), 
+                                          infer=c(T,T), by=NULL, adjust="bonferroni")
+rm(emm.path_edit_group_condition)
 
-emm3 <- emmeans(model.path_edit, ~ session * condition, lmer.df="satterthwaite")
-con3 <- summary(rbind(pairs(emm3, simple="session"), pairs(emm3, simple="condition"), pairs(emm3, interaction="pairwise")), 
-                infer=c(T,T), by=NULL, adjust="bonferroni")
+emm.path_edit_session_condition <- emmeans(model.path_edit, ~ session * condition, lmer.df="satterthwaite")
+post.path_edit_session_condition <- summary(rbind(pairs(emm.path_edit_session_condition, simple="session"), pairs(emm.path_edit_session_condition, simple="condition")), 
+                                            infer=c(T,T), by=NULL, adjust="bonferroni")
+rm(emm.path_edit_session_condition)
 ## ----
-rm(emm1, con1, emm2, con2, emm3, con3)
+rm(post.path_edit_group_session, post.path_edit_group_condition, post.path_edit_session_condition)
 
 ## ---- plot_probe_path_edit
 plot.path_edit <- afex_plot_wrapper(model.path_edit, "session", "group", "condition", "path edit distance", ymin=0, ymax=8)
@@ -1022,7 +1025,6 @@ rm(plot.path_edit, model.path_edit)
 
 # --- INITIAL ROTATION BY PATH LENGTH (ALL PROBE TRIALS) --- # 
 ## ---- model_probe_rotation_path
-# note: random effects structure was determined according to Bates (2015) & Matuschek et al. (2017) 
 model.rotation_path <- mixed(initial_rotation_by_path_length ~ group*session*condition + cov_sex + cov_motor_score + 
                                (condition||id), data=data_p, expand_re=T)
 ## ----
@@ -1034,14 +1036,17 @@ VarCorr(model.rotation_path$full_model)
 model.rotation_path
 
 ## ---- post_hoc_probe_rotation_path
-emm2 <- emmeans(model.rotation_path, ~ group * condition, lmer.df="satterthwaite")
-con2 <- summary(rbind(pairs(emm2, simple="group"), pairs(emm2, simple="condition")), infer=c(T,T), by=NULL, adjust="bonferroni")
+emm.rot_path_group_condition <- emmeans(model.rotation_path, ~ group * condition, lmer.df="satterthwaite")
+post.rot_path_group_condition <- summary(rbind(pairs(emm.rot_path_group_condition, simple="group"), pairs(emm.rot_path_group_condition, simple="condition")),
+                                         infer=c(T,T), by=NULL, adjust="bonferroni")
+rm(emm.rot_path_group_condition)
 
-emm3 <- emmeans(model.rotation_path, ~ session * condition, lmer.df="satterthwaite")
-con3 <- summary(rbind(pairs(emm3, simple="session"), pairs(emm3, simple="condition"), pairs(emm3, interaction="pairwise")), 
-                infer=c(T,T), by=NULL, adjust="bonferroni")
+emm.rot_path_session_condition <- emmeans(model.rotation_path, ~ session * condition, lmer.df="satterthwaite")
+post.rot_path_session_condition <- summary(rbind(pairs(emm.rot_path_session_condition, simple="session"), pairs(emm.rot_path_session_condition, simple="condition")), 
+                                           infer=c(T,T), by=NULL, adjust="bonferroni")
+rm(emm.rot_path_session_condition)
 ## ----
-rm(emm2, con2, emm3, con3)
+rm(post.rot_path_group_condition, post.rot_path_session_condition)
 
 ## ---- plot_probe_rotation_path
 plot.rotation_path <- afex_plot_wrapper(model.rotation_path, "session", "group", "condition", l_initial_rotation_by_path, ymin=0, ymax=30)
@@ -1062,9 +1067,8 @@ plot.initial_time <- afex_plot_wrapper(model.initial_time, "group", NULL, NULL, 
 
 # --- TOTAL ROTATION (ALL PROBE TRIALS) --- # 
 ## ---- model_probe_total_rotation
-# note: random effects structure was determined according to Bates (2015) & Matuschek et al. (2017) 
 model.rotation <- mixed(rotation ~ group*session*condition + cov_sex + cov_motor_score + 
-                          (condition||id), data=data_p, expand_re=T)
+                          (session+condition||id), data=data_p, expand_re=T)
 ## ----
 
 # random effects
@@ -1074,15 +1078,12 @@ VarCorr(model.rotation$full_model)
 model.rotation
 
 ## ---- post_hoc_probe_total_rotation
-emm1 <- emmeans(model.rotation, ~ group * session, lmer.df="satterthwaite")
-con1 <- summary(rbind(pairs(emm1, simple="group"), pairs(emm1, simple="session"), pairs(emm1, interaction="pairwise")), 
-                infer=c(T,T), by=NULL, adjust="bonferroni")
-
-emm3 <- emmeans(model.rotation, ~ session * condition, lmer.df="satterthwaite")
-con3 <- summary(rbind(pairs(emm3, simple="session"), pairs(emm3, simple="condition"), pairs(emm3, interaction="pairwise")), 
-                infer=c(T,T), by=NULL, adjust="bonferroni")
+emm.rot_session_condition <- emmeans(model.rotation, ~ session * condition, lmer.df="satterthwaite")
+post.rot_session_condition <- summary(rbind(pairs(emm.rot_session_condition, simple="session"), pairs(emm.rot_session_condition, simple="condition")), 
+                                      infer=c(T,T), by=NULL, adjust="bonferroni")
+rm(emm.rot_session_condition)
 ## ---- 
-rm(emm1, con1, emm3, con3)
+rm(post.rot_session_condition)
 
 ## ---- plot_probe_total_rotation
 plot.rotation <- afex_plot_wrapper(model.rotation, "session", "group", "condition", l_rotation, ymin=0, ymax=17)
@@ -1092,9 +1093,8 @@ rm(plot.rotation, model.rotation)
 
 # --- TOTAL ROTATION VELOCITY (ALL PROBE TRIALS) --- # 
 ## ---- model_probe_total_rotation_velocity
-# note: random effects structure was determined according to Bates (2015) & Matuschek et al. (2017) 
 model.rotation_velocity <- mixed(rotation_velocity ~ group*session*condition + cov_sex + cov_motor_score + 
-                                   (condition||id), data=data_p, expand_re=T)
+                                   (session+condition||id), data=data_p, expand_re=T)
 ## ----
 
 # random effects
@@ -1104,14 +1104,17 @@ VarCorr(model.rotation_velocity$full_model)
 model.rotation_velocity
 
 ## ---- post_hoc_probe_total_rotation_velocity
-emm2 <- emmeans(model.rotation_velocity, ~ group * condition, lmer.df="satterthwaite")
-con2 <- summary(rbind(pairs(emm2, simple="group"), pairs(emm2, simple="condition")), infer=c(T,T), by=NULL, adjust="bonferroni")
+emm.rot_vel_group_condition <- emmeans(model.rotation_velocity, ~ group * condition, lmer.df="satterthwaite")
+post.rot_vel_group_condition <- summary(rbind(pairs(emm.rot_vel_group_condition, simple="group"), pairs(emm.rot_vel_group_condition, simple="condition")), 
+                                        infer=c(T,T), by=NULL, adjust="bonferroni")
+rm(emm.rot_vel_group_condition)
 
-emm3 <- emmeans(model.rotation_velocity, ~ session * condition, lmer.df="satterthwaite")
-con3 <- summary(rbind(pairs(emm3, simple="session"), pairs(emm3, simple="condition"), pairs(emm3, interaction="pairwise")), 
-                infer=c(T,T), by=NULL, adjust="bonferroni")
+emm.rot_vel_session_condition <- emmeans(model.rotation_velocity, ~ session * condition, lmer.df="satterthwaite")
+post.rot_vel_session_condition <- summary(rbind(pairs(emm.rot_vel_session_condition, simple="session"), pairs(emm.rot_vel_session_condition, simple="condition")), 
+                                          infer=c(T,T), by=NULL, adjust="bonferroni")
+rm(emm.rot_vel_session_condition)
 ## ---- 
-rm(emm2, con2, emm3, con3)
+rm(post.rot_vel_group_condition, post.rot_vel_session_condition)
 
 ## ---- plot_probe_total_rotation_velocity
 plot.rotation_velocity <- afex_plot_wrapper(model.rotation_velocity, "session", "group", "condition", l_rotation_velocity, ymin=0, ymax=0.03)
@@ -1121,7 +1124,6 @@ rm(plot.rotation_velocity, model.rotation_velocity)
 
 # --- TOTAL ROTATION BY PATH (ALL PROBE TRIALS) --- # 
 ## ---- model_probe_total_rotation_path
-# note: random effects structure was determined according to Bates (2015) & Matuschek et al. (2017) 
 model.rotation_path <- mixed(rotation_by_path_length ~ group*session*condition + cov_sex + cov_motor_score + 
                                (condition||id), data=data_p, expand_re=T)
 ## ----
@@ -1133,18 +1135,22 @@ VarCorr(model.rotation_path$full_model)
 model.rotation_path
 
 ## ---- post_hoc_probe_total_rotation_path
-emm1 <- emmeans(model.rotation_path, ~ group * session, lmer.df="satterthwaite")
-con1 <- summary(rbind(pairs(emm1, simple="group"), pairs(emm1, simple="session"), pairs(emm1, interaction="pairwise")), 
-                infer=c(T,T), by=NULL, adjust="bonferroni")
+emm.rot_path_group_session <- emmeans(model.rotation_path, ~ group * session, lmer.df="satterthwaite")
+post.rot_path_group_session <- summary(rbind(pairs(emm.rot_path_group_session, simple="group"), pairs(emm.rot_path_group_session, simple="session")), 
+                                       infer=c(T,T), by=NULL, adjust="bonferroni")
+rm(emm.rot_path_group_session)
 
-emm2 <- emmeans(model.rotation_path, ~ group * condition, lmer.df="satterthwaite")
-con2 <- summary(rbind(pairs(emm2, simple="group"), pairs(emm2, simple="condition")), infer=c(T,T), by=NULL, adjust="bonferroni")
+emm.rot_path_group_condition <- emmeans(model.rotation_path, ~ group * condition, lmer.df="satterthwaite")
+post.rot_path_group_condition <- summary(rbind(pairs(emm.rot_path_group_condition, simple="group"), pairs(emm.rot_path_group_condition, simple="condition")), 
+                                         infer=c(T,T), by=NULL, adjust="bonferroni")
+rm(emm.rot_path_group_condition)
 
-emm3 <- emmeans(model.rotation_path, ~ session * condition, lmer.df="satterthwaite")
-con3 <- summary(rbind(pairs(emm3, simple="session"), pairs(emm3, simple="condition"), pairs(emm3, interaction="pairwise")), 
-                infer=c(T,T), by=NULL, adjust="bonferroni")
+emm.rot_path_session_condition <- emmeans(model.rotation_path, ~ session * condition, lmer.df="satterthwaite")
+post.rot_path_session_condition <- summary(rbind(pairs(emm.rot_path_session_condition, simple="session"), pairs(emm.rot_path_session_condition, simple="condition")), 
+                                           infer=c(T,T), by=NULL, adjust="bonferroni")
+rm(emm.rot_path_session_condition)
 ## ---- 
-rm(emm1, con1, emm2, con2, emm3, con3)
+rm(post.rot_path_group_session, post.rot_path_group_condition, post.rot_path_session_condition)
 
 ## ---- plot_probe_total_rotation_path
 plot.rotation_path <- afex_plot_wrapper(model.rotation_path, "session", "group", "condition", l_rotation_by_path, ymin=0, ymax=18)
@@ -1158,7 +1164,6 @@ rm(plot.rotation_path, model.rotation_path)
 
 # --- TIME (LEARNING TRIALS) --- # 
 ## ---- model_learn_time
-# note: random effects structure was determined according to Bates (2015) & Matuschek et al. (2017) 
 model.time_learn <- mixed(time ~ group*trial_in_block + cov_sex + cov_motor_score + 
                             (1|id), data=data_l, expand_re=T)
 ## ----
@@ -1170,9 +1175,11 @@ VarCorr(model.time_learn$full_model)
 model.time_learn
 
 ## ---- post_hoc_learn_time 
-emmeans(model.time_learn, pairwise ~ group, lmer.df="satterthwaite", adjust="bonferroni")
-emmeans(model.time_learn, pairwise ~ trial_in_block, lmer.df="satterthwaite", adjust="bonferroni")
+post.learn_time_group <- emmeans(model.time_learn, pairwise ~ group, lmer.df="satterthwaite", adjust="bonferroni")$contrasts
+
+post.learn_time_trial <- emmeans(model.time_learn, pairwise ~ trial_in_block, lmer.df="satterthwaite", adjust="bonferroni")$contrasts
 ## ----
+rm(post.learn_time_group, post.learn_time_trial)
 
 ## ---- plot_learn_time
 plot.time_learn <- afex_plot_wrapper(model.time_learn, "trial_in_block", "group", NULL, l_time, xlabel=l_trial_in_block, ymin=0, ymax=40)
@@ -1182,7 +1189,6 @@ rm(plot.time_learn, model.time_learn)
 
 # --- EXCESS PATH LENGTH TO CHOSEN TARGET (LEARNING TRIALS) --- # 
 ## ---- model_learn_path
-# note: random effects structure was determined according to Bates (2015) & Matuschek et al. (2017)
 model.path_learn <- mixed(excess_path_length ~ group*trial_in_block + cov_sex + cov_motor_score + 
                             (1|id), data=data_l, expand_re=T)
 ## ----
@@ -1194,9 +1200,11 @@ VarCorr(model.path_learn$full_model)
 model.path_learn
 
 ## ---- post_hoc_learn_path
-emmeans(model.path_learn, pairwise ~ group, lmer.df="satterthwaite", adjust="bonferroni")
-emmeans(model.path_learn, pairwise ~ trial_in_block, lmer.df="satterthwaite", adjust="bonferroni")
+post.learn_path_group <- emmeans(model.path_learn, pairwise ~ group, lmer.df="satterthwaite", adjust="bonferroni")$contrasts
+
+post.learn_path_trial <- emmeans(model.path_learn, pairwise ~ trial_in_block, lmer.df="satterthwaite", adjust="bonferroni")$contrasts
 ## ----
+rm(post.learn_path_group, post.learn_path_trial)
 
 ## ---- plot_learn_path
 plot.path_learn <- afex_plot_wrapper(model.path_learn, "trial_in_block", "group", NULL, l_excess_path_length, xlabel=l_trial_in_block)
@@ -1206,8 +1214,6 @@ rm(plot.path_learn, model.path_learn)
 
 # --- EXCESS AVERAGE DISTANCE TO TARGET (LEARNING TRIALS) --- # 
 ## ---- model_learn_target_distance
-# note: random effects structure was determined according to Bates (2015) & Matuschek et al. (2017) 
-# TBD choose outcome & add to Rmd
 model.target_distance_learn <- mixed(excess_target_distance ~ group*trial_in_block + cov_sex + cov_motor_score + 
                                  (1|id), data=data_l, expand_re=T)
 ## ----
@@ -1219,9 +1225,11 @@ VarCorr(model.target_distance_learn$full_model)
 model.target_distance_learn
 
 ## ---- post_hoc_learn_target_distance 
-emmeans(model.target_distance_learn, pairwise ~ group, lmer.df="satterthwaite", adjust="bonferroni")
-emmeans(model.target_distance_learn, pairwise ~ trial_in_block, lmer.df="satterthwaite", adjust="bonferroni")
+post.learn_distance_group <- emmeans(model.target_distance_learn, pairwise ~ group, lmer.df="satterthwaite", adjust="bonferroni")$contrasts
+
+post.learn_distance_trial <- emmeans(model.target_distance_learn, pairwise ~ trial_in_block, lmer.df="satterthwaite", adjust="bonferroni")$contrasts
 ## ----
+rm(post.learn_distance_group, post.learn_distance_trial)
 
 ## ---- plot_learn_target_distance
 plot.target_distance_learn <- afex_plot_wrapper(model.target_distance_learn, "trial_in_block", "group", NULL, l_excess_target_distance, xlabel=l_trial_in_block, ymin=-0.15, ymax=0.15)
@@ -1231,7 +1239,6 @@ rm(plot.target_distance_learn, model.target_distance_learn)
 
 # --- INITIAL ROTATION (LEARNING TRIALS) --- # 
 ## ---- model_learn_rotation
-# note: random effects structure was determined according to Bates (2015) & Matuschek et al. (2017) 
 model.rotation_learn <- mixed(initial_rotation ~ group*trial_in_block + cov_sex + cov_motor_score + 
                                         (1|id), data=data_l, expand_re=T)
 ## ----
@@ -1243,8 +1250,10 @@ VarCorr(model.rotation_learn$full_model)
 model.rotation_learn
 
 ## ---- post_hoc_learn_rotation
-pairs(emmeans(model.rotation_learn, ~ group*trial_in_block), interaction=c("pairwise", "poly"))
+post.learn_rotation_group_trial <- pairs(emmeans(model.rotation_learn, ~ group*trial_in_block), 
+                                         interaction=c("pairwise", "poly"), max.degree=2)
 ## ----
+rm(post.learn_rotation_group_trial)
 
 ## ---- plot_learn_rotation
 plot.rotation_learn <- afex_plot_wrapper(model.rotation_learn, "trial_in_block", "group", NULL, l_initial_rotation, xlabel=l_trial_in_block, ymin=0, ymax=0.3)
@@ -1254,7 +1263,6 @@ rm(plot.rotation_learn, model.rotation_learn)
 
 # --- INITIAL ROTATION VELOCITY (LEARNING TRIALS) --- # 
 ## ---- model_learn_rotation_velocity
-# note: random effects structure was determined according to Bates (2015) & Matuschek et al. (2017) 
 model.rotation_velocity_learn <- mixed(initial_rotation_velocity ~ group*trial_in_block + cov_sex + cov_motor_score + 
                                          (1|id), data=data_l, expand_re=T)
 ## ----

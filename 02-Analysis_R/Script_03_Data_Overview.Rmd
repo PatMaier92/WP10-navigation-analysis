@@ -638,6 +638,9 @@ rm(model.rotation_velocity, apa_lmm.init_vel, apa_post.init_vel_group_condition,
 ```{r, model_learn_time}
 ```
 
+```{r, post_hoc_learn_time, include=F}
+```
+
 ```{r, plot_learn_time, include=F}
 ```
 
@@ -649,40 +652,39 @@ rm(plot.time_learn)
 ```{r apa_learn_time, include=F}
 R2 <- r2beta(model.time_learn$full_model, method='nsj', partial=F) %>% mutate_all(apa_num)
 
-apa_lmm <- apa_print(model.time_learn)
-apa_lmm <- apa_lmm$table 
+apa_lmm.learn_time <- apa_print(model.time_learn)
 
-emm <- emmeans(model.time_learn, pairwise ~ group, lmer.df="satterthwaite", adjust="bonferroni")$contrasts
-apa_emm <- apa_print(emm) 
-apa_emm <- apa_emm$table %>% remove_rownames()
+apa_post.learn_time_group <- post.learn_time_group %>% apa_print() %>% bonferroni_fix()
+
+apa_post.learn_time_trial <- post.learn_time_trial %>% apa_print() %>% bonferroni_fix()
+
+rm(post.learn_time_group, post.learn_time_trial)
+```
+
+(ref:l-t-caption-f0) Fixed effects for time in training.
+
+```{r table-learn-time-f0, echo=F}
+apa_table(
+  apa_lmm.learn_time$table,
+  caption="(ref:l-t-caption-f0)",
+  placement="h")
+```
+
+(ref:l-t-caption-r0) Random effects for time in training.
+
+```{r table-learn-time-r0, echo=F}
+apa_random_table(VarCorr(model.time_learn$full_model)) %>% 
+  knitr::kable(
+    caption="(ref:l-t-caption-r0)")
 ```
 
 The model had a fit of $R2 = `r R2$Rsq`, [CI: `r R2$upper.CL`, `r R2$lower.CL`$].
 
-The time per trial decreased across trials (main effect *trial in block*) but there were no group differences in the slope of the decrease (no interaction *group x trial in block interaction*). The groups differed in time per trial (main effect *group*). More specifically 6-7-year-old children were slower than 9-10-year-old children and adults, there were no differences between 9-10-year-old children and adults.
-(Table\ \@ref(tab:table-learn-time0))
-
-(ref:l-t-caption0) Fixed effects for time in training.
-
-```{r table-learn-time0, echo=F}
-apa_table(
-  apa_lmm,
-  caption="(ref:l-t-caption0)",
-  placement="h")
-# `r apa_lm$statistic$group`
-```
-
-(ref:l-t-caption1) Post-hoc contrasts for factor group.
-
-```{r table-learn-time1, echo=F}
-apa_table(
-  apa_emm,
-  caption="(ref:l-t-caption1)",
-  placement="h")
-```
+There was a main effect of *group* (`r apa_lmm.learn_time$statistic$group`), showing that 6-7-yo children required significantly more time than 9-10-yo children (`r apa_post.learn_time_group$statistic$YoungKids_OldKids`) and adults (`r  apa_post.learn_time_group$statistic$YoungKids_YoungAdults`). There was a main effect of *trial in block* (`r apa_lmm.learn_time$statistic$trial_in_block`). Here time in the first trial per block was significantly higher than in all other trials. 
+(Table\ \@ref(tab:table-learn-time-f0))
 
 ```{r, include=F}
-rm(model.time_learn, R2, apa_lmm, apa_emm, emm)
+rm(model.time_learn, R2, apa_lmm.learn_time, apa_post.learn_time_group, apa_post.learn_time_trial)
 ```
 
 \newpage
@@ -690,6 +692,9 @@ rm(model.time_learn, R2, apa_lmm, apa_emm, emm)
 #### **Excess path length**
 
 ```{r, model_learn_path }
+```
+
+```{r, post_hoc_learn_path, include=F}
 ```
 
 ```{r, plot_learn_path, include=F}
@@ -703,39 +708,38 @@ rm(plot.path_learn)
 ```{r apa_learn_path, include=F}
 R2 <- r2beta(model.path_learn$full_model, method='nsj', partial=F) %>% mutate_all(apa_num)
 
-apa_lmm <- apa_print(model.path_learn)
-apa_lmm <- apa_lmm$table 
+apa_lmm.learn_path <- apa_print(model.path_learn)
 
-emm <- emmeans(model.path_learn, pairwise ~ group, lmer.df="satterthwaite", adjust="bonferroni")$contrasts
-apa_emm <- apa_print(emm) 
-apa_emm <- apa_emm$table %>% remove_rownames()
+apa_post.learn_path_group <- post.learn_path_group %>% apa_print() %>% bonferroni_fix()
+
+apa_post.learn_path_trial <- post.learn_path_trial %>% apa_print() %>% bonferroni_fix()
+
+rm(post.learn_path_group, post.learn_path_trial)
+```
+
+(ref:l-ep-caption-f0) Fixed effects for excess path length in training.
+
+```{r table-learn-excess-path-f0, echo=F}
+apa_table(
+  apa_lmm.learn_path$table,
+  caption="(ref:l-ep-caption-f0)",
+  placement="h")
+```
+
+(ref:l-ep-caption-r0) Random effects for excess path length in training.
+
+```{r table-learn-excess-path-r0, echo=F}
+apa_random_table(VarCorr(model.path_learn$full_model)) %>% 
+  knitr::kable(
+    caption="(ref:l-ep-caption-r0)")
 ```
 
 The model had a fit of $R2 = `r R2$Rsq`, [CI: `r R2$upper.CL`, `r R2$lower.CL`$].
 
-The excess path length decreased across trials (main effect *trial in block*) but there were no group differences in the slope of the decrease (no interaction *group x trial in block* ). The groups differed in excess path length (main effect *group*). More specifically younger participants had longer excess paths, meaning they took less direct routes, compare to older participants (all groups differed from each other). 
-(Table\ \@ref(tab:table-learn-excess-path0))
-
-(ref:l-ep-caption0) Fixed effects for excess path length in training.
-
-```{r table-learn-excess-path0, echo=F}
-apa_table(
-  apa_lmm,
-  caption="(ref:l-ep-caption0)",
-  placement="h")
-```
-
-(ref:l-ep-caption1) Post-hoc contrasts for factor group.
-
-```{r table-learn-excess-path1, echo=F}
-apa_table(
-  apa_emm,
-  caption="(ref:l-ep-caption1)",
-  placement="h")
-```
+There was a main effect of *group* (`r apa_lmm.learn_path$statistic$group`), showing a gradual decrease in excess path length with increasing age (6-7-yo vs. 9-10-yo `r apa_post.learn_path_group$statistic$YoungKids_OldKids`; 6-7-yo vs. adults `r apa_post.learn_path_group$statistic$YoungKids_YoungAdults`; 9-10-yo vs. adults `r apa_post.learn_path_group$statistic$OldKids_YoungAdults`). There was a main effect of *trial in block* (`r apa_lmm.learn_path$statistic$trial_in_block`). Here excess path length in the first trial per block was significantly higher than in all other trials. (Table\ \@ref(tab:table-learn-excess-path-f0))
 
 ```{r, include=F}
-rm(model.path_learn, R2, apa_lmm, apa_emm, emm)
+rm(model.path_learn, R2, apa_lmm.learn_path, apa_post.learn_path_group, apa_post.learn_path_trial)
 ```
 
 \newpage
@@ -743,6 +747,9 @@ rm(model.path_learn, R2, apa_lmm, apa_emm, emm)
 #### **Excess distance to goal**
 
 ```{r, model_learn_target_distance }
+```
+
+```{r, post_hoc_learn_target_distance, include=F}
 ```
 
 ```{r, plot_learn_target_distance, include=F}
@@ -756,39 +763,39 @@ rm(plot.target_distance_learn)
 ```{r apa_learn_target_distance, include=F}
 R2 <- r2beta(model.target_distance_learn$full_model, method='nsj', partial=F) %>% mutate_all(apa_num)
 
-apa_lmm <- apa_print(model.target_distance_learn)
-apa_lmm <- apa_lmm$table 
+apa_lmm.learn_distance <- apa_print(model.target_distance_learn)
 
-emm <- emmeans(model.target_distance_learn, pairwise ~ group, lmer.df="satterthwaite", adjust="bonferroni")$contrasts
-apa_emm <- apa_print(emm) 
-apa_emm <- apa_emm$table %>% remove_rownames()
+apa_post.learn_distance_group <- post.learn_distance_group %>% apa_print() %>% bonferroni_fix()
+
+apa_post.learn_distance_trial <- post.learn_distance_trial %>% apa_print() %>% bonferroni_fix()
+
+rm(post.learn_distance_group, post.learn_distance_trial)
+```
+
+(ref:l-ed-caption-f0) Fixed effects for excess distance to goal in training.
+
+```{r table-learn-excess-distance-f0, echo=F}
+apa_table(
+  apa_lmm.learn_distance$table,
+  caption="(ref:l-ed-caption-f0)",
+  placement="h")
+```
+
+(ref:l-ed-caption-r0) Random effects for excess distance to goal in training.
+
+```{r table-learn-excess-distance-r0, echo=F}
+apa_random_table(VarCorr(model.target_distance_learn$full_model)) %>% 
+  knitr::kable(
+    caption="(ref:l-ed-caption-r0)")
 ```
 
 The model had a fit of $R2 = `r R2$Rsq`, [CI: `r R2$upper.CL`, `r R2$lower.CL`$].
 
-The excess distance to goal decreased across trials (main effect *trial in block*) but there were no group differences in the slope of the decrease (no interaction *group x trial in block* ). The groups differed in excess distance to goal length (main effect *group*). More specifically 6-7 year-old children had higher excess avg. distance to goal than the other two groups, meaning they navigated further away from the correct goal location during the course of the trial.
-(Table\ \@ref(tab:table-learn-excess-distance0))
-
-(ref:l-ed-caption0) Fixed effects for excess distance to goal in training.
-
-```{r table-learn-excess-distance0, echo=F}
-apa_table(
-  apa_lmm,
-  caption="(ref:l-ed-caption0)",
-  placement="h")
-```
-
-(ref:l-ed-caption1) Post-hoc contrasts for factor group.
-
-```{r table-learn-excess-distance1, echo=F}
-apa_table(
-  apa_emm,
-  caption="(ref:l-ed-caption1)",
-  placement="h")
-```
+There was a main effect of *group* (`r apa_lmm.learn_distance$statistic$group`), showing that 6-7-yo children had a significantly higher excess distance to the goal than 9-10-yo children (`r apa_post.learn_distance_group$statistic$YoungKids_OldKids`) and adults (`r  apa_post.learn_distance_group$statistic$YoungKids_YoungAdults`). There was a main effect of *trial in block* (`r apa_lmm.learn_distance$statistic$trial_in_block`). Here excess distance to the goal in the first trial per block was significantly higher than in all the other trials. 
+(Table\ \@ref(tab:table-learn-excess-distance-f0))
 
 ```{r, include=F}
-rm(model.target_distance_learn, R2, apa_lmm, apa_emm, emm)
+rm(model.target_distance_learn, R2, apa_lmm.learn_distance, apa_post.learn_distance_group, apa_post.learn_distance_trial)
 ```
 
 \newpage
@@ -796,6 +803,9 @@ rm(model.target_distance_learn, R2, apa_lmm, apa_emm, emm)
 #### **Initial rotation**
 
 ```{r, model_learn_rotation }
+```
+
+```{r, post_hoc_learn_rotation, include=F}
 ```
 
 ```{r, plot_learn_rotation, include=F}
@@ -809,27 +819,43 @@ rm(plot.rotation_learn)
 ```{r apa_learn_rotation, include=F}
 R2 <- r2beta(model.rotation_learn$full_model, method='nsj', partial=F) %>% mutate_all(apa_num)
 
-apa_lmm <- apa_print(model.rotation_learn)
-apa_lmm <- apa_lmm$table 
+apa_lmm.learn_rotation <- apa_print(model.rotation_learn)
 
-# TBD 
+apa_post.learn_rotation_group_trial <- post.learn_rotation_group_trial %>% apa_print()
 
+rm(post.learn_rotation_group_trial)
+```
+
+ref:l-ir-caption-f0) Fixed effects for initial rotation in training.
+
+```{r table-learn-rotation-f0, echo=F}
+apa_table(
+  apa_lmm.learn_rotation$table,
+  caption="(ref:l-ir-caption-f0)",
+  placement="h")
+```
+
+(ref:l-ir-caption-r0) Random effects for initial rotation in training.
+
+```{r table-learn-rotation-r0, echo=F}
+apa_random_table(VarCorr(model.rotation_learn$full_model)) %>% 
+  knitr::kable(
+    caption="(ref:l-ir-caption-r0)")
 ```
 
 The model had a fit of $R2 = `r R2$Rsq`, [CI: `r R2$upper.CL`, `r R2$lower.CL`$].
-(Table\ \@ref(tab:table-learn-rot-p0))
 
-ref:l-irp-caption0) Fixed effects for initial rotation in training.
+There was a significant *group x trial interaction* (`r apa_lmm.learn_rotation$statistic$group_trial_in_block`). Post-hoc polynomial contrasts showed that the (linear or quadratic) decrease of initial rotation across trials was significantly steeper in adults than 6-7-yo children (linear: `r apa_post.learn_rotation_group_trial$statistic$YoungKids_YoungAdults_Linear`;  quadratic: `r apa_post.learn_rotation_group_trial$statistic$YoungKids_YoungAdults_Quadratic`). 
+(Table\ \@ref(tab:table-learn-rotation-f0))
 
-```{r table-learn-rot-p0, echo=F}
+```{r table-learn-rotation-1, echo=F}
 apa_table(
-  apa_lmm,
-  caption="(ref:l-irp-caption0)",
+  apa_post.learn_rotation_group_trial$table %>% remove_rownames(),
   placement="h")
 ```
 
 ```{r, include=F}
-rm(model.rotation_learn, R2, apa_lmm)
+rm(model.rotation_learn, R2, apa_lmm.learn_rotation, apa_post.learn_rotation_group_trial)
 ```
 
 \newpage
@@ -837,6 +863,9 @@ rm(model.rotation_learn, R2, apa_lmm)
 #### **Initial rotation velocity**
 
 ```{r, model_learn_rotation_velocity }
+```
+
+```{r, post_hoc_learn_rotation_velocity, include=F}
 ```
 
 ```{r, plot_learn_rotation_velocity, include=F}
@@ -850,27 +879,33 @@ rm(plot.rotation_velocity_learn)
 ```{r apa_learn_rotation_velocity, include=F}
 R2 <- r2beta(model.rotation_velocity_learn$full_model, method='nsj', partial=F) %>% mutate_all(apa_num)
 
-apa_lmm <- apa_print(model.rotation_velocity_learn)
-apa_lmm <- apa_lmm$table 
-
-# TBD 
-
+apa_lmm.learn_rotation_velocity <- apa_print(model.rotation_velocity_learn)
 ```
 
-The model had a fit of $R2 = `r R2$Rsq`, [CI: `r R2$upper.CL`, `r R2$lower.CL`$].
-(Table\ \@ref(tab:table-learn-init-rot-vel0))
+(ref:l-irv-caption-f0)  Fixed effects for factor initial rotation velocity.
 
-(ref:l-irv-caption0)  Fixed effects for factor initial rotation velocity. 
-
-```{r table-learn-init-rot-vel0, echo=F}
+```{r table-learn-rotation-velocity-f0, echo=F}
 apa_table(
-  apa_lmm,
-  caption="(ref:l-irv-caption0)",
+  apa_lmm.learn_rotation_velocity$table,
+  caption="(ref:l-irv-caption-f0)",
   placement="h")
 ```
 
+(ref:l-irv-caption-r0) Random effects for factor initial rotation velocity
+
+```{r table-learn-rotation-velocity-r0, echo=F}
+apa_random_table(VarCorr(model.rotation_velocity_learn$full_model)) %>% 
+  knitr::kable(
+    caption="(ref:l-irv-caption-r0)")
+```
+
+The model had a fit of $R2 = `r R2$Rsq`, [CI: `r R2$upper.CL`, `r R2$lower.CL`$].
+
+There were no sigificant main effects or interactions for rotation velocity in training (Table\ \@ref(tab:table-learn-rotation-velocity-f0)). 
+
+
 ```{r, include=F}
-rm(model.rotation_velocity_learn, R2, apa_lmm)
+rm(model.rotation_velocity_learn, R2, apa_lmm.learn_rotation_velocity)
 ```
 
 \newpage
