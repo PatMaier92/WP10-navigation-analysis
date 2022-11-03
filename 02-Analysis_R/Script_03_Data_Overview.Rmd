@@ -976,6 +976,21 @@ mc_time + mc_excess_path +
 rm(mc_time, mc_excess_path, mc_rotation, mc_plot, practise)
 ```
 
+```{r, model_motor_control, include=F }
+```
+
+```{r apa_learn_rotation, include=F}
+apa_aov.motor_time <- apa_print(model.motor_time)
+post_aov.motor_time_group <- post.motor_time %>% apa_print()
+rm(model.motor_time, post.motor_time)
+
+apa_aov.motor_path <- apa_print(model.motor_path)
+post_aov.motor_path_group <- post.motor_path %>% apa_print()
+rm(model.motor_path, post.motor_path)
+```
+
+There were significant *age group* differences the motor control task, aimed to assess the ability to use a joystick in the initial practise phase. Specifically, 6-7-yo children required more time to solve the task (`r apa_aov.motor_time$statistic$group`; 6-7-yo vs. 9-10-yo: `r post_aov.motor_time_group$statistic$YoungKids_OldKids`; 6-7-yo vs. adults: `r post_aov.motor_time_group$statistic$YoungKids_YoungAdults`) and had longer excess path lengths (`r apa_aov.motor_path$statistic$group`; 6-7-yo vs. 9-10-yo: `r post_aov.motor_path_group$statistic$YoungKids_OldKids`; 6-7-yo vs. adults: `r post_aov.motor_path_group$statistic$YoungKids_YoungAdults`). Thus, we computed a covariate by averaging the z-scored time and z-scored excess path length during practise and used this covariate to account for differences in joystick abilities. 
+
 ### Excluded trials 
 
 ```{r, echo=F, fig.height=3, fig.width=3, fig.cap="Overview of excluded trials." }

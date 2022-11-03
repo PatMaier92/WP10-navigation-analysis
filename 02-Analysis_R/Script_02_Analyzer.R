@@ -1368,15 +1368,18 @@ plot(rcorr)
 # ::: SUPPLEMENT ANALYSIS: MOTOR CONTROL TASK ::: #
 # ------------------------------------------------------------------------------
 
-## ---- stats_motor_control
+## ---- model_motor_control
 # time: GROUPS DIFFER SIGNIFICANTLY 
-aov_ez("id", "time", practise, between=c("group"))
+model.motor_time <- aov_ez("id", "time", practise, between=c("group"))
+post.motor_time <- emmeans(model.motor_time, pairwise ~ group, adjust="bonferroni")$contrasts
 
 # excess path length: DIFFER SIGNIFICANTLY
-aov_ez("id", "excess_path_length", practise, between=c("group"))
-
+model.motor_path <- aov_ez("id", "excess_path_length", practise, between=c("group"))
+post.motor_path <- emmeans(model.motor_path, pairwise ~ group, adjust="bonferroni")$contrasts
+## ---- 
 # rotation: GROUPS DIFFER SIGNIFICANTLY  
-aov_ez("id", "rotation", practise, between=c("group"))
+model.motor_rotation <- aov_ez("id", "rotation", practise, between=c("group"))
+post.motor_rotation <- emmeans(model.motor_rotation, pairwise ~ group, adjust="bonferroni")$contrasts
 ## ---- 
 
 
