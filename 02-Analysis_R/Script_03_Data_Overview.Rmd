@@ -919,7 +919,7 @@ apa_random_table(VarCorr(model.rotation_velocity_learn$full_model)) %>%
 
 The model had a fit of $R2 = `r R2$Rsq`, [CI: `r R2$upper.CL`, `r R2$lower.CL`$].
 
-There were no sigificant main effects or interactions for rotation velocity in training (Table\ \@ref(tab:table-learn-rotation-velocity-f0)). 
+There were no significant main effects or interactions for rotation velocity in training. (Table\ \@ref(tab:table-learn-rotation-velocity-f0)). 
 
 
 ```{r, include=F}
@@ -973,20 +973,22 @@ mc_time + mc_excess_path +
   plot_annotation("Navigation behavior in motor control task") + 
   plot_layout(guides="collect") & theme(legend.position="top", legend.justification=c(0,0))
 
-rm(mc_time, mc_excess_path, mc_rotation, mc_plot, practise)
+rm(mc_time, mc_excess_path, mc_rotation, mc_plot)
 ```
 
 ```{r, model_motor_control, include=F }
 ```
 
-```{r apa_learn_rotation, include=F}
+```{r apa_motor_control, include=F}
 apa_aov.motor_time <- apa_print(model.motor_time)
-post_aov.motor_time_group <- post.motor_time %>% apa_print()
+post_aov.motor_time_group <- post.motor_time %>% apa_print() %>% bonferroni_fix()
 rm(model.motor_time, post.motor_time)
 
 apa_aov.motor_path <- apa_print(model.motor_path)
-post_aov.motor_path_group <- post.motor_path %>% apa_print()
+post_aov.motor_path_group <- post.motor_path %>% apa_print() %>% bonferroni_fix()
 rm(model.motor_path, post.motor_path)
+
+rm(practise)
 ```
 
 There were significant *age group* differences the motor control task, aimed to assess the ability to use a joystick in the initial practise phase. Specifically, 6-7-yo children required more time to solve the task (`r apa_aov.motor_time$statistic$group`; 6-7-yo vs. 9-10-yo: `r post_aov.motor_time_group$statistic$YoungKids_OldKids`; 6-7-yo vs. adults: `r post_aov.motor_time_group$statistic$YoungKids_YoungAdults`) and had longer excess path lengths (`r apa_aov.motor_path$statistic$group`; 6-7-yo vs. 9-10-yo: `r post_aov.motor_path_group$statistic$YoungKids_OldKids`; 6-7-yo vs. adults: `r post_aov.motor_path_group$statistic$YoungKids_YoungAdults`). Thus, we computed a covariate by averaging the z-scored time and z-scored excess path length during practise and used this covariate to account for differences in joystick abilities. 
