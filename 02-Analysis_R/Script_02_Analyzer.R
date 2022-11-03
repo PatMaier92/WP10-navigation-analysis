@@ -170,6 +170,7 @@ apa_random_table <- function(varcor) {
     select(-vcov, -sdcor) %>% 
     unite('Slope/Correlation', var1:var2, sep=" x ", remove=T, na.rm=T) %>% 
     mutate_at(vars(`Slope/Correlation`), str_replace_all, pattern="re1.", replacement="") %>% 
+    mutate_at(vars(`Slope/Correlation`), str_replace_all, pattern="_", replacement=" ") %>% 
     mutate_at(vars(-SD, -r), str_to_title) %>% 
     rename(`Grouping`=grp)
 }
@@ -1256,7 +1257,7 @@ post.learn_rotation_group_trial <- pairs(emmeans(model.rotation_learn, ~ group*t
 rm(post.learn_rotation_group_trial)
 
 ## ---- plot_learn_rotation
-plot.rotation_learn <- afex_plot_wrapper(model.rotation_learn, "trial_in_block", "group", NULL, l_initial_rotation, xlabel=l_trial_in_block, ymin=0, ymax=0.3)
+plot.rotation_learn <- afex_plot_wrapper(model.rotation_learn, "trial_in_block", "group", NULL, l_initial_rotation, xlabel=l_trial_in_block, ymin=0, ymax=3)
 ## ----
 rm(plot.rotation_learn, model.rotation_learn)
 
