@@ -168,11 +168,13 @@ apa_random_table <- function(varcor) {
   varcor %>% as.data.frame() %>% 
     mutate(SD=if_else(is.na(var2), sdcor, NaN), 
            r=if_else(!is.na(var2), sdcor, NaN)) %>% 
-    mutate_at(vars(SD, r), round, 2) %>% 
+    mutate_at(vars(SD, r), round, 3) %>% 
     select(-vcov, -sdcor) %>% 
     unite('Slope/Correlation', var1:var2, sep=" x ", remove=T, na.rm=T) %>% 
     mutate_at(vars(`Slope/Correlation`), str_replace_all, pattern="re1.", replacement="") %>% 
     mutate_at(vars(`Slope/Correlation`), str_replace_all, pattern="_", replacement=" ") %>% 
+    mutate_at(vars(`grp`), str_replace_all, pattern=".1", replacement="") %>% 
+    mutate_at(vars(`grp`), str_replace_all, pattern=".2", replacement="") %>% 
     mutate_at(vars(-SD, -r), str_to_title) %>% 
     rename(`Grouping`=grp)
 }

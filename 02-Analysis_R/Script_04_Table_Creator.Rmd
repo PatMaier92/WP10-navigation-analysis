@@ -1,0 +1,108 @@
+---
+title: "Table creator"
+author: "Patrizia Maier"
+date: "`r format(Sys.time(), '%d %B, %Y')`"
+output: 
+  bookdown::word_document2:
+    fig_caption: yes
+    global_numbering: TRUE
+    number_sections: TRUE
+---
+
+```{r setup, include=FALSE, cache=FALSE}
+
+knitr::read_chunk('Script_02_Analyzer.R')
+knitr::opts_chunk$set(warning=FALSE, message=FALSE) 
+options(knitr.kable.NA='')
+```
+
+```{r, load_analysis_packages, include=FALSE, cache=FALSE}
+```
+
+```{r, include=FALSE}
+file_name <- "../WP10_data/WP10_results/wp10_navigation_data.RData"
+load(file_name)
+sm_orig <- sm_data 
+sm_data <- sm_data %>% filter(exclude_trial_matlab==0)
+rm(file_name)
+```
+
+```{r, data_prep, include=FALSE}
+```
+
+```{r, plot_settings, include=FALSE}
+```
+
+```{r, analysis_settings, include=FALSE}
+```
+
+```{r, papaja_output_helper, include=FALSE}
+```
+
+```{r, model_probe_ms, include=F  }
+```
+
+```{r apa_probe_ms, include=F}
+apa_lmm.ms <- apa_print(model.ms)
+```
+
+```{r, model_probe_time, include=F }
+```
+
+```{r apa_probe_time, include=F}
+apa_lmm.time  <- apa_print(model.time)
+```
+
+```{r, model_probe_path, include=F  }
+```
+
+```{r apa_probe_path, include=F}
+apa_lmm.path <- apa_print(model.path)
+```
+
+```{r, model_probe_target_distance, include=F  }
+```
+
+```{r apa_probe_target_distance, include=F}
+apa_lmm.distance <- apa_print(model.target_distance)
+```
+
+```{r, model_probe_rotation_velocity, include=F  }
+```
+
+```{r apa_probe_rotation_velocity, include=F }
+apa_lmm.init_vel <- apa_print(model.rotation_velocity)
+```
+
+```{r apa_table_fixed, echo=F}
+
+ms_f <- apa_lmm.ms$table
+t_f <- apa_lmm.time$table %>% list_modify("term"=NULL)
+p_f <- apa_lmm.path$table %>% list_modify("term"=NULL)
+d_f <- apa_lmm.distance$table %>% list_modify("term"=NULL)
+v_f <- apa_lmm.init_vel$table %>% list_modify("term"=NULL)
+
+apa_table(
+  cbind(ms_f, t_f, p_f, d_f, v_f)
+  )
+```
+
+\newpage
+
+```{r apa_table_random, echo=F}
+
+ms_r <- apa_random_table(VarCorr(model.ms$full_model))
+t_r <- apa_random_table(VarCorr(model.time$full_model))
+p_r <- apa_random_table(VarCorr(model.path$full_model))
+d_r <- apa_random_table(VarCorr(model.target_distance$full_model))
+v_r <- apa_random_table(VarCorr(model.rotation_velocity$full_model))
+
+df_list <- list(ms_r, t_r, p_r, d_r, v_r)
+
+temp <- df_list %>% reduce(full_join, by=c("Grouping", "Slope/Correlation")) 
+names(temp) <- c("Grouping", "Slope/Correlation", 
+                 "SD ms", "r ms", "SD t", "r t", "SD p", "r p", "SD d", "r d", "SD v", "r v")
+
+temp %>% 
+  knitr::kable()
+```
