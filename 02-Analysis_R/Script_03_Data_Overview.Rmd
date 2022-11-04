@@ -152,7 +152,9 @@ Single-trial values were analyzed with ANOVAs from the afex package (Singmann et
 
 # Results 
 
-## Memory accuracy: Probe trials at Day 2 & Day 14
+## Memory accuracy
+
+### **Raw responses (all probe trials)**
 
 ```{r, plot_raw_dots, include=F }
 ```
@@ -178,11 +180,6 @@ rm(dots_allo)
 ```
 
 ```{r, plot_probe_ms, include=F }
-```
-
-```{r, echo=F, fig.height=5, fig.width=5, fig.cap="Memory score for probe trials." }
-plot.ms
-rm(plot.ms)
 ```
 
 ```{r apa_probe_ms, include=F}
@@ -228,7 +225,7 @@ rm(model.ms, R2, apa_lmm.ms, apa_post.ms_group, apa_post.ms_group_chance, apa_po
 ```
 
 
-## Memory accuracy: Non-navigational memory tasks at Day 14
+### **Post-navigational memory tasks**
 
 ![Task overview](./pics/Overview_Session2_PostTest.jpg){width=500px}
 
@@ -248,16 +245,6 @@ rm(model.ms, R2, apa_lmm.ms, apa_post.ms_group, apa_post.ms_group_chance, apa_po
 ```
 
 ```{r, plot_post_position, include=F }
-```
-
-```{r, echo=F, fig.height=5, fig.width=8, fig.cap="Scores in non-navigational memory tests." }
-plot.layout + 
-  (plot.landmark + guides(color="none", shape="none")) + 
-  (plot.position + guides(color="none", shape="none")) + 
-  plot_annotation(title="Non-navigational memory tests") +
-  plot_layout(guides="collect") & theme(legend.position="bottom", legend.justification=c(0,0))
-
-rm(plot.layout, plot.layout_detailed, plot.landmark, plot.position)
 ```
 
 ### **Layout**
@@ -304,9 +291,23 @@ However, we did find significant *age group* differences in the ability to corre
 rm(model.position, apa_aov.position, apa_post.position)
 ```
 
-## Navigation behaviour: Probe trials at Day 2 & Day 14
+```{r, echo=F, fig.height=4.5, fig.width=10, fig.cap="Memory accuracy" }
 
-### **Time**
+(plot.ms + guides(shape=F, fill=F)) +
+  (plot.layout + guides(color=F, shape=F)) + 
+  (plot.landmark + guides(color=F, shape=F)) + 
+  (plot.position + guides(color=F, shape=F)) + 
+  plot_layout(nrow=1, width=c(0.4,0.2,0.2,0.2), guides="collect") & 
+  theme(legend.position="top", legend.justification=c(-0.025,0))
+
+rm(plot.ms, plot.layout, plot.landmark, plot.position)
+```
+
+\newpage
+
+## Navigation behaviour
+
+### **Time (all probe trials)**
 
 ```{r, model_probe_time}
 ```
@@ -315,11 +316,6 @@ rm(model.position, apa_aov.position, apa_post.position)
 ```
 
 ```{r, plot_probe_time, include=F }
-```
-
-```{r, echo=F, fig.height=5, fig.width=5, fig.cap="Time in probe trials." }
-plot.time
-rm(plot.time)
 ```
 
 ```{r apa_probe_time, include=F}
@@ -379,9 +375,7 @@ apa_table(
 rm(model.time, R2, apa_lmm.time, apa_post.time_group_session, apa_post.time_group_condition, apa_post.time_session_condition)
 ```
 
-\newpage 
-
-### **Excess path length**
+### **Excess path length (all probe trials)**
 
 ```{r, model_probe_path }
 ```
@@ -390,11 +384,6 @@ rm(model.time, R2, apa_lmm.time, apa_post.time_group_session, apa_post.time_grou
 ```
 
 ```{r, plot_probe_path, include=F }
-```
-
-```{r, echo=F, fig.height=5, fig.width=5, fig.cap="Excess path length in probe trials." }
-plot.path
-rm(plot.path)
 ```
 
 ```{r apa_probe_path, include=F}
@@ -454,9 +443,7 @@ apa_table(
 rm(model.path, apa_lmm.path, apa_post.path_group_session, apa_post.path_group_condition, apa_post.path_session_condition)
 ```
 
-\newpage 
-
-### **Excess distance to goal**
+### **Excess distance to goal (all probe trials)**
 
 ```{r, model_probe_target_distance }
 ```
@@ -465,11 +452,6 @@ rm(model.path, apa_lmm.path, apa_post.path_group_session, apa_post.path_group_co
 ```
 
 ```{r, plot_probe_target_distance, include=F }
-```
-
-```{r, echo=F, fig.height=5, fig.width=5, fig.cap="Excess distance to goal in probe trials." }
-plot.target_distance
-rm(plot.target_distance)
 ```
 
 ```{r apa_probe_target_distance, include=F}
@@ -511,9 +493,288 @@ For excess distance to goal in probe trials, we found significant main effects b
 rm(model.target_distance, apa_lmm.distance, apa_post.distance_group, apa_post.distance_session, apa_post.distance_condition)
 ```
 
+### **Initial rotation velocity (all probe trials)**
+
+```{r, model_probe_rotation_velocity }
+```
+
+```{r, post_hoc_probe_rotation_velocity, include=F }
+```
+
+```{r, plot_probe_rotation_velocity, include=F }
+```
+
+```{r apa_probe_rotation_velocity, include=F }
+R2 <- r2beta(model.rotation_velocity$full_model, method='nsj', partial=F) %>% mutate_all(apa_num)
+
+apa_lmm.init_vel <- apa_print(model.rotation_velocity)
+
+apa_post.init_vel_group_condition <- post.init_vel_group_condition %>% apa_print() %>% bonferroni_fix()
+
+apa_post.init_vel_session_condition <- post.init_vel_session_condition %>% apa_print() %>% bonferroni_fix()
+
+rm(post.init_vel_group_condition, post.init_vel_session_condition)
+```
+
+(ref:p-init-vel-f-caption0) Fixed effects for initial rotation veloctiy in probe trials.
+
+```{r table-probe-init-vel-f0, echo=F}
+apa_table(
+  apa_lmm.init_vel$table,
+  caption="(ref:p-init-vel-f-caption0)",
+  placement="h")
+```
+
+(ref:p-init-vel-r-caption-r0) Random effects for initial rotation veloctiy in probe trials.
+
+```{r table-probe-init-vel-r0, echo=F}
+apa_random_table(VarCorr(model.rotation_velocity$full_model)) %>% 
+  knitr::kable(
+    caption="(ref:p-init-vel-r-caption-r0)")
+```
+
+The model had a fit of $R2 = `r R2$Rsq`, [CI: `r R2$upper.CL`, `r R2$lower.CL`$].
+
+For the initial rotation velocity in probe trials, we found two significant two-way interactions (Table\ \@ref(tab:table-probe-init-vel-f0)). Post-hoc contrasts for the *group x condition* interaction (`r apa_lmm.init_vel$statistic$group_condition`) showed significant age group differences only in the allocentric condition, where 6-7-yo children had a significantly lower initial rotation velocity than both 9-10-yo (`r apa_post.init_vel_group_condition$statistic$Alloret_YoungKids_OldKids`) and adults (`r apa_post.init_vel_group_condition$statistic$Alloret_YoungKids_YoungAdults`). All groups had significantly higher initial rotation velocity for the allocentric than egocentric condition (6-7-yo: `r apa_post.init_vel_group_condition$statistic$YoungKids_Egoret_alloret`; 9-10-yo: `r apa_post.init_vel_group_condition$statistic$OldKids_Egoret_alloret`; adults: `r apa_post.init_vel_group_condition$statistic$YoungAdults_Egoret_alloret`). The *session x condition* interaction (`r apa_lmm.init_vel$statistic$session_condition`) added that this age-independent increase in initial rotation velocity for the allocentric condition was present in both sessions (egocentric vs. allocentric in first session: `r apa_post.init_vel_session_condition$statistic$X1_Egoret_alloret`; second session: `r apa_post.init_vel_session_condition$statistic$X2_Egoret_alloret`) and that initial rotation velocity increased across sessions in the allocentric (`r apa_post.init_vel_session_condition$statistic$Alloret_Session1_session2`) but not egocentric condition (`r apa_post.init_vel_session_condition$statistic$Egoret_Session1_session2`). 
+
+```{r table-probe-init-vel2, echo=F}
+apa_table(
+  apa_post.init_vel_group_condition$table %>% remove_rownames(),
+  placement="h")
+```
+
+```{r table-probe-init-vel3, echo=F}
+apa_table(
+  apa_post.init_vel_session_condition$table %>% remove_rownames(),
+  placement="h")
+```
+
+```{r, include=F}
+rm(model.rotation_velocity, apa_lmm.init_vel, apa_post.init_vel_group_condition, apa_post.init_vel_session_condition)
+```
+
+```{r, echo=F, fig.height=4.5, fig.width=12, fig.cap="Navigation behavior" }
+
+plot.time + 
+  plot.path + 
+  plot.target_distance + 
+  plot.rotation_velocity + 
+  plot_layout(nrow=1, guides="collect") & 
+  guides(fill=F, shape=F) & theme(legend.position="top", legend.justification=c(-0.025,0))
+
+rm(plot.time, plot.path, plot.target_distance, plot.rotation_velocity)
+```
+
 \newpage 
 
-### **Initial rotation**
+# Supplementary material 
+
+## Navigation behavior
+
+### **Time (training trials)**
+
+```{r, model_learn_time}
+```
+
+```{r, post_hoc_learn_time, include=F}
+```
+
+```{r, plot_learn_time, include=F}
+```
+
+```{r apa_learn_time, include=F}
+R2 <- r2beta(model.time_learn$full_model, method='nsj', partial=F) %>% mutate_all(apa_num)
+
+apa_lmm.learn_time <- apa_print(model.time_learn)
+
+apa_post.learn_time_group <- post.learn_time_group %>% apa_print() %>% bonferroni_fix()
+
+apa_post.learn_time_trial <- post.learn_time_trial %>% apa_print() %>% bonferroni_fix()
+
+rm(post.learn_time_group, post.learn_time_trial)
+```
+
+(ref:l-t-caption-f0) Fixed effects for time in training.
+
+```{r table-learn-time-f0, echo=F}
+apa_table(
+  apa_lmm.learn_time$table,
+  caption="(ref:l-t-caption-f0)",
+  placement="h")
+```
+
+(ref:l-t-caption-r0) Random effects for time in training.
+
+```{r table-learn-time-r0, echo=F}
+apa_random_table(VarCorr(model.time_learn$full_model)) %>% 
+  knitr::kable(
+    caption="(ref:l-t-caption-r0)")
+```
+
+The model had a fit of $R2 = `r R2$Rsq`, [CI: `r R2$upper.CL`, `r R2$lower.CL`$].
+
+There was a main effect of *group* (`r apa_lmm.learn_time$statistic$group`), showing that 6-7-yo children required significantly more time than 9-10-yo children (`r apa_post.learn_time_group$statistic$YoungKids_OldKids`) and adults (`r  apa_post.learn_time_group$statistic$YoungKids_YoungAdults`). There was a main effect of *trial in block* (`r apa_lmm.learn_time$statistic$trial_in_block`). Here, time in the first trial per block was significantly higher than in all other trials. 
+(Table\ \@ref(tab:table-learn-time-f0))
+
+```{r, include=F}
+rm(model.time_learn, R2, apa_lmm.learn_time, apa_post.learn_time_group, apa_post.learn_time_trial)
+```
+
+### **Excess path length (training trials)**
+
+```{r, model_learn_path }
+```
+
+```{r, post_hoc_learn_path, include=F}
+```
+
+```{r, plot_learn_path, include=F}
+```
+
+```{r apa_learn_path, include=F}
+R2 <- r2beta(model.path_learn$full_model, method='nsj', partial=F) %>% mutate_all(apa_num)
+
+apa_lmm.learn_path <- apa_print(model.path_learn)
+
+apa_post.learn_path_group <- post.learn_path_group %>% apa_print() %>% bonferroni_fix()
+
+apa_post.learn_path_trial <- post.learn_path_trial %>% apa_print() %>% bonferroni_fix()
+
+rm(post.learn_path_group, post.learn_path_trial)
+```
+
+(ref:l-ep-caption-f0) Fixed effects for excess path length in training.
+
+```{r table-learn-excess-path-f0, echo=F}
+apa_table(
+  apa_lmm.learn_path$table,
+  caption="(ref:l-ep-caption-f0)",
+  placement="h")
+```
+
+(ref:l-ep-caption-r0) Random effects for excess path length in training.
+
+```{r table-learn-excess-path-r0, echo=F}
+apa_random_table(VarCorr(model.path_learn$full_model)) %>% 
+  knitr::kable(
+    caption="(ref:l-ep-caption-r0)")
+```
+
+The model had a fit of $R2 = `r R2$Rsq`, [CI: `r R2$upper.CL`, `r R2$lower.CL`$].
+
+There was a main effect of *group* (`r apa_lmm.learn_path$statistic$group`), showing a gradual decrease in excess path length with increasing age (6-7-yo vs. 9-10-yo: `r apa_post.learn_path_group$statistic$YoungKids_OldKids`; 6-7-yo vs. adults: `r apa_post.learn_path_group$statistic$YoungKids_YoungAdults`; 9-10-yo vs. adults: `r apa_post.learn_path_group$statistic$OldKids_YoungAdults`). There was a main effect of *trial in block* (`r apa_lmm.learn_path$statistic$trial_in_block`). Here, excess path length in the first trial per block was significantly higher than in all other trials. (Table\ \@ref(tab:table-learn-excess-path-f0))
+
+```{r, include=F}
+rm(model.path_learn, R2, apa_lmm.learn_path, apa_post.learn_path_group, apa_post.learn_path_trial)
+```
+
+### **Excess distance to goal (training trials)**
+
+```{r, model_learn_target_distance }
+```
+
+```{r, post_hoc_learn_target_distance, include=F}
+```
+
+```{r, plot_learn_target_distance, include=F}
+```
+
+```{r apa_learn_target_distance, include=F}
+R2 <- r2beta(model.target_distance_learn$full_model, method='nsj', partial=F) %>% mutate_all(apa_num)
+
+apa_lmm.learn_distance <- apa_print(model.target_distance_learn)
+
+apa_post.learn_distance_group <- post.learn_distance_group %>% apa_print() %>% bonferroni_fix()
+
+apa_post.learn_distance_trial <- post.learn_distance_trial %>% apa_print() %>% bonferroni_fix()
+
+rm(post.learn_distance_group, post.learn_distance_trial)
+```
+
+(ref:l-ed-caption-f0) Fixed effects for excess distance to goal in training.
+
+```{r table-learn-excess-distance-f0, echo=F}
+apa_table(
+  apa_lmm.learn_distance$table,
+  caption="(ref:l-ed-caption-f0)",
+  placement="h")
+```
+
+(ref:l-ed-caption-r0) Random effects for excess distance to goal in training.
+
+```{r table-learn-excess-distance-r0, echo=F}
+apa_random_table(VarCorr(model.target_distance_learn$full_model)) %>% 
+  knitr::kable(
+    caption="(ref:l-ed-caption-r0)")
+```
+
+The model had a fit of $R2 = `r R2$Rsq`, [CI: `r R2$upper.CL`, `r R2$lower.CL`$].
+
+There was a main effect of *group* (`r apa_lmm.learn_distance$statistic$group`), showing that 6-7-yo children had a significantly higher excess distance to the goal than 9-10-yo children (`r apa_post.learn_distance_group$statistic$YoungKids_OldKids`) and adults (`r  apa_post.learn_distance_group$statistic$YoungKids_YoungAdults`). There was a main effect of *trial in block* (`r apa_lmm.learn_distance$statistic$trial_in_block`). Here, excess distance to the goal in the first trial per block was significantly higher than in all the other trials. 
+(Table\ \@ref(tab:table-learn-excess-distance-f0))
+
+```{r, include=F}
+rm(model.target_distance_learn, R2, apa_lmm.learn_distance, apa_post.learn_distance_group, apa_post.learn_distance_trial)
+```
+
+### **Initial rotation velocity (training trials)**
+
+```{r, model_learn_rotation_velocity }
+```
+
+```{r, post_hoc_learn_rotation_velocity, include=F}
+```
+
+```{r, plot_learn_rotation_velocity, include=F}
+```
+
+```{r apa_learn_rotation_velocity, include=F}
+R2 <- r2beta(model.rotation_velocity_learn$full_model, method='nsj', partial=F) %>% mutate_all(apa_num)
+
+apa_lmm.learn_rotation_velocity <- apa_print(model.rotation_velocity_learn)
+```
+
+(ref:l-irv-caption-f0)  Fixed effects for factor initial rotation velocity.
+
+```{r table-learn-rotation-velocity-f0, echo=F}
+apa_table(
+  apa_lmm.learn_rotation_velocity$table,
+  caption="(ref:l-irv-caption-f0)",
+  placement="h")
+```
+
+(ref:l-irv-caption-r0) Random effects for factor initial rotation velocity
+
+```{r table-learn-rotation-velocity-r0, echo=F}
+apa_random_table(VarCorr(model.rotation_velocity_learn$full_model)) %>% 
+  knitr::kable(
+    caption="(ref:l-irv-caption-r0)")
+```
+
+The model had a fit of $R2 = `r R2$Rsq`, [CI: `r R2$upper.CL`, `r R2$lower.CL`$].
+
+There were no significant main effects or interactions for rotation velocity in training. (Table\ \@ref(tab:table-learn-rotation-velocity-f0)). 
+
+
+```{r, include=F}
+rm(model.rotation_velocity_learn, R2, apa_lmm.learn_rotation_velocity)
+```
+
+```{r, echo=F, fig.height=6, fig.width=8, fig.cap="Navigation behavior" }
+
+plot.time_learn + 
+  plot.path_learn + 
+  plot.target_distance_learn + 
+  plot.rotation_velocity_learn + 
+  plot_layout(nrow=2, guides="collect") & 
+  guides(fill=F, shape=F) & theme(legend.position="top", legend.justification=c(-0.05,0))
+
+rm(plot.time_learn, plot.path_learn,plot.target_distance_learn, plot.rotation_velocity_learn)
+```
+
+\newpage
+
+### **Initial rotation (all probe trials)**
 
 ```{r, model_probe_rotation }
 ```
@@ -522,11 +783,6 @@ rm(model.target_distance, apa_lmm.distance, apa_post.distance_group, apa_post.di
 ```
 
 ```{r, plot_probe_rotation, include=F }
-```
-
-```{r, echo=F, fig.height=5, fig.width=5, fig.cap="Initial rotation in probe trials." }
-plot.rotation
-rm(plot.rotation)
 ```
 
 ```{r apa_probe_rotation, include=F}
@@ -586,241 +842,7 @@ apa_table(
 rm(model.rotation, apa_lmm.init_rot, apa_post.init_rot_group_session, apa_post.init_rot_group_condition, apa_post.init_rot_session_condition)
 ```
 
-\newpage 
-
-### **Initial rotation velocity**
-
-```{r, model_probe_rotation_velocity }
-```
-
-```{r, post_hoc_probe_rotation_velocity, include=F }
-```
-
-```{r, plot_probe_rotation_velocity, include=F }
-```
-
-```{r, echo=F, fig.height=5, fig.width=5, fig.cap="Initial rotation velocity in probe trials." }
-plot.rotation_velocity
-rm(plot.rotation_velocity)
-```
-
-```{r apa_probe_rotation_velocity, include=F }
-R2 <- r2beta(model.rotation_velocity$full_model, method='nsj', partial=F) %>% mutate_all(apa_num)
-
-apa_lmm.init_vel <- apa_print(model.rotation_velocity)
-
-apa_post.init_vel_group_condition <- post.init_vel_group_condition %>% apa_print() %>% bonferroni_fix()
-
-apa_post.init_vel_session_condition <- post.init_vel_session_condition %>% apa_print() %>% bonferroni_fix()
-
-rm(post.init_vel_group_condition, post.init_vel_session_condition)
-```
-
-(ref:p-init-vel-f-caption0) Fixed effects for initial rotation veloctiy in probe trials.
-
-```{r table-probe-init-vel-f0, echo=F}
-apa_table(
-  apa_lmm.init_vel$table,
-  caption="(ref:p-init-vel-f-caption0)",
-  placement="h")
-```
-
-(ref:p-init-vel-r-caption-r0) Random effects for initial rotation veloctiy in probe trials.
-
-```{r table-probe-init-vel-r0, echo=F}
-apa_random_table(VarCorr(model.rotation_velocity$full_model)) %>% 
-  knitr::kable(
-    caption="(ref:p-init-vel-r-caption-r0)")
-```
-
-The model had a fit of $R2 = `r R2$Rsq`, [CI: `r R2$upper.CL`, `r R2$lower.CL`$].
-
-For the initial rotation velocity in probe trials, we found two significant two-way interactions (Table\ \@ref(tab:table-probe-init-vel-f0)). Post-hoc contrasts for the *group x condition* interaction (`r apa_lmm.init_vel$statistic$group_condition`) showed significant age group differences only in the allocentric condition, where 6-7-yo children had a significantly lower initial rotation velocity than both 9-10-yo (`r apa_post.init_vel_group_condition$statistic$Alloret_YoungKids_OldKids`) and adults (`r apa_post.init_vel_group_condition$statistic$Alloret_YoungKids_YoungAdults`). All groups had significantly higher initial rotation velocity for the allocentric than egocentric condition (6-7-yo: `r apa_post.init_vel_group_condition$statistic$YoungKids_Egoret_alloret`; 9-10-yo: `r apa_post.init_vel_group_condition$statistic$OldKids_Egoret_alloret`; adults: `r apa_post.init_vel_group_condition$statistic$YoungAdults_Egoret_alloret`). The *session x condition* interaction (`r apa_lmm.init_vel$statistic$session_condition`) added that this age-independent increase in initial rotation velocity for the allocentric condition was present in both sessions (egocentric vs. allocentric in first session: `r apa_post.init_vel_session_condition$statistic$X1_Egoret_alloret`; second session: `r apa_post.init_vel_session_condition$statistic$X2_Egoret_alloret`) and that initial rotation velocity increased across sessions in the allocentric (`r apa_post.init_vel_session_condition$statistic$Alloret_Session1_session2`) but not egocentric condition (`r apa_post.init_vel_session_condition$statistic$Egoret_Session1_session2`). 
-
-```{r table-probe-init-vel2, echo=F}
-apa_table(
-  apa_post.init_vel_group_condition$table %>% remove_rownames(),
-  placement="h")
-```
-
-```{r table-probe-init-vel3, echo=F}
-apa_table(
-  apa_post.init_vel_session_condition$table %>% remove_rownames(),
-  placement="h")
-```
-
-```{r, include=F}
-rm(model.rotation_velocity, apa_lmm.init_vel, apa_post.init_vel_group_condition, apa_post.init_vel_session_condition)
-```
-
-\newpage 
-
-## Supplementary material 
-
-### Navigation behavior: Training trials at Day 2 
-
-#### **Time**
-
-```{r, model_learn_time}
-```
-
-```{r, post_hoc_learn_time, include=F}
-```
-
-```{r, plot_learn_time, include=F}
-```
-
-```{r, echo=F, fig.height=4, fig.width=5, fig.cap="Trial curve for time in training." }
-plot.time_learn 
-rm(plot.time_learn)
-```
-
-```{r apa_learn_time, include=F}
-R2 <- r2beta(model.time_learn$full_model, method='nsj', partial=F) %>% mutate_all(apa_num)
-
-apa_lmm.learn_time <- apa_print(model.time_learn)
-
-apa_post.learn_time_group <- post.learn_time_group %>% apa_print() %>% bonferroni_fix()
-
-apa_post.learn_time_trial <- post.learn_time_trial %>% apa_print() %>% bonferroni_fix()
-
-rm(post.learn_time_group, post.learn_time_trial)
-```
-
-(ref:l-t-caption-f0) Fixed effects for time in training.
-
-```{r table-learn-time-f0, echo=F}
-apa_table(
-  apa_lmm.learn_time$table,
-  caption="(ref:l-t-caption-f0)",
-  placement="h")
-```
-
-(ref:l-t-caption-r0) Random effects for time in training.
-
-```{r table-learn-time-r0, echo=F}
-apa_random_table(VarCorr(model.time_learn$full_model)) %>% 
-  knitr::kable(
-    caption="(ref:l-t-caption-r0)")
-```
-
-The model had a fit of $R2 = `r R2$Rsq`, [CI: `r R2$upper.CL`, `r R2$lower.CL`$].
-
-There was a main effect of *group* (`r apa_lmm.learn_time$statistic$group`), showing that 6-7-yo children required significantly more time than 9-10-yo children (`r apa_post.learn_time_group$statistic$YoungKids_OldKids`) and adults (`r  apa_post.learn_time_group$statistic$YoungKids_YoungAdults`). There was a main effect of *trial in block* (`r apa_lmm.learn_time$statistic$trial_in_block`). Here, time in the first trial per block was significantly higher than in all other trials. 
-(Table\ \@ref(tab:table-learn-time-f0))
-
-```{r, include=F}
-rm(model.time_learn, R2, apa_lmm.learn_time, apa_post.learn_time_group, apa_post.learn_time_trial)
-```
-
-#### **Excess path length**
-
-```{r, model_learn_path }
-```
-
-```{r, post_hoc_learn_path, include=F}
-```
-
-```{r, plot_learn_path, include=F}
-```
-
-```{r, echo=F, fig.height=4, fig.width=5, fig.cap="Trial curve for excess path length in training." }
-plot.path_learn
-rm(plot.path_learn)
-```
-
-```{r apa_learn_path, include=F}
-R2 <- r2beta(model.path_learn$full_model, method='nsj', partial=F) %>% mutate_all(apa_num)
-
-apa_lmm.learn_path <- apa_print(model.path_learn)
-
-apa_post.learn_path_group <- post.learn_path_group %>% apa_print() %>% bonferroni_fix()
-
-apa_post.learn_path_trial <- post.learn_path_trial %>% apa_print() %>% bonferroni_fix()
-
-rm(post.learn_path_group, post.learn_path_trial)
-```
-
-(ref:l-ep-caption-f0) Fixed effects for excess path length in training.
-
-```{r table-learn-excess-path-f0, echo=F}
-apa_table(
-  apa_lmm.learn_path$table,
-  caption="(ref:l-ep-caption-f0)",
-  placement="h")
-```
-
-(ref:l-ep-caption-r0) Random effects for excess path length in training.
-
-```{r table-learn-excess-path-r0, echo=F}
-apa_random_table(VarCorr(model.path_learn$full_model)) %>% 
-  knitr::kable(
-    caption="(ref:l-ep-caption-r0)")
-```
-
-The model had a fit of $R2 = `r R2$Rsq`, [CI: `r R2$upper.CL`, `r R2$lower.CL`$].
-
-There was a main effect of *group* (`r apa_lmm.learn_path$statistic$group`), showing a gradual decrease in excess path length with increasing age (6-7-yo vs. 9-10-yo: `r apa_post.learn_path_group$statistic$YoungKids_OldKids`; 6-7-yo vs. adults: `r apa_post.learn_path_group$statistic$YoungKids_YoungAdults`; 9-10-yo vs. adults: `r apa_post.learn_path_group$statistic$OldKids_YoungAdults`). There was a main effect of *trial in block* (`r apa_lmm.learn_path$statistic$trial_in_block`). Here, excess path length in the first trial per block was significantly higher than in all other trials. (Table\ \@ref(tab:table-learn-excess-path-f0))
-
-```{r, include=F}
-rm(model.path_learn, R2, apa_lmm.learn_path, apa_post.learn_path_group, apa_post.learn_path_trial)
-```
-
-#### **Excess distance to goal**
-
-```{r, model_learn_target_distance }
-```
-
-```{r, post_hoc_learn_target_distance, include=F}
-```
-
-```{r, plot_learn_target_distance, include=F}
-```
-
-```{r, echo=F, fig.height=4, fig.width=5, fig.cap="Trial curve for excess distance to goal in training." }
-plot.target_distance_learn
-rm(plot.target_distance_learn)
-```
-
-```{r apa_learn_target_distance, include=F}
-R2 <- r2beta(model.target_distance_learn$full_model, method='nsj', partial=F) %>% mutate_all(apa_num)
-
-apa_lmm.learn_distance <- apa_print(model.target_distance_learn)
-
-apa_post.learn_distance_group <- post.learn_distance_group %>% apa_print() %>% bonferroni_fix()
-
-apa_post.learn_distance_trial <- post.learn_distance_trial %>% apa_print() %>% bonferroni_fix()
-
-rm(post.learn_distance_group, post.learn_distance_trial)
-```
-
-(ref:l-ed-caption-f0) Fixed effects for excess distance to goal in training.
-
-```{r table-learn-excess-distance-f0, echo=F}
-apa_table(
-  apa_lmm.learn_distance$table,
-  caption="(ref:l-ed-caption-f0)",
-  placement="h")
-```
-
-(ref:l-ed-caption-r0) Random effects for excess distance to goal in training.
-
-```{r table-learn-excess-distance-r0, echo=F}
-apa_random_table(VarCorr(model.target_distance_learn$full_model)) %>% 
-  knitr::kable(
-    caption="(ref:l-ed-caption-r0)")
-```
-
-The model had a fit of $R2 = `r R2$Rsq`, [CI: `r R2$upper.CL`, `r R2$lower.CL`$].
-
-There was a main effect of *group* (`r apa_lmm.learn_distance$statistic$group`), showing that 6-7-yo children had a significantly higher excess distance to the goal than 9-10-yo children (`r apa_post.learn_distance_group$statistic$YoungKids_OldKids`) and adults (`r  apa_post.learn_distance_group$statistic$YoungKids_YoungAdults`). There was a main effect of *trial in block* (`r apa_lmm.learn_distance$statistic$trial_in_block`). Here, excess distance to the goal in the first trial per block was significantly higher than in all the other trials. 
-(Table\ \@ref(tab:table-learn-excess-distance-f0))
-
-```{r, include=F}
-rm(model.target_distance_learn, R2, apa_lmm.learn_distance, apa_post.learn_distance_group, apa_post.learn_distance_trial)
-```
-
-#### **Initial rotation**
+### **Initial rotation (training trials)**
 
 ```{r, model_learn_rotation }
 ```
@@ -829,11 +851,6 @@ rm(model.target_distance_learn, R2, apa_lmm.learn_distance, apa_post.learn_dista
 ```
 
 ```{r, plot_learn_rotation, include=F}
-```
-
-```{r, echo=F, fig.height=4, fig.width=5, fig.cap="Trial curve for initial rotation in training." }
-plot.rotation_learn 
-rm(plot.rotation_learn)
 ```
 
 ```{r apa_learn_rotation, include=F}
@@ -878,69 +895,15 @@ apa_table(
 rm(model.rotation_learn, R2, apa_lmm.learn_rotation, apa_post.learn_rotation_group_trial)
 ```
 
-#### **Initial rotation velocity**
+\newpage 
 
-```{r, model_learn_rotation_velocity }
-```
-
-```{r, post_hoc_learn_rotation_velocity, include=F}
-```
-
-```{r, plot_learn_rotation_velocity, include=F}
-```
-
-```{r, echo=F, fig.height=4, fig.width=5, fig.cap="Trial curve for initial rotation velocity in training." }
-plot.rotation_velocity_learn
-rm(plot.rotation_velocity_learn)
-```
-
-```{r apa_learn_rotation_velocity, include=F}
-R2 <- r2beta(model.rotation_velocity_learn$full_model, method='nsj', partial=F) %>% mutate_all(apa_num)
-
-apa_lmm.learn_rotation_velocity <- apa_print(model.rotation_velocity_learn)
-```
-
-(ref:l-irv-caption-f0)  Fixed effects for factor initial rotation velocity.
-
-```{r table-learn-rotation-velocity-f0, echo=F}
-apa_table(
-  apa_lmm.learn_rotation_velocity$table,
-  caption="(ref:l-irv-caption-f0)",
-  placement="h")
-```
-
-(ref:l-irv-caption-r0) Random effects for factor initial rotation velocity
-
-```{r table-learn-rotation-velocity-r0, echo=F}
-apa_random_table(VarCorr(model.rotation_velocity_learn$full_model)) %>% 
-  knitr::kable(
-    caption="(ref:l-irv-caption-r0)")
-```
-
-The model had a fit of $R2 = `r R2$Rsq`, [CI: `r R2$upper.CL`, `r R2$lower.CL`$].
-
-There were no significant main effects or interactions for rotation velocity in training. (Table\ \@ref(tab:table-learn-rotation-velocity-f0)). 
-
-
-```{r, include=F}
-rm(model.rotation_velocity_learn, R2, apa_lmm.learn_rotation_velocity)
-```
-
-\newpage
-
-### Correlations 
+## Correlations & PLSC Analysis
 
 TBD 
 
 \newpage
 
-### PLSC Analysis 
-
-TBD, siehe Powerpoint Iryna 
-
-\newpage
-
-### Motor Control Task 
+## Motor Control Task 
 
 ![Motor control practise task](./pics/Motor_Control.jpg){width=600px}
 
@@ -953,7 +916,7 @@ mc_plot <- function(data, xvar, yvar, my_colors, my_labels, y_label){
     scale_color_manual(values=my_colors, labels=my_labels, name=NULL) +
     scale_shape(guide="none") +
     coord_cartesian(ylim=c(0,NA)) +
-    theme_bw(base_size=15) +
+    theme_bw(base_size=13) +
     theme(legend.position="top", legend.justification=c(0,0),
           legend.title=NULL, 
           panel.grid.major.x=element_blank(),
@@ -993,24 +956,45 @@ rm(practise)
 
 There were significant *age group* differences the motor control task, aimed to assess the ability to use a joystick in the initial practise phase. Specifically, 6-7-yo children required more time to solve the task (`r apa_aov.motor_time$statistic$group`; 6-7-yo vs. 9-10-yo: `r post_aov.motor_time_group$statistic$YoungKids_OldKids`; 6-7-yo vs. adults: `r post_aov.motor_time_group$statistic$YoungKids_YoungAdults`) and had longer excess path lengths (`r apa_aov.motor_path$statistic$group`; 6-7-yo vs. 9-10-yo: `r post_aov.motor_path_group$statistic$YoungKids_OldKids`; 6-7-yo vs. adults: `r post_aov.motor_path_group$statistic$YoungKids_YoungAdults`). Thus, we computed a covariate by averaging the z-scored time and z-scored excess path length during practise and used this covariate to account for differences in joystick abilities. 
 
-### Excluded trials 
+## Excluded trials 
 
 ```{r, echo=F, fig.height=3, fig.width=3, fig.cap="Overview of excluded trials." }
 
-excluded_trials <- sm_orig %>% 
+data_excluded <- sm_orig %>% 
   group_by(id, group) %>% 
-  tally(exclude_trial_matlab)
+  count(exclude_trial_matlab) %>% 
+  ungroup() %>% 
+  complete(exclude_trial_matlab, nesting(id, group), fill=list(n=0))
 
-ggplot(excluded_trials, aes(x=n, fill=group, color=group)) + 
+n_excluded_p <- data_excluded %>% 
+  filter(exclude_trial_matlab==1) %>% 
+  ungroup %>%   
+  summarise(min=min(n), max=max(n), mean=mean(n), sd=sd(n)) %>% 
+  mutate_all(round, 2)
+
+n_excluded_t <- sm_orig %>% 
+  count(exclude_trial_matlab)
+
+ggplot(data_excluded %>% filter(exclude_trial_matlab==1), aes(x=n, fill=group, color=group)) + 
   geom_histogram(binwidth=1) + 
   scale_fill_manual(labels=group_labels, values=group_colors) + 
   scale_color_manual(labels=group_labels, values=group_colors_o) +
-  theme_bw(base_size=15) + 
+  theme_bw(base_size=13) + 
   theme(legend.position=c(0.8,0.8),
         legend.key.size=unit(0.5, 'cm')) + 
   labs(subtitle="Number of excluded trials",
        x="n trials",
        y="n participants")
 
-rm(excluded_trials)
+rm(data_excluded)
 ```
+
+How many trials were marked for exclusion?
+
+Percentage of excluded trials among all trials: `r round((n_excluded_t %>%  filter(exclude_trial_matlab==1) %>% pull) / (n_excluded_t %>% filter(exclude_trial_matlab==0) %>% pull) * 100, 2)` % 
+
+N per participant 
+min: `r n_excluded_p %>% select(min) %>% pull`
+max: `r n_excluded_p %>% select(max) %>% pull`
+mean: `r n_excluded_p %>% select(mean) %>% pull`
+sd: `r n_excluded_p %>% select(sd) %>% pull`

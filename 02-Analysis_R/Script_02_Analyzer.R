@@ -111,7 +111,7 @@ l_memory_score <- "memory score"
 l_correct_alley <- "alley accuracy (%)"
 l_time <- "time (sec)"
 l_excess_path_length <- "excess path length"
-l_excess_target_distance <- "excess avg. target distance"
+l_excess_distance_goal <- "excess distance to goal"
 l_rotation <- "sum of rotation"
 l_rotation_velocity <- "rotation velocity"
 l_rotation_by_path <- "sum of rotation / path length"
@@ -124,6 +124,7 @@ l_initial_rotation_by_path <- "sum of initial rotation / path length"
 group_colors <- c("#FFE476", "#6699FF", "#e19686")
 group_colors_o <-  c("#CC6600", "#003399", "#d56d56")
 
+
 # plot function 
 afex_plot_wrapper <- function(model, xv, tv, pv, ylabel, xlabel=l_session, ymin=0, ymax=1) {
   p <- afex_plot(model, x=xv, trace=tv, panel=pv, id="id", 
@@ -132,16 +133,17 @@ afex_plot_wrapper <- function(model, xv, tv, pv, ylabel, xlabel=l_session, ymin=
                  factor_levels=list(group=group_labels, condition=condition_labels),
                  legend_title=NULL, 
                  data_geom=geom_boxplot, 
-                 data_arg=list(width=0.5, color="black"),
+                 data_arg=list(width=0.5, color="black", outlier.colour="lightgrey"),
                  point_arg=list(size=3), 
                  line_arg=list(size=1.25),
                  error_arg=list(size=1.25, width=0)) + 
     scale_fill_manual(values=group_colors) + 
     scale_color_manual(values=group_colors_o) +
     coord_cartesian(ylim=c(ymin, ymax)) + 
-    theme_bw(base_size=15) + 
+    theme_bw(base_size=13) + 
     theme(legend.position="top", legend.justification=c(0,0),
-          panel.grid.major.x=element_blank()) +
+          panel.grid.major.x=element_blank(),
+          strip.background=element_rect(color=NA, fill=NA)) +
     labs(x=xlabel, y=ylabel)
   
   return(p)
@@ -402,13 +404,13 @@ post.layout <- pairwise_fisher_test(table(temp_data$score, temp_data$group), p.a
 
 ## ---- plot_post_layout
 plot.layout <- ggplot(temp_data, aes(x=group, y=score, shape=group, color=group)) + 
-  geom_point(position=position_jitter(h=0, seed=100), color="darkgrey") + 
+  geom_point(position=position_jitter(h=0, seed=100), color="lightgrey") + 
   stat_summary(fun=mean, na.rm=T, geom="point", size=5) + 
   scale_shape_manual(values=c(16, 17, 15), labels=group_labels, name=NULL) + 
   scale_color_manual(values=group_colors, labels=group_labels, name=NULL) + 
   scale_x_discrete(labels=group_labels) + 
   coord_cartesian(ylim=c(0,1)) +
-  theme_bw(base_size=15) +
+  theme_bw(base_size=13) +
   theme(legend.position="top", legend.justification=c(0,0),
         legend.title=NULL, 
         panel.grid.major.x=element_blank(),
@@ -429,7 +431,7 @@ plot.layout_detailed <- ggplot(temp_data2, aes(x=group, y=perc, fill=layout_obj_
   scale_x_discrete(labels=group_labels) + 
   scale_fill_brewer(palette="Pastel1", direction=-1, name=NULL) + 
   coord_cartesian(ylim=c(0,1)) +
-  theme_bw(base_size=15) +
+  theme_bw(base_size=13) +
   theme(legend.position="top", legend.justification=c(0,0),
         legend.title=NULL, 
         panel.grid.major.x=element_blank()) +
@@ -454,13 +456,13 @@ plot.landmark <- afex_plot(model.landmark, x="group", error="model",
                            factor_levels=list(group=group_labels),
                            legend_title=NULL, 
                            data_geom=ggbeeswarm::geom_quasirandom,
-                           data_arg=list(color="darkgrey"),
+                           data_arg=list(color="lightgrey"),
                            point_arg=list(size=3), 
                            line_arg=list(size=1),
                            error_arg=list(size=1, width=0.25)) +
   scale_color_manual(values=group_colors) + 
   coord_cartesian(ylim=c(0,1)) + 
-  theme_bw(base_size=15) + 
+  theme_bw(base_size=13) + 
   theme(legend.position="top", legend.justification=c(0,0),
         panel.grid.major.x=element_blank(),
         axis.text.x=element_blank(),
@@ -487,13 +489,13 @@ plot.position <- afex_plot(model.position, x="group", error="model",
                        factor_levels=list(group=group_labels),
                        legend_title=NULL, 
                        data_geom=ggbeeswarm::geom_quasirandom,
-                       data_arg=list(color="darkgrey"),
+                       data_arg=list(color="lightgrey"),
                        point_arg=list(size=3), 
                        line_arg=list(size=1),
                        error_arg=list(size=1, width=0.25)) +
   scale_color_manual(values=group_colors) + 
   coord_cartesian(ylim=c(0,1)) + 
-  theme_bw(base_size=15) + 
+  theme_bw(base_size=13) + 
   theme(legend.position="top", legend.justification=c(0,0),
         panel.grid.major.x=element_blank(),
         axis.text.x=element_blank(),
@@ -747,7 +749,7 @@ post.distance_condition <- emmeans(model.target_distance, pairwise ~ condition, 
 rm(post.distance_group, post.distance_session, post.distance_condition)
 
 ## ---- plot_probe_target_distance
-plot.target_distance <- afex_plot_wrapper(model.target_distance, "session", "group", "condition", l_excess_target_distance, ymin=-0.25, ymax=0.25)
+plot.target_distance <- afex_plot_wrapper(model.target_distance, "session", "group", "condition", l_excess_distance_goal, ymin=-0.25, ymax=0.25)
 ## ----
 rm(plot.target_distance)
 
@@ -1233,7 +1235,7 @@ post.learn_distance_trial <- emmeans(model.target_distance_learn, pairwise ~ tri
 rm(post.learn_distance_group, post.learn_distance_trial)
 
 ## ---- plot_learn_target_distance
-plot.target_distance_learn <- afex_plot_wrapper(model.target_distance_learn, "trial_in_block", "group", NULL, l_excess_target_distance, xlabel=l_trial_in_block, ymin=-0.15, ymax=0.15)
+plot.target_distance_learn <- afex_plot_wrapper(model.target_distance_learn, "trial_in_block", "group", NULL, l_excess_distance_goal, xlabel=l_trial_in_block, ymin=-0.15, ymax=0.15)
 ## ----
 rm(plot.target_distance_learn, model.target_distance_learn)
 
