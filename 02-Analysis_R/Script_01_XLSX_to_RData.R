@@ -167,8 +167,7 @@ pt_data <- pt_data %>%
 data_for_plsc <- function(d, add_change=FALSE){
   d <- d %>% 
     group_by(id, group, condition) %>% 
-    summarise_at(vars(memory_score, time, excess_path_length, presence_alleys, 
-                      rotation_turns_by_path_length, initial_rotation_turns, initial_angular_velocity), mean, na.rm=T) %>% 
+    summarise_at(vars(memory_score, time, excess_path_length, excess_target_distance, initial_rotation_velocity), mean, na.rm=T) %>% 
     arrange(group, id) %>% 
     mutate(group=case_when(group == "YoungKids" ~ "1", group == "OldKids" ~ "2", T ~ "3")) %>% 
     left_join(pt_data, by="id")

@@ -14,6 +14,29 @@ addpath(genpath(pwd)) % add subfolder functions to path
 
 %%  Run PLSC between memory score and navigation variables  
 %--------------------------------------------------------------------------
+% LOAD DATA 
+%--------------------------------------------------------------------------
+path = '../WP10_data/WP10_results/';
+load([path, 'wp10_plsc_allo.mat']);
+data_allo = cellfun(@str2num, m); clear m;
+
+load([path, 'wp10_plsc_allo_s1.mat']);
+data_allo_1 = cellfun(@str2num, m); clear m;
+
+load([path, 'wp10_plsc_allo_s2.mat']);
+data_allo_2 = cellfun(@str2num, m); clear m;
+
+
+load([path, 'wp10_plsc_ego.mat']);
+data_ego = cellfun(@str2num, m); clear m;
+
+load([path, 'wp10_plsc_ego_s1.mat']);
+data_ego_1 = cellfun(@str2num, m); clear m;
+
+load([path, 'wp10_plsc_ego_s2.mat']);
+data_ego_2 = cellfun(@str2num, m); clear m;
+%--------------------------------------------------------------------------
+%--------------------------------------------------------------------------
 % CONFIG
 %--------------------------------------------------------------------------
 cfg.pls = [];
@@ -21,18 +44,7 @@ cfg.pls.method   = 3; % regular behavior PLS
 cfg.pls.num_perm = 5000; % number of permutations
 cfg.pls.num_boot = 5000; % number of bootstrap tests
 cfg.pls.clim     = 95; % confidence interval level
-
 %--------------------------------------------------------------------------
-% LOAD DATA 
-%--------------------------------------------------------------------------
-path = '../WP10_data/WP10_results/';
-load([path, 'wp10_plsc_allo.mat']);
-data_allo = cellfun(@str2num, m);
-clear m;
-load([path, 'wp10_plsc_ego.mat']);
-data_ego = cellfun(@str2num, m);
-clear m;
-
 %--------------------------------------------------------------------------
 % CREATE THE BASIC MATRCIES / VECTORS
 %--------------------------------------------------------------------------
@@ -41,45 +53,24 @@ clear m;
 plsinput.y = data(:,3);  % the behavioral output we want to explain
 
 % the explanatory behavioral data - remember the order of it!
-% % with groups 
-% plsinput.X = { data(data(:,2)==1, 4:end), ...
-%     data(data(:,2)==2, 4:end), data(data(:,2)==3, 4:end) };
-% without groups 
-plsinput.X = data(:, 4:end-1);
-% plsinput.X = data(:, 4:end);
+plsinput.X = data(:,4:7);
 
-% % exclude all subjects with missings
-% A = find(isnan(plsinput.y)==1);  % find missing age values
-% B = find(any(isnan(plsinput.X),2)==1); % find missing brain data
-% C = vertcat(A,B); 
-% excl = unique(C); % define all subjects with missings on one variable
-% 
-% plsinput.y(excl) = []; % exclude subjects
-% plsinput.X(excl,:) = []; % exclude subjects
+% optional: exclude all subjects with missings
 
 % z-standardization of variables
 plsinput.y = zscore(plsinput.y,0,1);
 plsinput.X = zscore(plsinput.X,0,1);
 %--------------------------------------------------------------------------
-
 %--------------------------------------------------------------------------
 % RUN PLS
 %--------------------------------------------------------------------------
 % add the 'behavioral data'
 cfg.pls.stacked_behavdata = plsinput.y;
 
-% add the 'design matrix' with conditions 
-% cfg.pls.stacked_designdata = [data(:,3)]; 
-
 % input arguments: data, number of subjects, number of conditions, specific settings
-% plsres = pls_analysis({plsinput.X},size(plsinput.y,1),1,cfg.pls);
-% % with groups
-% n_subj = [ size(plsinput.X{1},1) size(plsinput.X{2},1) size(plsinput.X{3},1) ];
-% plsres = pls_analysis(plsinput.X, n_subj, 1, cfg.pls);
-% without groups 
 n_subj = size(plsinput.y,1); 
 plsres = pls_analysis({ plsinput.X }, n_subj, 1, cfg.pls);
-
+%--------------------------------------------------------------------------
 %--------------------------------------------------------------------------
 % PREPARE OUTPUT 
 % -------------------------------------------------------------------------
@@ -88,25 +79,24 @@ plsres = pls_analysis({ plsinput.X }, n_subj, 1, cfg.pls);
 plsres.perm_result.sprob 
 sig_LV = 1; % define the latent variable (here it is only one extracted latent variable) 
 
-% write output table
+% Latent variable
+% combine data and write table 
 time = plsres.boot_result.compare_u(1,sig_LV);
 excess_path = plsres.boot_result.compare_u(2,sig_LV);
-presence = plsres.boot_result.compare_u(3,sig_LV);
-rotation = plsres.boot_result.compare_u(4,sig_LV);
-initial_rotation = plsres.boot_result.compare_u(5,sig_LV);
-initial_IdPhi = plsres.boot_result.compare_u(6,sig_LV);
-layout = plsres.boot_result.compare_u(7,sig_LV);
-landmark = plsres.boot_result.compare_u(8,sig_LV);
-position = plsres.boot_result.compare_u(9,sig_LV);
-PLSC_LV = table(time, excess_path,presence, rotation, initial_rotation, layout, landmark, position);
+excess_distance = plsres.boot_result.compare_u(3,sig_LV);
+inital_velocity = plsres.boot_result.compare_u(4,sig_LV);
+PLSC_LV = table(time, excess_path, excess_distance, inital_velocity);
+% layout = plsres.boot_result.compare_u(5,sig_LV);
+% landmark = plsres.boot_result.compare_u(6,sig_LV);
+% position = plsres.boot_result.compare_u(7,sig_LV);
 
 figure; subplot(1,2,1);
 bar(plsres.boot_result.compare_u(:,sig_LV),'k'); hold on;
-set(gca,'xticklabels',{'time','path','presence','rot', 'init. rot', 'init. IdPhi', 'layout', 'landmark', 'position'}, 'fontsize', 12);
+set(gca,'xticklabels',{'time','path','distance','init.vel','layout', 'landmark', 'position'}, 'fontsize', 12);
 box off; grid on;
-lh = line([0,10],[2,2]);
+lh = line([0,numel(plsres.boot_result.compare_u)+1],[2,2]);
 set(lh, 'color','r','linestyle','--');
-lh = line([0,10],[-2,-2]);
+lh = line([0,numel(plsres.boot_result.compare_u)+1],[-2,-2]);
 set(lh, 'color','r','linestyle','--');
 title('LV profile');
 
@@ -118,8 +108,7 @@ lh1 = line([1,1],[plsres.boot_result.llcorr_adj(1,1),plsres.boot_result.ulcorr_a
 set(lh1, 'color','r');
 title('LV correlation with memory score');
 
-%% Latent profile scores
-
+% Latent profile scores
 % combine data and write table 
 id = data(:,1); % subjects_use (excl,:) = []; 
 group = data(:,2); 
@@ -135,11 +124,15 @@ xlabel(upper('LV profile score'),'fontweight','bold');
 ylabel(upper('memory score'),'fontweight','bold');
 [R,P]=corrcoef(plsres.usc, plsinput.y, 'rows', 'complete');
 title(strcat('r=',num2str(R(2,1)),', p=',num2str(P(2,1)))); 
+%--------------------------------------------------------------------------
+%--------------------------------------------------------------------------
+% SAVE OUTPUT 
+% -------------------------------------------------------------------------
+condition='allo'; 
+condition='ego'; 
 
-%% save output 
-
-condition='allo'; condition='ego'; 
 writetable(PLSC_LV,[path, 'PLSC_LV_', condition, '.txt'])
 writetable(PLSC_LP,[path, 'PLSC_LP_', condition, '.txt'])
+% -------------------------------------------------------------------------
 
 clear all; 
