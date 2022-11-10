@@ -1319,49 +1319,44 @@ rm(plot.rotation_path_learn, model.rotation_path_learn)
 # ::: SUPPLEMENT ANALYSIS: CORRELATIONS ::: #
 # ------------------------------------------------------------------------------
 
-# tbd aggregate data first 
-corr_data <- data_p %>%
-  select(memory_score, time, excess_path_length, excess_target_distance,  
-         initial_rotation, initial_rotation_velocity, initial_rotation_by_path_length,
-         time_in_initial, path_length_in_initial, 
-         rotation, rotation_velocity, rotation_by_path_length) %>% 
+library(corrplot)
+
+## ---- corr_memory_navigation
+corr_ms_nav <- data_p %>%
+  select(id, memory_score, time, excess_path_length, excess_target_distance, initial_rotation_velocity) %>% 
+  group_by(id) %>% 
+  summarise_all(mean, na.rm=T) %>% 
+  select(-id) %>% 
   drop_na() %>% 
   cor()
 
-corrplot::corrplot(corr_data, method="number", tl.col="black", tl.srt=45)
-rm(corr_data)
+test_corr_ms_nav = cor.mtest(corr_ms_nav, conf.level = 0.95)
 
-## ---- stats_corr_allo_ego_trad
-# aggregated standard spearman correlation
-corr <- data_p %>% 
-  group_by(id, group, condition) %>% 
-  summarise(memory_score=mean(memory_score, na.rm=T)) %>% 
-  pivot_wider(names_from=condition,
-              names_prefix="memory_",
-              values_from=memory_score)
-
-cor.test(corr$memory_allo_ret, corr$memory_ego_ret, method="spearman")
-rm(corr)
+corrplot(corr_ms_nav, method="number", tl.col="black", tl.srt=45, type="lower", p.mat=test_corr_ms_nav$p, sig.level=0.05)
+rm(corr_ms_nav)
 ## ----
-ggplot(corr, aes(x=memory_allo_ret, y=memory_ego_ret)) + 
-  geom_point() + geom_smooth(method="lm") +
-  facet_wrap(~group, nrow=1)
 
-
-## ---- stats_corr_allo_ego_rmcorr
-# aggregated repeated measures correlation 
-rm_corr <- data_p %>% 
-  group_by(id, group, session, cov_location, cov_block, condition) %>% 
-  summarise(memory_score=mean(memory_score, na.rm=T)) %>% 
+## ---- corr_memory_post
+temp_pt <- pt_data %>% 
+  select(id, condition, score) %>% 
+  filter(condition!="goals") %>% 
   pivot_wider(names_from=condition,
-              names_prefix="memory_",
-              values_from=memory_score)
+              names_prefix="score_",
+              values_from=score)
 
-rcorr <- rmcorr::rmcorr(id, memory_ego_ret, memory_allo_ret, rm_corr, CIs=c("analytic"))
-rcorr
-rm(rm_corr, rcorr)
-## ---- 
-plot(rcorr)
+corr_ms_pt <- data_p %>% 
+  group_by(id) %>% 
+  summarise(memory_score=mean(memory_score, na.rm=T)) %>% 
+  left_join(temp_pt) %>% 
+  select(-id) %>% 
+  drop_na() %>% 
+  cor()
+
+test_corr_ms_pt = cor.mtest(corr_ms_pt, conf.level = 0.95)
+
+corrplot(corr_ms_pt, method="number", tl.col="black", tl.srt=45, type="lower", p.mat=test_corr_ms_pt$p, sig.level=0.05)
+rm(corr_ms_pt, test_corr_ms_pt)
+## ----
 
 
 # ############################################################################ #
