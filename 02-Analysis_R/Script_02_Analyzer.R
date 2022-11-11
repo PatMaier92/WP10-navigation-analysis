@@ -26,14 +26,11 @@ library(WRS2)
 library(afex)
 library(lme4)
 library(nlme)
-# library(lmeresampler)
-# library(parameters)
 library(emmeans)
 library(r2glmm)
 library(car)
 library(lattice)
-# library(DHARMa)
-# library(sjPlot)
+library(corrplot)
 library(papaja)
 ## ----
 
@@ -1319,7 +1316,18 @@ rm(plot.rotation_path_learn, model.rotation_path_learn)
 # ::: SUPPLEMENT ANALYSIS: CORRELATIONS ::: #
 # ------------------------------------------------------------------------------
 
-library(corrplot)
+## ---- corr_memory
+corr_ms <- data_p %>%
+  select(id, condition, memory_score) %>% 
+  group_by(id, condition) %>% 
+  summarise_all(mean, na.rm=T) %>% 
+  pivot_wider(names_from=condition,
+              names_prefix="ms_",
+              values_from=memory_score) %>% 
+  ungroup()
+
+cor.test(corr_ms$ms_ego_ret, corr_ms$ms_allo_ret, method="spearman")
+## ----
 
 ## ---- corr_memory_navigation
 corr_ms_nav <- data_p %>%
