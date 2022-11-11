@@ -1422,3 +1422,55 @@ post.motor_rotation <- emmeans(model.motor_rotation, pairwise ~ group, adjust="b
 # t <- data_p %>% group_by(group, session, condition) %>% count(search_strategy) %>% mutate(percent=n/sum(n))
 # ggplot(t, aes(x=group, y=percent, fill=search_strategy)) + geom_col(position=position_stack()) + facet_wrap(~condition + session, nrow=1)
 # rm(t)
+
+
+# ------------------------------------------------------------------------------
+# ::: ANALYSIS: ANOVA ON PLSC LATENT PROFILE SCORE::: #
+# ------------------------------------------------------------------------------
+
+file_plsc_allo <-"../WP10_data/WP10_results/plsc/PLSC_LP_allo_0.txt"
+plsc_allo <- read.table(file_plsc_allo, sep=",", header=T)
+rm(file_plsc_allo)
+
+model.plsc_allo <- aov_ez("id", "lp", plsc_allo, between=c("group"))
+post.plsc_allo <- emmeans(model.plsc_allo, pairwise ~ group, adjust="bonferroni")$contrasts
+
+
+# file_plsc_allo <-"../WP10_data/WP10_results/plsc/PLSC_LP_allo_1.txt"
+# plsc_allo <- read.table(file_plsc_allo, sep=",", header=T)
+# rm(file_plsc_allo)
+# 
+# model.plsc_allo <- aov_ez("id", "lp", plsc_allo, between=c("group"))
+# post.plsc_allo <- emmeans(model.plsc_allo, pairwise ~ group, adjust="bonferroni")$contrasts
+# 
+# 
+# file_plsc_allo <-"../WP10_data/WP10_results/plsc/PLSC_LP_allo_2.txt"
+# plsc_allo <- read.table(file_plsc_allo, sep=",", header=T)
+# rm(file_plsc_allo)
+# 
+# model.plsc_allo <- aov_ez("id", "lp", plsc_allo, between=c("group"))
+# post.plsc_allo <- emmeans(model.plsc_allo, pairwise ~ group, adjust="bonferroni")$contrasts
+
+
+file_plsc_ego <-"../WP10_data/WP10_results/plsc/PLSC_LP_ego_0.txt"
+plsc_ego <- read.table(file_plsc_ego, sep=",", header=T)
+rm(file_plsc_ego)
+
+model.plsc_ego <- aov_ez("id", "lp", plsc_ego, between=c("group"))
+post.plsc_ego <- emmeans(model.plsc_ego, pairwise ~ group, adjust="bonferroni")$contrasts
+
+
+# file_plsc_ego <-"../WP10_data/WP10_results/plsc/PLSC_LP_ego_1.txt"
+# plsc_ego <- read.table(file_plsc_ego, sep=",", header=T)
+# rm(file_plsc_ego)
+# 
+# model.plsc_ego <- aov_ez("id", "lp", plsc_ego, between=c("group"))
+# post.plsc_ego <- emmeans(model.plsc_ego, pairwise ~ group, adjust="bonferroni")$contrasts
+# 
+# 
+# file_plsc_ego <-"../WP10_data/WP10_results/plsc/PLSC_LP_ego_2.txt"
+# plsc_ego <- read.table(file_plsc_ego, sep=",", header=T)
+# rm(file_plsc_ego)
+# 
+# model.plsc_ego <- aov_ez("id", "lp", plsc_ego, between=c("group"))
+# post.plsc_ego <- emmeans(model.plsc_ego, pairwise ~ group, adjust="bonferroni")$contrasts

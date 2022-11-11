@@ -55,9 +55,11 @@ cfg.pls.clim     = 95; % confidence interval level
 % NOTE: all data needs to be sorted subjects X data
 % the behavioral output
 plsinput.y = data(:,3);  % the behavioral output we want to explain
+% plsinput.y = data(:,11);
 
 % the explanatory behavioral data - remember the order of it!
 plsinput.X = data(:,4:7);
+% plsinput.X = data(:,8:10);
 
 % optional: exclude all subjects with missings
 
@@ -97,6 +99,7 @@ PLSC_LV = table(time, excess_path, excess_distance, inital_velocity);
 figure; subplot(1,2,1);
 bar(plsres.boot_result.compare_u(:,sig_LV),'k'); hold on;
 set(gca,'xticklabels',{'time','path','distance','init.vel','layout', 'landmark', 'position'}, 'fontsize', 12);
+% set(gca,'xticklabels',{'layout', 'landmark', 'position'}, 'fontsize', 12);
 box off; grid on;
 lh = line([0,numel(plsres.boot_result.compare_u)+1],[2,2]);
 set(lh, 'color','r','linestyle','--');
@@ -134,9 +137,12 @@ title(strcat('r=',num2str(R(2,1)),', p=',num2str(P(2,1))));
 % -------------------------------------------------------------------------
 condition='allo'; 
 condition='ego'; 
+session='0'; 
+session='1';
+session='2'; 
 
-writetable(PLSC_LV,[path, 'PLSC_LV_', condition, '.txt'])
-writetable(PLSC_LP,[path, 'PLSC_LP_', condition, '.txt'])
+writetable(PLSC_LV,[path, 'PLSC_LV_', condition, '_', session, '.txt'])
+writetable(PLSC_LP,[path, 'PLSC_LP_', condition,  '_', session, '.txt'])
 % -------------------------------------------------------------------------
 
 clear all; 
