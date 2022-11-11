@@ -17,6 +17,10 @@ addpath(genpath(pwd)) % add subfolder functions to path
 % LOAD DATA 
 %--------------------------------------------------------------------------
 path = '../WP10_data/WP10_results/';
+
+load([path, 'wp10_plsc_total.mat']);
+data = cellfun(@str2num, m); clear m;
+
 load([path, 'wp10_plsc_allo.mat']);
 data_allo = cellfun(@str2num, m); clear m;
 

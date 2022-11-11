@@ -139,16 +139,6 @@ load(file_name)
 sm_data <- sm_data %>% filter(exclude_trial_matlab==0) 
 rm(file_name)
 
-sm_change_data <- sm_data %>%
-  filter(session!=3, condition %in% c("ego_ret", "allo_ret")) %>% 
-  group_by(id, session, condition) %>% 
-  summarise_at(vars(memory_score), mean, na.rm=T) %>% 
-  pivot_wider(id_cols=c(id, condition),
-              names_from=session,
-              names_prefix="ms_",
-              values_from=memory_score) %>% 
-  mutate(change_memory_score=ms_2/ms_1) %>% 
-  select(-ms_1, -ms_2)
 
 # read-in post-test data 
 file_name <- "../WP10_data/WP10_results/wp10_post_nav_data.RData"
@@ -163,29 +153,83 @@ pt_data <- pt_data %>%
   select(-goals)
 
 
-# filter and aggregate for PLSC analysis 
-data_for_plsc <- function(d, add_change=FALSE){
-  d <- d %>% 
-    group_by(id, group, condition) %>% 
-    summarise_at(vars(memory_score, time, excess_path_length, excess_target_distance, initial_rotation_velocity), mean, na.rm=T) %>% 
-    arrange(group, id) %>% 
-    mutate(group=case_when(group == "YoungKids" ~ "1", group == "OldKids" ~ "2", T ~ "3")) %>% 
-    left_join(pt_data, by="id")
-    
-    if (add_change) {
-      d <- d %>% 
-        left_join(sm_change_data, by=c("id", "condition"))
-    }
+# compute change data 
+data_change <- function(d, by_condition=TRUE){
+  
+  d <- d %>%
+    filter(session!=3, condition %in% c("ego_ret", "allo_ret")) 
+  
+  if (by_condition) {
+    d <- d %>% 
+      group_by(id, session, condition) %>% 
+      summarise_at(vars(memory_score), mean, na.rm=T) %>% 
+      pivot_wider(id_cols=c(id, condition),
+                  names_from=session,
+                  names_prefix="ms_",
+                  values_from=memory_score)
+  }
+  else {
+    d <- d %>% 
+      group_by(id, session) %>% 
+      summarise_at(vars(memory_score), mean, na.rm=T) %>% 
+      pivot_wider(id_cols=c(id),
+                  names_from=session,
+                  names_prefix="ms_",
+                  values_from=memory_score)
+  }
   
   d <- d %>% 
-    select(-condition) %>% 
+    mutate(change_memory_score=ms_2/ms_1) %>% 
+    select(-ms_1, -ms_2)
+}
+
+
+# filter and aggregate for PLSC analysis 
+data_for_plsc <- function(d, by_condition=TRUE, add_change=FALSE, d_c=NULL){
+ 
+  if (by_condition) {
+    d <- d %>% 
+      group_by(id, group, condition)
+  }
+  else {
+    d <- d %>% 
+      group_by(id, group)
+  }
+  
+  d <- d %>% 
+    summarise_at(vars(memory_score, time, excess_path_length, excess_target_distance, initial_rotation_velocity), mean, na.rm=T) %>% 
+    arrange(group, id) %>% 
+    mutate(group=case_when(group=="YoungKids" ~ "1", group=="OldKids" ~ "2", T ~ "3")) %>% 
+    left_join(pt_data, by="id") %>% 
     drop_na()
+  
+  if (add_change) {
+    
+    if (by_condition) {
+      d <- d %>% 
+        left_join(d_c, by=c("id", "condition")) %>% 
+        select(-condition)
+    }
+    else {
+      d <- d %>% 
+        left_join(d_c, by=c("id"))
+    }
+
+  }
   
   return(d)
 } 
 
+# total across sessions 
+change_data <- data_change(sm_data, by_condition=F)
+plsc_total<- data_for_plsc(sm_data, by_condition=F, add_change=T, change_data)
+writeMat(con="../WP10_data/WP10_results/wp10_plsc_total.mat", m=as.matrix(plsc_total))
+rm(plsc_total)
+
+
 # allo across sessions 
-plsc_allo <- data_for_plsc(sm_data %>% filter(condition %in% c("allo_ret")), add_change=TRUE)
+change_by_condition_data <- data_change(sm_data, by_condition=T)
+plsc_allo <- data_for_plsc(sm_data %>% filter(condition %in% c("allo_ret")), by_condition=T, add_change=T, change_by_condition_data)
 writeMat(con="../WP10_data/WP10_results/wp10_plsc_allo.mat", m=as.matrix(plsc_allo))
 rm(plsc_allo)
 
@@ -200,7 +244,7 @@ rm(plsc_allo_2)
 
 
 # ego across sessions 
-plsc_ego <- data_for_plsc(sm_data %>% filter(condition %in% c("ego_ret")), add_change=TRUE)
+plsc_ego <- data_for_plsc(sm_data %>% filter(condition %in% c("ego_ret")),  by_condition=T, add_change=T, change_by_condition_data)
 writeMat(con="../WP10_data/WP10_results/wp10_plsc_ego.mat", m=as.matrix(plsc_ego))
 rm(plsc_ego)
 
