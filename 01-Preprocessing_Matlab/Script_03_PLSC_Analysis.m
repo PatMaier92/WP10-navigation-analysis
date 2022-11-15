@@ -21,6 +21,12 @@ path = '../WP10_data/WP10_results/';
 load([path, 'wp10_plsc_total.mat']);
 data = cellfun(@str2num, m); clear m;
 
+load([path, 'wp10_plsc_retention_by_1.mat']);
+data = cellfun(@str2num, m); clear m;
+
+load([path, 'wp10_plsc_total_2_by_1.mat']);
+data = cellfun(@str2num, m); clear m;
+
 load([path, 'wp10_plsc_allo.mat']);
 data_allo = cellfun(@str2num, m); clear m;
 
@@ -30,6 +36,11 @@ data_allo_1 = cellfun(@str2num, m); clear m;
 load([path, 'wp10_plsc_allo_s2.mat']);
 data_allo_2 = cellfun(@str2num, m); clear m;
 
+load([path, 'wp10_plsc_allo_2_by_1.mat']);
+data_allo_2_by_1 = cellfun(@str2num, m); clear m;
+
+load([path, 'wp10_plsc_allo_retention_by_1.mat']);
+data_allo_r_by_1 = cellfun(@str2num, m); clear m;
 
 load([path, 'wp10_plsc_ego.mat']);
 data_ego = cellfun(@str2num, m); clear m;
@@ -39,6 +50,12 @@ data_ego_1 = cellfun(@str2num, m); clear m;
 
 load([path, 'wp10_plsc_ego_s2.mat']);
 data_ego_2 = cellfun(@str2num, m); clear m;
+
+load([path, 'wp10_plsc_ego_2_by_1.mat']);
+data_ego_2_by_1 = cellfun(@str2num, m); clear m;
+
+load([path, 'wp10_plsc_ego_retention_by_1.mat']);
+data_ego_r_by_1 = cellfun(@str2num, m); clear m;
 %--------------------------------------------------------------------------
 %--------------------------------------------------------------------------
 % CONFIG
@@ -60,6 +77,7 @@ plsinput.y = data(:,3);  % the behavioral output we want to explain
 % the explanatory behavioral data - remember the order of it!
 plsinput.X = data(:,4:7);
 % plsinput.X = data(:,8:10);
+% plsinput.X = data(:,4:10);
 
 % optional: exclude all subjects with missings
 

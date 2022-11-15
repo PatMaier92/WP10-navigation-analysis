@@ -153,6 +153,14 @@ pt_data <- pt_data %>%
   select(-goals)
 
 
+# temp: remove 25034
+pt_data <- pt_data %>% 
+  filter(id != 25034)
+
+sm_data <- sm_data %>% 
+  filter(id != 25034)
+
+
 # compute change data 
 data_change <- function(d, by_condition=TRUE){
   
@@ -226,12 +234,76 @@ plsc_total<- data_for_plsc(sm_data, by_condition=F, add_change=T, change_data)
 writeMat(con="../WP10_data/WP10_results/wp10_plsc_total.mat", m=as.matrix(plsc_total))
 rm(plsc_total)
 
+# total memory score 2 by navigation session 1
+ms_2 <- sm_data %>% 
+  filter(condition %in% c("allo_ret", "ego_ret"), session==2) %>% 
+  group_by(id, group) %>% 
+  summarise_at(vars(memory_score), mean, na.rm=T) %>% 
+  arrange(group, id) %>% 
+  mutate(group=case_when(group=="YoungKids" ~ "1", group=="OldKids" ~ "2", T ~ "3"))
+
+nav_1 <- sm_data %>% 
+  filter(condition %in% c("allo_ret", "ego_ret"), session==1) %>% 
+  group_by(id, group) %>% 
+  summarise_at(vars(time, excess_path_length, excess_target_distance, initial_rotation_velocity), mean, na.rm=T) %>% 
+  mutate(group=case_when(group=="YoungKids" ~ "1", group=="OldKids" ~ "2", T ~ "3")) 
+
+group_info <- nav_1 %>% select(id, group) 
+
+plsc_memory_2_by_1 <- group_info %>% 
+  left_join(ms_2, by=c("id", "group")) %>% 
+  left_join(nav_1, by=c("id", "group")) %>% 
+  left_join(pt_data, by="id") %>% 
+  drop_na()
+writeMat(con="../WP10_data/WP10_results/wp10_plsc_total_2_by_1.mat", m=as.matrix(plsc_memory_2_by_1))
+rm(plsc_memory_2_by_1)
+
+# total retention rate by navigation session 1
+plsc_retention_by_1 <- group_info %>% 
+  left_join(change_data, by="id") %>% 
+  left_join(nav_1, by=c("id", "group")) %>% 
+  left_join(pt_data, by="id") %>% 
+  drop_na()
+writeMat(con="../WP10_data/WP10_results/wp10_plsc_retention_by_1.mat", m=as.matrix(plsc_retention_by_1))
+rm(plsc_retention_by_1)
+
 
 # allo across sessions 
 change_by_condition_data <- data_change(sm_data, by_condition=T)
 plsc_allo <- data_for_plsc(sm_data %>% filter(condition %in% c("allo_ret")), by_condition=T, add_change=T, change_by_condition_data)
 writeMat(con="../WP10_data/WP10_results/wp10_plsc_allo.mat", m=as.matrix(plsc_allo))
 rm(plsc_allo)
+
+# allo memory score 2 by navigation session 1
+ms_allo_2 <- sm_data %>% 
+  filter(condition %in% c("allo_ret"), session==2) %>% 
+  group_by(id, group) %>% 
+  summarise_at(vars(memory_score), mean, na.rm=T) %>% 
+  arrange(group, id) %>% 
+  mutate(group=case_when(group=="YoungKids" ~ "1", group=="OldKids" ~ "2", T ~ "3"))
+
+nav_allo_1 <- sm_data %>% 
+  filter(condition %in% c("allo_ret"), session==1) %>% 
+  group_by(id) %>% 
+  summarise_at(vars(time, excess_path_length, excess_target_distance, initial_rotation_velocity), mean, na.rm=T)
+
+plsc_allo_2_by_1 <- ms_allo_2 %>% 
+  left_join(nav_allo_1, by="id") %>% 
+  left_join(pt_data, by="id") %>% 
+  drop_na()
+writeMat(con="../WP10_data/WP10_results/wp10_plsc_allo_2_by_1.mat", m=as.matrix(plsc_allo_2_by_1))
+rm(plsc_allo_2_by_1)
+
+# allo retention rate by navigation session 1
+group_info <- ms_allo_2 %>% select(id, group)
+allo_change <- change_by_condition_data %>% filter(condition %in% c("allo_ret")) %>% select(-condition)
+plsc_allo_retention_by_1 <- group_info %>% 
+  left_join(allo_change, by="id") %>% 
+  left_join(nav_allo_1, by="id") %>% 
+  left_join(pt_data, by="id") %>% 
+  drop_na()
+writeMat(con="../WP10_data/WP10_results/wp10_plsc_allo_retention_by_1.mat", m=as.matrix(plsc_allo_retention_by_1))
+rm(plsc_allo_retention_by_1)
 
 # allo split by sessions 
 plsc_allo_1 <- data_for_plsc(sm_data %>% filter(condition %in% c("allo_ret"), session==1))
@@ -247,6 +319,37 @@ rm(plsc_allo_2)
 plsc_ego <- data_for_plsc(sm_data %>% filter(condition %in% c("ego_ret")),  by_condition=T, add_change=T, change_by_condition_data)
 writeMat(con="../WP10_data/WP10_results/wp10_plsc_ego.mat", m=as.matrix(plsc_ego))
 rm(plsc_ego)
+
+# ego memory score 2 by navigation session 1
+ms_ego_2 <- sm_data %>% 
+  filter(condition %in% c("ego_ret"), session==2) %>% 
+  group_by(id, group) %>% 
+  summarise_at(vars(memory_score), mean, na.rm=T) %>% 
+  arrange(group, id) %>% 
+  mutate(group=case_when(group=="YoungKids" ~ "1", group=="OldKids" ~ "2", T ~ "3"))
+
+nav_ego_1 <- sm_data %>% 
+  filter(condition %in% c("ego_ret"), session==1) %>% 
+  group_by(id) %>% 
+  summarise_at(vars(time, excess_path_length, excess_target_distance, initial_rotation_velocity), mean, na.rm=T)
+
+plsc_ego_2_by_1 <- ms_ego_2 %>% 
+  left_join(nav_ego_1, by="id") %>% 
+  left_join(pt_data, by="id") %>% 
+  drop_na()
+writeMat(con="../WP10_data/WP10_results/wp10_plsc_ego_2_by_1.mat", m=as.matrix(plsc_ego_2_by_1))
+rm(plsc_ego_2_by_1)
+
+# ego retention rate by navigation session 1
+group_info <- ms_ego_2 %>% select(id, group)
+ego_change <- change_by_condition_data %>% filter(condition %in% c("ego_ret")) %>% select(-condition)
+plsc_ego_retention_by_1 <- group_info %>% 
+  left_join(ego_change, by="id") %>% 
+  left_join(nav_ego_1, by="id") %>% 
+  left_join(pt_data, by="id") %>% 
+  drop_na()
+writeMat(con="../WP10_data/WP10_results/wp10_plsc_ego_retention_by_1.mat", m=as.matrix(plsc_ego_retention_by_1))
+rm(plsc_ego_retention_by_1)
 
 # ego split by sessions 
 plsc_ego_1 <- data_for_plsc(sm_data %>% filter(condition %in% c("ego_ret"), session==1))
