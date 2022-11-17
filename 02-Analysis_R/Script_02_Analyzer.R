@@ -49,6 +49,12 @@ file_name <- "../WP10_data/WP10_results/wp10_post_nav_data.RData"
 load(file_name)
 rm(file_name)
 
+file_name <- "../WP10_data/WP10_results/covariates_starmaze.xlsx"
+cov <- read_xlsx(file_name, col_names=T, na="999") %>% mutate(id=as.numeric(id)) %>% select(-sex, -group, income)
+sm_data <- sm_data %>% 
+  left_join(cov, by="id")
+rm(cov)
+
 
 ## ---- data_prep
 # practise 
@@ -1366,6 +1372,28 @@ corrplot(corr_ms_pt, method="number", tl.col="black", tl.srt=45, type="lower", p
 rm(corr_ms_pt, test_corr_ms_pt)
 ## ----
 
+## ---- corr_memory_age
+temp <- data_p %>% 
+  filter(session==1, group!="YoungAdults") %>% 
+  select(id, age, condition, memory_score) %>% 
+  drop_na() %>% 
+  mutate(age_c=scale(age, scale=FALSE))
+
+model <- mixed(memory_score ~ age_c * condition + (condition|id), data=temp, expand_re=T)
+emtrends(model, pairwise ~ condition, var="age_c", lmer.df="satterthwaite")
+
+ggplot(temp, aes(x=age, y=memory_score, color=condition)) + 
+  stat_summary(fun="mean", geom="point") + 
+  geom_smooth(method="lm") +
+  scale_color_manual(values=c("#8742f5", "#f59042"), labels=c("ego", "allo")) +
+  coord_cartesian(ylim=c(0,1)) + 
+  theme_bw(base_size=13) + 
+  theme(legend.position="top", legend.justification=c(0,0),
+        panel.grid.major.x=element_blank(),
+        strip.background=element_rect(color=NA, fill=NA)) +
+  labs(x="age", y="memory score")
+## ----
+## ---- 
 
 # ############################################################################ #
 # ############################################################################ #
