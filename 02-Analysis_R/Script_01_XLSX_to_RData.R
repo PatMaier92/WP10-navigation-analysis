@@ -50,6 +50,11 @@ sm_data <- sm_data %>%
   select(-condition2)
 
 
+# temp: remove 25034
+sm_data <- sm_data %>% 
+  filter(id != 25034)
+
+
 # save as RData
 file_name <- "../WP10_data/WP10_results/wp10_navigation_data.RData"
 save(sm_data, file=file_name)
@@ -116,6 +121,11 @@ pt_data <- pt_data %>%
   relocate(starts_with("lm"), .after=("landmarks_obj_5")) %>% 
   relocate(starts_with("obj_M"), .after=("goals_obj_3"))
 rm(gmda_data, get_gmda_score)
+
+
+# temp: remove 25034
+pt_data <- pt_data %>% 
+  filter(id != 25034)
 
 
 # save as RData
