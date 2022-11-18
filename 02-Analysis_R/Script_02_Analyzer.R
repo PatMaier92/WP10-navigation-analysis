@@ -393,6 +393,47 @@ rm(plot.ms_all)
 # ## ---- 
 
 
+# --- MEMORY SCORE (WELL LEARNED ITEMS ONLY, PROBE TRIALS) --- #
+## ---- model_probe_ms_wl_data
+temp <- data_p %>% 
+  select(id, group, session, condition, goal, correct_final_alley) %>% 
+  filter(session==1) %>% 
+  group_by(id, goal, condition) %>% 
+  tally(correct_final_alley) %>% 
+  pivot_wider(names_from=condition, values_from=n) %>% 
+  mutate(flag=case_when(ego_ret<=1 ~T, allo_ret<=1 ~ T, T ~ F))
+
+data_p_w <- data_p %>% 
+  left_join(temp, by=c("id", "goal")) %>% 
+  filter(!flag)
+rm(temp)
+## ----
+
+## ---- model_probe_ms_wl
+model.ms_wl <- mixed(memory_score ~ group*session*condition + cov_sex + cov_motor_score +
+                        (session||id), data=data_p_w, expand_re=T)
+## ----
+
+# random effects
+VarCorr(model.ms_wl$full_model)
+# dotplot(ranef(model.ms$full_model))
+
+# fixed effects
+model.ms_wl
+
+## ---- post_hoc_probe_ms_wl
+emm.ms_wl_group_session <- emmeans(model.ms_wl, ~ group * session, lmer.df="satterthwaite")
+post.ms_wl_group_session <- summary(rbind(pairs(emm.ms_wl_group_session, simple="group"), pairs(emm.ms_wl_group_session, simple="session")),
+                                    infer=c(T,T), by=NULL, adjust="bonferroni")
+## ----
+rm(emm.ms_wl_group_session)
+
+## ---- plot_probe_ms_wl
+plot.ms_wl <- afex_plot_wrapper(model.ms_wl, "session", "group", "condition", l_memory_score)
+## ----
+rm(plot.ms_wl)
+
+
 # ------------------------------------------------------------------------------
 # ::: SUPPLEMENT ANALYSIS: MEMORY ACCURACY (PROBE TRIALS) ::: #
 # ------------------------------------------------------------------------------

@@ -296,7 +296,7 @@ However, we did find significant *age group* differences in the ability to corre
 rm(model.position, apa_aov.position, apa_post.position)
 ```
 
-```{r, echo=F, fig.height=4.5, fig.width=8, fig.cap="Memory accuracy" }
+```{r, echo=F, fig.height=4.5, fig.width=10, fig.cap="Memory accuracy" }
 
 (plot.ms + guides(shape=F, fill=F)) +
   (plot.layout + guides(color=F, shape=F)) + 
