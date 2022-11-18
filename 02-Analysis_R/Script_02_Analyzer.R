@@ -631,7 +631,7 @@ VarCorr(model.time$full_model)
 model.time
 
 ## ---- post_hoc_probe_time
-emm.time_group_condition <-  emmeans(model.time, ~ group * condition, lmer.df="satterthwaite")
+emm.time_group_condition <- emmeans(model.time, ~ group * condition, lmer.df="satterthwaite")
 post.time_group_condition <- summary(rbind(pairs(emm.time_group_condition, simple="group"), pairs(emm.time_group_condition, simple="condition")), 
                                      infer=c(T,T), by=NULL, adjust="bonferroni")
 rm(emm.time_group_condition)
