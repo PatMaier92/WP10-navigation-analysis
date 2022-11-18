@@ -269,37 +269,68 @@ plot.ms <- afex_plot_wrapper(model.ms, "condition", "group", NULL, l_memory_scor
 rm(plot.ms)
 
 
-# # --- MEMORY SCORE (ALL PROBE TRIALS) --- # 
-# ## ---- model_probe_ms
-# model.ms <- mixed(memory_score ~ group*session*condition + cov_sex + cov_motor_score + 
-#                     (session*condition|id), data=data_p, expand_re=T)
-# ## ----
-# 
-# # random effects
-# VarCorr(model.ms$full_model)
-# # dotplot(ranef(model.ms$full_model))
-# 
-# # fixed effects
-# model.ms
-# 
-# ## ---- post_hoc_probe_ms
-# emm.ms_group <- emmeans(model.ms, ~ group, lmer.df="satterthwaite")
-# post.ms_group <- pairs(emm.ms_group, adjust="bonferroni")
-# post.ms_group_chance <- summary(emm.ms_group, null=0.5, adjust="bonferroni", infer=c(T,T))
-# rm(emm.ms_group)
-# 
-# post.ms_session <- emmeans(model.ms, pairwise ~ session, lmer.df="satterthwaite")$contrasts
-# 
-# post.ms_condition <- emmeans(model.ms, pairwise ~ condition, lmer.df="satterthwaite")$contrasts
-# ## ----
-# rm(post.ms_group, post.ms_group_chance, post.ms_session, post.ms_condition)
-# 
-# ## ---- plot_probe_ms
-# plot.ms <- afex_plot_wrapper(model.ms, "session", "group", "condition", l_memory_score)
-# ## ----
-# rm(plot.ms)
-# 
-# ## ---- control_probe_ms
+# --- MEMORY SCORE (BOTH SESSIONS EGOCENTRIC PROBE TRIALS) --- # 
+## ---- model_probe_ms_ego
+model.ms_ego <- mixed(memory_score ~ group*session + cov_sex + cov_motor_score + 
+                        (session|id), data=data_p %>% filter(condition=="ego_ret"), expand_re=T)
+## ----
+
+## ---- post_hoc_probe_ms_ego
+emm.ms_ego_group_session <- emmeans(model.ms_ego, ~ group * session, lmer.df="satterthwaite")
+post.ms_ego_group_session <- summary(rbind(pairs(emm.ms_ego_group_session, simple="group"), pairs(emm.ms_ego_group_session, simple="session")),
+                                     infer=c(T,T), by=NULL, adjust="bonferroni")
+rm(emm.ms_ego_group_session)
+## ---- 
+
+## ---- plot_probe_ms_ego
+plot.ms_ego <- afex_plot_wrapper(model.ms_ego, "session", "group", NULL, l_memory_score, xlabel=NULL, ymax=1.2)
+## ----
+rm(plot.ms_ego)
+
+
+# --- MEMORY SCORE (BOTH SESSIONS ALLOCENTRIC PROBE TRIALS) --- # 
+## ---- model_probe_ms_allo
+model.ms_allo <- mixed(memory_score ~ group*session + cov_sex + cov_motor_score + 
+                         (session|id), data=data_p %>% filter(condition=="allo_ret"), expand_re=T)
+## ----
+
+## ---- plot_probe_ms_allo
+plot.ms_allo <- afex_plot_wrapper(model.ms_allo, "session", "group", NULL, l_memory_score, xlabel=NULL, ymax=1.2)
+## ----
+rm(plot.ms)
+
+
+# --- MEMORY SCORE (ALL PROBE TRIALS) --- #
+## ---- model_probe_ms_all
+model.ms_all <- mixed(memory_score ~ group*session*condition + cov_sex + cov_motor_score +
+                        (session*condition||id), data=data_p, expand_re=T)
+## ----
+
+# random effects
+VarCorr(model.ms_all$full_model)
+# dotplot(ranef(model.ms$full_model))
+
+# fixed effects
+model.ms_all
+
+## ---- post_hoc_probe_ms_all
+emm.ms_all_group <- emmeans(model.ms_all, ~ group, lmer.df="satterthwaite")
+post.ms_all_group <- pairs(emm.ms_all_group, adjust="bonferroni")
+post.ms_all_group_chance <- summary(emm.ms_all_group, null=0.5, adjust="bonferroni", infer=c(T,T))
+rm(emm.ms_group)
+
+post.ms_all_session <- emmeans(model.ms_all, pairwise ~ session, lmer.df="satterthwaite")$contrasts
+
+post.ms_all_condition <- emmeans(model.ms_all, pairwise ~ condition, lmer.df="satterthwaite")$contrasts
+## ----
+rm(post.ms_all_group, post.ms_all_group_chance, post.ms_all_session, post.ms_all_condition)
+
+## ---- plot_probe_ms_all
+plot.ms_all <- afex_plot_wrapper(model.ms_all, "session", "group", "condition", l_memory_score)
+## ----
+rm(plot.ms_all)
+
+# ## ---- control_probe_ms_all
 # # 1) model with outliers removed
 # t <- data_p %>% mutate(flag=ifelse(is_outlier(memory_score), T, F))
 # t <- t %>% filter(flag==F)

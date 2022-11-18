@@ -39,6 +39,8 @@ rm(file_name)
 ```{r, papaja_output_helper, include=FALSE}
 ```
 
+# Learning session
+
 ```{r, model_probe_ms, include=F  }
 ```
 
@@ -106,3 +108,28 @@ names(temp) <- c("Grouping", "Slope/Correlation",
 temp %>% 
   knitr::kable()
 ```
+
+\newpage
+
+# Consolidation 
+
+```{r, model_probe_ms_all, include=F  }
+```
+
+```{r apa_probe_ms_all, include=F}
+apa_lmm.ms_all <- apa_print(model.ms_all)
+```
+
+```{r apa_table_fixed_all, echo=F}
+apa_table(
+  apa_lmm.ms_all$table
+  )
+```
+
+```{r apa_table_random_all, echo=F}
+temp <- apa_random_table(VarCorr(model.ms_all$full_model))
+temp %>% 
+  knitr::kable()
+```
+
+\newpage
