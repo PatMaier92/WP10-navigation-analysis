@@ -124,6 +124,7 @@ set(lh, 'color','r','linestyle','--');
 lh = line([0,numel(plsres.boot_result.compare_u)+1],[-2,-2]);
 set(lh, 'color','r','linestyle','--');
 title('LV profile');
+ylim([-12 6]); 
 
 subplot(1,2,2);
 bar(plsres.boot_result.orig_corr(:,1),'k'); hold on;

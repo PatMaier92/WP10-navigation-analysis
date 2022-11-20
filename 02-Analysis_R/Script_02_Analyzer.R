@@ -1610,7 +1610,6 @@ ggplot(temp, aes(x=age, y=memory_score, color=condition)) +
         strip.background=element_rect(color=NA, fill=NA)) +
   labs(x="age", y="memory score")
 ## ----
-## ---- 
 
 # ############################################################################ #
 # ############################################################################ #
@@ -1673,49 +1672,45 @@ post.motor_rotation <- emmeans(model.motor_rotation, pairwise ~ group, adjust="b
 # ::: ANALYSIS: ANOVA ON PLSC LATENT PROFILE SCORE::: #
 # ------------------------------------------------------------------------------
 
-file_plsc_allo <-"../WP10_data/WP10_results/plsc/PLSC_LP_allo_0.txt"
+file_plsc_allo <-"../WP10_data/WP10_results/PLSC_LP_allo_2.txt"
 plsc_allo <- read.table(file_plsc_allo, sep=",", header=T)
 rm(file_plsc_allo)
 
 model.plsc_allo <- aov_ez("id", "lp", plsc_allo, between=c("group"))
 post.plsc_allo <- emmeans(model.plsc_allo, pairwise ~ group, adjust="bonferroni")$contrasts
+cor.test(plsc_allo$lp, plsc_allo$ms)
+
+ggplot(plsc_allo, aes(x=lp, y=ms, color=factor(group))) + 
+  geom_point() + 
+  geom_smooth(method=lm, se=FALSE, aes(colour=NULL), color="grey") + 
+  scale_color_manual(values=group_colors, labels=c("6-8yo","9-11yo","adults")) +
+  theme_bw(base_size=13) + 
+  theme(legend.position="top", legend.justification=c(0,0),
+        legend.title=element_blank(),
+        panel.grid=element_blank(),
+        strip.background=element_rect(color=NA, fill=NA)) +
+  labs(x="navigation score", 
+       y="allocentric score")
+ggsave("plsc_allo2.jpeg", width=4, height=3.5, dpi=600)
 
 
-# file_plsc_allo <-"../WP10_data/WP10_results/plsc/PLSC_LP_allo_1.txt"
-# plsc_allo <- read.table(file_plsc_allo, sep=",", header=T)
-# rm(file_plsc_allo)
-# 
-# model.plsc_allo <- aov_ez("id", "lp", plsc_allo, between=c("group"))
-# post.plsc_allo <- emmeans(model.plsc_allo, pairwise ~ group, adjust="bonferroni")$contrasts
-# 
-# 
-# file_plsc_allo <-"../WP10_data/WP10_results/plsc/PLSC_LP_allo_2.txt"
-# plsc_allo <- read.table(file_plsc_allo, sep=",", header=T)
-# rm(file_plsc_allo)
-# 
-# model.plsc_allo <- aov_ez("id", "lp", plsc_allo, between=c("group"))
-# post.plsc_allo <- emmeans(model.plsc_allo, pairwise ~ group, adjust="bonferroni")$contrasts
-
-
-file_plsc_ego <-"../WP10_data/WP10_results/plsc/PLSC_LP_ego_0.txt"
+file_plsc_ego <-"../WP10_data/WP10_results/PLSC_LP_ego_2.txt"
 plsc_ego <- read.table(file_plsc_ego, sep=",", header=T)
 rm(file_plsc_ego)
 
 model.plsc_ego <- aov_ez("id", "lp", plsc_ego, between=c("group"))
 post.plsc_ego <- emmeans(model.plsc_ego, pairwise ~ group, adjust="bonferroni")$contrasts
+cor.test(plsc_ego$lp, plsc_ego$ms)
 
-
-# file_plsc_ego <-"../WP10_data/WP10_results/plsc/PLSC_LP_ego_1.txt"
-# plsc_ego <- read.table(file_plsc_ego, sep=",", header=T)
-# rm(file_plsc_ego)
-# 
-# model.plsc_ego <- aov_ez("id", "lp", plsc_ego, between=c("group"))
-# post.plsc_ego <- emmeans(model.plsc_ego, pairwise ~ group, adjust="bonferroni")$contrasts
-# 
-# 
-# file_plsc_ego <-"../WP10_data/WP10_results/plsc/PLSC_LP_ego_2.txt"
-# plsc_ego <- read.table(file_plsc_ego, sep=",", header=T)
-# rm(file_plsc_ego)
-# 
-# model.plsc_ego <- aov_ez("id", "lp", plsc_ego, between=c("group"))
-# post.plsc_ego <- emmeans(model.plsc_ego, pairwise ~ group, adjust="bonferroni")$contrasts
+ggplot(plsc_ego, aes(x=lp, y=ms, color=factor(group))) + 
+  geom_point() + 
+  geom_smooth(method=lm, se=FALSE, aes(colour=NULL), color="grey") + 
+  scale_color_manual(values=group_colors, labels=c("6-8yo","9-11yo","adults")) +
+  theme_bw(base_size=13) + 
+  theme(legend.position="top", legend.justification=c(0,0),
+        legend.title=element_blank(),
+        panel.grid=element_blank(),
+        strip.background=element_rect(color=NA, fill=NA)) +
+  labs(x="navigation score", 
+       y="egocentric score")
+ggsave("plsc_ego.jpeg", width=4, height=3.5, dpi=600)

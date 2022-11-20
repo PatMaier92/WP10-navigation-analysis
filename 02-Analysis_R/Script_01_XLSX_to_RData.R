@@ -263,7 +263,7 @@ group_info <- nav_1 %>% select(id, group)
 plsc_memory_2_by_1 <- group_info %>% 
   left_join(ms_2, by=c("id", "group")) %>% 
   left_join(nav_1, by=c("id", "group")) %>% 
-  left_join(pt_data, by="id") %>% 
+  #left_join(pt_data, by="id") %>% 
   drop_na()
 writeMat(con="../WP10_data/WP10_results/wp10_plsc_total_2_by_1.mat", m=as.matrix(plsc_memory_2_by_1))
 rm(plsc_memory_2_by_1)
@@ -299,7 +299,7 @@ nav_allo_1 <- sm_data %>%
 
 plsc_allo_2_by_1 <- ms_allo_2 %>% 
   left_join(nav_allo_1, by="id") %>% 
-  left_join(pt_data, by="id") %>% 
+  #left_join(pt_data, by="id") %>% 
   drop_na()
 writeMat(con="../WP10_data/WP10_results/wp10_plsc_allo_2_by_1.mat", m=as.matrix(plsc_allo_2_by_1))
 rm(plsc_allo_2_by_1)
@@ -345,7 +345,7 @@ nav_ego_1 <- sm_data %>%
 
 plsc_ego_2_by_1 <- ms_ego_2 %>% 
   left_join(nav_ego_1, by="id") %>% 
-  left_join(pt_data, by="id") %>% 
+  #left_join(pt_data, by="id") %>% 
   drop_na()
 writeMat(con="../WP10_data/WP10_results/wp10_plsc_ego_2_by_1.mat", m=as.matrix(plsc_ego_2_by_1))
 rm(plsc_ego_2_by_1)
