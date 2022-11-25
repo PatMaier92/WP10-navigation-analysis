@@ -139,12 +139,13 @@ $$\text{Initial rotation Velocity} = \frac {\sum_{i=1}^{n_{initial}} | (z_{i}-z_
 
 ![Visualization of variables of interest](./pics/Var_all.jpg){width=300px,height=500x}  
 
-
 # Statistical analysis
 
-All linear mixed models (LMM) were computed using the mixed() function from the afex package (Singmann et al., 2022), which is based on lmer() from the lme4 package (Bates et al., 2015). We used the maximum random effects structure as recommended by Barr (2013) and simplified according to Bates et al. (2015) and Matuschek et al. (2017) in case of non-convergence. The diagnostic plots showed non-normality, outliers and heteroscedastic variances (especially larger variance in children compared to adults). To account for this, we computed additional models 1. excluding outliers (defined as above/below the upper/lower quantile plus/minus 1.5 * IQR, similar to Bellmund et al., 2019) and 2. models with heterogeneous variances with lme() from the nlme package (Pinheiro & Bates, 2022). The results did not change substantially, which is why we decided to use the most simple LMM approach. 
+All linear mixed models (LMM) were computed using the mixed() function from the afex package (Singmann et al., 2022), which is based on lmer() from the lme4 package (Bates et al., 2015). We used the maximum random effects structure as recommended by Barr (2013) and simplified according to Bates et al. (2015) and Matuschek et al. (2017) in case of non-convergence. 
 
-For evaluating the general fit, we calculated a (pseudo) R^2^ for each model according to Nakagawa and Schielzeth's (2013) approach with the r2beta() function from the r2glmm package (Jaeger, 2017). However, R^2^ for LMM should be interpreted with caution and do not directly correspond to a traditional R^2^. We computed degrees of freedom for the LMM with Sattherthwaite's method using the lmerTest package (Kuznetsova et al., 2017; via afex package). For all significant main effects and interactions, we computed post-hoc planned contrasts with the emmeans package (Lenth, 2022), using Bonferroni-corrections for multiple comparisons.
+For evaluating the general fit, we calculated a (pseudo) R^2^ for each model according to Nakagawa and Schielzeth's (2013) approach with the r2beta() function from the r2glmm package (Jaeger, 2017). However, R^2^ for LMM should be interpreted with caution and do not directly correspond to a traditional R^2^. 
+
+We computed degrees of freedom for the LMM with Sattherthwaite's method using the lmerTest package (Kuznetsova et al., 2017; via afex package). For all significant main effects and interactions, we computed post-hoc planned contrasts with the emmeans package (Lenth, 2022), using Bonferroni-corrections for multiple comparisons.
 
 Single-trial values were analyzed with ANOVAs from the afex package (Singmann et al., 2022). 
 
@@ -235,7 +236,6 @@ Memory accuracy measured with the memory score was significantly affected by *ag
 ```{r, include=F}
 rm(model.ms, R2, apa_lmm.ms, apa_post.ms_group, apa_post.ms_group_chance, apa_post.ms_condition, apa_post.ms_group_condition, apa_rs.condition)
 ```
-
 
 ### **Post-navigational memory tasks**
 
@@ -338,15 +338,11 @@ R2 <- r2beta(model.time$full_model, method='nsj', partial=F) %>% mutate_all(apa_
 
 apa_lmm.time  <- apa_print(model.time)
 
-# apa_post.time_group_session <- post.time_group_session %>% apa_print() %>% bonferroni_fix()
-
 apa_post.time_group_condition <- post.time_group_condition %>% apa_print() %>% bonferroni_fix()
-
-# apa_post.time_session_condition <- post.time_session_condition %>% apa_print() %>% bonferroni_fix()
 
 apa_rs.condition <- LRT.time %>% mutate_at(vars(Chisq, Df), apa_df) %>% mutate_at(vars(p), apa_p)
 
-rm(post.time_group_session, post.time_group_condition, post.time_session_condition, LRT.time)
+rm(post.time_group_condition, LRT.time)
 ```
 
 (ref:p-t-f-caption0) Fixed effects for time in probe trials.
@@ -372,31 +368,14 @@ For time, the *group x condition* interaction was significant (`r apa_lmm.time$s
 
 LRT for random slope for *condition*: Chisq(`r apa_rs.condition$Df`) = `r apa_rs.condition$Chisq`, p `r apa_rs.condition$p`
 
-```{r, include=F, eval=F}
-OLD TEXT
-For time in probe trials, all two-way interactions were significant (Table\ \@ref(tab:table-probe-time-f0)). Post-hoc contrasts on the *group x session* interaction (`r apa_lmm.time$statistic$group_session`) showed that 6-8-yo children required significantly more time than adults in the first session only (`r apa_post.time_group_session$statistic$X1_YoungKids_YoungAdults`), no other comparisons across age groups and sessions were significant. Post-hoc contrasts on the *group x condition* interaction (`r apa_lmm.time$statistic$group_condition`) revealed that 6-8-yo children required significantly more time than adults in the allocentric condition only (`r apa_post.time_group_condition$statistic$Alloret_YoungKids_YoungAdults`) and that all age groups needed more time to complete the allocentric condition (egocentric vs. allocentric in 6-8-yo: `r apa_post.time_group_condition$statistic$YoungKids_Egoret_alloret`; 9-11-yo: `r apa_post.time_group_condition$statistic$OldKids_Egoret_alloret`; adults: `r apa_post.time_group_condition$statistic$YoungAdults_Egoret_alloret`). The *session x condition* interaction (`r apa_lmm.time$statistic$session_condition`) added that this age-independent time increase for the allocentric condition was present in both sessions (egocentric vs. allocentric in first session: `r apa_post.time_session_condition$statistic$X1_Egoret_alloret`; second session: `r apa_post.time_session_condition$statistic$X2_Egoret_alloret`). The time to complete a trial did not change across sessions.
-```
-
-```{r table-probe-time1, echo=F}
-# apa_table(
-#   apa_post.time_group_session$table %>% remove_rownames(),
-#   placement="h")
-```
-
 ```{r table-probe-time2, echo=F}
 apa_table(
   apa_post.time_group_condition$table %>% remove_rownames(),
   placement="h")
 ```
 
-```{r table-probe-time3, echo=F}
-# apa_table(
-#   apa_post.time_session_condition$table %>% remove_rownames(),
-#   placement="h")
-```
-
 ```{r, include=F}
-rm(model.time, R2, apa_lmm.time, apa_post.time_group_session, apa_post.time_group_condition, apa_post.time_session_condition, apa_rs.condition)
+rm(model.time, R2, apa_lmm.time, apa_post.time_group_condition, apa_rs.condition)
 ```
 
 ### **Excess path length (all probe trials)**
@@ -418,15 +397,11 @@ R2 <- r2beta(model.path$full_model, method='nsj', partial=F) %>% mutate_all(apa_
 
 apa_lmm.path <- apa_print(model.path)
 
-# apa_post.path_group_session <- post.path_group_session %>% apa_print() %>% bonferroni_fix()
-
 apa_post.path_group_condition <- post.path_group_condition %>% apa_print() %>% bonferroni_fix()
-
-# apa_post.path_session_condition <- post.path_session_condition %>% apa_print() %>% bonferroni_fix()
 
 apa_rs.condition <- LRT.path %>% mutate_at(vars(Chisq, Df), apa_df) %>% mutate_at(vars(p), apa_p)
 
-rm(post.path_group_session, post.path_group_condition, post.path_session_condition, LRT.path)
+rm(post.path_group_condition, LRT.path)
 ```
 
 (ref:p-ep-f-caption0) Fixed effects for excess path in probe trials.
@@ -452,31 +427,14 @@ For excess path length, the *group x condition* interaction was significant (`r 
 
 LRT for random slope for *condition*: Chisq(`r apa_rs.condition$Df`) = `r apa_rs.condition$Chisq`, p `r apa_rs.condition$p`
 
-```{r, include=F, eval=F}
-OLD TEXT
-For excess path length in probe trials, all two-way interactions were significant (Table\ \@ref(tab:table-probe-excess-path-f0)). Post-hoc contrasts on the *group x session* interaction (`r apa_lmm.path$statistic$group_session`) showed a gradual decrease in excess path length with increasing age in the first session (6-8-yo vs. 9-11-yo: `r apa_post.path_group_session$statistic$X1_YoungKids_OldKids`; 6-8-yo vs. adults: `r apa_post.path_group_session$statistic$X1_YoungKids_YoungAdults`; 9-11-yo vs. adults: `r apa_post.path_group_session$statistic$X1_OldKids_YoungAdults`), in the second session only the comparisons between adults and the two groups of children were significant (6-8-yo vs. adults: `r apa_post.path_group_session$statistic$X2_YoungKids_YoungAdults`; 6-8-yo vs. 9-11-yo: `r apa_post.path_group_session$statistic$X2_YoungKids_OldKids`; 9-11-yo vs. adults: `r apa_post.path_group_session$statistic$X2_OldKids_YoungAdults`). Post-hoc contrasts on the *group x condition* interaction revealed than adults had significantly shorter excess paths than 6-8-yo children in the egocentric condition (`r apa_post.path_group_condition$statistic$Egoret_YoungKids_YoungAdults`) and significantly shorter excess paths than both groups of children in the allocentric condition (6-8-yo vs. adults: `r apa_post.path_group_condition$statistic$Alloret_YoungKids_YoungAdults`; 9-11-yo vs. adults: `r apa_post.path_group_condition$statistic$Alloret_OldKids_YoungAdults`). Participants from all age groups had shorter excess path lengths in the egocentric than the allocentric condition (egocentric vs. allocentric in 6-8-yo:  `r apa_post.path_group_condition$statistic$YoungKids_Egoret_alloret`; 9-11-yo: `r apa_post.path_group_condition$statistic$OldKids_Egoret_alloret`; adults: `r apa_post.path_group_condition$statistic$YoungAdults_Egoret_alloret`). The *session x condition* interaction (`r apa_lmm.path$statistic$session_condition`) added that this age-independent increase in excess path length for the allocentric condition was present in both sessions (egocentric vs. allocentric in first session: `r apa_post.path_session_condition$statistic$X1_Egoret_alloret`; second session: `r apa_post.path_session_condition$statistic$X2_Egoret_alloret`). Excess path length did not change across sessions. 
-```
-
-```{r table-probe-excess-path1, echo=F}
-# apa_table(
-#   apa_post.path_group_session$table %>% remove_rownames(),
-#   placement="h")
-```
-
 ```{r table-probe-excess-path2, echo=F}
 apa_table(
   apa_post.path_group_condition$table %>% remove_rownames(),
   placement="h")
 ```
 
-```{r table-probe-excess-path3, echo=F}
-# apa_table(
-#   apa_post.path_session_condition$table %>% remove_rownames(),
-#   placement="h")
-```
-
 ```{r, include=F}
-rm(model.path, apa_lmm.path, apa_post.path_group_session, apa_post.path_group_condition, apa_post.path_session_condition, apa_rs.condition)
+rm(model.path, apa_lmm.path, apa_post.path_group_condition, apa_rs.condition)
 ```
 
 ### **Excess distance to goal (all probe trials)**
@@ -500,13 +458,11 @@ apa_lmm.distance <- apa_print(model.distance)
 
 apa_post.distance_group <- post.distance_group %>% apa_print() %>% bonferroni_fix()
 
-# apa_post.distance_session <- post.distance_session %>% apa_print()
-
 apa_post.distance_condition <- post.distance_condition %>% apa_print()
 
 apa_rs.condition <- LRT.distance %>% mutate_at(vars(Chisq, Df), apa_df) %>% mutate_at(vars(p), apa_p)
 
-rm(post.distance_group, post.distance_session, post.distance_condition, LRT.distance)
+rm(post.distance_group, post.distance_condition, LRT.distance)
 ```
 
 (ref:p-ed-caption-f0) Fixed effects for excess distance to goal in probe trials.
@@ -532,13 +488,8 @@ For excess distance to goal, we found significant main effects but no interactio
 
 LRT for random slope for *condition*: Chisq(`r apa_rs.condition$Df`) = `r apa_rs.condition$Chisq`, p `r apa_rs.condition$p`
 
-```{r, include=F, eval=F}
-OLD TEXT
-For excess distance to goal in probe trials, we found significant main effects but no significant two-way or three-way interactions (Table\ \@ref(tab:table-probe-excess-distance-f0)). There was a significant effect of *age group* (`r apa_lmm.distance$statistic$group`). Post-hoc contrasts revealed a gradual decrease in excess distance to goal with increasing age, meaning that that older participants searched in closer proximity to the actual goal locations (6-8-yo vs. 9-11-yo: `r apa_post.distance_group$statistic$YoungKids_OldKids`; 6-8-yo vs. adults: `r apa_post.distance_group$statistic$YoungKids_YoungAdults`; 9-11-yo vs. adults: `r apa_post.distance_group$statistic$OldKids_YoungAdults`). Additionally, there was a main effect of *condition* (`r apa_lmm.distance$statistic$condition`), with an increased excess distance to goal in the allocentric compared to the egocentric condition (`r apa_post.distance_condition$full_result`), and a main effect of *session* (`r apa_lmm.distance$statistic$session`), with an increased excess distance to goal in the second session (`r apa_post.distance_session$full_result`). 
-```
-
 ```{r, include=F}
-rm(model.distance, apa_lmm.distance, apa_post.distance_group, apa_post.distance_session, apa_post.distance_condition, apa_rs.condition)
+rm(model.distance, apa_lmm.distance, apa_post.distance_group, apa_post.distance_condition, apa_rs.condition)
 ```
 
 ### **Initial rotation velocity (all probe trials)**
@@ -562,11 +513,9 @@ apa_lmm.init_vel <- apa_print(model.rotation_velocity)
 
 apa_post.init_vel_group_condition <- post.init_vel_group_condition %>% apa_print() %>% bonferroni_fix()
 
-# apa_post.init_vel_session_condition <- post.init_vel_session_condition %>% apa_print() %>% bonferroni_fix()
-
 apa_rs.condition <- LRT.rotation_velocity %>% mutate_at(vars(Chisq, Df), apa_df) %>% mutate_at(vars(p), apa_p)
 
-rm(post.init_vel_group_condition, post.init_vel_session_condition, LRT.rotation_velocity)
+rm(post.init_vel_group_condition, LRT.rotation_velocity)
 ```
 
 (ref:p-init-vel-f-caption0) Fixed effects for initial rotation veloctiy in probe trials.
@@ -592,25 +541,14 @@ For the initial rotation velocity, there was a significant *group x condition* i
 
 LRT for random slope for *condition*: Chisq(`r apa_rs.condition$Df`) = `r apa_rs.condition$Chisq`, p `r apa_rs.condition$p`
 
-```{r, include=F, eval=F}
-OLD TEXT
-For the initial rotation velocity in probe trials, we found two significant two-way interactions (Table\ \@ref(tab:table-probe-init-vel-f0)). Post-hoc contrasts for the *group x condition* interaction (`r apa_lmm.init_vel$statistic$group_condition`) showed significant age group differences only in the allocentric condition, where 6-8-yo children had a significantly lower initial rotation velocity than both 9-11-yo (`r apa_post.init_vel_group_condition$statistic$Alloret_YoungKids_OldKids`) and adults (`r apa_post.init_vel_group_condition$statistic$Alloret_YoungKids_YoungAdults`). All groups had significantly higher initial rotation velocity for the allocentric than egocentric condition (6-8-yo: `r apa_post.init_vel_group_condition$statistic$YoungKids_Egoret_alloret`; 9-11-yo: `r apa_post.init_vel_group_condition$statistic$OldKids_Egoret_alloret`; adults: `r apa_post.init_vel_group_condition$statistic$YoungAdults_Egoret_alloret`). The *session x condition* interaction (`r apa_lmm.init_vel$statistic$session_condition`) added that this age-independent increase in initial rotation velocity for the allocentric condition was present in both sessions (egocentric vs. allocentric in first session: `r apa_post.init_vel_session_condition$statistic$X1_Egoret_alloret`; second session: `r apa_post.init_vel_session_condition$statistic$X2_Egoret_alloret`) and that initial rotation velocity increased across sessions in the allocentric (`r apa_post.init_vel_session_condition$statistic$Alloret_Session1_session2`) but not egocentric condition (`r apa_post.init_vel_session_condition$statistic$Egoret_Session1_session2`). 
-```
-
 ```{r table-probe-init-vel2, echo=F}
 apa_table(
   apa_post.init_vel_group_condition$table %>% remove_rownames(),
   placement="h")
 ```
 
-```{r table-probe-init-vel3, echo=F}
-# apa_table(
-#   apa_post.init_vel_session_condition$table %>% remove_rownames(),
-#   placement="h")
-```
-
 ```{r, include=F}
-rm(model.rotation_velocity, apa_lmm.init_vel, apa_post.init_vel_group_condition, apa_post.init_vel_session_condition, apa_rs.condition)
+rm(model.rotation_velocity, apa_lmm.init_vel, apa_post.init_vel_group_condition, apa_rs.condition)
 ```
 
 ```{r, echo=F, fig.height=4.5, fig.width=10, fig.cap="Navigation behavior" }
