@@ -62,11 +62,11 @@ apa_lmm.time  <- apa_print(model.time)
 apa_lmm.path <- apa_print(model.path)
 ```
 
-```{r, model_probe_target_distance, include=F  }
+```{r, model_probe_distance, include=F  }
 ```
 
-```{r apa_probe_target_distance, include=F}
-apa_lmm.distance <- apa_print(model.target_distance)
+```{r apa_probe_distance, include=F}
+apa_lmm.distance <- apa_print(model.distance)
 ```
 
 ```{r, model_probe_rotation_velocity, include=F  }
@@ -96,7 +96,7 @@ apa_table(
 ms_r <- apa_random_table(VarCorr(model.ms$full_model))
 t_r <- apa_random_table(VarCorr(model.time$full_model))
 p_r <- apa_random_table(VarCorr(model.path$full_model))
-d_r <- apa_random_table(VarCorr(model.target_distance$full_model))
+d_r <- apa_random_table(VarCorr(model.distance$full_model))
 v_r <- apa_random_table(VarCorr(model.rotation_velocity$full_model))
 
 df_list <- list(ms_r, t_r, p_r, d_r, v_r)
@@ -133,9 +133,6 @@ temp %>%
 ```
 
 \newpage
-
-```{r, model_probe_ms_wl_data, include=F  }
-```
 
 ```{r, model_probe_ms_wl, include=F  }
 ```

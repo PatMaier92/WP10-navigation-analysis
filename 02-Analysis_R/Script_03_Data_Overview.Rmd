@@ -176,6 +176,9 @@ rm(dots_allo)
 ```{r, model_probe_ms }
 ```
 
+```{r, ranef_probe_ms, include=F }
+```
+
 ```{r, post_hoc_probe_ms, include=F }
 ```
 
@@ -194,7 +197,9 @@ apa_post.ms_group_chance <- post.ms_group_chance %>%  apa_print() %>% bonferroni
 
 apa_post.ms_condition <- post.ms_condition %>%  apa_print()
 
-rm(post.ms_group, post.ms_group_chance, post.ms_condition)
+apa_rs.condition <- LRT.ms %>% mutate_at(vars(Chisq, Df), apa_df) %>% mutate_at(vars(p), apa_p)
+
+rm(post.ms_group, post.ms_group_chance, post.ms_condition, LRT.ms)
 ```
 
 (ref:p-ms-f-caption0) Fixed effects for memory score in probe.
@@ -220,13 +225,15 @@ First, we analysed memory accuracy and navigation behavior in learning session p
 The memory score was significantly affected by *age group* (`r apa_lmm.ms$statistic$group`). All three groups performed significantly above chance level (test against chance level of 0.5 for 6-8-yo: `r apa_post.ms_group_chance$statistic$YoungKids`; 9-11-yo: `r apa_post.ms_group_chance$statistic$OldKids`; adults: `r apa_post.ms_group_chance$statistic$YoungAdults`) and there was a gradual increase in memory accuracy with increasing age (6-8-yo vs. 9-11-yo: `r apa_post.ms_group$statistic$YoungKids_OldKids`; 6-8-yo vs. adults: `r apa_post.ms_group$statistic$YoungKids_YoungAdults`; 9-11-yo vs. adults: `r apa_post.ms_group$statistic$OldKids_YoungAdults`). Additionally, there was a main effect of *condition* (`r apa_lmm.ms$statistic$condition`), showing that memory accuracy was slightly higher in the egocentric compared to the allocentric condition (`r apa_post.ms_condition$estimate`). There was a trend effect for the interaction *age group x condition* (`r apa_lmm.ms$statistic$group_condition`) and post-hoc contrasts revealed that the advantage for egocentric memory was present specifically in 9-11-yo children (`r apa_post.ms_group_condition$statistic$OldKids_Egoret_alloret`) but not in the other age groups (6-8-yo: `r apa_post.ms_group_condition$statistic$YoungKids_Egoret_alloret`; adults: `r apa_post.ms_group_condition$statistic$YoungAdults_Egoret_alloret`).
 Table\ \@ref(tab:table-probe-ms-f0)
 
+LRT for random slope for *condition*: Chisq(`r apa_rs.condition$Df`) = `r apa_rs.condition$Chisq`, p `r apa_rs.condition$p`
+
 ```{r, include=F, eval=F}
 OLD TEXT FOR FULL MODEL
 Memory accuracy measured with the memory score was significantly affected by *age group* (`r apa_lmm.ms$statistic$group`. All three groups performed significantly above chance level (test against chance level of 0.5 for 6-8-yo: `r apa_post.ms_group_chance$statistic$YoungKids`; 9-11-yo: `r apa_post.ms_group_chance$statistic$OldKids`; adults: `r apa_post.ms_group_chance$statistic$YoungAdults`) and there was a gradual increase in memory accuracy with increasing age (6-8-yo vs. 9-11-yo: `r apa_post.ms_group$statistic$YoungKids_OldKids`; 6-8-yo vs. adults: `r apa_post.ms_group$statistic$YoungKids_YoungAdults`; 9-11-yo vs. adults: `r apa_post.ms_group$statistic$OldKids_YoungAdults`). Additionally, there was a main effect of *condition* (`r apa_lmm.ms$statistic$condition`), showing that memory accuracy was slightly higher in the egocentric compared to the allocentric condition (`r apa_post.ms_condition$estimate`), and a main effect of *session* (), revealing that memory accuracy deteriorated significantly in the 2-week time period between sessions (). There were no significant two-way or three-way interactions for the memory score (Table\ \@ref(tab:table-probe-ms-f0)), and thus, no evidence for age-related differences in forgetting across sessions, condition-related differences in forgetting across sessions, and no age-specific advantage for egocentric over allocentric spatial memory. 
 ```
 
 ```{r, include=F}
-rm(model.ms, R2, apa_lmm.ms, apa_post.ms_group, apa_post.ms_group_chance, apa_post.ms_condition, apa_post.ms_group_condition)
+rm(model.ms, R2, apa_lmm.ms, apa_post.ms_group, apa_post.ms_group_chance, apa_post.ms_condition, apa_post.ms_group_condition, apa_rs.condition)
 ```
 
 
@@ -317,6 +324,9 @@ rm(plot.ms, plot.layout, plot.landmark, plot.position)
 ```{r, model_probe_time}
 ```
 
+```{r, ranef_probe_time, include=F }
+```
+
 ```{r, post_hoc_probe_time, include=F }
 ```
 
@@ -334,7 +344,9 @@ apa_post.time_group_condition <- post.time_group_condition %>% apa_print() %>% b
 
 # apa_post.time_session_condition <- post.time_session_condition %>% apa_print() %>% bonferroni_fix()
 
-rm(post.time_group_session, post.time_group_condition, post.time_session_condition)
+apa_rs.condition <- LRT.time %>% mutate_at(vars(Chisq, Df), apa_df) %>% mutate_at(vars(p), apa_p)
+
+rm(post.time_group_session, post.time_group_condition, post.time_session_condition, LRT.time)
 ```
 
 (ref:p-t-f-caption0) Fixed effects for time in probe trials.
@@ -357,6 +369,8 @@ apa_random_table(VarCorr(model.time$full_model)) %>%
 The model had a fit of $R2 = `r R2$Rsq`, [CI: `r R2$upper.CL`, `r R2$lower.CL`$].
 
 For time, the *group x condition* interaction was significant (`r apa_lmm.time$statistic$group_condition`; Table\ \@ref(tab:table-probe-time-f0)). Post-hoc contrasts revealed that all groups required more time to complete the allocentric condition (egocentric vs. allocentric in 6-8-yo: `r apa_post.time_group_condition$statistic$YoungKids_Egoret_alloret`; 9-11-yo: `r apa_post.time_group_condition$statistic$OldKids_Egoret_alloret`; adults: `r apa_post.time_group_condition$statistic$YoungAdults_Egoret_alloret`). 6-8-yo children required significantly more time than adults in the egocentric (`r apa_post.time_group_condition$statistic$Egoret_YoungKids_YoungAdults`) and allocentric condition (`r apa_post.time_group_condition$statistic$Alloret_YoungKids_YoungAdults`). Additionally, there was a trend for a difference between 9-11-yo children and adults in allocentric (`r apa_post.time_group_condition$statistic$Alloret_OldKids_YoungAdults`).
+
+LRT for random slope for *condition*: Chisq(`r apa_rs.condition$Df`) = `r apa_rs.condition$Chisq`, p `r apa_rs.condition$p`
 
 ```{r, include=F, eval=F}
 OLD TEXT
@@ -382,12 +396,15 @@ apa_table(
 ```
 
 ```{r, include=F}
-rm(model.time, R2, apa_lmm.time, apa_post.time_group_session, apa_post.time_group_condition, apa_post.time_session_condition)
+rm(model.time, R2, apa_lmm.time, apa_post.time_group_session, apa_post.time_group_condition, apa_post.time_session_condition, apa_rs.condition)
 ```
 
 ### **Excess path length (all probe trials)**
 
 ```{r, model_probe_path }
+```
+
+```{r, ranef_probe_path, include=F }
 ```
 
 ```{r, post_hoc_probe_path, include=F }
@@ -407,7 +424,9 @@ apa_post.path_group_condition <- post.path_group_condition %>% apa_print() %>% b
 
 # apa_post.path_session_condition <- post.path_session_condition %>% apa_print() %>% bonferroni_fix()
 
-rm(post.path_group_session, post.path_group_condition, post.path_session_condition)
+apa_rs.condition <- LRT.path %>% mutate_at(vars(Chisq, Df), apa_df) %>% mutate_at(vars(p), apa_p)
+
+rm(post.path_group_session, post.path_group_condition, post.path_session_condition, LRT.path)
 ```
 
 (ref:p-ep-f-caption0) Fixed effects for excess path in probe trials.
@@ -430,6 +449,8 @@ apa_random_table(VarCorr(model.path$full_model)) %>%
 The model had a fit of $R2 = `r R2$Rsq`, [CI: `r R2$upper.CL`, `r R2$lower.CL`$].
 
 For excess path length, the *group x condition* interaction was significant (`r apa_lmm.path$statistic$group_condition`; Table\ \@ref(tab:table-probe-excess-path-f0)). Post-hoc contrasts revealed that participants from all age groups had shorter excess path lengths in the egocentric than the allocentric condition (egocentric vs. allocentric in 6-8-yo:  `r apa_post.path_group_condition$statistic$YoungKids_Egoret_alloret`; 9-11-yo: `r apa_post.path_group_condition$statistic$OldKids_Egoret_alloret`; adults: `r apa_post.path_group_condition$statistic$YoungAdults_Egoret_alloret`). In the egocentric condition, 6-8-yo children had significantly longer excess paths than adults (`r apa_post.path_group_condition$statistic$Egoret_YoungKids_YoungAdults`), in the allocentric condition there was a gradual decrease in excess path with increasing age (6-8-yo vs. adults: `r apa_post.path_group_condition$statistic$Alloret_YoungKids_YoungAdults`; 6-8-yo vs. 9-11-yo: `r apa_post.path_group_condition$statistic$Alloret_YoungKids_OldKids`;9-11-yo vs. adults: `r apa_post.path_group_condition$statistic$Alloret_OldKids_YoungAdults`).
+
+LRT for random slope for *condition*: Chisq(`r apa_rs.condition$Df`) = `r apa_rs.condition$Chisq`, p `r apa_rs.condition$p`
 
 ```{r, include=F, eval=F}
 OLD TEXT
@@ -455,24 +476,27 @@ apa_table(
 ```
 
 ```{r, include=F}
-rm(model.path, apa_lmm.path, apa_post.path_group_session, apa_post.path_group_condition, apa_post.path_session_condition)
+rm(model.path, apa_lmm.path, apa_post.path_group_session, apa_post.path_group_condition, apa_post.path_session_condition, apa_rs.condition)
 ```
 
 ### **Excess distance to goal (all probe trials)**
 
-```{r, model_probe_target_distance }
+```{r, model_probe_distance }
 ```
 
-```{r, post_hoc_probe_target_distance, include=F }
+```{r, ranef_probe_distance, include=F }
 ```
 
-```{r, plot_probe_target_distance, include=F }
+```{r, post_hoc_probe_distance, include=F }
 ```
 
-```{r apa_probe_target_distance, include=F}
-R2 <- r2beta(model.target_distance$full_model, method='nsj', partial=F) %>% mutate_all(apa_num)
+```{r, plot_probe_distance, include=F }
+```
 
-apa_lmm.distance <- apa_print(model.target_distance)
+```{r apa_probe_distance, include=F}
+R2 <- r2beta(model.distance$full_model, method='nsj', partial=F) %>% mutate_all(apa_num)
+
+apa_lmm.distance <- apa_print(model.distance)
 
 apa_post.distance_group <- post.distance_group %>% apa_print() %>% bonferroni_fix()
 
@@ -480,7 +504,9 @@ apa_post.distance_group <- post.distance_group %>% apa_print() %>% bonferroni_fi
 
 apa_post.distance_condition <- post.distance_condition %>% apa_print()
 
-rm(post.distance_group, post.distance_session, post.distance_condition)
+apa_rs.condition <- LRT.distance %>% mutate_at(vars(Chisq, Df), apa_df) %>% mutate_at(vars(p), apa_p)
+
+rm(post.distance_group, post.distance_session, post.distance_condition, LRT.distance)
 ```
 
 (ref:p-ed-caption-f0) Fixed effects for excess distance to goal in probe trials.
@@ -495,7 +521,7 @@ apa_table(
 (ref:p-ed-r-caption-r0) Random effects for excess distance to goal in probe trials.
 
 ```{r table-probe-excess-distance-r0, echo=F}
-apa_random_table(VarCorr(model.target_distance$full_model)) %>% 
+apa_random_table(VarCorr(model.distance$full_model)) %>% 
   knitr::kable(
     caption="(ref:p-ed-r-caption-r0)")
 ```
@@ -504,18 +530,23 @@ The model had a fit of $R2 = `r R2$Rsq`, [CI: `r R2$upper.CL`, `r R2$lower.CL`$]
 
 For excess distance to goal, we found significant main effects but no interaction (Table\ \@ref(tab:table-probe-excess-distance-f0)). There was a significant effect of *age group* (`r apa_lmm.distance$statistic$group`). Post-hoc contrasts revealed a gradual decrease in excess distance to goal with increasing age, meaning that that older participants searched in closer proximity to the actual goal locations (6-8-yo vs. 9-11-yo: `r apa_post.distance_group$statistic$YoungKids_OldKids`; 6-8-yo vs. adults: `r apa_post.distance_group$statistic$YoungKids_YoungAdults`; 9-11-yo vs. adults: `r apa_post.distance_group$statistic$OldKids_YoungAdults`). Additionally, there was a main effect of *condition* (`r apa_lmm.distance$statistic$condition`), with an increased excess distance to goal in the allocentric compared to the egocentric condition (`r apa_post.distance_condition$full_result`).
 
+LRT for random slope for *condition*: Chisq(`r apa_rs.condition$Df`) = `r apa_rs.condition$Chisq`, p `r apa_rs.condition$p`
+
 ```{r, include=F, eval=F}
 OLD TEXT
 For excess distance to goal in probe trials, we found significant main effects but no significant two-way or three-way interactions (Table\ \@ref(tab:table-probe-excess-distance-f0)). There was a significant effect of *age group* (`r apa_lmm.distance$statistic$group`). Post-hoc contrasts revealed a gradual decrease in excess distance to goal with increasing age, meaning that that older participants searched in closer proximity to the actual goal locations (6-8-yo vs. 9-11-yo: `r apa_post.distance_group$statistic$YoungKids_OldKids`; 6-8-yo vs. adults: `r apa_post.distance_group$statistic$YoungKids_YoungAdults`; 9-11-yo vs. adults: `r apa_post.distance_group$statistic$OldKids_YoungAdults`). Additionally, there was a main effect of *condition* (`r apa_lmm.distance$statistic$condition`), with an increased excess distance to goal in the allocentric compared to the egocentric condition (`r apa_post.distance_condition$full_result`), and a main effect of *session* (`r apa_lmm.distance$statistic$session`), with an increased excess distance to goal in the second session (`r apa_post.distance_session$full_result`). 
 ```
 
 ```{r, include=F}
-rm(model.target_distance, apa_lmm.distance, apa_post.distance_group, apa_post.distance_session, apa_post.distance_condition)
+rm(model.distance, apa_lmm.distance, apa_post.distance_group, apa_post.distance_session, apa_post.distance_condition, apa_rs.condition)
 ```
 
 ### **Initial rotation velocity (all probe trials)**
 
 ```{r, model_probe_rotation_velocity }
+```
+ 
+```{r, ranef_probe_rotation_velocity, include=F }
 ```
 
 ```{r, post_hoc_probe_rotation_velocity, include=F }
@@ -533,7 +564,9 @@ apa_post.init_vel_group_condition <- post.init_vel_group_condition %>% apa_print
 
 # apa_post.init_vel_session_condition <- post.init_vel_session_condition %>% apa_print() %>% bonferroni_fix()
 
-rm(post.init_vel_group_condition, post.init_vel_session_condition)
+apa_rs.condition <- LRT.rotation_velocity %>% mutate_at(vars(Chisq, Df), apa_df) %>% mutate_at(vars(p), apa_p)
+
+rm(post.init_vel_group_condition, post.init_vel_session_condition, LRT.rotation_velocity)
 ```
 
 (ref:p-init-vel-f-caption0) Fixed effects for initial rotation veloctiy in probe trials.
@@ -557,6 +590,8 @@ The model had a fit of $R2 = `r R2$Rsq`, [CI: `r R2$upper.CL`, `r R2$lower.CL`$]
 
 For the initial rotation velocity, there was a significant *group x condition* interaction (`r apa_lmm.init_vel$statistic$group_condition`; Table\ \@ref(tab:table-probe-init-vel-f0)). Post-hoc contrasts showed that significant age group differences were only present in the allocentric condition, where 6-8-yo children had a significantly lower initial rotation velocity than both 9-11-yo (`r apa_post.init_vel_group_condition$statistic$Alloret_YoungKids_OldKids`) and adults (`r apa_post.init_vel_group_condition$statistic$Alloret_YoungKids_YoungAdults`). All groups had significantly higher initial rotation velocity for the allocentric than egocentric condition (6-8-yo: `r apa_post.init_vel_group_condition$statistic$YoungKids_Egoret_alloret`; 9-11-yo: `r apa_post.init_vel_group_condition$statistic$OldKids_Egoret_alloret`; adults: `r apa_post.init_vel_group_condition$statistic$YoungAdults_Egoret_alloret`). 
 
+LRT for random slope for *condition*: Chisq(`r apa_rs.condition$Df`) = `r apa_rs.condition$Chisq`, p `r apa_rs.condition$p`
+
 ```{r, include=F, eval=F}
 OLD TEXT
 For the initial rotation velocity in probe trials, we found two significant two-way interactions (Table\ \@ref(tab:table-probe-init-vel-f0)). Post-hoc contrasts for the *group x condition* interaction (`r apa_lmm.init_vel$statistic$group_condition`) showed significant age group differences only in the allocentric condition, where 6-8-yo children had a significantly lower initial rotation velocity than both 9-11-yo (`r apa_post.init_vel_group_condition$statistic$Alloret_YoungKids_OldKids`) and adults (`r apa_post.init_vel_group_condition$statistic$Alloret_YoungKids_YoungAdults`). All groups had significantly higher initial rotation velocity for the allocentric than egocentric condition (6-8-yo: `r apa_post.init_vel_group_condition$statistic$YoungKids_Egoret_alloret`; 9-11-yo: `r apa_post.init_vel_group_condition$statistic$OldKids_Egoret_alloret`; adults: `r apa_post.init_vel_group_condition$statistic$YoungAdults_Egoret_alloret`). The *session x condition* interaction (`r apa_lmm.init_vel$statistic$session_condition`) added that this age-independent increase in initial rotation velocity for the allocentric condition was present in both sessions (egocentric vs. allocentric in first session: `r apa_post.init_vel_session_condition$statistic$X1_Egoret_alloret`; second session: `r apa_post.init_vel_session_condition$statistic$X2_Egoret_alloret`) and that initial rotation velocity increased across sessions in the allocentric (`r apa_post.init_vel_session_condition$statistic$Alloret_Session1_session2`) but not egocentric condition (`r apa_post.init_vel_session_condition$statistic$Egoret_Session1_session2`). 
@@ -575,18 +610,18 @@ apa_table(
 ```
 
 ```{r, include=F}
-rm(model.rotation_velocity, apa_lmm.init_vel, apa_post.init_vel_group_condition, apa_post.init_vel_session_condition)
+rm(model.rotation_velocity, apa_lmm.init_vel, apa_post.init_vel_group_condition, apa_post.init_vel_session_condition, apa_rs.condition)
 ```
 
 ```{r, echo=F, fig.height=4.5, fig.width=10, fig.cap="Navigation behavior" }
 plot.time + 
   plot.path + 
-  plot.target_distance + 
+  plot.distance + 
   plot.rotation_velocity + 
   plot_layout(nrow=1, guides="collect") & 
   guides(fill=F, shape=F) & theme(legend.position="top", legend.justification=c(-0.025,0))
 
-rm(plot.time, plot.path, plot.target_distance, plot.rotation_velocity)
+rm(plot.time, plot.path, plot.distance, plot.rotation_velocity)
 ```
 
 \newpage 
@@ -794,129 +829,6 @@ plot.time_learn +
   guides(fill=F, shape=F) & theme(legend.position="top", legend.justification=c(-0.05,0))
 
 rm(plot.time_learn, plot.path_learn,plot.target_distance_learn, plot.rotation_velocity_learn)
-```
-
-\newpage
-
-### **Initial rotation (all probe trials)**
-
-```{r, model_probe_rotation }
-```
-
-```{r, post_hoc_probe_rotation, include=F}
-```
-
-```{r, plot_probe_rotation, include=F }
-```
-
-```{r apa_probe_rotation, include=F}
-R2 <- r2beta(model.rotation$full_model, method='nsj', partial=F) %>% mutate_all(apa_num)
-
-apa_lmm.init_rot <- apa_print(model.rotation)
-
-apa_post.init_rot_group_session <- post.init_rot_group_session %>% apa_print() %>% bonferroni_fix()
-
-apa_post.init_rot_group_condition <- post.init_rot_group_condition %>% apa_print() %>% bonferroni_fix()
-
-apa_post.init_rot_session_condition <- post.init_rot_session_condition %>% apa_print() %>% bonferroni_fix()
-
-rm(post.init_rot_group_session, post.init_rot_group_condition, post.init_rot_session_condition)
-```
-
-(ref:p-init-rot-caption-f0) Fixed effects for initial rotation in probe trials.
-
-```{r table-probe-init-rot-f0, echo=F}
-apa_table(
-  apa_lmm.init_rot$table,
-  caption="(ref:p-init-rot-caption-f0)",
-  placement="h")
-```
-
-(ref:p-init-rot-r-caption-r0) Random effects for initial rotation in probe trials.
-
-```{r table-probe-init-rot-r0, echo=F}
-apa_random_table(VarCorr(model.rotation$full_model)) %>% 
-  knitr::kable(
-    caption="(ref:p-init-rot-r-caption-r0)")
-```
-
-The model had a fit of $R2 = `r R2$Rsq`, [CI: `r R2$upper.CL`, `r R2$lower.CL`$].
-
-For initial rotation in probe trials, all two-way interactions were significant (Table\ \@ref(tab:table-probe-init-rot-f0)). Post-hoc contrasts on the *group x session* interaction (`r apa_lmm.init_rot$statistic$group_session`) revealed that initial rotation increased across sessions for 6-8-yo children (`r apa_post.init_rot_group_session$statistic$YoungKids_Session1_session2`) and adults (`r apa_post.init_rot_group_session$statistic$YoungAdults_Session1_session2`). There were no significant age group differences within sessions. Post-hoc contrasts on the *group x condition* interaction (`r apa_lmm.init_rot$statistic$group_condition`) found that initial rotation was increase in the allocentric compared to egocentric condition for all age groups (egocentric vs. allocentric for 6-8-yo: `r apa_post.init_rot_group_condition$statistic$YoungKids_Egoret_alloret`; 9-11-yo: `r apa_post.init_rot_group_condition$statistic$OldKids_Egoret_alloret`; adults: `r apa_post.init_rot_group_condition$statistic$YoungAdults_Egoret_alloret`). There were no significant age group differences within conditions. The *session x condition* interaction (`r apa_lmm.init_rot$statistic$session_condition`) added that the age-independent increase in initial rotation for the allocentric condition was present in both sessions (egocentric vs. allocentric in first session: `r apa_post.init_rot_session_condition$statistic$X1_Egoret_alloret`; second session: `r apa_post.init_rot_session_condition$statistic$X2_Egoret_alloret`) and that initial rotation increased across sessions only in the allocentric (`r apa_post.init_rot_session_condition$statistic$Alloret_Session1_session2`) but not egocentric condition (`r apa_post.init_rot_session_condition$statistic$Egoret_Session1_session2`). 
-
-```{r table-probe-init-rot1, echo=F}
-apa_table(
-  apa_post.init_rot_group_session$table %>% remove_rownames(),
-  placement="h")
-```
-
-```{r table-probe-init-rot2, echo=F}
-apa_table(
-  apa_post.init_rot_group_condition$table %>% remove_rownames(),
-  placement="h")
-```
-
-```{r table-probe-init-rot3, echo=F}
-apa_table(
-  apa_post.init_rot_session_condition$table %>% remove_rownames(),
-  placement="h")
-```
-
-```{r, include=F}
-rm(model.rotation, apa_lmm.init_rot, apa_post.init_rot_group_session, apa_post.init_rot_group_condition, apa_post.init_rot_session_condition)
-```
-
-### **Initial rotation (training trials)**
-
-```{r, model_learn_rotation }
-```
-
-```{r, post_hoc_learn_rotation, include=F}
-```
-
-```{r, plot_learn_rotation, include=F}
-```
-
-```{r apa_learn_rotation, include=F}
-R2 <- r2beta(model.rotation_learn$full_model, method='nsj', partial=F) %>% mutate_all(apa_num)
-
-apa_lmm.learn_rotation <- apa_print(model.rotation_learn)
-
-apa_post.learn_rotation_group_trial <- post.learn_rotation_group_trial %>% apa_print()
-
-rm(post.learn_rotation_group_trial)
-```
-
-ref:l-ir-caption-f0) Fixed effects for initial rotation in training.
-
-```{r table-learn-rotation-f0, echo=F}
-apa_table(
-  apa_lmm.learn_rotation$table,
-  caption="(ref:l-ir-caption-f0)",
-  placement="h")
-```
-
-(ref:l-ir-caption-r0) Random effects for initial rotation in training.
-
-```{r table-learn-rotation-r0, echo=F}
-apa_random_table(VarCorr(model.rotation_learn$full_model)) %>% 
-  knitr::kable(
-    caption="(ref:l-ir-caption-r0)")
-```
-
-The model had a fit of $R2 = `r R2$Rsq`, [CI: `r R2$upper.CL`, `r R2$lower.CL`$].
-
-There was a significant *group x trial interaction* (`r apa_lmm.learn_rotation$statistic$group_trial_in_block`). Post-hoc polynomial contrasts showed that the decrease of initial rotation across trials was significantly steeper in adults than 6-8-yo children only (linear: `r apa_post.learn_rotation_group_trial$statistic$YoungKids_YoungAdults_Linear`;  quadratic: `r apa_post.learn_rotation_group_trial$statistic$YoungKids_YoungAdults_Quadratic`). 
-(Table\ \@ref(tab:table-learn-rotation-f0))
-
-```{r table-learn-rotation-1, echo=F}
-apa_table(
-  apa_post.learn_rotation_group_trial$table %>% remove_rownames(),
-  placement="h")
-```
-
-```{r, include=F}
-rm(model.rotation_learn, R2, apa_lmm.learn_rotation, apa_post.learn_rotation_group_trial)
 ```
 
 \newpage 

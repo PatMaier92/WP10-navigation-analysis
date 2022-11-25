@@ -14,6 +14,7 @@
 # ------------------------------------------------------------------------------
 
 ## ---- load_analysis_packages
+library(readxl)
 library(tidyverse)
 library(janitor)
 library(patchwork)
@@ -48,12 +49,6 @@ rm(file_name)
 file_name <- "../WP10_data/WP10_results/wp10_post_nav_data.RData"
 load(file_name)
 rm(file_name)
-
-file_name <- "../WP10_data/WP10_results/covariates_starmaze.xlsx"
-cov <- read_xlsx(file_name, col_names=T, na="999") %>% mutate(id=as.numeric(id)) %>% select(-sex, -group, income)
-sm_data <- sm_data %>% 
-  left_join(cov, by="id")
-rm(cov)
 
 
 ## ---- data_prep
@@ -99,13 +94,29 @@ data_p1 <- data %>%
             ~ .x - mean(.x, na.rm=T)) %>% 
   droplevels()
 
+well_learned <- data %>% 
+  filter(condition %in% c("allo_ret", "ego_ret")) %>%
+  select(id, group, session, condition, goal, correct_final_alley) %>% 
+  filter(session==1) %>% 
+  group_by(id, goal, condition) %>% 
+  tally(correct_final_alley) %>% 
+  pivot_wider(names_from=condition, values_from=n) %>% 
+  mutate(flag=case_when(ego_ret<=1 ~T, allo_ret<=1 ~ T, T ~ F))
+
+data_p_w <- data %>% 
+  filter(condition %in% c("allo_ret", "ego_ret")) %>%
+  left_join(well_learned, by=c("id", "goal")) %>% 
+  filter(!flag) %>% 
+  mutate_at(vars(all_of(cov_names)), 
+            ~ .x - mean(.x, na.rm=T)) %>% 
+  droplevels()
 
 # helper function for outlier check
 is_outlier <- function(x) {
   return(x < quantile(x, 0.25) - 1.5 * IQR(x) | x > quantile(x, 0.75) + 1.5 * IQR(x))
 }
 
-rm(cov_data, cov_names, data)
+rm(cov_data, cov_names, data, well_learned)
 ## ---- 
 
 
@@ -192,9 +203,11 @@ apa_random_table <- function(varcor) {
 
 
 # ############################################################################ #
+# ############################################################################ #
+
 
 # ------------------------------------------------------------------------------
-# ::: MAIN ANALYSIS: MEMORY ACCURACY (PROBE TRIALS) ::: #
+# ::: RAW DATA VISUALIZATION ::: #
 # ------------------------------------------------------------------------------
 
 # --- RAW DATA VIZ (ALL PROBE TRIALS) --- # 
@@ -235,7 +248,15 @@ rm(dot_plots)
 rm(dots_ego, dots_allo)
 
 
-# --- MEMORY SCORE (LEARNING SESSION PROBE TRIALS) --- # 
+# ############################################################################ #
+# ############################################################################ #
+
+
+# ------------------------------------------------------------------------------
+# ::: LEARNING ANALYSIS - MEMORY ACCURACY (PROBE TRIALS) ::: #
+# ------------------------------------------------------------------------------
+
+# --- MEMORY SCORE (SESSION 1 PROBE TRIALS) --- # 
 ## ---- model_probe_ms
 model.ms <- mixed(memory_score ~ group*condition + cov_sex + cov_motor_score + 
                     (condition|id), data=data_p1, expand_re=T)
@@ -244,6 +265,14 @@ model.ms <- mixed(memory_score ~ group*condition + cov_sex + cov_motor_score +
 # random effects
 VarCorr(model.ms$full_model)
 # dotplot(ranef(model.ms$full_model))
+
+## ---- ranef_probe_ms
+model.ms_base <- mixed(memory_score ~ group*condition + cov_sex + cov_motor_score + 
+                         (1|id), data=data_p1, expand_re=T)
+LRT.ms <- anova(model.ms_base, model.ms)  %>% select(Chisq, Df, `Pr(>Chisq)`) %>% slice(2) %>% rename(p=`Pr(>Chisq)`)
+rm(model.ms_base)
+## ---- 
+rm(LRT.ms)
 
 # fixed effects
 model.ms
@@ -269,36 +298,154 @@ plot.ms <- afex_plot_wrapper(model.ms, "condition", "group", NULL, l_memory_scor
 rm(plot.ms)
 
 
-# --- MEMORY SCORE (BOTH SESSIONS EGOCENTRIC PROBE TRIALS) --- # 
-## ---- model_probe_ms_ego
-model.ms_ego <- mixed(memory_score ~ group*session + cov_sex + cov_motor_score + 
-                        (session|id), data=data_p %>% filter(condition=="ego_ret"), expand_re=T)
+# ------------------------------------------------------------------------------
+# ::: LEARNING ANALYSIS - NAVIGATION BEHAVIOR (PROBE TRIALS) ::: #
+# ------------------------------------------------------------------------------
+
+# --- TIME (SESSION 1 PROBE TRIALS) --- # 
+## ---- model_probe_time
+model.time <- mixed(time ~ group*condition + cov_sex + cov_motor_score + 
+                      (condition||id), data=data_p1, expand_re=T)
 ## ----
 
-## ---- post_hoc_probe_ms_ego
-emm.ms_ego_group_session <- emmeans(model.ms_ego, ~ group * session, lmer.df="satterthwaite")
-post.ms_ego_group_session <- summary(rbind(pairs(emm.ms_ego_group_session, simple="group"), pairs(emm.ms_ego_group_session, simple="session")),
-                                     infer=c(T,T), by=NULL, adjust="bonferroni")
-rm(emm.ms_ego_group_session)
+# random effects
+VarCorr(model.time$full_model)
+
+## ---- ranef_probe_time
+model.time_base <- mixed(time ~ group*condition + cov_sex + cov_motor_score + 
+                           (1|id), data=data_p1, expand_re=T)
+LRT.time <- anova(model.time_base, model.time)  %>% select(Chisq, Df, `Pr(>Chisq)`) %>% slice(2) %>% rename(p=`Pr(>Chisq)`)
+rm(model.time_base)
 ## ---- 
+rm(LRT.time)
 
-## ---- plot_probe_ms_ego
-plot.ms_ego <- afex_plot_wrapper(model.ms_ego, "session", "group", NULL, l_memory_score, xlabel=NULL, ymax=1.2)
+# fixed effects 
+model.time
+
+## ---- post_hoc_probe_time
+emm.time_group_condition <- emmeans(model.time, ~ group * condition, lmer.df="satterthwaite")
+post.time_group_condition <- summary(rbind(pairs(emm.time_group_condition, simple="group"), pairs(emm.time_group_condition, simple="condition")), 
+                                     infer=c(T,T), by=NULL, adjust="bonferroni")
+rm(emm.time_group_condition)
 ## ----
-rm(plot.ms_ego)
+rm(post.time_group_condition)
+
+## ---- plot_probe_time 
+plot.time <- afex_plot_wrapper(model.time, "condition", "group", NULL, l_time, xlabel=NULL, ymin=0, ymax=40)
+## ----
+rm(plot.time, model.time)
 
 
-# --- MEMORY SCORE (BOTH SESSIONS ALLOCENTRIC PROBE TRIALS) --- # 
-## ---- model_probe_ms_allo
-model.ms_allo <- mixed(memory_score ~ group*session + cov_sex + cov_motor_score + 
-                         (session|id), data=data_p %>% filter(condition=="allo_ret"), expand_re=T)
+# --- EXCESS PATH LENGTH TO CHOSEN TARGET (SESSION 1 PROBE TRIALS) --- # 
+## ---- model_probe_path
+model.path <- mixed(excess_path_length ~ group*condition + cov_sex + cov_motor_score +
+                      (condition||id), data=data_p1, expand_re=T)
 ## ----
 
-## ---- plot_probe_ms_allo
-plot.ms_allo <- afex_plot_wrapper(model.ms_allo, "session", "group", NULL, l_memory_score, xlabel=NULL, ymax=1.2)
-## ----
-rm(plot.ms)
+# random effects
+VarCorr(model.path$full_model)
 
+## ---- ranef_probe_path
+model.path_base <- mixed(excess_path_length ~ group*condition + cov_sex + cov_motor_score +
+                           (1|id), data=data_p1, expand_re=T)
+LRT.path <- anova(model.path_base, model.path)  %>% select(Chisq, Df, `Pr(>Chisq)`) %>% slice(2) %>% rename(p=`Pr(>Chisq)`)
+rm(model.path_base)
+## ---- 
+rm(LRT.path)
+
+# fixed effects
+model.path
+
+## ---- post_hoc_probe_path
+emm.path_group_condition <- emmeans(model.path, ~ group * condition, lmer.df="satterthwaite")
+post.path_group_condition <- summary(rbind(pairs(emm.path_group_condition, simple="group"), pairs(emm.path_group_condition, simple="condition")),
+                                     infer=c(T,T), by=NULL, adjust="bonferroni")
+rm(emm.path_group_condition)
+## ----
+rm(post.path_group_condition)
+
+## ---- plot_probe_path
+plot.path <- afex_plot_wrapper(model.path, "condition", "group", NULL, l_excess_path_length, xlabel=NULL, ymin=0, ymax=1.5)
+## ----
+rm(plot.path, model.path)
+
+
+# --- EXCESS AVERAGE DISTANCE TO TARGET (SESSION 1 PROBE TRIALS) --- # 
+## ---- model_probe_distance
+model.distance <- mixed(excess_target_distance ~ group*condition + cov_sex + cov_motor_score + 
+                          (condition|id), data=data_p1, expand_re=T)
+## ----
+
+# random effects
+VarCorr(model.distance$full_model)
+
+## ---- ranef_probe_distance
+model.distance_base <- mixed(excess_target_distance ~ group*condition + cov_sex + cov_motor_score + 
+                               (1|id), data=data_p1, expand_re=T)
+LRT.distance <- anova(model.distance_base, model.distance)  %>% select(Chisq, Df, `Pr(>Chisq)`) %>% slice(2) %>% rename(p=`Pr(>Chisq)`)
+rm(model.distance_base)
+## ---- 
+rm(LRT.distance)
+
+# fixed effects 
+model.distance
+
+## ---- post_hoc_probe_distance
+emm.distance_group <- emmeans(model.distance, ~ group, lmer.df="satterthwaite")
+post.distance_group <- pairs(emm.distance_group, adjust="bonferroni")
+rm(emm.distance_group)
+
+post.distance_condition <- emmeans(model.distance, pairwise ~ condition, lmer.df="satterthwaite")$contrasts
+## ----
+rm(post.distance_group, post.distance_condition)
+
+## ---- plot_probe_distance
+plot.distance <- afex_plot_wrapper(model.distance, "condition", "group", NULL, l_excess_distance_goal, xlabel=NULL, ymin=-0.25, ymax=0.25)
+## ----
+rm(plot.distance, model.distance)
+
+
+# --- INITIAL ROTATION VELOCITY (SESSION 1 PROBE TRIALS --- # 
+## ---- model_probe_rotation_velocity
+model.rotation_velocity <- mixed(initial_rotation_velocity ~ group*condition + cov_sex + cov_motor_score +  
+                                   (condition||id), data=data_p1, expand_re=T)
+## ----
+
+# random effects
+VarCorr(model.rotation_velocity$full_model)
+
+## ---- ranef_probe_rotation_velocity
+model.rotation_velocity_base <- mixed(initial_rotation_velocity ~ group*condition + cov_sex + cov_motor_score +  
+                                        (1|id), data=data_p1, expand_re=T)
+LRT.rotation_velocity <- anova(model.rotation_velocity_base, model.rotation_velocity)  %>% select(Chisq, Df, `Pr(>Chisq)`) %>% slice(2) %>% rename(p=`Pr(>Chisq)`)
+rm(model.rotation_velocity_base)
+## ---- 
+rm(LRT.rotation_velocity)
+
+# fixed effects 
+model.rotation_velocity
+
+## ---- post_hoc_probe_rotation_velocity
+emm.init_vel_group_condition <- emmeans(model.rotation_velocity, ~ group * condition, lmer.df="satterthwaite")
+post.init_vel_group_condition <- summary(rbind(pairs(emm.init_vel_group_condition, simple="group"), pairs(emm.init_vel_group_condition, simple="condition")),
+                                         infer=c(T,T), by=NULL, adjust="bonferroni")
+rm(emm.init_vel_group_condition)
+## ----
+rm(post.init_vel_group_condition)
+
+## ---- plot_probe_rotation_velocity
+plot.rotation_velocity <- afex_plot_wrapper(model.rotation_velocity, "condition", "group", NULL, l_initial_rotation_velocity, xlabel=NULL, ymin=0, ymax=0.025)
+## ----
+rm(plot.rotation_velocity)
+
+
+# ############################################################################ #
+# ############################################################################ #
+
+
+# ------------------------------------------------------------------------------
+# ::: CONSOLIDATION ANALYSIS - MEMORY ACCURACY (PROBE TRIALS) ::: #
+# ------------------------------------------------------------------------------
 
 # --- MEMORY SCORE (ALL PROBE TRIALS) --- #
 ## ---- model_probe_ms_all
@@ -393,25 +540,45 @@ rm(plot.ms_all)
 # ## ---- 
 
 
-# --- MEMORY SCORE (WELL LEARNED ITEMS ONLY, PROBE TRIALS) --- #
-## ---- model_probe_ms_wl_data
-temp <- data_p %>% 
-  select(id, group, session, condition, goal, correct_final_alley) %>% 
-  filter(session==1) %>% 
-  group_by(id, goal, condition) %>% 
-  tally(correct_final_alley) %>% 
-  pivot_wider(names_from=condition, values_from=n) %>% 
-  mutate(flag=case_when(ego_ret<=1 ~T, allo_ret<=1 ~ T, T ~ F))
+# ------------------------------------------------------------------------------
+# ::: OPTIONAL: CONSOLIDATION ANALYSIS - MEMORY ACCURACY (PROBE TRIALS) ::: #
+# ------------------------------------------------------------------------------
 
-data_p_w <- data_p %>% 
-  left_join(temp, by=c("id", "goal")) %>% 
-  filter(!flag)
-rm(temp)
+# --- MEMORY SCORE (BOTH SESSIONS EGOCENTRIC PROBE TRIALS) --- #
+## ---- model_probe_ms_ego
+model.ms_ego <- mixed(memory_score ~ group*session + cov_sex + cov_motor_score +
+                        (session|id), data=data_p %>% filter(condition=="ego_ret"), expand_re=T)
 ## ----
 
+## ---- post_hoc_probe_ms_ego
+emm.ms_ego_group_session <- emmeans(model.ms_ego, ~ group * session, lmer.df="satterthwaite")
+post.ms_ego_group_session <- summary(rbind(pairs(emm.ms_ego_group_session, simple="group"), pairs(emm.ms_ego_group_session, simple="session")),
+                                     infer=c(T,T), by=NULL, adjust="bonferroni")
+rm(emm.ms_ego_group_session)
+## ----
+
+## ---- plot_probe_ms_ego
+plot.ms_ego <- afex_plot_wrapper(model.ms_ego, "session", "group", NULL, l_memory_score, xlabel=NULL, ymax=1.2)
+## ----
+rm(plot.ms_ego)
+
+
+# --- MEMORY SCORE (BOTH SESSIONS ALLOCENTRIC PROBE TRIALS) --- #
+## ---- model_probe_ms_allo
+model.ms_allo <- mixed(memory_score ~ group*session + cov_sex + cov_motor_score +
+                         (session|id), data=data_p %>% filter(condition=="allo_ret"), expand_re=T)
+## ----
+
+## ---- plot_probe_ms_allo
+plot.ms_allo <- afex_plot_wrapper(model.ms_allo, "session", "group", NULL, l_memory_score, xlabel=NULL, ymax=1.2)
+## ----
+rm(plot.ms)
+
+
+# --- MEMORY SCORE (WELL LEARNED ITEMS, ALL PROBE TRIALS) --- #
 ## ---- model_probe_ms_wl
 model.ms_wl <- mixed(memory_score ~ group*session*condition + cov_sex + cov_motor_score +
-                        (session||id), data=data_p_w, expand_re=T)
+                       (session||id), data=data_p_w, expand_re=T)
 ## ----
 
 # random effects
@@ -434,81 +601,13 @@ plot.ms_wl <- afex_plot_wrapper(model.ms_wl, "session", "group", "condition", l_
 rm(plot.ms_wl)
 
 
-# ------------------------------------------------------------------------------
-# ::: SUPPLEMENT ANALYSIS: MEMORY ACCURACY (PROBE TRIALS) ::: #
-# ------------------------------------------------------------------------------
-
-# --- CORRECT FINAL ALLEY (ALL PROBE TRIALS) --- #
-## ---- model_probe_ca
-model.ca <- mixed(correct_final_alley ~ group*session*condition + cov_sex + cov_motor_score + 
-                    (session|id), data=data_p, expand_re=T, family=binomial(link="logit"), method="LRT",
-                  control=glmerControl(optimizer="bobyqa", optCtrl=list(maxfun=1e6)))
-## ---- 
-
-# random effects
-VarCorr(model.ca$full_model)
-# dotplot(ranef(model.ca$full_model))
-
-# fixed effects
-model.ca
-
-# check model: ok 
-simulationOutput <- simulateResiduals(fittedModel=model.ca$full_model, plot=F)
-testResiduals(simulationOutput) 
-plotResiduals(simulationOutput) 
-testCategorical(simulationOutput, catPred=data_p$group[data_p$exclude_trial_matlab==0])
-testCategorical(simulationOutput, catPred=data_p$session[data_p$exclude_trial_matlab==0])
-testCategorical(simulationOutput, catPred=data_p$condition[data_p$exclude_trial_matlab==0])
-
-## ---- post_hoc_probe_ca
-emmeans(model.ca, pairwise ~ group, type="response", adjust="bonferroni")$contrasts
-emmeans(model.ca, pairwise ~ condition, type="response")$contrasts
-emmeans(model.ca, pairwise ~ session, type="response")$contrasts
-## ----
-
-## ---- plot_probe_ca
-plot.ca <- afex_plot_wrapper(model.ca, "session", "group", "condition", l_correct_alley)
-## ----
-rm(plot.ca)
-
-
-# --- MEMORY SCORE (ALL PROBE TRIALS) EXTENDED WITH GOAL LOCATIONS --- # 
-## ---- model_probe_ms_extended
-model.ms_ext <- mixed(memory_score ~ group*condition*session*cov_location + cov_sex + cov_motor_score + 
-                              (session*condition+cov_location||id), data=data_p, expand_re=T)
-## ---- 
-
-# random effects
-VarCorr(model.ms_ext$full_model)
-dotplot(ranef(model.ms_ext$full_model))
-
-# fixed effects 
-model.ms_ext
-
-## ---- post_hoc_probe_ms_extended
-# group x session x location 
-emm1 <- emmeans(model.ms_ext, ~ group*cov_location*session, lmer.df="satterthwaite")
-con1 <- summary(rbind(pairs(emm1, simple="group"), pairs(emm1, simple="session"), 
-                      pairs(emm1, interaction="pairwise", by="cov_location")), infer=c(T,T), by=NULL, adjust="bonferroni")
-
-# condition x location 
-emm2 <- emmeans(model.ms_ext, ~ condition*cov_location, lmer.df="satterthwaite")
-con2 <- summary(rbind(pairs(emm2, simple="condition"), pairs(emm2, simple="cov_location")), infer=c(T,T), by=NULL, adjust="bonferroni")
-## ----
-rm(emm1, con1, emm2, con2)
-
-## ---- plot_probe_ms_extended
-plot.ms_ext <- afex_plot_wrapper(model.ms_ext, "session", "group", ~ cov_location + condition, l_memory_score)
-## ---- 
-rm(plot.ms_ext, model.ms_ext)
-
-
+# ############################################################################ #
 # ############################################################################ #
 
-# ------------------------------------------------------------------------------
-# ::: MAIN ANALYSIS: POST-NAVIGATION TESTS ::: #
-# ------------------------------------------------------------------------------
 
+# ------------------------------------------------------------------------------
+# ::: CONSOLIDATION ANALYSIS - POST-NAVIGATION TESTS ::: #
+# ------------------------------------------------------------------------------
 
 # --- LAYOUT RECOGNITION (1 out of 6 options) --- #
 ## ---- model_post_layout
@@ -625,7 +724,7 @@ rm(plot.position, model.position, post.position)
 
 
 # ------------------------------------------------------------------------------
-# ::: SUPPLEMENT ANALYSIS: POST-NAVIGATION TESTS ::: #
+# ::: OPTIONAL: CONSOLIDATION ANALYSIS - POST-NAVIGATION TESTS ::: #
 # ------------------------------------------------------------------------------
 
 # detailed positioning data
@@ -654,35 +753,318 @@ rm(data_gmda, CanAcc, DistAcc, AngleAcc, boxplot)
 
 
 # ############################################################################ #
+# ############################################################################ #
+
 
 # ------------------------------------------------------------------------------
-# ::: MAIN ANALYSIS: NAVIGATION BEHAVIOR (PROBE TRIALS) ::: #
+# ::: CONSOLIDATION ANALYSIS - ANOVA ON PLSC LATENT PROFILE SCORE::: #
 # ------------------------------------------------------------------------------
 
-# --- TIME (LEARNING SESSION PROBE TRIALS) --- # 
-## ---- model_probe_time
-model.time <- mixed(time ~ group*condition + cov_sex + cov_motor_score + 
-                      (condition||id), data=data_p1, expand_re=T)
+file_plsc_allo <-"../WP10_data/WP10_results/PLSC_LP_allo_2.txt"
+plsc_allo <- read.table(file_plsc_allo, sep=",", header=T)
+rm(file_plsc_allo)
+
+model.plsc_allo <- aov_ez("id", "lp", plsc_allo, between=c("group"))
+post.plsc_allo <- emmeans(model.plsc_allo, pairwise ~ group, adjust="bonferroni")$contrasts
+cor.test(plsc_allo$lp, plsc_allo$ms)
+
+ggplot(plsc_allo, aes(x=lp, y=ms, color=factor(group))) + 
+  geom_point() + 
+  geom_smooth(method=lm, se=FALSE, aes(colour=NULL), color="grey") + 
+  scale_color_manual(values=group_colors, labels=c("6-8yo","9-11yo","adults")) +
+  theme_bw(base_size=13) + 
+  theme(legend.position="top", legend.justification=c(0,0),
+        legend.title=element_blank(),
+        panel.grid=element_blank(),
+        strip.background=element_rect(color=NA, fill=NA)) +
+  labs(x="navigation score", 
+       y="allocentric score")
+ggsave("plsc_allo2.jpeg", width=4, height=3.5, dpi=600)
+
+
+file_plsc_ego <-"../WP10_data/WP10_results/PLSC_LP_ego_2.txt"
+plsc_ego <- read.table(file_plsc_ego, sep=",", header=T)
+rm(file_plsc_ego)
+
+model.plsc_ego <- aov_ez("id", "lp", plsc_ego, between=c("group"))
+post.plsc_ego <- emmeans(model.plsc_ego, pairwise ~ group, adjust="bonferroni")$contrasts
+cor.test(plsc_ego$lp, plsc_ego$ms)
+
+ggplot(plsc_ego, aes(x=lp, y=ms, color=factor(group))) + 
+  geom_point() + 
+  geom_smooth(method=lm, se=FALSE, aes(colour=NULL), color="grey") + 
+  scale_color_manual(values=group_colors, labels=c("6-8yo","9-11yo","adults")) +
+  theme_bw(base_size=13) + 
+  theme(legend.position="top", legend.justification=c(0,0),
+        legend.title=element_blank(),
+        panel.grid=element_blank(),
+        strip.background=element_rect(color=NA, fill=NA)) +
+  labs(x="navigation score", 
+       y="egocentric score")
+ggsave("plsc_ego.jpeg", width=4, height=3.5, dpi=600)
+
+
+# ############################################################################ #
+# ############################################################################ #
+
+
+# ------------------------------------------------------------------------------
+# ::: SUPPLEMENT: LEARNING ANALYSIS - NAVIGATION BEHAVIOR (PROBE TRIALS) ::: #
+# ------------------------------------------------------------------------------
+
+# --- CORRECT FINAL ALLEY (SESSION 1 PROBE TRIALS) --- #
+## ---- model_probe_ca
+model.ca <- mixed(correct_final_alley ~ group*condition + cov_sex + cov_motor_score + 
+                    (condition|id), data=data_p1, expand_re=T, family=binomial(link="logit"), method="LRT",
+                  control=glmerControl(optimizer="bobyqa", optCtrl=list(maxfun=1e6)))
+## ---- 
+
+# random effects
+VarCorr(model.ca$full_model)
+# dotplot(ranef(model.ca$full_model))
+
+# fixed effects
+model.ca
+
+# check model: ok 
+simulationOutput <- simulateResiduals(fittedModel=model.ca$full_model, plot=F)
+testResiduals(simulationOutput) 
+plotResiduals(simulationOutput) 
+testCategorical(simulationOutput, catPred=data_p$group[data_p$exclude_trial_matlab==0])
+testCategorical(simulationOutput, catPred=data_p$session[data_p$exclude_trial_matlab==0])
+testCategorical(simulationOutput, catPred=data_p$condition[data_p$exclude_trial_matlab==0])
+
+## ---- post_hoc_probe_ca
+emmeans(model.ca, pairwise ~ group, type="response", adjust="bonferroni")$contrasts
+emmeans(model.ca, pairwise ~ condition, type="response")$contrasts
+emmeans(model.ca, pairwise ~ session, type="response")$contrasts
+## ----
+
+## ---- plot_probe_ca
+plot.ca <- afex_plot_wrapper(model.ca, "condition", "group", NULL, l_correct_alley, xlabel=NULL, ymin=0, ymax=1.2)
+## ----
+rm(plot.ca)
+
+
+# ------------------------------------------------------------------------------
+# ::: SUPPLEMENT: LEARNING ANALYSIS - NAVIGATION BEHAVIOR (PROBE TRIALS) ::: #
+# ------------------------------------------------------------------------------
+
+# --- EXCESS PATH EDIT DISTANCE (SESSION 1 PROBE TRIALS) --- # 
+## ---- model_probe_path_edit
+model.path_edit <- mixed(excess_path_edit_distance ~ group*condition + cov_sex + cov_motor_score + 
+                           (condition||id), data=data_p1, expand_re=T)
 ## ----
 
 # random effects
-VarCorr(model.time$full_model)
+VarCorr(model.path_edit$full_model)
 
 # fixed effects 
-model.time
+model.path_edit
 
-## ---- post_hoc_probe_time
-emm.time_group_condition <- emmeans(model.time, ~ group * condition, lmer.df="satterthwaite")
-post.time_group_condition <- summary(rbind(pairs(emm.time_group_condition, simple="group"), pairs(emm.time_group_condition, simple="condition")), 
-                                     infer=c(T,T), by=NULL, adjust="bonferroni")
-rm(emm.time_group_condition)
+## ---- post_hoc_probe_path_edit
+emm.path_edit_group_condition <- emmeans(model.path_edit, ~ group * condition, lmer.df="satterthwaite")
+post.path_edit_group_condition <- summary(rbind(pairs(emm.path_edit_group_condition, simple="group"), pairs(emm.path_edit_group_condition, simple="condition")), 
+                                          infer=c(T,T), by=NULL, adjust="bonferroni")
+rm(emm.path_edit_group_condition)
 ## ----
-rm(post.time_group_condition)
+rm(post.path_edit_group_condition)
 
-## ---- plot_probe_time 
-plot.time <- afex_plot_wrapper(model.time, "condition", "group", NULL, l_time, xlabel=NULL, ymin=0, ymax=40)
+## ---- plot_probe_path_edit
+plot.path_edit <- afex_plot_wrapper(model.path_edit, "condition", "group", NULL, "path edit distance", xlabel=NULL, ymin=0, ymax=6)
+## ---- 
+rm(plot.path_edit, model.path_edit)
+
+
+# --- INITIAL ROTATION (SESSION 1 PROBE TRIALS) --- # 
+## ---- model_probe_rotation
+model.rotation <- mixed(initial_rotation ~ group*condition + cov_sex + cov_motor_score + 
+                          (condition||id), data=data_p1, expand_re=T)
 ## ----
-rm(plot.time)
+
+# random effects
+VarCorr(model.rotation$full_model)
+
+# fixed effects
+model.rotation
+
+## ---- post_hoc_probe_rotation
+post.ms_condition <- emmeans(model.rotation, pairwise ~ condition, lmer.df="satterthwaite")$contrasts
+## ---- 
+rm(post.ms_condition)
+
+## ---- plot_probe_rotation
+plot.rotation <- afex_plot_wrapper(model.rotation, "condition", "group", NULL, l_initial_rotation, xlabel=NULL, ymin=0, ymax=5)
+## ---- 
+rm(plot.rotation, model.rotation)
+
+
+# # initial path
+# aov1 <- aov_ez("id", "path_length_in_initial", data_p, between=c("group"), within=c("session", "condition"), fun_aggregate = mean)
+# emmeans(aov1, pairwise ~ group, adjust="bonferroni")
+# plot.initial_path <- afex_plot_wrapper(aov1, "group", NULL, NULL, "initial path", ymin=0.1, ymax=0.4)
+# 
+# # initial time 
+# model.initial_time <- mixed(time_in_initial ~ group*session*condition + (session*condition||id), data=data_p, expand_re=T)
+# emmeans(model.initial_time, pairwise ~ group, adjust="bonferroni")
+# plot.initial_time <- afex_plot_wrapper(model.initial_time, "group", NULL, NULL, "initial time", ymin=0, ymax=12)
+
+
+# --- TOTAL ROTATION (SESSION 1 PROBE TRIALS) --- # 
+## ---- model_probe_total_rotation
+model.rotation <- mixed(rotation ~ group*condition + cov_sex + cov_motor_score + 
+                          (condition||id), data=data_p1, expand_re=T)
+## ----
+
+# random effects
+VarCorr(model.rotation$full_model)
+
+# fixed effects
+model.rotation
+
+## ---- post_hoc_probe_total_rotation
+post.ms_group <- emmeans(model.rotation, pairwise ~ group, lmer.df="satterthwaite", adjust="bonferroni")$contrasts
+
+post.ms_condition <- emmeans(model.rotation, pairwise ~ condition, lmer.df="satterthwaite")$contrasts
+## ---- 
+rm(post.ms_group, post.ms_condition)
+
+## ---- plot_probe_total_rotation
+plot.rotation <- afex_plot_wrapper(model.rotation, "condition", "group", NULL, l_rotation, xlabel=NULL, ymin=0, ymax=17)
+## ---- 
+rm(plot.rotation, model.rotation)
+
+
+# --- TOTAL ROTATION VELOCITY (SESSION 1 PROBE TRIALS) --- # 
+## ---- model_probe_total_rotation_velocity
+model.rotation_velocity <- mixed(rotation_velocity ~ group*condition + cov_sex + cov_motor_score + 
+                                   (condition|id), data=data_p1, expand_re=T)
+## ----
+
+# random effects
+VarCorr(model.rotation_velocity$full_model)
+
+# fixed effects
+model.rotation_velocity
+
+## ---- post_hoc_probe_total_rotation_velocity
+emm.rot_vel_group_condition <- emmeans(model.rotation_velocity, ~ group * condition, lmer.df="satterthwaite")
+post.rot_vel_group_condition <- summary(rbind(pairs(emm.rot_vel_group_condition, simple="group"), pairs(emm.rot_vel_group_condition, simple="condition")), 
+                                        infer=c(T,T), by=NULL, adjust="bonferroni")
+rm(emm.rot_vel_group_condition)
+## ---- 
+rm(post.rot_vel_group_condition)
+
+## ---- plot_probe_total_rotation_velocity
+plot.rotation_velocity <- afex_plot_wrapper(model.rotation_velocity, "condition", "group", NULL, l_rotation_velocity, xlabel=NULL, ymin=0, ymax=0.03)
+## ---- 
+rm(plot.rotation_velocity, model.rotation_velocity)
+
+
+# ------------------------------------------------------------------------------
+# ::: SUPPLEMENT: LEARNING ANALYSIS - NAVIGATION BEHAVIOR (LEARNING TRIALS) ::: #
+# ------------------------------------------------------------------------------
+
+# --- TIME (LEARNING TRIALS) --- # 
+## ---- model_learn_time
+model.time_learn <- mixed(time ~ group*trial_in_block + cov_sex + cov_motor_score + 
+                            (1|id), data=data_l, expand_re=T)
+## ----
+
+# random effects
+VarCorr(model.time_learn$full_model)
+
+# fixed effects
+model.time_learn
+
+## ---- post_hoc_learn_time 
+post.learn_time_group <- emmeans(model.time_learn, pairwise ~ group, lmer.df="satterthwaite", adjust="bonferroni")$contrasts
+
+post.learn_time_trial <- emmeans(model.time_learn, pairwise ~ trial_in_block, lmer.df="satterthwaite", adjust="bonferroni")$contrasts
+## ----
+rm(post.learn_time_group, post.learn_time_trial)
+
+## ---- plot_learn_time
+plot.time_learn <- afex_plot_wrapper(model.time_learn, "trial_in_block", "group", NULL, l_time, xlabel=l_trial_in_block, ymin=0, ymax=40)
+## ----
+rm(plot.time_learn, model.time_learn)
+
+
+# --- EXCESS PATH LENGTH TO CHOSEN TARGET (LEARNING TRIALS) --- # 
+## ---- model_learn_path
+model.path_learn <- mixed(excess_path_length ~ group*trial_in_block + cov_sex + cov_motor_score + 
+                            (1|id), data=data_l, expand_re=T)
+## ----
+
+# random effects
+VarCorr(model.path_learn$full_model)
+
+# fixed effects
+model.path_learn
+
+## ---- post_hoc_learn_path
+post.learn_path_group <- emmeans(model.path_learn, pairwise ~ group, lmer.df="satterthwaite", adjust="bonferroni")$contrasts
+
+post.learn_path_trial <- emmeans(model.path_learn, pairwise ~ trial_in_block, lmer.df="satterthwaite", adjust="bonferroni")$contrasts
+## ----
+rm(post.learn_path_group, post.learn_path_trial)
+
+## ---- plot_learn_path
+plot.path_learn <- afex_plot_wrapper(model.path_learn, "trial_in_block", "group", NULL, l_excess_path_length, xlabel=l_trial_in_block)
+## ----
+rm(plot.path_learn, model.path_learn)
+
+
+# --- EXCESS AVERAGE DISTANCE TO TARGET (LEARNING TRIALS) --- # 
+## ---- model_learn_target_distance
+model.target_distance_learn <- mixed(excess_target_distance ~ group*trial_in_block + cov_sex + cov_motor_score + 
+                                       (1|id), data=data_l, expand_re=T)
+## ----
+
+# random effects
+VarCorr(model.target_distance_learn$full_model)
+
+# fixed effects
+model.target_distance_learn
+
+## ---- post_hoc_learn_target_distance 
+post.learn_distance_group <- emmeans(model.target_distance_learn, pairwise ~ group, lmer.df="satterthwaite", adjust="bonferroni")$contrasts
+
+post.learn_distance_trial <- emmeans(model.target_distance_learn, pairwise ~ trial_in_block, lmer.df="satterthwaite", adjust="bonferroni")$contrasts
+## ----
+rm(post.learn_distance_group, post.learn_distance_trial)
+
+## ---- plot_learn_target_distance
+plot.target_distance_learn <- afex_plot_wrapper(model.target_distance_learn, "trial_in_block", "group", NULL, l_excess_distance_goal, xlabel=l_trial_in_block, ymin=-0.15, ymax=0.15)
+## ----
+rm(plot.target_distance_learn, model.target_distance_learn)
+
+
+# --- INITIAL ROTATION VELOCITY (LEARNING TRIALS) --- # 
+## ---- model_learn_rotation_velocity
+model.rotation_velocity_learn <- mixed(initial_rotation_velocity ~ group*trial_in_block + cov_sex + cov_motor_score + 
+                                         (1|id), data=data_l, expand_re=T)
+## ----
+
+# random effects
+VarCorr(model.rotation_velocity_learn$full_model)
+
+# fixed effects
+model.rotation_velocity_learn
+
+## ---- post_hoc_learn_rotation_velocity
+# all ns
+## ----
+
+## ---- plot_learn_rotation_velocity
+plot.rotation_velocity_learn <- afex_plot_wrapper(model.rotation_velocity_learn, "trial_in_block", "group", NULL, l_initial_rotation_velocity, xlabel=l_trial_in_block, ymin=0, ymax=0.025)
+## ----
+rm(plot.rotation_velocity_learn, model.rotation_velocity_learn)
+
+
+# ------------------------------------------------------------------------------
+# ::: SUPPLEMENT: FULL DATA ANALYSIS - NAVIGATION BEHAVIOR (PROBE TRIALS) ::: #
+# ------------------------------------------------------------------------------
 
 # # --- TIME (ALL PROBE TRIALS) --- # 
 # ## ---- model_probe_time
@@ -777,32 +1159,6 @@ rm(plot.time)
 # ## ----
 
 
-# --- EXCESS PATH LENGTH TO CHOSEN TARGET (LEARNING SESSION PROBE TRIALS) --- # 
-## ---- model_probe_path
-model.path <- mixed(excess_path_length ~ group*condition + cov_sex + cov_motor_score +
-                      (condition||id), data=data_p1, expand_re=T)
-## ----
-
-# random effects
-VarCorr(model.path$full_model)
-
-# fixed effects
-model.path
-
-## ---- post_hoc_probe_path
-emm.path_group_condition <- emmeans(model.path, ~ group * condition, lmer.df="satterthwaite")
-post.path_group_condition <- summary(rbind(pairs(emm.path_group_condition, simple="group"), pairs(emm.path_group_condition, simple="condition")),
-                                     infer=c(T,T), by=NULL, adjust="bonferroni")
-rm(emm.path_group_condition)
-## ----
-rm(post.path_group_condition)
-
-## ---- plot_probe_path
-plot.path <- afex_plot_wrapper(model.path, "condition", "group", NULL, l_excess_path_length, xlabel=NULL, ymin=0, ymax=1.5)
-## ----
-rm(plot.path)
-
-
 # # --- EXCESS PATH LENGTH TO CHOSEN TARGET (ALL PROBE TRIALS) --- # 
 # ## ---- model_probe_path
 # model.path <- mixed(excess_path_length ~ group*session*condition + cov_sex + cov_motor_score + 
@@ -894,33 +1250,6 @@ rm(plot.path)
 # ## ----
 
 
-# --- EXCESS AVERAGE DISTANCE TO TARGET (ALL PROBE TRIALS) --- # 
-## ---- model_probe_target_distance
-model.target_distance <- mixed(excess_target_distance ~ group*condition + cov_sex + cov_motor_score + 
-                                 (condition|id), data=data_p1, expand_re=T)
-## ----
-
-# random effects
-VarCorr(model.target_distance$full_model)
-
-# fixed effects 
-model.target_distance
-
-## ---- post_hoc_probe_target_distance
-emm.distance_group <- emmeans(model.target_distance, ~ group, lmer.df="satterthwaite")
-post.distance_group <- pairs(emm.distance_group, adjust="bonferroni")
-rm(emm.distance_group)
-
-post.distance_condition <- emmeans(model.target_distance, pairwise ~ condition, lmer.df="satterthwaite")$contrasts
-## ----
-rm(post.distance_group, post.distance_condition)
-
-## ---- plot_probe_target_distance
-plot.target_distance <- afex_plot_wrapper(model.target_distance, "condition", "group", NULL, l_excess_distance_goal, xlabel=NULL, ymin=-0.25, ymax=0.25)
-## ----
-rm(plot.target_distance)
-
-
 # # --- EXCESS AVERAGE DISTANCE TO TARGET (ALL PROBE TRIALS) --- # 
 # ## ---- model_probe_target_distance
 # model.target_distance <- mixed(excess_target_distance ~ group*session*condition + cov_sex + cov_motor_score + 
@@ -1002,124 +1331,6 @@ rm(plot.target_distance)
 # anova.lme(model.target_distance_hetero, type="marginal")
 # rm(model.target_distance, model.target_distance_outlier, model.target_distance_hetero)
 # ## ----
-
-
-# --- INITIAL ROTATION (ALL PROBE TRIALS) --- # 
-## ---- model_probe_rotation
-model.rotation <- mixed(initial_rotation ~ group*session*condition- + cov_sex + cov_motor_score + 
-                          (session*condition||id), data=data_p, expand_re=T)
-## ----
-
-# random effects
-VarCorr(model.rotation$full_model)
-
-# fixed effects
-model.rotation
-
-## ---- post_hoc_probe_rotation
-emm.init_rot_group_session <- emmeans(model.rotation, ~ group * session, lmer.df="satterthwaite")
-post.init_rot_group_session <- summary(rbind(pairs(emm.init_rot_group_session, simple="group"), pairs(emm.init_rot_group_session, simple="session")), 
-                                       infer=c(T,T), by=NULL, adjust="bonferroni")
-rm(emm.init_rot_group_session)
-
-emm.init_rot_group_condition <- emmeans(model.rotation, ~ group * condition, lmer.df="satterthwaite")
-post.init_rot_group_condition <- summary(rbind(pairs(emm.init_rot_group_condition, simple="group"), pairs(emm.init_rot_group_condition, simple="condition")),
-                                         infer=c(T,T), by=NULL, adjust="bonferroni")
-rm(emm.init_rot_group_condition)
-
-emm.init_rot_session_condition <- emmeans(model.rotation, ~ session * condition, lmer.df="satterthwaite")
-post.init_rot_session_condition <- summary(rbind(pairs(emm.init_rot_session_condition, simple="session"), pairs(emm.init_rot_session_condition, simple="condition")), 
-                                           infer=c(T,T), by=NULL, adjust="bonferroni")
-rm(emm.init_rot_session_condition)
-## ---- 
-rm(post.init_rot_group_session, post.init_rot_group_condition, post.init_rot_session_condition)
-
-## ---- plot_probe_rotation
-plot.rotation <- afex_plot_wrapper(model.rotation, "session", "group", "condition", l_initial_rotation, ymin=0, ymax=6)
-## ---- 
-rm(plot.rotation)
-
-## ---- control_probe_rotation
-# 1) model with outliers removed
-t <- data_p %>% mutate(flag=ifelse(is_outlier(initial_rotation), T, F))
-t <- t %>% filter(flag==F)
-model.rotation_outlier <-  mixed(initial_rotation ~ group*session*condition + cov_sex + cov_motor_score + 
-                                   (session*condition||id), data=t %>% filter(flag==F), expand_re=T)
-rm(t)
-
-
-# 1) model with outliers removed
-model.rotation_h1 <- lme(initial_rotation ~ group*session*condition + cov_sex + cov_motor_score,  
-                         random=list(id=pdDiag(~ session * condition)),
-                         na.action=na.omit, data=data_p, method="ML")
-model.rotation_h2 <- update(model.rotation_h1, weights=varIdent(form=~1 | condition))
-model.rotation_h3 <- update(model.rotation_h1, weights=varComb(varIdent(form=~1 | condition),
-                                                               varIdent(form=~1 | group)))
-model.rotation_h4 <- update(model.rotation_h1, weights=varComb(varIdent(form=~1 | condition),
-                                                               varIdent(form=~1 | group),
-                                                               varIdent(form=~1 | session)))
-anova(model.rotation_h1, model.rotation_h2, model.rotation_h3, model.rotation_h4) # chose model h4
-rm(model.rotation_h1, model.rotation_h2, model.rotation_h3, model.rotation_h4) 
-model.rotation_hetero <-  lme(initial_rotation ~  group*session*condition + cov_sex + cov_motor_score,  
-                              random=list(id=pdDiag(~ session * condition)),
-                              weights=varComb(varIdent(form=~1 | condition),
-                                              varIdent(form=~1 | group),
-                                              varIdent(form=~1 | session)),
-                              na.action=na.omit, data=data_p, method="REML")
-
-# check models 
-plot(model.rotation$full_model, resid(., type="pearson") ~ fitted(.))
-plot(model.rotation$full_model, group ~ residuals(., type="pearson"))
-qqnorm(resid(model.rotation$full_model))
-qqline(resid(model.rotation$full_model))
-
-plot(model.rotation_outlier$full_model, resid(., type="pearson") ~ fitted(.))
-plot(model.rotation_outlier$full_model, group ~ residuals(., type="pearson"))
-qqnorm(resid(model.rotation_outlier$full_model))
-qqline(resid(model.rotation_outlier$full_model))
-
-plot(model.rotation_hetero, resid(., type="pearson") ~ fitted(.))
-plot(model.rotation_hetero, group ~ residuals(., type="pearson"))
-qqnorm(resid(model.rotation_hetero))
-qqline(resid(model.rotation_hetero))
-
-# random effects
-VarCorr(model.rotation$full_model)
-VarCorr(model.rotation_outlier$full_model)
-model.rotation_hetero$modelStruct$reStruct 
-
-# statistics on fixed effects 
-model.rotation
-model.rotation_outlier
-anova.lme(model.rotation_hetero, type="marginal")
-rm(model.rotation, model.rotation_outlier, model.rotation_hetero)
-## ----
-
-
-# --- INITIAL ROTATION VELOCITY (ALL PROBE TRIALS) --- # 
-## ---- model_probe_rotation_velocity
-model.rotation_velocity <- mixed(initial_rotation_velocity ~ group*condition + cov_sex + cov_motor_score +  
-                                   (condition||id), data=data_p1, expand_re=T)
-## ----
-
-# random effects
-VarCorr(model.rotation_velocity$full_model)
-
-# fixed effects 
-model.rotation_velocity
-
-## ---- post_hoc_probe_rotation_velocity
-emm.init_vel_group_condition <- emmeans(model.rotation_velocity, ~ group * condition, lmer.df="satterthwaite")
-post.init_vel_group_condition <- summary(rbind(pairs(emm.init_vel_group_condition, simple="group"), pairs(emm.init_vel_group_condition, simple="condition")),
-                                         infer=c(T,T), by=NULL, adjust="bonferroni")
-rm(emm.init_vel_group_condition)
-## ----
-rm(post.init_vel_group_condition)
-
-## ---- plot_probe_rotation_velocity
-plot.rotation_velocity <- afex_plot_wrapper(model.rotation_velocity, "condition", "group", NULL, l_initial_rotation_velocity, xlabel=NULL, ymin=0, ymax=0.025)
-## ----
-rm(plot.rotation_velocity)
 
 
 # # --- INITIAL ROTATION VELOCITY (ALL PROBE TRIALS) --- # 
@@ -1207,336 +1418,12 @@ rm(plot.rotation_velocity)
 # ## ----
 
 
-# ------------------------------------------------------------------------------
-# ::: SUPPLEMENT ANALYSIS: NAVIGATION BEHAVIOR (PROBE TRIALS) ::: #
-# ------------------------------------------------------------------------------
-
-
-# --- EXCESS PATH EDIT DISTANCE (ALL PROBE TRIALS) --- # 
-## ---- model_probe_path_edit
-model.path_edit <- mixed(excess_path_edit_distance ~ group*session*condition + cov_sex + cov_motor_score + 
-                           (session+condition||id), data=data_p, expand_re=T)
-## ----
-
-# random effects
-VarCorr(model.path_edit$full_model)
-
-# fixed effects 
-model.path_edit
-
-## ---- post_hoc_probe_path_edit
-emm.path_edit_group_session <- emmeans(model.path_edit, ~ group * session, lmer.df="satterthwaite")
-post.path_edit_group_session <- summary(rbind(pairs(emm.path_edit_group_session, simple="group"), pairs(emm.path_edit_group_session, simple="session")), 
-                                        infer=c(T,T), by=NULL, adjust="bonferroni")
-rm(emm.path_edit_group_session)
-
-emm.path_edit_group_condition <- emmeans(model.path_edit, ~ group * condition, lmer.df="satterthwaite")
-post.path_edit_group_condition <- summary(rbind(pairs(emm.path_edit_group_condition, simple="group"), pairs(emm.path_edit_group_condition, simple="condition")), 
-                                          infer=c(T,T), by=NULL, adjust="bonferroni")
-rm(emm.path_edit_group_condition)
-
-emm.path_edit_session_condition <- emmeans(model.path_edit, ~ session * condition, lmer.df="satterthwaite")
-post.path_edit_session_condition <- summary(rbind(pairs(emm.path_edit_session_condition, simple="session"), pairs(emm.path_edit_session_condition, simple="condition")), 
-                                            infer=c(T,T), by=NULL, adjust="bonferroni")
-rm(emm.path_edit_session_condition)
-## ----
-rm(post.path_edit_group_session, post.path_edit_group_condition, post.path_edit_session_condition)
-
-## ---- plot_probe_path_edit
-plot.path_edit <- afex_plot_wrapper(model.path_edit, "session", "group", "condition", "path edit distance", ymin=0, ymax=8)
-## ---- 
-rm(plot.path_edit, model.path_edit)
-
-
-# --- INITIAL ROTATION BY PATH LENGTH (ALL PROBE TRIALS) --- # 
-## ---- model_probe_rotation_path
-model.rotation_path <- mixed(initial_rotation_by_path_length ~ group*session*condition + cov_sex + cov_motor_score + 
-                               (condition||id), data=data_p, expand_re=T)
-## ----
-
-# random effects
-VarCorr(model.rotation_path$full_model)
-
-# fixed effects
-model.rotation_path
-
-## ---- post_hoc_probe_rotation_path
-emm.rot_path_group_condition <- emmeans(model.rotation_path, ~ group * condition, lmer.df="satterthwaite")
-post.rot_path_group_condition <- summary(rbind(pairs(emm.rot_path_group_condition, simple="group"), pairs(emm.rot_path_group_condition, simple="condition")),
-                                         infer=c(T,T), by=NULL, adjust="bonferroni")
-rm(emm.rot_path_group_condition)
-
-emm.rot_path_session_condition <- emmeans(model.rotation_path, ~ session * condition, lmer.df="satterthwaite")
-post.rot_path_session_condition <- summary(rbind(pairs(emm.rot_path_session_condition, simple="session"), pairs(emm.rot_path_session_condition, simple="condition")), 
-                                           infer=c(T,T), by=NULL, adjust="bonferroni")
-rm(emm.rot_path_session_condition)
-## ----
-rm(post.rot_path_group_condition, post.rot_path_session_condition)
-
-## ---- plot_probe_rotation_path
-plot.rotation_path <- afex_plot_wrapper(model.rotation_path, "session", "group", "condition", l_initial_rotation_by_path, ymin=0, ymax=30)
-## ---- 
-rm(plot.rotation_path, model.rotation_path)
-
-
-# initial path
-aov1 <- aov_ez("id", "path_length_in_initial", data_p, between=c("group"), within=c("session", "condition"), fun_aggregate = mean)
-emmeans(aov1, pairwise ~ group, adjust="bonferroni")
-plot.initial_path <- afex_plot_wrapper(aov1, "group", NULL, NULL, "initial path", ymin=0.1, ymax=0.4)
-
-# initial time 
-model.initial_time <- mixed(time_in_initial ~ group*session*condition + (session*condition||id), data=data_p, expand_re=T)
-emmeans(model.initial_time, pairwise ~ group, adjust="bonferroni")
-plot.initial_time <- afex_plot_wrapper(model.initial_time, "group", NULL, NULL, "initial time", ymin=0, ymax=12)
-
-
-# --- TOTAL ROTATION (ALL PROBE TRIALS) --- # 
-## ---- model_probe_total_rotation
-model.rotation <- mixed(rotation ~ group*session*condition + cov_sex + cov_motor_score + 
-                          (session+condition||id), data=data_p, expand_re=T)
-## ----
-
-# random effects
-VarCorr(model.rotation$full_model)
-
-# fixed effects
-model.rotation
-
-## ---- post_hoc_probe_total_rotation
-emm.rot_session_condition <- emmeans(model.rotation, ~ session * condition, lmer.df="satterthwaite")
-post.rot_session_condition <- summary(rbind(pairs(emm.rot_session_condition, simple="session"), pairs(emm.rot_session_condition, simple="condition")), 
-                                      infer=c(T,T), by=NULL, adjust="bonferroni")
-rm(emm.rot_session_condition)
-## ---- 
-rm(post.rot_session_condition)
-
-## ---- plot_probe_total_rotation
-plot.rotation <- afex_plot_wrapper(model.rotation, "session", "group", "condition", l_rotation, ymin=0, ymax=17)
-## ---- 
-rm(plot.rotation, model.rotation)
-
-
-# --- TOTAL ROTATION VELOCITY (ALL PROBE TRIALS) --- # 
-## ---- model_probe_total_rotation_velocity
-model.rotation_velocity <- mixed(rotation_velocity ~ group*session*condition + cov_sex + cov_motor_score + 
-                                   (session+condition||id), data=data_p, expand_re=T)
-## ----
-
-# random effects
-VarCorr(model.rotation_velocity$full_model)
-
-# fixed effects
-model.rotation_velocity
-
-## ---- post_hoc_probe_total_rotation_velocity
-emm.rot_vel_group_condition <- emmeans(model.rotation_velocity, ~ group * condition, lmer.df="satterthwaite")
-post.rot_vel_group_condition <- summary(rbind(pairs(emm.rot_vel_group_condition, simple="group"), pairs(emm.rot_vel_group_condition, simple="condition")), 
-                                        infer=c(T,T), by=NULL, adjust="bonferroni")
-rm(emm.rot_vel_group_condition)
-
-emm.rot_vel_session_condition <- emmeans(model.rotation_velocity, ~ session * condition, lmer.df="satterthwaite")
-post.rot_vel_session_condition <- summary(rbind(pairs(emm.rot_vel_session_condition, simple="session"), pairs(emm.rot_vel_session_condition, simple="condition")), 
-                                          infer=c(T,T), by=NULL, adjust="bonferroni")
-rm(emm.rot_vel_session_condition)
-## ---- 
-rm(post.rot_vel_group_condition, post.rot_vel_session_condition)
-
-## ---- plot_probe_total_rotation_velocity
-plot.rotation_velocity <- afex_plot_wrapper(model.rotation_velocity, "session", "group", "condition", l_rotation_velocity, ymin=0, ymax=0.03)
-## ---- 
-rm(plot.rotation_velocity, model.rotation_velocity)
-
-
-# --- TOTAL ROTATION BY PATH (ALL PROBE TRIALS) --- # 
-## ---- model_probe_total_rotation_path
-model.rotation_path <- mixed(rotation_by_path_length ~ group*session*condition + cov_sex + cov_motor_score + 
-                               (condition||id), data=data_p, expand_re=T)
-## ----
-
-# random effects
-VarCorr(model.rotation_path$full_model)
-
-# fixed effects
-model.rotation_path
-
-## ---- post_hoc_probe_total_rotation_path
-emm.rot_path_group_session <- emmeans(model.rotation_path, ~ group * session, lmer.df="satterthwaite")
-post.rot_path_group_session <- summary(rbind(pairs(emm.rot_path_group_session, simple="group"), pairs(emm.rot_path_group_session, simple="session")), 
-                                       infer=c(T,T), by=NULL, adjust="bonferroni")
-rm(emm.rot_path_group_session)
-
-emm.rot_path_group_condition <- emmeans(model.rotation_path, ~ group * condition, lmer.df="satterthwaite")
-post.rot_path_group_condition <- summary(rbind(pairs(emm.rot_path_group_condition, simple="group"), pairs(emm.rot_path_group_condition, simple="condition")), 
-                                         infer=c(T,T), by=NULL, adjust="bonferroni")
-rm(emm.rot_path_group_condition)
-
-emm.rot_path_session_condition <- emmeans(model.rotation_path, ~ session * condition, lmer.df="satterthwaite")
-post.rot_path_session_condition <- summary(rbind(pairs(emm.rot_path_session_condition, simple="session"), pairs(emm.rot_path_session_condition, simple="condition")), 
-                                           infer=c(T,T), by=NULL, adjust="bonferroni")
-rm(emm.rot_path_session_condition)
-## ---- 
-rm(post.rot_path_group_session, post.rot_path_group_condition, post.rot_path_session_condition)
-
-## ---- plot_probe_total_rotation_path
-plot.rotation_path <- afex_plot_wrapper(model.rotation_path, "session", "group", "condition", l_rotation_by_path, ymin=0, ymax=18)
-## ---- 
-rm(plot.rotation_path, model.rotation_path)
-
-
-# ------------------------------------------------------------------------------
-# ::: SUPPLEMENT ANALYSIS: NAVIGATION BEHAVIOR (LEARNING TRIALS) ::: #
-# ------------------------------------------------------------------------------
-
-# --- TIME (LEARNING TRIALS) --- # 
-## ---- model_learn_time
-model.time_learn <- mixed(time ~ group*trial_in_block + cov_sex + cov_motor_score + 
-                            (1|id), data=data_l, expand_re=T)
-## ----
-
-# random effects
-VarCorr(model.time_learn$full_model)
-
-# fixed effects
-model.time_learn
-
-## ---- post_hoc_learn_time 
-post.learn_time_group <- emmeans(model.time_learn, pairwise ~ group, lmer.df="satterthwaite", adjust="bonferroni")$contrasts
-
-post.learn_time_trial <- emmeans(model.time_learn, pairwise ~ trial_in_block, lmer.df="satterthwaite", adjust="bonferroni")$contrasts
-## ----
-rm(post.learn_time_group, post.learn_time_trial)
-
-## ---- plot_learn_time
-plot.time_learn <- afex_plot_wrapper(model.time_learn, "trial_in_block", "group", NULL, l_time, xlabel=l_trial_in_block, ymin=0, ymax=40)
-## ----
-rm(plot.time_learn, model.time_learn)
-
-
-# --- EXCESS PATH LENGTH TO CHOSEN TARGET (LEARNING TRIALS) --- # 
-## ---- model_learn_path
-model.path_learn <- mixed(excess_path_length ~ group*trial_in_block + cov_sex + cov_motor_score + 
-                            (1|id), data=data_l, expand_re=T)
-## ----
-
-# random effects
-VarCorr(model.path_learn$full_model)
-
-# fixed effects
-model.path_learn
-
-## ---- post_hoc_learn_path
-post.learn_path_group <- emmeans(model.path_learn, pairwise ~ group, lmer.df="satterthwaite", adjust="bonferroni")$contrasts
-
-post.learn_path_trial <- emmeans(model.path_learn, pairwise ~ trial_in_block, lmer.df="satterthwaite", adjust="bonferroni")$contrasts
-## ----
-rm(post.learn_path_group, post.learn_path_trial)
-
-## ---- plot_learn_path
-plot.path_learn <- afex_plot_wrapper(model.path_learn, "trial_in_block", "group", NULL, l_excess_path_length, xlabel=l_trial_in_block)
-## ----
-rm(plot.path_learn, model.path_learn)
-
-
-# --- EXCESS AVERAGE DISTANCE TO TARGET (LEARNING TRIALS) --- # 
-## ---- model_learn_target_distance
-model.target_distance_learn <- mixed(excess_target_distance ~ group*trial_in_block + cov_sex + cov_motor_score + 
-                                 (1|id), data=data_l, expand_re=T)
-## ----
-
-# random effects
-VarCorr(model.target_distance_learn$full_model)
-
-# fixed effects
-model.target_distance_learn
-
-## ---- post_hoc_learn_target_distance 
-post.learn_distance_group <- emmeans(model.target_distance_learn, pairwise ~ group, lmer.df="satterthwaite", adjust="bonferroni")$contrasts
-
-post.learn_distance_trial <- emmeans(model.target_distance_learn, pairwise ~ trial_in_block, lmer.df="satterthwaite", adjust="bonferroni")$contrasts
-## ----
-rm(post.learn_distance_group, post.learn_distance_trial)
-
-## ---- plot_learn_target_distance
-plot.target_distance_learn <- afex_plot_wrapper(model.target_distance_learn, "trial_in_block", "group", NULL, l_excess_distance_goal, xlabel=l_trial_in_block, ymin=-0.15, ymax=0.15)
-## ----
-rm(plot.target_distance_learn, model.target_distance_learn)
-
-
-# --- INITIAL ROTATION (LEARNING TRIALS) --- # 
-## ---- model_learn_rotation
-model.rotation_learn <- mixed(initial_rotation ~ group*trial_in_block + cov_sex + cov_motor_score + 
-                                        (1|id), data=data_l, expand_re=T)
-## ----
-
-# random effects
-VarCorr(model.rotation_learn$full_model)
-
-# fixed effects
-model.rotation_learn
-
-## ---- post_hoc_learn_rotation
-post.learn_rotation_group_trial <- pairs(emmeans(model.rotation_learn, ~ group*trial_in_block), 
-                                         interaction=c("pairwise", "poly"), max.degree=2)
-## ----
-rm(post.learn_rotation_group_trial)
-
-## ---- plot_learn_rotation
-plot.rotation_learn <- afex_plot_wrapper(model.rotation_learn, "trial_in_block", "group", NULL, l_initial_rotation, xlabel=l_trial_in_block, ymin=0, ymax=3)
-## ----
-rm(plot.rotation_learn, model.rotation_learn)
-
-
-# --- INITIAL ROTATION VELOCITY (LEARNING TRIALS) --- # 
-## ---- model_learn_rotation_velocity
-model.rotation_velocity_learn <- mixed(initial_rotation_velocity ~ group*trial_in_block + cov_sex + cov_motor_score + 
-                                         (1|id), data=data_l, expand_re=T)
-## ----
-
-# random effects
-VarCorr(model.rotation_velocity_learn$full_model)
-
-# fixed effects
-model.rotation_velocity_learn
-
-## ---- post_hoc_learn_rotation_velocity
-# all ns
-## ----
-
-## ---- plot_learn_rotation_velocity
-plot.rotation_velocity_learn <- afex_plot_wrapper(model.rotation_velocity_learn, "trial_in_block", "group", NULL, l_initial_rotation_velocity, xlabel=l_trial_in_block, ymin=0, ymax=0.025)
-## ----
-rm(plot.rotation_velocity_learn, model.rotation_velocity_learn)
-
-
-# --- INITIAL ROTATION BY PATH LENGTH (LEARNING TRIALS) --- # 
-## ---- model_learn_rotation_path
-# note: random effects structure was determined according to Bates (2015) & Matuschek et al. (2017) 
-model.rotation_path_learn <- mixed(initial_rotation_by_path_length ~ group*trial_in_block + cov_sex + cov_motor_score + 
-                                     (1|id), data=data_l, expand_re=T)
-## ----
-
-# random effects
-VarCorr(model.rotation_path_learn$full_model)
-
-# fixed effects
-model.rotation_path_learn
-
-## ---- post_hoc_learn_rotation_path
-pairs(emmeans(model.rotation_path_learn, ~ group*trial_in_block), interaction=c("pairwise", "poly"))
-## ----
-
-## ---- plot_learn_rotation_path
-plot.rotation_path_learn <- afex_plot_wrapper(model.rotation_path_learn, "trial_in_block", "group", NULL, l_rotation_by_path, xlabel=l_trial_in_block, ymin=0, ymax=10)
-## ----
-rm(plot.rotation_path_learn, model.rotation_path_learn)
-
-
 # ############################################################################ #
 # ############################################################################ #
 
 
 # ------------------------------------------------------------------------------
-# ::: SUPPLEMENT ANALYSIS: CORRELATIONS ::: #
+# ::: SUPPLEMENT: CORRELATION ANALYSIS ::: #
 # ------------------------------------------------------------------------------
 
 ## ---- corr_memory
@@ -1611,12 +1498,13 @@ ggplot(temp, aes(x=age, y=memory_score, color=condition)) +
   labs(x="age", y="memory score")
 ## ----
 
+
 # ############################################################################ #
 # ############################################################################ #
 
 
 # ------------------------------------------------------------------------------
-# ::: SUPPLEMENT ANALYSIS: MOTOR CONTROL TASK ::: #
+# ::: SUPPLEMENT: PRACTISE - MOTOR CONTROL TASK ::: #
 # ------------------------------------------------------------------------------
 
 ## ---- model_motor_control
@@ -1632,85 +1520,3 @@ post.motor_path <- emmeans(model.motor_path, pairwise ~ group, adjust="bonferron
 model.motor_rotation <- aov_ez("id", "rotation", practise, between=c("group"))
 post.motor_rotation <- emmeans(model.motor_rotation, pairwise ~ group, adjust="bonferroni")$contrasts
 ## ---- 
-
-
-# ############################################################################ #
-# ############################################################################ #
-
-
-# ------------------------------------------------------------------------------
-# ::: SUPPLEMENT ANALYSIS: SEARcH STRATEGIES ::: #
-# ------------------------------------------------------------------------------
-
-# ## ---- stats_probe_path_strategy
-# table(data_p$search_strategy, data_p$group)
-# da1 <- data_p %>% filter(condition=="allo_ret", session==1)
-# table(da1$search_strategy, da1$group)
-# da2 <- data_p %>% filter(condition=="allo_ret", session==2)
-# table(da2$search_strategy, da2$group)
-# de1 <- data_p %>% filter(condition=="ego_ret", session==1)
-# table(de1$search_strategy, de1$group)
-# de2 <- data_p %>% filter(condition=="ego_ret", session==2)
-# table(de2$search_strategy, de2$group)
-# 
-# # discANOVA from WRS2: tests hypothesis that independent groups have identical multinomial distributions. 
-# discANOVA(search_strategy ~ group, data=data_p, nboot=500) 
-# discmcp(search_strategy ~ group, data=data_p, alpha=0.05, nboot=2000)
-# 
-# discmcp(search_strategy ~ group, data=da1, alpha=0.05, nboot=2000)
-# discmcp(search_strategy ~ group, data=da2, alpha=0.05, nboot=2000)
-# discmcp(search_strategy ~ group, data=de1, alpha=0.05, nboot=2000)
-# discmcp(search_strategy ~ group, data=de2, alpha=0.05, nboot=2000)
-# ## ---- 
-# # helper plots
-# t <- data_p %>% group_by(group, session, condition) %>% count(search_strategy) %>% mutate(percent=n/sum(n))
-# ggplot(t, aes(x=group, y=percent, fill=search_strategy)) + geom_col(position=position_stack()) + facet_wrap(~condition + session, nrow=1)
-# rm(t)
-
-
-# ------------------------------------------------------------------------------
-# ::: ANALYSIS: ANOVA ON PLSC LATENT PROFILE SCORE::: #
-# ------------------------------------------------------------------------------
-
-file_plsc_allo <-"../WP10_data/WP10_results/PLSC_LP_allo_2.txt"
-plsc_allo <- read.table(file_plsc_allo, sep=",", header=T)
-rm(file_plsc_allo)
-
-model.plsc_allo <- aov_ez("id", "lp", plsc_allo, between=c("group"))
-post.plsc_allo <- emmeans(model.plsc_allo, pairwise ~ group, adjust="bonferroni")$contrasts
-cor.test(plsc_allo$lp, plsc_allo$ms)
-
-ggplot(plsc_allo, aes(x=lp, y=ms, color=factor(group))) + 
-  geom_point() + 
-  geom_smooth(method=lm, se=FALSE, aes(colour=NULL), color="grey") + 
-  scale_color_manual(values=group_colors, labels=c("6-8yo","9-11yo","adults")) +
-  theme_bw(base_size=13) + 
-  theme(legend.position="top", legend.justification=c(0,0),
-        legend.title=element_blank(),
-        panel.grid=element_blank(),
-        strip.background=element_rect(color=NA, fill=NA)) +
-  labs(x="navigation score", 
-       y="allocentric score")
-ggsave("plsc_allo2.jpeg", width=4, height=3.5, dpi=600)
-
-
-file_plsc_ego <-"../WP10_data/WP10_results/PLSC_LP_ego_2.txt"
-plsc_ego <- read.table(file_plsc_ego, sep=",", header=T)
-rm(file_plsc_ego)
-
-model.plsc_ego <- aov_ez("id", "lp", plsc_ego, between=c("group"))
-post.plsc_ego <- emmeans(model.plsc_ego, pairwise ~ group, adjust="bonferroni")$contrasts
-cor.test(plsc_ego$lp, plsc_ego$ms)
-
-ggplot(plsc_ego, aes(x=lp, y=ms, color=factor(group))) + 
-  geom_point() + 
-  geom_smooth(method=lm, se=FALSE, aes(colour=NULL), color="grey") + 
-  scale_color_manual(values=group_colors, labels=c("6-8yo","9-11yo","adults")) +
-  theme_bw(base_size=13) + 
-  theme(legend.position="top", legend.justification=c(0,0),
-        legend.title=element_blank(),
-        panel.grid=element_blank(),
-        strip.background=element_rect(color=NA, fill=NA)) +
-  labs(x="navigation score", 
-       y="egocentric score")
-ggsave("plsc_ego.jpeg", width=4, height=3.5, dpi=600)

@@ -22,10 +22,17 @@ library(R.matlab)
 # ::: STARMAZE NAVIGATION DATA ::: #
 # ------------------------------------------------------------------------------
 
-# read-in data 
+# read-in navigation data 
 date = readline(prompt = "Please enter the date string of the result file ")
 file_path <- paste("../WP10_data/WP10_results/wp10_navigation_data_", date, ".xlsx", sep="")
-sm_data <- read_xlsx(file_path, col_names = T, na = "999")
+sm_data <- read_xlsx(file_path, col_names=T, na="999")
+
+# read-in covariate data 
+file_name <- "../WP10_data/WP10_results/covariates_starmaze.xlsx"
+cov <- read_xlsx(file_name, col_names=T, na="999") %>% 
+  select(-sex, -group) %>% 
+  mutate_all(as.numeric) %>% 
+  rename(IQ=GGX_T, fam_income=income)
 
 
 # tidy data 
@@ -36,7 +43,8 @@ sm_data <- sm_data %>%
          condition=factor(condition, levels=c("main_learn", "main_ret", "ego_ret", "allo_ret", "practise")),
          condition2=factor(case_when(condition %in% c("allo_ret", "ego_ret") ~ "learn", condition=="main_learn" ~ "probe", T ~ "other")),
          obj_at_chosen_loc=factor(obj_at_chosen_loc, levels=c("01-Fussball", "02-Globus", "03-Geige", "04-Stuhl")),
-         search_strategy=factor(search_strategy, levels=c("direct","detour","reorient")))
+         search_strategy=factor(search_strategy, levels=c("direct","detour","reorient"))) %>% 
+  left_join(cov, by="id")
 
 assign_trial <- function(i, s, b, c, t){
   temp <- sm_data %>%
