@@ -729,19 +729,19 @@ rm(model.path_learn, R2, apa_lmm.learn_path, apa_post.learn_path_group, apa_post
 
 ### **Excess distance to goal (training trials)**
 
-```{r, model_learn_target_distance }
+```{r, model_learn_distance }
 ```
 
-```{r, post_hoc_learn_target_distance, include=F}
+```{r, post_hoc_learn_distance, include=F}
 ```
 
-```{r, plot_learn_target_distance, include=F}
+```{r, plot_learn_distance, include=F}
 ```
 
-```{r apa_learn_target_distance, include=F}
-R2 <- r2beta(model.target_distance_learn$full_model, method='nsj', partial=F) %>% mutate_all(apa_num)
+```{r apa_learn__distance, include=F}
+R2 <- r2beta(model.distance_learn$full_model, method='nsj', partial=F) %>% mutate_all(apa_num)
 
-apa_lmm.learn_distance <- apa_print(model.target_distance_learn)
+apa_lmm.learn_distance <- apa_print(model.distance_learn)
 
 apa_post.learn_distance_group <- post.learn_distance_group %>% apa_print() %>% bonferroni_fix()
 
@@ -762,7 +762,7 @@ apa_table(
 (ref:l-ed-caption-r0) Random effects for excess distance to goal in training.
 
 ```{r table-learn-excess-distance-r0, echo=F}
-apa_random_table(VarCorr(model.target_distance_learn$full_model)) %>% 
+apa_random_table(VarCorr(model.distance_learn$full_model)) %>% 
   knitr::kable(
     caption="(ref:l-ed-caption-r0)")
 ```
@@ -773,7 +773,7 @@ There was a main effect of *group* (`r apa_lmm.learn_distance$statistic$group`),
 (Table\ \@ref(tab:table-learn-excess-distance-f0))
 
 ```{r, include=F}
-rm(model.target_distance_learn, R2, apa_lmm.learn_distance, apa_post.learn_distance_group, apa_post.learn_distance_trial)
+rm(model.distance_learn, R2, apa_lmm.learn_distance, apa_post.learn_distance_group, apa_post.learn_distance_trial)
 ```
 
 ### **Initial rotation velocity (training trials)**
@@ -823,12 +823,12 @@ rm(model.rotation_velocity_learn, R2, apa_lmm.learn_rotation_velocity)
 
 plot.time_learn + 
   plot.path_learn + 
-  plot.target_distance_learn + 
+  plot.distance_learn + 
   plot.rotation_velocity_learn + 
   plot_layout(nrow=2, guides="collect") & 
   guides(fill=F, shape=F) & theme(legend.position="top", legend.justification=c(-0.05,0))
 
-rm(plot.time_learn, plot.path_learn,plot.target_distance_learn, plot.rotation_velocity_learn)
+rm(plot.time_learn, plot.path_learn,plot.distance_learn, plot.rotation_velocity_learn)
 ```
 
 \newpage 

@@ -94,6 +94,12 @@ data_p1 <- data %>%
             ~ .x - mean(.x, na.rm=T)) %>% 
   droplevels()
 
+data_p2 <- data %>% 
+  filter(session==2, condition %in% c("allo_ret", "ego_ret")) %>%
+  mutate_at(vars(all_of(cov_names)), 
+            ~ .x - mean(.x, na.rm=T)) %>% 
+  droplevels()
+
 well_learned <- data %>% 
   filter(condition %in% c("allo_ret", "ego_ret")) %>%
   select(id, group, session, condition, goal, correct_final_alley) %>% 
@@ -135,10 +141,8 @@ l_excess_path_length <- "excess path length"
 l_excess_distance_goal <- "excess distance to goal"
 l_rotation <- "sum of rotation"
 l_rotation_velocity <- "rotation velocity"
-l_rotation_by_path <- "sum of rotation / path length"
 l_initial_rotation <- "sum of initial rotation"
 l_initial_rotation_velocity <- "initial rotation velocity"
-l_initial_rotation_by_path <- "sum of initial rotation / path length"
 
 # colors
 # scales::show_col()
@@ -807,6 +811,112 @@ ggsave("plsc_ego.jpeg", width=4, height=3.5, dpi=600)
 # ############################################################################ #
 # ############################################################################ #
 
+# ------------------------------------------------------------------------------
+# ::: SUPPLEMENT: CONSOLIDATION ANALYSIS - NAVIGATION BEHAVIOR (PROBE TRIALS) ::: #
+# ------------------------------------------------------------------------------
+
+# --- TIME (SESSION 2 PROBE TRIALS) --- #
+## ---- model_probe_time_2
+model.time <- mixed(time ~ group*condition + cov_sex + cov_motor_score +
+                      (1|id), data=data_p2, expand_re=T)
+## ----
+
+# random effects
+VarCorr(model.time$full_model)
+
+# fixed effects
+model.time
+
+## ---- post_hoc_probe_time_2
+emm.time_group_condition <-  emmeans(model.time, ~ group * condition, lmer.df="satterthwaite")
+post.time_group_condition <- summary(rbind(pairs(emm.time_group_condition, simple="group"), pairs(emm.time_group_condition, simple="condition")),
+                                     infer=c(T,T), by=NULL, adjust="bonferroni")
+rm(emm.time_group_condition)
+## ----
+rm(post.time_group_condition)
+
+## ---- plot_probe_time_2
+plot.time <- afex_plot_wrapper(model.time, "condition", "group", NULL, l_time, xlabel=NULL, ymin=0, ymax=40)
+## ----
+rm(plot.time, model.time)
+
+
+# --- EXCESS PATH LENGTH TO CHOSEN TARGET (ALL PROBE TRIALS) --- #
+## ---- model_probe_path_2
+model.path <- mixed(excess_path_length ~ group*condition + cov_sex + cov_motor_score +
+                      (condition||id), data=data_p2, expand_re=T)
+## ----
+
+# random effects
+VarCorr(model.path$full_model)
+
+# fixed effects
+model.path
+
+## ---- post_hoc_probe_path_2
+emm.path_group_condition <- emmeans(model.path, ~ group * condition, lmer.df="satterthwaite")
+post.path_group_condition <- summary(rbind(pairs(emm.path_group_condition, simple="group"), pairs(emm.path_group_condition, simple="condition")),
+                                     infer=c(T,T), by=NULL, adjust="bonferroni")
+rm(emm.path_group_condition)
+## ----
+rm(post.path_group_condition)
+
+## ---- plot_probe_path_2
+plot.path <- afex_plot_wrapper(model.path, "condition", "group", NULL, l_excess_path_length, xlabel=NULL, ymin=0, ymax=1.5)
+## ----
+rm(plot.path, model.path)
+
+
+# --- EXCESS AVERAGE DISTANCE TO TARGET (ALL PROBE TRIALS) --- #
+## ---- model_probe_distance_2
+model.distance <- mixed(excess_target_distance ~ group*condition + cov_sex + cov_motor_score +
+                          (condition|id), data=data_p2, expand_re=T)
+## ----
+
+# random effects
+VarCorr(model.distance$full_model)
+
+# fixed effects
+model.distance
+
+## ---- post_hoc_probe_distance_2
+post.distance_group <- emmeans(model.distance, pairwise ~ condition, lmer.df="satterthwaite", adjust="bonferroni")$contrasts
+
+post.distance_condition <- emmeans(model.distance, pairwise ~ condition, lmer.df="satterthwaite")$contrasts
+## ----
+rm(post.distance_group, post.distance_condition)
+
+## ---- plot_probe_distance_2
+plot.distance <- afex_plot_wrapper(model.distance, "condition", "group", NULL, l_excess_distance_goal, xlabel=NULL, ymin=-0.25, ymax=0.25)
+## ----
+rm(plot.distance, model.distance)
+
+
+# --- INITIAL ROTATION VELOCITY (ALL PROBE TRIALS) --- #
+## ---- model_probe_rotation_velocity_2
+model.rotation_velocity <- mixed(initial_rotation_velocity ~ group*condition + cov_sex + cov_motor_score +
+                                   (condition||id), data=data_p2, expand_re=T)
+## ----
+
+# random effects
+VarCorr(model.rotation_velocity$full_model)
+
+# fixed effects
+model.rotation_velocity
+
+## ---- post_hoc_probe_rotation_velocity_2
+emm.init_vel_group_condition <- emmeans(model.rotation_velocity, ~ group * condition, lmer.df="satterthwaite")
+post.init_vel_group_condition <- summary(rbind(pairs(emm.init_vel_group_condition, simple="group"), pairs(emm.init_vel_group_condition, simple="condition")),
+                                         infer=c(T,T), by=NULL, adjust="bonferroni")
+rm(emm.init_vel_group_condition)
+## ----
+rm(post.init_vel_group_condition)
+
+## ---- plot_probe_rotation_velocity_2
+plot.rotation_velocity <- afex_plot_wrapper(model.rotation_velocity, "condition", "group", NULL, l_initial_rotation_velocity, xlabel=NULL, ymin=0, ymax=0.025)
+## ----
+rm(plot.rotation_velocity, model.rotation_velocity)
+
 
 # ------------------------------------------------------------------------------
 # ::: SUPPLEMENT: LEARNING ANALYSIS - NAVIGATION BEHAVIOR (PROBE TRIALS) ::: #
@@ -1016,28 +1126,28 @@ rm(plot.path_learn, model.path_learn)
 
 
 # --- EXCESS AVERAGE DISTANCE TO TARGET (LEARNING TRIALS) --- # 
-## ---- model_learn_target_distance
-model.target_distance_learn <- mixed(excess_target_distance ~ group*trial_in_block + cov_sex + cov_motor_score + 
+## ---- model_learn_distance
+model.distance_learn <- mixed(excess_target_distance ~ group*trial_in_block + cov_sex + cov_motor_score + 
                                        (1|id), data=data_l, expand_re=T)
 ## ----
 
 # random effects
-VarCorr(model.target_distance_learn$full_model)
+VarCorr(model.distance_learn$full_model)
 
 # fixed effects
-model.target_distance_learn
+model.distance_learn
 
-## ---- post_hoc_learn_target_distance 
-post.learn_distance_group <- emmeans(model.target_distance_learn, pairwise ~ group, lmer.df="satterthwaite", adjust="bonferroni")$contrasts
+## ---- post_hoc_learn_distance 
+post.learn_distance_group <- emmeans(model.distance_learn, pairwise ~ group, lmer.df="satterthwaite", adjust="bonferroni")$contrasts
 
-post.learn_distance_trial <- emmeans(model.target_distance_learn, pairwise ~ trial_in_block, lmer.df="satterthwaite", adjust="bonferroni")$contrasts
+post.learn_distance_trial <- emmeans(model.distance_learn, pairwise ~ trial_in_block, lmer.df="satterthwaite", adjust="bonferroni")$contrasts
 ## ----
 rm(post.learn_distance_group, post.learn_distance_trial)
 
-## ---- plot_learn_target_distance
-plot.target_distance_learn <- afex_plot_wrapper(model.target_distance_learn, "trial_in_block", "group", NULL, l_excess_distance_goal, xlabel=l_trial_in_block, ymin=-0.15, ymax=0.15)
+## ---- plot_learn_distance
+plot.distance_learn <- afex_plot_wrapper(model.distance_learn, "trial_in_block", "group", NULL, l_excess_distance_goal, xlabel=l_trial_in_block, ymin=-0.15, ymax=0.15)
 ## ----
-rm(plot.target_distance_learn, model.target_distance_learn)
+rm(plot.distance_learn, model.distance_learn)
 
 
 # --- INITIAL ROTATION VELOCITY (LEARNING TRIALS) --- # 
@@ -1060,362 +1170,6 @@ model.rotation_velocity_learn
 plot.rotation_velocity_learn <- afex_plot_wrapper(model.rotation_velocity_learn, "trial_in_block", "group", NULL, l_initial_rotation_velocity, xlabel=l_trial_in_block, ymin=0, ymax=0.025)
 ## ----
 rm(plot.rotation_velocity_learn, model.rotation_velocity_learn)
-
-
-# ------------------------------------------------------------------------------
-# ::: SUPPLEMENT: FULL DATA ANALYSIS - NAVIGATION BEHAVIOR (PROBE TRIALS) ::: #
-# ------------------------------------------------------------------------------
-
-# # --- TIME (ALL PROBE TRIALS) --- # 
-# ## ---- model_probe_time
-# model.time <- mixed(time ~ group*session*condition + cov_sex + cov_motor_score + 
-#                       (session+condition|id), data=data_p, expand_re=T)
-# ## ----
-# 
-# # random effects
-# VarCorr(model.time$full_model)
-# 
-# # fixed effects 
-# model.time
-# 
-# ## ---- post_hoc_probe_time
-# emm.time_group_session <- emmeans(model.time, ~ group * session, lmer.df="satterthwaite")
-# post.time_group_session <- summary(rbind(pairs(emm.time_group_session, simple="group"), pairs(emm.time_group_session, simple="session")),
-#                                          infer=c(T,T), by=NULL, adjust="bonferroni")
-# # post.time_group_session <- summary(rbind(pairs(emm.time_group_session, simple="group"), pairs(emm.time_group_session, simple="session"), 
-# #                                          pairs(emm.time_group_session, interaction="pairwise")), 
-# #                                    infer=c(T,T), by=NULL, adjust="bonferroni")
-# rm(emm.time_group_session)
-# 
-# emm.time_group_condition <-  emmeans(model.time, ~ group * condition, lmer.df="satterthwaite")
-# post.time_group_condition <- summary(rbind(pairs(emm.time_group_condition, simple="group"), pairs(emm.time_group_condition, simple="condition")), 
-#                                      infer=c(T,T), by=NULL, adjust="bonferroni")
-# rm(emm.time_group_condition)
-# 
-# emm.time_session_condition <-  emmeans(model.time, ~ session * condition, lmer.df="satterthwaite")
-# post.time_session_condition <- summary(rbind(pairs(emm.time_session_condition, simple="session"), pairs(emm.time_session_condition, simple="condition")),  
-#                                       infer=c(T,T), by=NULL, adjust="bonferroni")
-# rm(emm.time_session_condition)
-# ## ----
-# rm(post.time_group_session, post.time_group_condition, post.time_session_condition)
-# 
-# ## ---- plot_probe_time 
-# plot.time <- afex_plot_wrapper(model.time, "session", "group", "condition", l_time, ymin=0, ymax=40)
-# ## ----
-# rm(plot.time)
-# 
-# ## ---- control_probe_time
-# # 1) model with outliers removed
-# t <- data_p %>% mutate(flag=ifelse(is_outlier(time), T, F))
-# t <- t %>% filter(flag==F)
-# model.time_outlier <- mixed(time ~ group*session*condition + cov_sex + cov_motor_score + 
-#                               (condition+session|id), data=t, expand_re=T)
-# rm(t)
-# 
-# # 2) model with heteroscedastic variances
-# model.time_h1 <- lme(time ~ group*session*condition + cov_sex + cov_motor_score,  
-#                      random=list(id=pdDiag(~ condition + session)), data=data_p, method="ML", na.action=na.omit)
-# model.time_h2 <- update(model.time_h1, weights=varIdent(form=~1 | group))
-# model.time_h3 <- update(model.time_h1, weights=varComb(varIdent(form=~1 | group),
-#                                                        varIdent(form=~1 | condition)))
-# model.time_h4 <- update(model.time_h1, weights=varComb(varIdent(form=~1 | group),
-#                                                        varIdent(form=~1 | condition),
-#                                                        varIdent(form=~1 | session)))
-# anova(model.time_h1, model.time_h2, model.time_h3, model.time_h4) # chose model h4
-# rm(model.time_h1, model.time_h2, model.time_h3, model.time_h4)
-# model.time_hetero <- lme(time ~ group*session*condition  + cov_sex + cov_motor_score, 
-#                          random=list(id=pdDiag(~ condition + session)),
-#                          weights=varComb(varIdent(form=~1 | group),
-#                                          varIdent(form=~1 | condition),
-#                                          varIdent(form=~1 | session)),
-#                          na.action=na.omit, data=data_p, method="REML")
-# 
-# # check models 
-# plot(model.time$full_model, resid(., type="pearson") ~ fitted(.))
-# plot(model.time$full_model, group ~ residuals(., type="pearson"))
-# qqnorm(resid(model.time$full_model))
-# qqline(resid(model.time$full_model))
-# 
-# plot(model.time_outlier$full_model, resid(., type="pearson") ~ fitted(.))
-# plot(model.time_outlier$full_model, group ~ residuals(., type="pearson"))
-# qqnorm(resid(model.time_outlier$full_model))
-# qqline(resid(model.time_outlier$full_model))
-# 
-# plot(model.time_hetero, resid(., type="pearson") ~ fitted(.))
-# plot(model.time_hetero, group ~ residuals(., type="pearson"))
-# qqnorm(resid(model.time_hetero))
-# qqline(resid(model.time_hetero))
-# 
-# # random effects
-# VarCorr(model.time$full_model)
-# VarCorr(model.time_outlier$full_model)
-# model.time_hetero$modelStruct$reStruct 
-# 
-# # statistics on fixed effects 
-# model.time
-# model.time_outlier
-# anova.lme(model.time_hetero, type="marginal")
-# rm(model.time, model.time_outlier, model.time_hetero)
-# ## ----
-
-
-# # --- EXCESS PATH LENGTH TO CHOSEN TARGET (ALL PROBE TRIALS) --- # 
-# ## ---- model_probe_path
-# model.path <- mixed(excess_path_length ~ group*session*condition + cov_sex + cov_motor_score + 
-#                       (session+condition||id), data=data_p, expand_re=T)
-# ## ----
-# 
-# # random effects
-# VarCorr(model.path$full_model)
-# 
-# # fixed effects 
-# model.path
-# 
-# ## ---- post_hoc_probe_path
-# emm.path_group_session <- emmeans(model.path, ~ group * session, lmer.df="satterthwaite")
-# post.path_group_session <- summary(rbind(pairs(emm.path_group_session, simple="group"), pairs(emm.path_group_session, simple="session")), 
-#                                    infer=c(T,T), by=NULL, adjust="bonferroni")
-# rm(emm.path_group_session)
-# 
-# emm.path_group_condition <- emmeans(model.path, ~ group * condition, lmer.df="satterthwaite")
-# post.path_group_condition <- summary(rbind(pairs(emm.path_group_condition, simple="group"), pairs(emm.path_group_condition, simple="condition")),
-#                                      infer=c(T,T), by=NULL, adjust="bonferroni")
-# rm(emm.path_group_condition)
-# 
-# emm.path_session_condition <- emmeans(model.path, ~ session * condition, lmer.df="satterthwaite")
-# post.path_session_condition <- summary(rbind(pairs(emm.path_session_condition, simple="session"), pairs(emm.path_session_condition, simple="condition")), 
-#                                        infer=c(T,T), by=NULL, adjust="bonferroni")
-# rm(emm.path_session_condition)
-# ## ---- 
-# rm(post.path_group_session, post.path_group_condition, post.path_session_condition)
-# 
-# ## ---- plot_probe_path
-# plot.path <- afex_plot_wrapper(model.path, "session", "group", "condition", l_excess_path_length, ymin=0, ymax=1.5)
-# ## ----
-# rm(plot.path)
-# 
-# ## ---- control_probe_path 
-# # 1) model with outliers removed
-# t <- data_p %>% mutate(flag=ifelse(is_outlier(excess_path_length), T, F))
-# t <- t %>% filter(flag==F)
-# model.path_outlier <- mixed(excess_path_length ~ group*session*condition + cov_sex + cov_motor_score +   
-#                               (session+condition||id), data=t, expand_re=T)
-# rm(t)
-# 
-# # 2) model with heteroscedastic variances
-# model.path_h1 <- lme(excess_path_length ~ group*session*condition + cov_sex + cov_motor_score,
-#                      random=list(id=pdDiag(~ session + condition)),
-#                      na.action=na.omit, data=data_p, method="ML")
-# model.path_h2 <- update(model.path_h1, weights=varIdent(form=~1 | group))
-# model.path_h3 <- update(model.path_h1, weights=varComb(varIdent(form=~1 | group),
-#                                                        varIdent(form=~1 | condition)))
-# model.path_h4 <- update(model.path_h1, weights=varComb(varIdent(form=~1 | group),
-#                                                        varIdent(form=~1 | condition),
-#                                                        varIdent(form=~1 | session)))
-# anova(model.path_h1, model.path_h2, model.path_h3, model.path_h4) # chose model h4 
-# rm(model.path_h1, model.path_h2, model.path_h3, model.path_h4)
-# model.path_hetero <- lme(excess_path_length ~ group*session*condition + cov_sex + cov_motor_score,  
-#                          random=list(id=pdDiag(~ session + condition)),
-#                          weights=varComb(varIdent(form=~1 | group),
-#                                          varIdent(form=~1 | condition),
-#                                          varIdent(form=~1 | session)),
-#                          na.action=na.omit, data=data_p, method="REML")
-# 
-# # check models 
-# plot(model.path$full_model, resid(., type="pearson") ~ fitted(.))
-# plot(model.path$full_model, group ~ residuals(., type="pearson"))
-# qqnorm(resid(model.path$full_model))
-# qqline(resid(model.path$full_model))
-# 
-# plot(model.path_outlier$full_model, resid(., type="pearson") ~ fitted(.))
-# plot(model.path_outlier$full_model, group ~ residuals(., type="pearson"))
-# qqnorm(resid(model.path_outlier$full_model))
-# qqline(resid(model.path_outlier$full_model))
-# 
-# plot(model.path_hetero, resid(., type="pearson") ~ fitted(.))
-# plot(model.path_hetero, group ~ residuals(., type="pearson"))
-# qqnorm(resid(model.path_hetero))
-# qqline(resid(model.path_hetero))
-# 
-# # random effects
-# VarCorr(model.path$full_model)
-# VarCorr(model.path_outlier$full_model)
-# model.path_hetero$modelStruct$reStruct 
-# 
-# # statistics on fixed effects 
-# model.path
-# model.path_outlier
-# anova.lme(model.path_hetero, type="marginal")
-# rm(model.path, model.path_outlier, model.path_hetero)
-# ## ----
-
-
-# # --- EXCESS AVERAGE DISTANCE TO TARGET (ALL PROBE TRIALS) --- # 
-# ## ---- model_probe_target_distance
-# model.target_distance <- mixed(excess_target_distance ~ group*session*condition + cov_sex + cov_motor_score + 
-#                                  (session*condition|id), data=data_p, expand_re=T)
-# ## ----
-# 
-# # random effects
-# VarCorr(model.target_distance$full_model)
-# 
-# # fixed effects 
-# model.target_distance
-# 
-# ## ---- post_hoc_probe_target_distance
-# emm.distance_group <- emmeans(model.target_distance, ~ group, lmer.df="satterthwaite")
-# post.distance_group <- pairs(emm.distance_group, adjust="bonferroni")
-# rm(emm.distance_group)
-# 
-# post.distance_session <- emmeans(model.target_distance, pairwise ~ session, lmer.df="satterthwaite")$contrasts
-# 
-# post.distance_condition <- emmeans(model.target_distance, pairwise ~ condition, lmer.df="satterthwaite")$contrasts
-# ## ----
-# rm(post.distance_group, post.distance_session, post.distance_condition)
-# 
-# ## ---- plot_probe_target_distance
-# plot.target_distance <- afex_plot_wrapper(model.target_distance, "session", "group", "condition", l_excess_distance_goal, ymin=-0.25, ymax=0.25)
-# ## ----
-# rm(plot.target_distance)
-# 
-# ## ---- control_probe_target_distance 
-# t <- data_p %>% mutate(flag=ifelse(is_outlier(excess_target_distance), T, F))
-# t <- t %>% filter(flag==F)
-# model.target_distance_outlier <- mixed(excess_target_distance ~ group*session*condition + cov_sex + cov_motor_score + 
-#                                          (session*condition|id), data=t, expand_re=T)
-# rm(t)
-# 
-# # 2) model with heteroscedastic variances
-# model.target_distance_h1 <- lme(excess_target_distance ~ group*session*condition + cov_sex + cov_motor_score,  
-#                                 random=list(id=pdDiag(~ session * condition)),
-#                                 na.action=na.omit, data=data_p, method="ML")
-# model.target_distance_h2 <- update(model.target_distance_h1, weights=varIdent(form=~1 | group))
-# model.target_distance_h3 <- update(model.target_distance_h1, weights=varComb(varIdent(form=~1 | group),
-#                                                                              varIdent(form=~1 | condition)))
-# model.target_distance_h4 <- update(model.target_distance_h1, weights=varComb(varIdent(form=~1 | group),
-#                                                                              varIdent(form=~1 | condition),
-#                                                                              varIdent(form=~1 | session)))
-# anova(model.target_distance_h1, model.target_distance_h2, model.target_distance_h3, model.target_distance_h4) # chose model h4 
-# rm(model.target_distance_h1, model.target_distance_h2, model.target_distance_h3, model.target_distance_h4)
-# model.target_distance_hetero <- lme(excess_target_distance ~ group*session*condition + cov_sex + cov_motor_score, 
-#                                     random=list(id=pdDiag(~ session * condition)),
-#                                     weights=varComb(varIdent(form=~1 | group),
-#                                                     varIdent(form=~1 | condition),
-#                                                     varIdent(form=~1 | session)),
-#                                     na.action=na.omit, data=data_p, method="REML")
-# 
-# # check models 
-# plot(model.target_distance$full_model, resid(., type="pearson") ~ fitted(.))
-# plot(model.target_distance$full_model, group ~ residuals(., type="pearson"))
-# qqnorm(resid(model.target_distance$full_model))
-# qqline(resid(model.target_distance$full_model))
-# 
-# plot(model.target_distance_outlier$full_model, resid(., type="pearson") ~ fitted(.))
-# plot(model.target_distance_outlier$full_model, group ~ residuals(., type="pearson"))
-# qqnorm(resid(model.target_distance_outlier$full_model))
-# qqline(resid(model.target_distance_outlier$full_model))
-# 
-# plot(model.target_distance_hetero, resid(., type="pearson") ~ fitted(.))
-# plot(model.target_distance_hetero, group ~ residuals(., type="pearson"))
-# qqnorm(resid(model.target_distance_hetero))
-# qqline(resid(model.target_distance_hetero))
-# 
-# # random effects
-# VarCorr(model.target_distance$full_model)
-# VarCorr(model.target_distance_outlier$full_model)
-# model.target_distance_hetero$modelStruct$reStruct 
-# 
-# # statistics on fixed effects 
-# model.target_distance
-# model.target_distance_outlier
-# anova.lme(model.target_distance_hetero, type="marginal")
-# rm(model.target_distance, model.target_distance_outlier, model.target_distance_hetero)
-# ## ----
-
-
-# # --- INITIAL ROTATION VELOCITY (ALL PROBE TRIALS) --- # 
-# ## ---- model_probe_rotation_velocity
-# model.rotation_velocity <- mixed(initial_rotation_velocity ~ group*session*condition + cov_sex + cov_motor_score +  
-#                                    (condition||id), data=data_p, expand_re=T)
-# ## ----
-# 
-# # random effects
-# VarCorr(model.rotation_velocity$full_model)
-# 
-# # fixed effects 
-# model.rotation_velocity
-# 
-# ## ---- post_hoc_probe_rotation_velocity
-# emm.init_vel_group_condition <- emmeans(model.rotation_velocity, ~ group * condition, lmer.df="satterthwaite")
-# post.init_vel_group_condition <- summary(rbind(pairs(emm.init_vel_group_condition, simple="group"), pairs(emm.init_vel_group_condition, simple="condition")),
-#                                          infer=c(T,T), by=NULL, adjust="bonferroni")
-# rm(emm.init_vel_group_condition)
-# 
-# emm.init_vel_session_condition <- emmeans(model.rotation_velocity, ~ session * condition, lmer.df="satterthwaite")
-# post.init_vel_session_condition <- summary(rbind(pairs(emm.init_vel_session_condition, simple="session"), pairs(emm.init_vel_session_condition, simple="condition")), 
-#                                            infer=c(T,T), by=NULL, adjust="bonferroni")
-# rm(emm.init_vel_session_condition)
-# ## ----
-# rm(post.init_vel_group_condition, post.init_vel_session_condition)
-# 
-# ## ---- plot_probe_rotation_velocity
-# plot.rotation_velocity <- afex_plot_wrapper(model.rotation_velocity, "session", "group", "condition", l_initial_rotation_velocity, ymin=0, ymax=0.025)
-# ## ----
-# rm(plot.rotation_velocity)
-# 
-# ## ---- control_probe_rotation_velocity
-# t <- data_p %>% mutate(flag=ifelse(is_outlier(initial_rotation_velocity), T, F))
-# t <- t %>% filter(flag==F)
-# model.rotation_velocity_outlier <- mixed(initial_rotation_velocity ~ group*session*condition + cov_sex + cov_motor_score + 
-#                                            (condition||id), data=t, expand_re=T)
-# rm(t)
-# 
-# # 2) model with heteroscedastic variances
-# model.rotation_velocity_h1 <- lme(initial_rotation_velocity ~ group*session*condition + cov_sex + cov_motor_score, 
-#                                   random=list(id=pdDiag(~ condition)),
-#                                   na.action=na.omit, data=data_p, method="ML")
-# model.rotation_velocity_h2 <- update(model.rotation_velocity_h1, weights=varIdent(form=~1 | group))
-# model.rotation_velocity_h3 <- update(model.rotation_velocity_h1, weights=varComb(varIdent(form=~1 | group),
-#                                                                                  varIdent(form=~1 | condition)))
-# model.rotation_velocity_h4 <- update(model.rotation_velocity_h1, weights=varComb(varIdent(form=~1 | group),
-#                                                                                  varIdent(form=~1 | condition),
-#                                                                                  varIdent(form=~1 | session)))
-# anova(model.rotation_velocity_h1, model.rotation_velocity_h2, model.rotation_velocity_h3, model.rotation_velocity_h4) # chose model h4 
-# rm(model.rotation_velocity_h1, model.rotation_velocity_h2, model.rotation_velocity_h3, model.rotation_velocity_h4)
-# model.rotation_velocity_hetero <- lme(initial_rotation_velocity ~ group*session*condition + cov_sex + cov_motor_score,  
-#                                       random=list(id=pdDiag(~ condition)),
-#                                       weights=varComb(varIdent(form=~1 | group),
-#                                                       varIdent(form=~1 | condition),
-#                                                       varIdent(form=~1 | session)),
-#                                       na.action=na.omit, data=data_p, method="REML")
-# 
-# # check models 
-# plot(model.rotation_velocity$full_model, resid(., type="pearson") ~ fitted(.))
-# plot(model.rotation_velocity$full_model, group ~ residuals(., type="pearson"))
-# qqnorm(resid(model.rotation_velocity$full_model))
-# qqline(resid(model.rotation_velocity$full_model))
-# 
-# plot(model.rotation_velocity_outlier$full_model, resid(., type="pearson") ~ fitted(.))
-# plot(model.rotation_velocity_outlier$full_model, group ~ residuals(., type="pearson"))
-# qqnorm(resid(model.rotation_velocity_outlier$full_model))
-# qqline(resid(model.rotation_velocity_outlier$full_model))
-# 
-# plot(model.rotation_velocity_hetero, resid(., type="pearson") ~ fitted(.))
-# plot(model.rotation_velocity_hetero, group ~ residuals(., type="pearson"))
-# qqnorm(resid(model.rotation_velocity_hetero))
-# qqline(resid(model.rotation_velocity_hetero))
-# 
-# # random effects
-# VarCorr(model.rotation_velocity$full_model)
-# VarCorr(model.rotation_velocity_outlier$full_model)
-# model.rotation_velocity_hetero$modelStruct$reStruct 
-# 
-# # statistics on fixed effects 
-# model.rotation_velocity
-# model.rotation_velocity_outlier
-# anova.lme(model.rotation_velocity_hetero, type="marginal")
-# rm(model.rotation_velocity, model.rotation_velocity_outlier, model.rotation_velocity_hetero)
-# ## ----
 
 
 # ############################################################################ #
