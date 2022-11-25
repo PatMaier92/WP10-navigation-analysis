@@ -409,7 +409,7 @@ plot.distance <- afex_plot_wrapper(model.distance, "condition", "group", NULL, l
 rm(plot.distance, model.distance)
 
 
-# --- INITIAL ROTATION VELOCITY (SESSION 1 PROBE TRIALS --- # 
+# --- INITIAL ROTATION VELOCITY (SESSION 1 PROBE TRIALS) --- # 
 ## ---- model_probe_rotation_velocity
 model.rotation_velocity <- mixed(initial_rotation_velocity ~ group*condition + cov_sex + cov_motor_score +  
                                    (condition||id), data=data_p1, expand_re=T)
@@ -810,113 +810,7 @@ ggsave("plsc_ego.jpeg", width=4, height=3.5, dpi=600)
 
 # ############################################################################ #
 # ############################################################################ #
-
-# ------------------------------------------------------------------------------
-# ::: SUPPLEMENT: CONSOLIDATION ANALYSIS - NAVIGATION BEHAVIOR (PROBE TRIALS) ::: #
-# ------------------------------------------------------------------------------
-
-# --- TIME (SESSION 2 PROBE TRIALS) --- #
-## ---- model_probe_time_2
-model.time <- mixed(time ~ group*condition + cov_sex + cov_motor_score +
-                      (1|id), data=data_p2, expand_re=T)
-## ----
-
-# random effects
-VarCorr(model.time$full_model)
-
-# fixed effects
-model.time
-
-## ---- post_hoc_probe_time_2
-emm.time_group_condition <-  emmeans(model.time, ~ group * condition, lmer.df="satterthwaite")
-post.time_group_condition <- summary(rbind(pairs(emm.time_group_condition, simple="group"), pairs(emm.time_group_condition, simple="condition")),
-                                     infer=c(T,T), by=NULL, adjust="bonferroni")
-rm(emm.time_group_condition)
-## ----
-rm(post.time_group_condition)
-
-## ---- plot_probe_time_2
-plot.time <- afex_plot_wrapper(model.time, "condition", "group", NULL, l_time, xlabel=NULL, ymin=0, ymax=40)
-## ----
-rm(plot.time, model.time)
-
-
-# --- EXCESS PATH LENGTH TO CHOSEN TARGET (ALL PROBE TRIALS) --- #
-## ---- model_probe_path_2
-model.path <- mixed(excess_path_length ~ group*condition + cov_sex + cov_motor_score +
-                      (condition||id), data=data_p2, expand_re=T)
-## ----
-
-# random effects
-VarCorr(model.path$full_model)
-
-# fixed effects
-model.path
-
-## ---- post_hoc_probe_path_2
-emm.path_group_condition <- emmeans(model.path, ~ group * condition, lmer.df="satterthwaite")
-post.path_group_condition <- summary(rbind(pairs(emm.path_group_condition, simple="group"), pairs(emm.path_group_condition, simple="condition")),
-                                     infer=c(T,T), by=NULL, adjust="bonferroni")
-rm(emm.path_group_condition)
-## ----
-rm(post.path_group_condition)
-
-## ---- plot_probe_path_2
-plot.path <- afex_plot_wrapper(model.path, "condition", "group", NULL, l_excess_path_length, xlabel=NULL, ymin=0, ymax=1.5)
-## ----
-rm(plot.path, model.path)
-
-
-# --- EXCESS AVERAGE DISTANCE TO TARGET (ALL PROBE TRIALS) --- #
-## ---- model_probe_distance_2
-model.distance <- mixed(excess_target_distance ~ group*condition + cov_sex + cov_motor_score +
-                          (condition|id), data=data_p2, expand_re=T)
-## ----
-
-# random effects
-VarCorr(model.distance$full_model)
-
-# fixed effects
-model.distance
-
-## ---- post_hoc_probe_distance_2
-post.distance_group <- emmeans(model.distance, pairwise ~ condition, lmer.df="satterthwaite", adjust="bonferroni")$contrasts
-
-post.distance_condition <- emmeans(model.distance, pairwise ~ condition, lmer.df="satterthwaite")$contrasts
-## ----
-rm(post.distance_group, post.distance_condition)
-
-## ---- plot_probe_distance_2
-plot.distance <- afex_plot_wrapper(model.distance, "condition", "group", NULL, l_excess_distance_goal, xlabel=NULL, ymin=-0.25, ymax=0.25)
-## ----
-rm(plot.distance, model.distance)
-
-
-# --- INITIAL ROTATION VELOCITY (ALL PROBE TRIALS) --- #
-## ---- model_probe_rotation_velocity_2
-model.rotation_velocity <- mixed(initial_rotation_velocity ~ group*condition + cov_sex + cov_motor_score +
-                                   (condition||id), data=data_p2, expand_re=T)
-## ----
-
-# random effects
-VarCorr(model.rotation_velocity$full_model)
-
-# fixed effects
-model.rotation_velocity
-
-## ---- post_hoc_probe_rotation_velocity_2
-emm.init_vel_group_condition <- emmeans(model.rotation_velocity, ~ group * condition, lmer.df="satterthwaite")
-post.init_vel_group_condition <- summary(rbind(pairs(emm.init_vel_group_condition, simple="group"), pairs(emm.init_vel_group_condition, simple="condition")),
-                                         infer=c(T,T), by=NULL, adjust="bonferroni")
-rm(emm.init_vel_group_condition)
-## ----
-rm(post.init_vel_group_condition)
-
-## ---- plot_probe_rotation_velocity_2
-plot.rotation_velocity <- afex_plot_wrapper(model.rotation_velocity, "condition", "group", NULL, l_initial_rotation_velocity, xlabel=NULL, ymin=0, ymax=0.025)
-## ----
-rm(plot.rotation_velocity, model.rotation_velocity)
-
+.
 
 # ------------------------------------------------------------------------------
 # ::: SUPPLEMENT: LEARNING ANALYSIS - NAVIGATION BEHAVIOR (PROBE TRIALS) ::: #
@@ -1170,6 +1064,113 @@ model.rotation_velocity_learn
 plot.rotation_velocity_learn <- afex_plot_wrapper(model.rotation_velocity_learn, "trial_in_block", "group", NULL, l_initial_rotation_velocity, xlabel=l_trial_in_block, ymin=0, ymax=0.025)
 ## ----
 rm(plot.rotation_velocity_learn, model.rotation_velocity_learn)
+
+
+# ------------------------------------------------------------------------------
+# ::: SUPPLEMENT: CONSOLIDATION ANALYSIS - NAVIGATION BEHAVIOR (PROBE TRIALS) ::: #
+# ------------------------------------------------------------------------------
+
+# --- TIME (SESSION 2 PROBE TRIALS) --- #
+## ---- model_probe_time_2
+model.time <- mixed(time ~ group*condition + cov_sex + cov_motor_score +
+                      (1|id), data=data_p2, expand_re=T)
+## ----
+
+# random effects
+VarCorr(model.time$full_model)
+
+# fixed effects
+model.time
+
+## ---- post_hoc_probe_time_2
+emm.time_group_condition <-  emmeans(model.time, ~ group * condition, lmer.df="satterthwaite")
+post.time_group_condition <- summary(rbind(pairs(emm.time_group_condition, simple="group"), pairs(emm.time_group_condition, simple="condition")),
+                                     infer=c(T,T), by=NULL, adjust="bonferroni")
+rm(emm.time_group_condition)
+## ----
+rm(post.time_group_condition)
+
+## ---- plot_probe_time_2
+plot.time <- afex_plot_wrapper(model.time, "condition", "group", NULL, l_time, xlabel=NULL, ymin=0, ymax=40)
+## ----
+rm(plot.time, model.time)
+
+
+# --- EXCESS PATH LENGTH TO CHOSEN TARGET (ALL PROBE TRIALS) --- #
+## ---- model_probe_path_2
+model.path <- mixed(excess_path_length ~ group*condition + cov_sex + cov_motor_score +
+                      (condition||id), data=data_p2, expand_re=T)
+## ----
+
+# random effects
+VarCorr(model.path$full_model)
+
+# fixed effects
+model.path
+
+## ---- post_hoc_probe_path_2
+emm.path_group_condition <- emmeans(model.path, ~ group * condition, lmer.df="satterthwaite")
+post.path_group_condition <- summary(rbind(pairs(emm.path_group_condition, simple="group"), pairs(emm.path_group_condition, simple="condition")),
+                                     infer=c(T,T), by=NULL, adjust="bonferroni")
+rm(emm.path_group_condition)
+## ----
+rm(post.path_group_condition)
+
+## ---- plot_probe_path_2
+plot.path <- afex_plot_wrapper(model.path, "condition", "group", NULL, l_excess_path_length, xlabel=NULL, ymin=0, ymax=1.5)
+## ----
+rm(plot.path, model.path)
+
+
+# --- EXCESS AVERAGE DISTANCE TO TARGET (ALL PROBE TRIALS) --- #
+## ---- model_probe_distance_2
+model.distance <- mixed(excess_target_distance ~ group*condition + cov_sex + cov_motor_score +
+                          (condition|id), data=data_p2, expand_re=T)
+## ----
+
+# random effects
+VarCorr(model.distance$full_model)
+
+# fixed effects
+model.distance
+
+## ---- post_hoc_probe_distance_2
+post.distance_group <- emmeans(model.distance, pairwise ~ condition, lmer.df="satterthwaite", adjust="bonferroni")$contrasts
+
+post.distance_condition <- emmeans(model.distance, pairwise ~ condition, lmer.df="satterthwaite")$contrasts
+## ----
+rm(post.distance_group, post.distance_condition)
+
+## ---- plot_probe_distance_2
+plot.distance <- afex_plot_wrapper(model.distance, "condition", "group", NULL, l_excess_distance_goal, xlabel=NULL, ymin=-0.25, ymax=0.25)
+## ----
+rm(plot.distance, model.distance)
+
+
+# --- INITIAL ROTATION VELOCITY (ALL PROBE TRIALS) --- #
+## ---- model_probe_rotation_velocity_2
+model.rotation_velocity <- mixed(initial_rotation_velocity ~ group*condition + cov_sex + cov_motor_score +
+                                   (condition||id), data=data_p2, expand_re=T)
+## ----
+
+# random effects
+VarCorr(model.rotation_velocity$full_model)
+
+# fixed effects
+model.rotation_velocity
+
+## ---- post_hoc_probe_rotation_velocity_2
+emm.init_vel_group_condition <- emmeans(model.rotation_velocity, ~ group * condition, lmer.df="satterthwaite")
+post.init_vel_group_condition <- summary(rbind(pairs(emm.init_vel_group_condition, simple="group"), pairs(emm.init_vel_group_condition, simple="condition")),
+                                         infer=c(T,T), by=NULL, adjust="bonferroni")
+rm(emm.init_vel_group_condition)
+## ----
+rm(post.init_vel_group_condition)
+
+## ---- plot_probe_rotation_velocity_2
+plot.rotation_velocity <- afex_plot_wrapper(model.rotation_velocity, "condition", "group", NULL, l_initial_rotation_velocity, xlabel=NULL, ymin=0, ymax=0.025)
+## ----
+rm(plot.rotation_velocity, model.rotation_velocity)
 
 
 # ############################################################################ #
