@@ -137,7 +137,7 @@ l_session <- "session"
 l_trial_in_block <- "trial"
 l_memory_score <- "memory score"
 l_correct_alley <- "alley accuracy (%)"
-l_time <- "latency (sec)"
+l_latency <- "latency (sec)"
 l_excess_path_length <- "excess path length"
 l_excess_distance_goal <- "excess distance to goal"
 l_rotation <- "sum of rotation"
@@ -312,38 +312,47 @@ rm(plot.ms)
 # ::: LEARNING ANALYSIS - NAVIGATION BEHAVIOR (PROBE TRIALS) ::: #
 # ------------------------------------------------------------------------------
 
-# --- TIME (SESSION 1 PROBE TRIALS) --- # 
-## ---- model_probe_time
-model.time <- mixed(time ~ group*condition + cov_sex + cov_motor_score + 
-                      (condition||id), data=data_p1, expand_re=T)
+# --- LATENCY (SESSION 1 PROBE TRIALS) --- # 
+## ---- model_probe_latency
+model.latency <- mixed(time ~ group*condition + cov_sex + cov_motor_score + 
+                         (condition||id), data=data_p1, expand_re=T)
 ## ----
 
 # random effects
-VarCorr(model.time$full_model)
+VarCorr(model.latency$full_model)
 
-## ---- ranef_probe_time
-model.time_base <- mixed(time ~ group*condition + cov_sex + cov_motor_score + 
+## ---- ranef_probe_latency
+model.latency_base <- mixed(time ~ group*condition + cov_sex + cov_motor_score + 
                            (1|id), data=data_p1, expand_re=T)
-LRT.time <- anova(model.time_base, model.time)  %>% select(Chisq, Df, `Pr(>Chisq)`) %>% slice(2) %>% rename(p=`Pr(>Chisq)`)
-rm(model.time_base)
+LRT.latency <- anova(model.latency_base, model.latency)  %>% select(Chisq, Df, `Pr(>Chisq)`) %>% slice(2) %>% rename(p=`Pr(>Chisq)`)
+rm(model.latency_base)
 ## ---- 
-rm(LRT.time)
+rm(LRT.latency)
 
 # fixed effects 
-model.time
+model.latency
 
-## ---- post_hoc_probe_time
-emm.time_group_condition <- emmeans(model.time, ~ group * condition, lmer.df="satterthwaite")
-post.time_group_condition <- summary(rbind(pairs(emm.time_group_condition, simple="group"), pairs(emm.time_group_condition, simple="condition")), 
+## ---- fixef_probe_latency
+omega.latency <- omega_squared(model.latency, partial=T)
+## ----
+rm(omega.latency)
+
+## ---- post_hoc_probe_latency
+emm.latency_group_condition <- emmeans(model.latency, ~ group * condition, lmer.df="satterthwaite")
+post.latency_group_condition <- summary(rbind(pairs(emm.latency_group_condition, simple="group"), pairs(emm.latency_group_condition, simple="condition")), 
                                      infer=c(T,T), by=NULL, adjust="bonferroni")
-rm(emm.time_group_condition)
-## ----
-rm(post.time_group_condition)
+rm(emm.latency_group_condition)
 
-## ---- plot_probe_time 
-plot.time <- afex_plot_wrapper(model.time, "condition", "group", NULL, l_time, xlabel=NULL, ymin=0, ymax=40)
+post.latency_group <- emmeans(model.latency, pairwise ~ group, adjust="bonferroni", lmer.df="satterthwaite")$contrasts
+
+post.latency_condition <- emmeans(model.latency, pairwise ~ condition, lmer.df="satterthwaite")$contrasts
 ## ----
-rm(plot.time, model.time)
+rm(post.latency_group_condition, post.latency_group, post.latency_condition)
+
+## ---- plot_probe_latency 
+plot.latency <- afex_plot_wrapper(model.latency, "condition", "group", NULL, l_latency, xlabel=NULL, ymin=0, ymax=40)
+## ----
+rm(plot.latency, model.latency)
 
 
 # --- EXCESS PATH LENGTH TO CHOSEN TARGET (SESSION 1 PROBE TRIALS) --- # 
@@ -915,9 +924,9 @@ rm(plot.rotation, model.rotation)
 # plot.initial_path <- afex_plot_wrapper(aov1, "group", NULL, NULL, "initial path", ymin=0.1, ymax=0.4)
 # 
 # # initial time 
-# model.initial_time <- mixed(time_in_initial ~ group*session*condition + (session*condition||id), data=data_p, expand_re=T)
-# emmeans(model.initial_time, pairwise ~ group, adjust="bonferroni")
-# plot.initial_time <- afex_plot_wrapper(model.initial_time, "group", NULL, NULL, "initial time", ymin=0, ymax=12)
+# model.initial_latency <- mixed(time_in_initial ~ group*session*condition + (session*condition||id), data=data_p, expand_re=T)
+# emmeans(model.initial_latency, pairwise ~ group, adjust="bonferroni")
+# plot.initial_latency <- afex_plot_wrapper(model.initial_latency, "group", NULL, NULL, "initial time", ymin=0, ymax=12)
 
 
 # --- TOTAL ROTATION (SESSION 1 PROBE TRIALS) --- # 
@@ -995,7 +1004,7 @@ post.learn_time_trial <- emmeans(model.time_learn, pairwise ~ trial_in_block, lm
 rm(post.learn_time_group, post.learn_time_trial)
 
 ## ---- plot_learn_time
-plot.time_learn <- afex_plot_wrapper(model.time_learn, "trial_in_block", "group", NULL, l_time, xlabel=l_trial_in_block, ymin=0, ymax=40)
+plot.time_learn <- afex_plot_wrapper(model.time_learn, "trial_in_block", "group", NULL, l_latency, xlabel=l_trial_in_block, ymin=0, ymax=40)
 ## ----
 rm(plot.time_learn, model.time_learn)
 
@@ -1097,7 +1106,7 @@ rm(emm.time_group_condition)
 rm(post.time_group_condition)
 
 ## ---- plot_probe_time_2
-plot.time <- afex_plot_wrapper(model.time, "condition", "group", NULL, l_time, xlabel=NULL, ymin=0, ymax=40)
+plot.time <- afex_plot_wrapper(model.time, "condition", "group", NULL, l_latency, xlabel=NULL, ymin=0, ymax=40)
 ## ----
 rm(plot.time, model.time)
 

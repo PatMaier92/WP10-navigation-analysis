@@ -177,10 +177,10 @@ rm(dots_allo)
 ```{r, model_probe_ms }
 ```
 
-```{r, ranef_probe_ms, include=F }
+```{r, fixef_probe_ms, include=F }
 ```
 
-```{r, fixef_probe_ms, include=F }
+```{r, ranef_probe_ms, include=F }
 ```
 
 ```{r, post_hoc_probe_ms, include=F }
@@ -217,7 +217,7 @@ apa_post.ms_omega_condition <- omega.ms %>%
 apa_post.ms_condition <- post.ms_condition %>%  apa_print()
 
 # random effects LRT 
-apa_rs.condition <- LRT.ms %>% mutate_at(vars(Chisq, Df), apa_df) %>% mutate_at(vars(p), apa_p)
+apa_rs.condition <- LRT.ms %>% mutate_at(vars(Chisq, Df), apa_df) %>% mutate_at(vars(p), apa_p, add_equals=T)
 
 
 rm(post.ms_group, post.ms_group_chance, post.ms_condition, LRT.ms, omega.ms)
@@ -245,11 +245,10 @@ Table\ \@ref(tab:table-probe-ms-f0)
 
 To investigate age group and condition differences in memory accuracy during learning, we computed a LMM with the memory score. The memory score was significantly affected by *age group* (`r apa_lmm.ms$statistic$group`, $\omega^2 =$ `r apa_post.ms_omega_group`). All three groups performed significantly above chance level (test against chance level of 0.5 for 6-8-yo: `r apa_post.ms_group_chance$estimate$YoungKids`; 9-11-yo: `r apa_post.ms_group_chance$estimate$OldKids`; adults: `r apa_post.ms_group_chance$estimate$YoungAdults`) and there was a gradual increase in memory accuracy with increasing age (6-8-yo vs. 9-11-yo: `r apa_post.ms_group$statistic$YoungKids_OldKids`; 6-8-yo vs. adults: `r apa_post.ms_group$statistic$YoungKids_YoungAdults`; 9-11-yo vs. adults: `r apa_post.ms_group$statistic$OldKids_YoungAdults`). Additionally, there was a main effect of *condition* (`r apa_lmm.ms$statistic$condition`, $\omega^2 =$ `r apa_post.ms_omega_condition`), showing that memory accuracy was slightly higher in the egocentric compared to the allocentric condition. There was a trend effect for the interaction *age group x condition* (`r apa_lmm.ms$statistic$group_condition`, $\omega^2 =$ `r apa_post.ms_omega_group_condition`) and post-hoc contrasts revealed that the advantage for egocentric memory was present in 9-11-yo children (`r apa_post.ms_group_condition$statistic$OldKids_Egoret_alloret`) but not in the other age groups (6-8-yo: `r apa_post.ms_group_condition$statistic$YoungKids_Egoret_alloret`; adults: `r apa_post.ms_group_condition$statistic$YoungAdults_Egoret_alloret`). 
 
-The LMM had a significantly better fit when including the *random slope for condition* compared to a model with random intercept only ($\chi^2$(`r apa_rs.condition$Df`) = `r apa_rs.condition$Chisq`, p `r apa_rs.condition$p`), meaning that there was substantial interindividual variation in how participants responded to the two conditions. This may explain the small effect sizes for the condition main effect and age group x condition interaction.
+The LMM with memory score had a significantly better fit when including the *random slope for condition* compared to a model with random intercept only ($\chi^2$(`r apa_rs.condition$Df`) = `r apa_rs.condition$Chisq`, p `r apa_rs.condition$p`), meaning that there was substantial interindividual variation in how participants responded to the two conditions. This may explain the small effect sizes for the condition main effect and age group x condition interaction.
 
 ```{r, echo=F, fig.height=4, fig.width=4, fig.cap="Memory accuracy in learning session" }
-plot.ms + 
-  guides(fill=F, shape=F) & theme(legend.position="right", legend.justification="top")
+plot.ms + guides(fill=F, shape=F) & theme(legend.position="right", legend.justification="top")
 ```
 
 ```{r, include=F}
@@ -260,61 +259,86 @@ rm(model.ms, R2, apa_lmm.ms, apa_post.ms_group, apa_post.ms_group_chance, apa_po
 
 ### **Latency (all probe trials)**
 
-```{r, model_probe_time}
+```{r, model_probe_latency}
 ```
 
-```{r, ranef_probe_time, include=F }
+```{r, fixef_probe_latency, include=F }
 ```
 
-```{r, post_hoc_probe_time, include=F }
+```{r, ranef_probe_latency, include=F }
 ```
 
-```{r, plot_probe_time, include=F }
+```{r, post_hoc_probe_latency, include=F }
 ```
 
-```{r apa_probe_time, include=F}
-R2 <- r2beta(model.time$full_model, method='nsj', partial=F) %>% mutate_all(apa_num)
-
-apa_lmm.time  <- apa_print(model.time)
-
-apa_post.time_group_condition <- post.time_group_condition %>% apa_print() %>% bonferroni_fix()
-
-apa_rs.condition <- LRT.time %>% mutate_at(vars(Chisq, Df), apa_df) %>% mutate_at(vars(p), apa_p)
-
-rm(post.time_group_condition, LRT.time)
+```{r, plot_probe_latency, include=F }
 ```
 
-(ref:p-t-f-caption0) Fixed effects for time in probe trials.
+```{r apa_probe_latency, include=F}
 
-```{r table-probe-time-f0, echo=F}
+# model fit
+R2 <- r2beta(model.latency$full_model, method='nsj', partial=F) %>% mutate_all(apa_num)
+
+# fixed effects
+apa_lmm.latency  <- apa_print(model.latency)
+
+# group x condition 
+apa_post.latency_omega_group_condition <- omega.latency %>% 
+  filter(Parameter=="group:condition") %>% select(Omega2_partial) %>% apa_num()
+
+apa_post.latency_group_condition <- post.latency_group_condition %>% apa_print() %>% bonferroni_fix()
+
+# group 
+apa_post.latency_omega_group <- omega.latency %>% 
+  filter(Parameter=="group") %>% select(Omega2_partial) %>% apa_num()
+
+apa_post.latency_group <- post.latency_group %>%  apa_print() %>% bonferroni_fix()
+
+# condition
+apa_post.latency_omega_condition <- omega.latency %>% 
+  filter(Parameter=="condition") %>% select(Omega2_partial) %>% apa_num()
+
+apa_post.latency_condition <- post.latency_condition %>%  apa_print() %>% bonferroni_fix()
+
+# random effects LRT 
+apa_rs.condition <- LRT.latency %>% mutate_at(vars(Chisq, Df), apa_df) %>% mutate_at(vars(p), apa_p, add_equals=T)
+
+
+rm(post.latency_group_condition, post.latency_group, post.latency_condition, LRT.latency, omega.latency)
+```
+
+(ref:p-t-f-caption0) Fixed effects for latency in probe trials.
+
+```{r table-probe-latency-f0, echo=F}
 apa_table(
-  apa_lmm.time$table,
+  apa_lmm.latency$table,
   caption="(ref:p-t-f-caption0)",
   placement="h")
 ```
 
-(ref:p-t-r-caption0) Random effects for time in probe trials.
+(ref:p-t-r-caption0) Random effects for latency in probe trials.
 
-```{r table-probe-time-r0, echo=F}
-apa_random_table(VarCorr(model.time$full_model)) %>% 
+```{r table-probe-latency-r0, echo=F}
+apa_random_table(VarCorr(model.latency$full_model)) %>% 
   knitr::kable(
     caption="(ref:p-t-r-caption0)")
 ```
 
 The model had a fit of $R2 = `r R2$Rsq`, [CI: `r R2$upper.CL`, `r R2$lower.CL`$].
+Table\ \@ref(tab:table-probe-latency-f0)
 
-For time, the *group x condition* interaction was significant (`r apa_lmm.time$statistic$group_condition`; Table\ \@ref(tab:table-probe-time-f0)). Post-hoc contrasts revealed that all groups required more time to complete the allocentric condition (egocentric vs. allocentric in 6-8-yo: `r apa_post.time_group_condition$statistic$YoungKids_Egoret_alloret`; 9-11-yo: `r apa_post.time_group_condition$statistic$OldKids_Egoret_alloret`; adults: `r apa_post.time_group_condition$statistic$YoungAdults_Egoret_alloret`). 6-8-yo children required significantly more time than adults in the egocentric (`r apa_post.time_group_condition$statistic$Egoret_YoungKids_YoungAdults`) and allocentric condition (`r apa_post.time_group_condition$statistic$Alloret_YoungKids_YoungAdults`). Additionally, there was a trend for a difference between 9-11-yo children and adults in allocentric (`r apa_post.time_group_condition$statistic$Alloret_OldKids_YoungAdults`).
+Next, we wanted to look at navigation efficiency during learning, starting with latency. For latency, the *age group* effect (`r apa_lmm.latency$statistic$group`, $\omega^2 =$ `r apa_post.latency_omega_group`), *condition* effect (`r apa_lmm.latency$statistic$condition`, $\omega^2 =$ `r apa_post.latency_omega_condition`) and *age group x condition* interaction were significant (`r apa_lmm.latency$statistic$group_condition`, $\omega^2 =$ `r apa_post.latency_omega_group_condition`). Post-hoc contrasts revealed that all age groups had a higher latency in the allocentric condition (egocentric vs. allocentric in 6-8-yo: `r apa_post.latency_group_condition$statistic$YoungKids_Egoret_alloret`; 9-11-yo: `r apa_post.latency_group_condition$statistic$OldKids_Egoret_alloret`; adults: `r apa_post.latency_group_condition$statistic$YoungAdults_Egoret_alloret`). 6-8-yo children had a higher latency than adults in the egocentric (`r apa_post.latency_group_condition$statistic$Egoret_YoungKids_YoungAdults`) and allocentric condition (`r apa_post.latency_group_condition$statistic$Alloret_YoungKids_YoungAdults`). There was a trend for a significant difference between 9-11-yo children and adults in allocentric (`r apa_post.latency_group_condition$statistic$Alloret_OldKids_YoungAdults`).
 
-LRT for random slope for *condition*: Chisq(`r apa_rs.condition$Df`) = `r apa_rs.condition$Chisq`, p `r apa_rs.condition$p`
+The LMM with latency did not have a significantly better fit when including the *random slope for condition* compared to a model with random intercept only ($\chi^2$(`r apa_rs.condition$Df`) = `r apa_rs.condition$Chisq`, p `r apa_rs.condition$p`).
 
-```{r table-probe-time2, echo=F}
+```{r table-probe-latency2, echo=F}
 apa_table(
-  apa_post.time_group_condition$table %>% remove_rownames(),
+  apa_post.latency_group_condition$table %>% remove_rownames(),
   placement="h")
 ```
 
 ```{r, include=F}
-rm(model.time, R2, apa_lmm.time, apa_post.time_group_condition, apa_rs.condition)
+rm(model.latency, R2, apa_lmm.latency, apa_post.latency_group_condition, apa_post.latency_group, apa_post.latency_condition, apa_post.latency_omega_group_condition, apa_post.latency_omega_group, apa_post.latency_omega_condition, apa_rs.condition)
 ```
 
 ### **Excess path length (all probe trials)**
@@ -338,7 +362,7 @@ apa_lmm.path <- apa_print(model.path)
 
 apa_post.path_group_condition <- post.path_group_condition %>% apa_print() %>% bonferroni_fix()
 
-apa_rs.condition <- LRT.path %>% mutate_at(vars(Chisq, Df), apa_df) %>% mutate_at(vars(p), apa_p)
+apa_rs.condition <- LRT.path %>% mutate_at(vars(Chisq, Df), apa_df) %>% mutate_at(vars(p), apa_p, add_equals=T)
 
 rm(post.path_group_condition, LRT.path)
 ```
@@ -399,7 +423,7 @@ apa_post.distance_group <- post.distance_group %>% apa_print() %>% bonferroni_fi
 
 apa_post.distance_condition <- post.distance_condition %>% apa_print()
 
-apa_rs.condition <- LRT.distance %>% mutate_at(vars(Chisq, Df), apa_df) %>% mutate_at(vars(p), apa_p)
+apa_rs.condition <- LRT.distance %>% mutate_at(vars(Chisq, Df), apa_df) %>% mutate_at(vars(p), apa_p, add_equals=T)
 
 rm(post.distance_group, post.distance_condition, LRT.distance)
 ```
@@ -452,7 +476,7 @@ apa_lmm.init_vel <- apa_print(model.rotation_velocity)
 
 apa_post.init_vel_group_condition <- post.init_vel_group_condition %>% apa_print() %>% bonferroni_fix()
 
-apa_rs.condition <- LRT.rotation_velocity %>% mutate_at(vars(Chisq, Df), apa_df) %>% mutate_at(vars(p), apa_p)
+apa_rs.condition <- LRT.rotation_velocity %>% mutate_at(vars(Chisq, Df), apa_df) %>% mutate_at(vars(p), apa_p, add_equals=T)
 
 rm(post.init_vel_group_condition, LRT.rotation_velocity)
 ```
@@ -491,14 +515,14 @@ rm(model.rotation_velocity, apa_lmm.init_vel, apa_post.init_vel_group_condition,
 ```
 
 ```{r, echo=F, fig.height=4.5, fig.width=10, fig.cap="Navigation behavior" }
-plot.time + 
+plot.latency + 
   plot.path + 
   plot.distance + 
   plot.rotation_velocity + 
   plot_layout(nrow=1, guides="collect") & 
   guides(fill=F, shape=F) & theme(legend.position="top", legend.justification=c(-0.025,0))
 
-rm(plot.time, plot.path, plot.distance, plot.rotation_velocity)
+rm(plot.latency, plot.path, plot.distance, plot.rotation_velocity)
 ```
 
 
