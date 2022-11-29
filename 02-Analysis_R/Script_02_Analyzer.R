@@ -32,6 +32,7 @@ library(r2glmm)
 library(car)
 library(lattice)
 library(corrplot)
+library(effectsize)
 library(papaja)
 ## ----
 
@@ -128,8 +129,8 @@ rm(cov_data, cov_names, data, well_learned)
 
 ## ---- plot_settings
 # factor level labels 
-group_labels <- c("YoungKids"="6-8yo", "OldKids"="9-11yo", "YoungAdults"="adults")
-condition_labels <- c("ego_ret"="Egocentric", "allo_ret"="Allocentric")
+group_labels <- c("YoungKids"="6-8-yo", "OldKids"="9-11-yo", "YoungAdults"="adults")
+condition_labels <- c("ego_ret"="egocentric", "allo_ret"="allocentric")
 
 # variable labels 
 l_session <- "session"
@@ -147,7 +148,7 @@ l_initial_rotation_velocity <- "initial rotation velocity"
 # colors
 # scales::show_col()
 group_colors <- c("#FFE476", "#6699FF", "#e19686")
-group_colors_o <-  c("#CC6600", "#003399", "#d56d56")
+group_colors_o <- c("#FD9A2A", "#003399", "#d56d56") #CC6600
 
 
 # plot function 
@@ -195,9 +196,9 @@ apa_random_table <- function(varcor) {
            r=if_else(!is.na(var2), sdcor, NaN)) %>% 
     mutate_at(vars(SD, r), round, 3) %>% 
     select(-vcov, -sdcor) %>% 
-    unite('Slope/Correlation', var1:var2, sep=" x ", remove=T, na.rm=T) %>% 
-    mutate_at(vars(`Slope/Correlation`), str_replace_all, pattern="re1.", replacement="") %>% 
-    mutate_at(vars(`Slope/Correlation`), str_replace_all, pattern="_", replacement=" ") %>% 
+    unite('Random effect', var1:var2, sep=" x ", remove=T, na.rm=T) %>% 
+    mutate_at(vars(`Random effect`), str_replace_all, pattern="re1.", replacement="") %>% 
+    mutate_at(vars(`Random effect`), str_replace_all, pattern="_", replacement=" ") %>% 
     mutate_at(vars(`grp`), str_replace_all, pattern=".1", replacement="") %>% 
     mutate_at(vars(`grp`), str_replace_all, pattern=".2", replacement="") %>% 
     mutate_at(vars(-SD, -r), str_to_title) %>% 
@@ -280,6 +281,11 @@ rm(LRT.ms)
 
 # fixed effects
 model.ms
+
+## ---- fixef_probe_ms
+omega.ms <- omega_squared(model.ms, partial=T)
+## ----
+rm(omega.ms)
 
 ## ---- post_hoc_probe_ms
 emm.ms_group_condition <- emmeans(model.ms, ~ group * condition, lmer.df="satterthwaite")

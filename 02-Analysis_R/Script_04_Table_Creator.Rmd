@@ -101,8 +101,8 @@ v_r <- apa_random_table(VarCorr(model.rotation_velocity$full_model))
 
 df_list <- list(ms_r, t_r, p_r, d_r, v_r)
 
-temp <- df_list %>% reduce(full_join, by=c("Grouping", "Slope/Correlation")) 
-names(temp) <- c("Grouping", "Slope/Correlation", 
+temp <- df_list %>% reduce(full_join, by=c("Grouping", "Random effect")) 
+names(temp) <- c("Grouping", "Random effect", 
                  "SD ms", "r ms", "SD t", "r t", "SD p", "r p", "SD d", "r d", "SD v", "r v")
 
 temp %>% 

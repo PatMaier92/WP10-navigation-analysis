@@ -153,9 +153,7 @@ Single-trial values were analyzed with ANOVAs from the afex package (Singmann et
 
 # Results 
 
-## Memory accuracy
-
-### **Raw responses (all probe trials)**
+## **Raw data responses across sessions and conditions (probe trials)**
 
 ```{r, plot_raw_dots, include=F }
 ```
@@ -172,12 +170,17 @@ rm(dots_allo)
 
 \newpage 
 
+## Learning Session 
+
 ### **Memory score (all probe trials)**
 
 ```{r, model_probe_ms }
 ```
 
 ```{r, ranef_probe_ms, include=F }
+```
+
+```{r, fixef_probe_ms, include=F }
 ```
 
 ```{r, post_hoc_probe_ms, include=F }
@@ -187,20 +190,37 @@ rm(dots_allo)
 ```
 
 ```{r apa_probe_ms, include=F}
+
+# model fit 
 R2 <- r2beta(model.ms$full_model, method='nsj', partial=F) %>% mutate_all(apa_num)
 
+# fixed effects 
 apa_lmm.ms <- apa_print(model.ms)
 
-apa_post.ms_group_condition <- post.ms_group_condition %>%  apa_print() %>% bonferroni_fix()
+# group x condition
+apa_post.ms_omega_group_condition <- omega.ms %>% 
+  filter(Parameter=="group:condition") %>% select(Omega2_partial) %>% apa_num()
+
+apa_post.ms_group_condition <- post.ms_group_condition %>% apa_print() %>% bonferroni_fix()
+
+# group 
+apa_post.ms_omega_group <- omega.ms %>% 
+  filter(Parameter=="group") %>% select(Omega2_partial) %>% apa_num()
 
 apa_post.ms_group <- post.ms_group %>%  apa_print() %>% bonferroni_fix()
 apa_post.ms_group_chance <- post.ms_group_chance %>%  apa_print() %>% bonferroni_fix()
 
+# condition 
+apa_post.ms_omega_condition <- omega.ms %>% 
+  filter(Parameter=="condition") %>% select(Omega2_partial) %>% apa_num()
+
 apa_post.ms_condition <- post.ms_condition %>%  apa_print()
 
+# random effects LRT 
 apa_rs.condition <- LRT.ms %>% mutate_at(vars(Chisq, Df), apa_df) %>% mutate_at(vars(p), apa_p)
 
-rm(post.ms_group, post.ms_group_chance, post.ms_condition, LRT.ms)
+
+rm(post.ms_group, post.ms_group_chance, post.ms_condition, LRT.ms, omega.ms)
 ```
 
 (ref:p-ms-f-caption0) Fixed effects for memory score in probe.
@@ -221,105 +241,24 @@ apa_random_table(VarCorr(model.ms$full_model)) %>%
 ```
 
 The model had a fit of $R2 = `r R2$Rsq`, [CI: `r R2$upper.CL`, `r R2$lower.CL`$].
-
-First, we analysed memory accuracy and navigation behavior in learning session probe trials. 
-The memory score was significantly affected by *age group* (`r apa_lmm.ms$statistic$group`). All three groups performed significantly above chance level (test against chance level of 0.5 for 6-8-yo: `r apa_post.ms_group_chance$statistic$YoungKids`; 9-11-yo: `r apa_post.ms_group_chance$statistic$OldKids`; adults: `r apa_post.ms_group_chance$statistic$YoungAdults`) and there was a gradual increase in memory accuracy with increasing age (6-8-yo vs. 9-11-yo: `r apa_post.ms_group$statistic$YoungKids_OldKids`; 6-8-yo vs. adults: `r apa_post.ms_group$statistic$YoungKids_YoungAdults`; 9-11-yo vs. adults: `r apa_post.ms_group$statistic$OldKids_YoungAdults`). Additionally, there was a main effect of *condition* (`r apa_lmm.ms$statistic$condition`), showing that memory accuracy was slightly higher in the egocentric compared to the allocentric condition (`r apa_post.ms_condition$estimate`). There was a trend effect for the interaction *age group x condition* (`r apa_lmm.ms$statistic$group_condition`) and post-hoc contrasts revealed that the advantage for egocentric memory was present specifically in 9-11-yo children (`r apa_post.ms_group_condition$statistic$OldKids_Egoret_alloret`) but not in the other age groups (6-8-yo: `r apa_post.ms_group_condition$statistic$YoungKids_Egoret_alloret`; adults: `r apa_post.ms_group_condition$statistic$YoungAdults_Egoret_alloret`).
 Table\ \@ref(tab:table-probe-ms-f0)
 
-LRT for random slope for *condition*: Chisq(`r apa_rs.condition$Df`) = `r apa_rs.condition$Chisq`, p `r apa_rs.condition$p`
+To investigate age group and condition differences in memory accuracy during learning, we computed a LMM with the memory score. The memory score was significantly affected by *age group* (`r apa_lmm.ms$statistic$group`, $\omega^2 =$ `r apa_post.ms_omega_group`). All three groups performed significantly above chance level (test against chance level of 0.5 for 6-8-yo: `r apa_post.ms_group_chance$estimate$YoungKids`; 9-11-yo: `r apa_post.ms_group_chance$estimate$OldKids`; adults: `r apa_post.ms_group_chance$estimate$YoungAdults`) and there was a gradual increase in memory accuracy with increasing age (6-8-yo vs. 9-11-yo: `r apa_post.ms_group$statistic$YoungKids_OldKids`; 6-8-yo vs. adults: `r apa_post.ms_group$statistic$YoungKids_YoungAdults`; 9-11-yo vs. adults: `r apa_post.ms_group$statistic$OldKids_YoungAdults`). Additionally, there was a main effect of *condition* (`r apa_lmm.ms$statistic$condition`, $\omega^2 =$ `r apa_post.ms_omega_condition`), showing that memory accuracy was slightly higher in the egocentric compared to the allocentric condition. There was a trend effect for the interaction *age group x condition* (`r apa_lmm.ms$statistic$group_condition`, $\omega^2 =$ `r apa_post.ms_omega_group_condition`) and post-hoc contrasts revealed that the advantage for egocentric memory was present in 9-11-yo children (`r apa_post.ms_group_condition$statistic$OldKids_Egoret_alloret`) but not in the other age groups (6-8-yo: `r apa_post.ms_group_condition$statistic$YoungKids_Egoret_alloret`; adults: `r apa_post.ms_group_condition$statistic$YoungAdults_Egoret_alloret`). 
 
-```{r, include=F, eval=F}
-OLD TEXT FOR FULL MODEL
-Memory accuracy measured with the memory score was significantly affected by *age group* (`r apa_lmm.ms$statistic$group`. All three groups performed significantly above chance level (test against chance level of 0.5 for 6-8-yo: `r apa_post.ms_group_chance$statistic$YoungKids`; 9-11-yo: `r apa_post.ms_group_chance$statistic$OldKids`; adults: `r apa_post.ms_group_chance$statistic$YoungAdults`) and there was a gradual increase in memory accuracy with increasing age (6-8-yo vs. 9-11-yo: `r apa_post.ms_group$statistic$YoungKids_OldKids`; 6-8-yo vs. adults: `r apa_post.ms_group$statistic$YoungKids_YoungAdults`; 9-11-yo vs. adults: `r apa_post.ms_group$statistic$OldKids_YoungAdults`). Additionally, there was a main effect of *condition* (`r apa_lmm.ms$statistic$condition`), showing that memory accuracy was slightly higher in the egocentric compared to the allocentric condition (`r apa_post.ms_condition$estimate`), and a main effect of *session* (), revealing that memory accuracy deteriorated significantly in the 2-week time period between sessions (). There were no significant two-way or three-way interactions for the memory score (Table\ \@ref(tab:table-probe-ms-f0)), and thus, no evidence for age-related differences in forgetting across sessions, condition-related differences in forgetting across sessions, and no age-specific advantage for egocentric over allocentric spatial memory. 
+The LMM had a significantly better fit when including the *random slope for condition* compared to a model with random intercept only ($\chi^2$(`r apa_rs.condition$Df`) = `r apa_rs.condition$Chisq`, p `r apa_rs.condition$p`), meaning that there was substantial interindividual variation in how participants responded to the two conditions. This may explain the small effect sizes for the condition main effect and age group x condition interaction.
+
+```{r, echo=F, fig.height=4, fig.width=4, fig.cap="Memory accuracy in learning session" }
+plot.ms + 
+  guides(fill=F, shape=F) & theme(legend.position="right", legend.justification="top")
 ```
 
 ```{r, include=F}
-rm(model.ms, R2, apa_lmm.ms, apa_post.ms_group, apa_post.ms_group_chance, apa_post.ms_condition, apa_post.ms_group_condition, apa_rs.condition)
-```
-
-### **Post-navigational memory tasks**
-
-![Task overview](./pics/Overview_Session2_PostTest.jpg){width=500px}
-
-```{r, model_post_layout, include=F }
-```
-
-```{r, plot_post_layout, include=F }
-```
-
-```{r, model_post_landmark, include=F }
-```
-
-```{r, plot_post_landmark, include=F }
-```
-
-```{r, model_post_position, include=F }
-```
-
-```{r, plot_post_position, include=F }
-```
-
-### **Layout**
-
-```{r apa_layout, include=F}
-apa_fisher.layout <- model.layout %>% pluck("p.value") %>% apa_p(add_equals=T)
-
-apa_post.layout_young_vs_old <- post.layout$p.adj[1] %>% apa_p(add_equals=T)
-apa_post.layout_young_vs_adult <- post.layout$p.adj[2] %>% apa_p(add_equals=T)
-apa_post.layout_old_vs_adult <- post.layout$p.adj[3] %>% apa_p(add_equals=T)
-rm(post.layout)
-```
-
-We found significant *age group* differences in the ability to correctly identify the geometrical maze layout (Fisher's exact test $p$ `r apa_fisher.layout`). Post-hoc contrasts showed a gradual increase in performance with increasing age (Bonferroni-adjusted pairwise Fisher tests: 6-8-yo vs. 9-11-yo: $p$ `r apa_post.layout_young_vs_old`; 6-8-yo vs. adults: $p$ `r apa_post.layout_young_vs_adult`; 9-11-yo vs. adults: $p$ `r apa_post.layout_old_vs_adult`).
-
-```{r, include=F}
-rm(model.layout, apa_fisher.layout, apa_post.layout_young_vs_old, apa_post.layout_young_vs_adult, apa_post.layout_old_vs_adult)
-```
-
-### **Landmarks**
-
-```{r apa_landmark, include=F}
-apa_aov.landmark <- apa_print(model.landmark)
-```
-
-There were no significant *age group* differences in the ability to correctly identify the landmark objects (`r apa_aov.landmark$statistic$group`). 
-
-```{r, include=F}
-rm(model.landmark, apa_aov.landmark)
-```
-
-### **Positioning**
-
-```{r apa_position, include=F}
-apa_aov.position <- apa_print(model.position)
-
-apa_post.position <- post.position$contrasts %>% apa_print() %>% bonferroni_fix()
-rm(post.position)
-```
-
-However, we did find significant *age group* differences in the ability to correctly position the landmark and goal objects in a 2D map (`r apa_aov.position$statistic$group`). Post-hoc contrasts showed that adults performed significantly better than both groups of children (6-8-yo vs. adults: `r apa_post.position$statistic$YoungKids_YoungAdults`; 9-11-yo vs. adults: `r apa_post.position$statistic$OldKids_YoungAdults`) but that the children groups did not differ (6-8-yo vs. 9-11-yo: `r apa_post.position$statistic$YoungKids_OldKids`). 
-
-```{r, include=F}
-rm(model.position, apa_aov.position, apa_post.position)
-```
-
-```{r, echo=F, fig.height=4.5, fig.width=10, fig.cap="Memory accuracy" }
-
-(plot.ms + guides(shape=F, fill=F)) +
-  (plot.layout + guides(color=F, shape=F)) + 
-  (plot.landmark + guides(color=F, shape=F)) + 
-  (plot.position + guides(color=F, shape=F)) + 
-  plot_layout(nrow=1, width=c(0.3,0.23,0.23,0.23), guides="collect") & 
-  theme(legend.position="top", legend.justification=c(-0.025,0))
-
-rm(plot.ms, plot.layout, plot.landmark, plot.position)
+rm(model.ms, R2, apa_lmm.ms, apa_post.ms_group, apa_post.ms_group_chance, apa_post.ms_condition, apa_post.ms_group_condition, apa_post.ms_omega_group, apa_post.ms_omega_condition, apa_post.ms_omega_group_condition, apa_rs.condition, plot.ms)
 ```
 
 \newpage
 
-## Navigation behaviour
-
-### **Time (all probe trials)**
+### **Latency (all probe trials)**
 
 ```{r, model_probe_time}
 ```
@@ -562,6 +501,91 @@ plot.time +
 rm(plot.time, plot.path, plot.distance, plot.rotation_velocity)
 ```
 
+
+## Consolidation 
+
+```{r, include=F, eval=F}
+OLD TEXT FOR FULL MODEL
+Memory accuracy measured with the memory score was significantly affected by *age group* (`r apa_lmm.ms$statistic$group`. All three groups performed significantly above chance level (test against chance level of 0.5 for 6-8-yo: `r apa_post.ms_group_chance$statistic$YoungKids`; 9-11-yo: `r apa_post.ms_group_chance$statistic$OldKids`; adults: `r apa_post.ms_group_chance$statistic$YoungAdults`) and there was a gradual increase in memory accuracy with increasing age (6-8-yo vs. 9-11-yo: `r apa_post.ms_group$statistic$YoungKids_OldKids`; 6-8-yo vs. adults: `r apa_post.ms_group$statistic$YoungKids_YoungAdults`; 9-11-yo vs. adults: `r apa_post.ms_group$statistic$OldKids_YoungAdults`). Additionally, there was a main effect of *condition* (`r apa_lmm.ms$statistic$condition`), showing that memory accuracy was slightly higher in the egocentric compared to the allocentric condition (`r apa_post.ms_condition$estimate`), and a main effect of *session* (), revealing that memory accuracy deteriorated significantly in the 2-week time period between sessions (). There were no significant two-way or three-way interactions for the memory score (Table\ \@ref(tab:table-probe-ms-f0)), and thus, no evidence for age-related differences in forgetting across sessions, condition-related differences in forgetting across sessions, and no age-specific advantage for egocentric over allocentric spatial memory. 
+```
+
+
+### **Post-navigational memory tasks**
+
+![Task overview](./pics/Overview_Session2_PostTest.jpg){width=500px}
+
+```{r, model_post_layout, include=F }
+```
+
+```{r, plot_post_layout, include=F }
+```
+
+```{r, model_post_landmark, include=F }
+```
+
+```{r, plot_post_landmark, include=F }
+```
+
+```{r, model_post_position, include=F }
+```
+
+```{r, plot_post_position, include=F }
+```
+
+### **Layout**
+
+```{r apa_layout, include=F}
+apa_fisher.layout <- model.layout %>% pluck("p.value") %>% apa_p(add_equals=T)
+
+apa_post.layout_young_vs_old <- post.layout$p.adj[1] %>% apa_p(add_equals=T)
+apa_post.layout_young_vs_adult <- post.layout$p.adj[2] %>% apa_p(add_equals=T)
+apa_post.layout_old_vs_adult <- post.layout$p.adj[3] %>% apa_p(add_equals=T)
+rm(post.layout)
+```
+
+We found significant *age group* differences in the ability to correctly identify the geometrical maze layout (Fisher's exact test $p$ `r apa_fisher.layout`). Post-hoc contrasts showed a gradual increase in performance with increasing age (Bonferroni-adjusted pairwise Fisher tests: 6-8-yo vs. 9-11-yo: $p$ `r apa_post.layout_young_vs_old`; 6-8-yo vs. adults: $p$ `r apa_post.layout_young_vs_adult`; 9-11-yo vs. adults: $p$ `r apa_post.layout_old_vs_adult`).
+
+```{r, include=F}
+rm(model.layout, apa_fisher.layout, apa_post.layout_young_vs_old, apa_post.layout_young_vs_adult, apa_post.layout_old_vs_adult)
+```
+
+### **Landmarks**
+
+```{r apa_landmark, include=F}
+apa_aov.landmark <- apa_print(model.landmark)
+```
+
+There were no significant *age group* differences in the ability to correctly identify the landmark objects (`r apa_aov.landmark$statistic$group`). 
+
+```{r, include=F}
+rm(model.landmark, apa_aov.landmark)
+```
+
+### **Positioning**
+
+```{r apa_position, include=F}
+apa_aov.position <- apa_print(model.position)
+
+apa_post.position <- post.position$contrasts %>% apa_print() %>% bonferroni_fix()
+rm(post.position)
+```
+
+However, we did find significant *age group* differences in the ability to correctly position the landmark and goal objects in a 2D map (`r apa_aov.position$statistic$group`). Post-hoc contrasts showed that adults performed significantly better than both groups of children (6-8-yo vs. adults: `r apa_post.position$statistic$YoungKids_YoungAdults`; 9-11-yo vs. adults: `r apa_post.position$statistic$OldKids_YoungAdults`) but that the children groups did not differ (6-8-yo vs. 9-11-yo: `r apa_post.position$statistic$YoungKids_OldKids`). 
+
+```{r, include=F}
+rm(model.position, apa_aov.position, apa_post.position)
+```
+
+```{r, echo=F, fig.height=4.5, fig.width=8, fig.cap="Memory accuracy" }
+(plot.layout + guides(color=F, shape=F)) + 
+  (plot.landmark + guides(color=F, shape=F)) + 
+  (plot.position + guides(color=F, shape=F)) + 
+  plot_layout(nrow=1, width=c(0.3,0.23,0.23,0.23), guides="collect") & 
+  theme(legend.position="top", legend.justification=c(-0.025,0))
+
+rm(plot.layout, plot.landmark, plot.position)
+```
+
 \newpage 
 
 # Supplementary material 
@@ -758,7 +782,6 @@ rm(model.rotation_velocity_learn, R2, apa_lmm.learn_rotation_velocity)
 ```
 
 ```{r, echo=F, fig.height=6, fig.width=8, fig.cap="Navigation behavior" }
-
 plot.time_learn + 
   plot.path_learn + 
   plot.distance_learn + 
