@@ -410,6 +410,11 @@ rm(LRT.distance)
 # fixed effects 
 model.distance
 
+## ---- fixef_probe_distance
+omega.distance <- omega_squared(model.distance, partial=T)
+## ----
+rm(omega.distance)
+
 ## ---- post_hoc_probe_distance
 emm.distance_group <- emmeans(model.distance, ~ group, lmer.df="satterthwaite")
 post.distance_group <- pairs(emm.distance_group, adjust="bonferroni")
@@ -444,6 +449,11 @@ rm(LRT.rotation_velocity)
 
 # fixed effects 
 model.rotation_velocity
+
+## ---- fixef_probe_rotation_velocity
+omega.rotation_velocity <- omega_squared(model.rotation_velocity, partial=T)
+## ----
+rm(omega.rotation_velocity)
 
 ## ---- post_hoc_probe_rotation_velocity
 emm.init_vel_group_condition <- emmeans(model.rotation_velocity, ~ group * condition, lmer.df="satterthwaite")
