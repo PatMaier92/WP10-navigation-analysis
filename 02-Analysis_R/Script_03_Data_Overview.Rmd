@@ -292,19 +292,15 @@ apa_post.latency_group_condition <- post.latency_group_condition %>% apa_print()
 apa_post.latency_omega_group <- omega.latency %>% 
   filter(Parameter=="group") %>% select(Omega2_partial) %>% apa_num()
 
-apa_post.latency_group <- post.latency_group %>%  apa_print() %>% bonferroni_fix()
-
 # condition
 apa_post.latency_omega_condition <- omega.latency %>% 
   filter(Parameter=="condition") %>% select(Omega2_partial) %>% apa_num()
-
-apa_post.latency_condition <- post.latency_condition %>%  apa_print() %>% bonferroni_fix()
 
 # random effects LRT 
 apa_rs.condition <- LRT.latency %>% mutate_at(vars(Chisq, Df), apa_df) %>% mutate_at(vars(p), apa_p, add_equals=T)
 
 
-rm(post.latency_group_condition, post.latency_group, post.latency_condition, LRT.latency, omega.latency)
+rm(post.latency_group_condition, LRT.latency, omega.latency)
 ```
 
 (ref:p-t-f-caption0) Fixed effects for latency in probe trials.
@@ -338,12 +334,15 @@ apa_table(
 ```
 
 ```{r, include=F}
-rm(model.latency, R2, apa_lmm.latency, apa_post.latency_group_condition, apa_post.latency_group, apa_post.latency_condition, apa_post.latency_omega_group_condition, apa_post.latency_omega_group, apa_post.latency_omega_condition, apa_rs.condition)
+rm(model.latency, R2, apa_lmm.latency, apa_post.latency_group_condition, apa_post.latency_omega_group_condition, apa_post.latency_omega_group, apa_post.latency_omega_condition, apa_rs.condition)
 ```
 
 ### **Excess path length (all probe trials)**
 
 ```{r, model_probe_path }
+```
+
+```{r, fixef_probe_path, include=F }
 ```
 
 ```{r, ranef_probe_path, include=F }
@@ -356,15 +355,31 @@ rm(model.latency, R2, apa_lmm.latency, apa_post.latency_group_condition, apa_pos
 ```
 
 ```{r apa_probe_path, include=F}
+# model fit
 R2 <- r2beta(model.path$full_model, method='nsj', partial=F) %>% mutate_all(apa_num)
 
+# fixed effects 
 apa_lmm.path <- apa_print(model.path)
+
+# group x condition 
+apa_post.path_omega_group_condition <- omega.path %>% 
+  filter(Parameter=="group:condition") %>% select(Omega2_partial) %>% apa_num()
 
 apa_post.path_group_condition <- post.path_group_condition %>% apa_print() %>% bonferroni_fix()
 
+# group
+apa_post.path_omega_group <- omega.path %>% 
+  filter(Parameter=="group") %>% select(Omega2_partial) %>% apa_num()
+
+# condition
+apa_post.path_omega_condition <- omega.path %>% 
+  filter(Parameter=="condition") %>% select(Omega2_partial) %>% apa_num()
+
+# random effects LRT 
 apa_rs.condition <- LRT.path %>% mutate_at(vars(Chisq, Df), apa_df) %>% mutate_at(vars(p), apa_p, add_equals=T)
 
-rm(post.path_group_condition, LRT.path)
+
+rm(post.path_group_condition, LRT.path, omega.path)
 ```
 
 (ref:p-ep-f-caption0) Fixed effects for excess path in probe trials.
@@ -385,10 +400,11 @@ apa_random_table(VarCorr(model.path$full_model)) %>%
 ```
 
 The model had a fit of $R2 = `r R2$Rsq`, [CI: `r R2$upper.CL`, `r R2$lower.CL`$].
+Table\ \@ref(tab:table-probe-excess-path-f0)
 
-For excess path length, the *group x condition* interaction was significant (`r apa_lmm.path$statistic$group_condition`; Table\ \@ref(tab:table-probe-excess-path-f0)). Post-hoc contrasts revealed that participants from all age groups had shorter excess path lengths in the egocentric than the allocentric condition (egocentric vs. allocentric in 6-8-yo:  `r apa_post.path_group_condition$statistic$YoungKids_Egoret_alloret`; 9-11-yo: `r apa_post.path_group_condition$statistic$OldKids_Egoret_alloret`; adults: `r apa_post.path_group_condition$statistic$YoungAdults_Egoret_alloret`). In the egocentric condition, 6-8-yo children had significantly longer excess paths than adults (`r apa_post.path_group_condition$statistic$Egoret_YoungKids_YoungAdults`), in the allocentric condition there was a gradual decrease in excess path with increasing age (6-8-yo vs. adults: `r apa_post.path_group_condition$statistic$Alloret_YoungKids_YoungAdults`; 6-8-yo vs. 9-11-yo: `r apa_post.path_group_condition$statistic$Alloret_YoungKids_OldKids`;9-11-yo vs. adults: `r apa_post.path_group_condition$statistic$Alloret_OldKids_YoungAdults`).
+For excess path length, the *age group* effect (`r apa_lmm.path$statistic$group`, $\omega^2 =$ `r apa_post.latency_omega_group`), *condition* effect (`r apa_lmm.path$statistic$condition`, $\omega^2 =$ `r apa_post.latency_omega_condition`) and *age group x condition* interaction were significant (`r apa_lmm.path$statistic$group_condition`, $\omega^2 =$ `r apa_post.latency_omega_group_condition`). Post-hoc contrasts revealed that participants from all groups had longer excess path lengths in the allocentric condition (egocentric vs. allocentric in 6-8-yo: `r apa_post.path_group_condition$statistic$YoungKids_Egoret_alloret`; 9-11-yo: `r apa_post.path_group_condition$statistic$OldKids_Egoret_alloret`; adults: `r apa_post.path_group_condition$statistic$YoungAdults_Egoret_alloret`). In the egocentric condition, 6-8-yo children had significantly longer excess paths than adults (`r apa_post.path_group_condition$statistic$Egoret_YoungKids_YoungAdults`), in the allocentric condition there was a gradual decrease in excess path with increasing age (6-8-yo vs. adults: `r apa_post.path_group_condition$statistic$Alloret_YoungKids_YoungAdults`; 6-8-yo vs. 9-11-yo: `r apa_post.path_group_condition$statistic$Alloret_YoungKids_OldKids`;9-11-yo vs. adults: `r apa_post.path_group_condition$statistic$Alloret_OldKids_YoungAdults`).
 
-LRT for random slope for *condition*: Chisq(`r apa_rs.condition$Df`) = `r apa_rs.condition$Chisq`, p `r apa_rs.condition$p`
+The LMM with excess path length did not have a significantly better fit when including the *random slope for condition* compared to a model with random intercept only ($\chi^2$(`r apa_rs.condition$Df`) = `r apa_rs.condition$Chisq`, p `r apa_rs.condition$p`).
 
 ```{r table-probe-excess-path2, echo=F}
 apa_table(
@@ -397,7 +413,7 @@ apa_table(
 ```
 
 ```{r, include=F}
-rm(model.path, apa_lmm.path, apa_post.path_group_condition, apa_rs.condition)
+rm(model.path, apa_lmm.path, apa_post.path_group_condition, apa_post.path_omega_group_condition, apa_post.path_omega_group, apa_post.path_omega_condition, apa_rs.condition)
 ```
 
 ### **Excess distance to goal (all probe trials)**

@@ -342,12 +342,8 @@ emm.latency_group_condition <- emmeans(model.latency, ~ group * condition, lmer.
 post.latency_group_condition <- summary(rbind(pairs(emm.latency_group_condition, simple="group"), pairs(emm.latency_group_condition, simple="condition")), 
                                      infer=c(T,T), by=NULL, adjust="bonferroni")
 rm(emm.latency_group_condition)
-
-post.latency_group <- emmeans(model.latency, pairwise ~ group, adjust="bonferroni", lmer.df="satterthwaite")$contrasts
-
-post.latency_condition <- emmeans(model.latency, pairwise ~ condition, lmer.df="satterthwaite")$contrasts
 ## ----
-rm(post.latency_group_condition, post.latency_group, post.latency_condition)
+rm(post.latency_group_condition)
 
 ## ---- plot_probe_latency 
 plot.latency <- afex_plot_wrapper(model.latency, "condition", "group", NULL, l_latency, xlabel=NULL, ymin=0, ymax=40)
@@ -374,6 +370,11 @@ rm(LRT.path)
 
 # fixed effects
 model.path
+
+## ---- fixef_probe_path
+omega.path <- omega_squared(model.path, partial=T)
+## ----
+rm(omega.path)
 
 ## ---- post_hoc_probe_path
 emm.path_group_condition <- emmeans(model.path, ~ group * condition, lmer.df="satterthwaite")
