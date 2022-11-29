@@ -480,21 +480,37 @@ rm(plot.rotation_velocity)
 # --- MEMORY SCORE (ALL PROBE TRIALS) --- #
 ## ---- model_probe_ms_all
 model.ms_all <- mixed(memory_score ~ group*session*condition + cov_sex + cov_motor_score +
-                        (session*condition||id), data=data_p, expand_re=T)
+                        (session+condition|id), data=data_p, expand_re=T)
 ## ----
 
 # random effects
 VarCorr(model.ms_all$full_model)
-# dotplot(ranef(model.ms$full_model))
+# dotplot(ranef(model.ms_all$full_model))
+
+## ---- ranef_probe_ms_all
+model.ms_all_base_condition <- mixed(memory_score ~ group*session*condition + cov_sex + cov_motor_score +
+                                     (session|id), data=data_p, expand_re=T)
+model.ms_all_base_session <- mixed(memory_score ~ group*session*condition + cov_sex + cov_motor_score +
+                                     (condition|id), data=data_p, expand_re=T)
+LRT.ms_all_session <- anova(model.ms_all, model.ms_all_base_session) %>% select(Chisq, Df, `Pr(>Chisq)`) %>% slice(2) %>% rename(p=`Pr(>Chisq)`)
+LRT.ms_all_condition <- anova(model.ms_all, model.ms_all_base_condition) %>% select(Chisq, Df, `Pr(>Chisq)`) %>% slice(2) %>% rename(p=`Pr(>Chisq)`)
+rm(model.ms_all_base_session, model.ms_all_base_condition)
+## ---- 
+rm(LRT.ms_all_session, LRT.ms_all_condition)
 
 # fixed effects
 model.ms_all
+
+## ---- fixef_probe_ms_all
+omega.ms_all <- omega_squared(model.ms_all, partial=T)
+## ----
+rm(omega.ms_all)
 
 ## ---- post_hoc_probe_ms_all
 emm.ms_all_group <- emmeans(model.ms_all, ~ group, lmer.df="satterthwaite")
 post.ms_all_group <- pairs(emm.ms_all_group, adjust="bonferroni")
 post.ms_all_group_chance <- summary(emm.ms_all_group, null=0.5, adjust="bonferroni", infer=c(T,T))
-rm(emm.ms_group)
+rm(emm.ms_all_group)
 
 post.ms_all_session <- emmeans(model.ms_all, pairwise ~ session, lmer.df="satterthwaite")$contrasts
 
@@ -503,9 +519,9 @@ post.ms_all_condition <- emmeans(model.ms_all, pairwise ~ condition, lmer.df="sa
 rm(post.ms_all_group, post.ms_all_group_chance, post.ms_all_session, post.ms_all_condition)
 
 ## ---- plot_probe_ms_all
-plot.ms_all <- afex_plot_wrapper(model.ms_all, "session", "group", "condition", l_memory_score)
+plot.ms_all <- afex_plot_wrapper(model.ms_all, "session", "group", "condition", l_memory_score, ymin=0, ymax=1.2)
 ## ----
-rm(plot.ms_all)
+rm(plot.ms_all, model.ms_all)
 
 # ## ---- control_probe_ms_all
 # # 1) model with outliers removed
@@ -574,11 +590,66 @@ rm(plot.ms_all)
 # ::: OPTIONAL: CONSOLIDATION ANALYSIS - MEMORY ACCURACY (PROBE TRIALS) ::: #
 # ------------------------------------------------------------------------------
 
-# --- MEMORY SCORE (BOTH SESSIONS EGOCENTRIC PROBE TRIALS) --- #
+
+# --- MEMORY SCORE (WELL LEARNED ITEMS, ALL PROBE TRIALS) --- #
+## ---- model_probe_ms_wl
+model.ms_wl <- mixed(memory_score ~ group*session*condition + cov_sex + cov_motor_score +
+                       (session||id), data=data_p_w, expand_re=T)
+## ----
+
+# random effects
+VarCorr(model.ms_wl$full_model)
+
+## ---- ranef_probe_ms_wl
+model.ms_wl_base <- mixed(memory_score ~ group*session*condition + cov_sex + cov_motor_score +
+                            (1|id), data=data_p_w, expand_re=T)
+LRT.ms_wl <- anova(model.ms_wl, model.ms_wl_base) %>% select(Chisq, Df, `Pr(>Chisq)`) %>% slice(2) %>% rename(p=`Pr(>Chisq)`)
+rm(model.ms_wl_base)
+## ---- 
+rm(LRT.ms_wl)
+
+# fixed effects
+model.ms_wl
+
+## ---- fixef_probe_ms_wl
+omega.ms_wl <- omega_squared(model.ms_wl, partial=T)
+## ----
+rm(omega.ms_wl)
+
+## ---- post_hoc_probe_ms_wl
+emm.ms_wl_group_session <- emmeans(model.ms_wl, ~ group * session, lmer.df="satterthwaite")
+post.ms_wl_group_session <- summary(rbind(pairs(emm.ms_wl_group_session, simple="group"), pairs(emm.ms_wl_group_session, simple="session")),
+                                    infer=c(T,T), by=NULL, adjust="bonferroni")
+rm(emm.ms_wl_group_session)
+
+post.ms_wl_condition <- emmeans(model.ms_wl, pairwise ~ group * condition, lmer.df="satterthwaite")$contrasts
+## ----
+rm(post.ms_wl_group_session, post.ms_wl_condition)
+
+## ---- plot_probe_ms_wl
+plot.ms_wl <- afex_plot_wrapper(model.ms_wl, "session", "group", "condition", l_memory_score)
+## ----
+rm(plot.ms_wl)
+
+
+# --- EGOCENTRIC MEMORY SCORE (BOTH SESSIONS PROBE TRIALS) --- #
 ## ---- model_probe_ms_ego
 model.ms_ego <- mixed(memory_score ~ group*session + cov_sex + cov_motor_score +
                         (session|id), data=data_p %>% filter(condition=="ego_ret"), expand_re=T)
 ## ----
+
+## ---- ranef_probe_ms_ego
+model.ms_ego_base <- mixed(memory_score ~ group*session + cov_sex + cov_motor_score +
+                             (1|id), data=data_p %>% filter(condition=="ego_ret"), expand_re=T)
+LRT.ms_ego_base <- anova(model.ms_ego, model.ms_ego_base) %>% select(Chisq, Df, `Pr(>Chisq)`) %>% slice(2) %>% rename(p=`Pr(>Chisq)`)
+rm(model.ms_ego_base)
+## ---- 
+rm(LRT.ms_ego_base)
+
+## ---- fixef_probe_ms_ego
+omega.ms_ego <- omega_squared(model.ms_ego, partial=T)
+## ----
+rm(omega.ms_ego)
 
 ## ---- post_hoc_probe_ms_ego
 emm.ms_ego_group_session <- emmeans(model.ms_ego, ~ group * session, lmer.df="satterthwaite")
@@ -590,45 +661,32 @@ rm(emm.ms_ego_group_session)
 ## ---- plot_probe_ms_ego
 plot.ms_ego <- afex_plot_wrapper(model.ms_ego, "session", "group", NULL, l_memory_score, xlabel=NULL, ymax=1.2)
 ## ----
-rm(plot.ms_ego)
+rm(plot.ms_ego, model.ms_ego)
 
 
-# --- MEMORY SCORE (BOTH SESSIONS ALLOCENTRIC PROBE TRIALS) --- #
+# --- ALLOCENTRIC MEMORY SCORE (BOTH SESSIONS PROBE TRIALS) --- #
 ## ---- model_probe_ms_allo
 model.ms_allo <- mixed(memory_score ~ group*session + cov_sex + cov_motor_score +
                          (session|id), data=data_p %>% filter(condition=="allo_ret"), expand_re=T)
 ## ----
 
+## ---- ranef_probe_ms_allo
+model.ms_allo_base <- mixed(memory_score ~ group*session + cov_sex + cov_motor_score +
+                             (1|id), data=data_p %>% filter(condition=="allo_ret"), expand_re=T)
+LRT.ms_allo_base <- anova(model.ms_allo, model.ms_allo_base) %>% select(Chisq, Df, `Pr(>Chisq)`) %>% slice(2) %>% rename(p=`Pr(>Chisq)`)
+rm(model.ms_allo_base)
+## ---- 
+rm(LRT.ms_allo_base)
+
+## ---- fixef_probe_ms_allo
+omega.ms_allo <- omega_squared(model.ms_allo, partial=T)
+## ----
+rm(omega.ms_allo)
+
 ## ---- plot_probe_ms_allo
 plot.ms_allo <- afex_plot_wrapper(model.ms_allo, "session", "group", NULL, l_memory_score, xlabel=NULL, ymax=1.2)
 ## ----
-rm(plot.ms)
-
-
-# --- MEMORY SCORE (WELL LEARNED ITEMS, ALL PROBE TRIALS) --- #
-## ---- model_probe_ms_wl
-model.ms_wl <- mixed(memory_score ~ group*session*condition + cov_sex + cov_motor_score +
-                       (session||id), data=data_p_w, expand_re=T)
-## ----
-
-# random effects
-VarCorr(model.ms_wl$full_model)
-# dotplot(ranef(model.ms$full_model))
-
-# fixed effects
-model.ms_wl
-
-## ---- post_hoc_probe_ms_wl
-emm.ms_wl_group_session <- emmeans(model.ms_wl, ~ group * session, lmer.df="satterthwaite")
-post.ms_wl_group_session <- summary(rbind(pairs(emm.ms_wl_group_session, simple="group"), pairs(emm.ms_wl_group_session, simple="session")),
-                                    infer=c(T,T), by=NULL, adjust="bonferroni")
-## ----
-rm(emm.ms_wl_group_session)
-
-## ---- plot_probe_ms_wl
-plot.ms_wl <- afex_plot_wrapper(model.ms_wl, "session", "group", "condition", l_memory_score)
-## ----
-rm(plot.ms_wl)
+rm(plot.ms_allo, model.ms_allo)
 
 
 # ############################################################################ #
