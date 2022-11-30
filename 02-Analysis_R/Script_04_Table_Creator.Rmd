@@ -47,7 +47,12 @@ rm(file_name)
 ```{r, fixef_probe_ms, include=F  }
 ```
 
+```{r, ranef_probe_ms, include=F  }
+```
+
 ```{r apa_probe_ms, include=F}
+
+# fixed effects
 apa_lmm.ms <- apa_print(model.ms)
 
 apa_omega.ms <- omega.ms$Omega2_partial %>% apa_num()
@@ -55,7 +60,15 @@ apa_omega.ms <- omega.ms$Omega2_partial %>% apa_num()
 apa_ms_fixed <- apa_lmm.ms$table %>% 
   list_modify("omega"=apa_omega.ms) %>% label_variable(omega="$\\omega^2$")
 
-rm(apa_lmm.ms, omega.ms, apa_omega.ms)
+# random effects
+apa_LRT.ms <- tibble("Grouping" = c("Id", "Id", "Id")) %>% 
+  cbind("Random effect" = c("(Intercept)", "Condition1", "(Intercept) X Condition1")) %>% 
+  cbind("p.value" = c(NA, LRT.ms$p %>% apa_p(), NA)) 
+
+apa_ms_random <- apa_random_table(VarCorr(model.ms$full_model), apa_LRT.ms) 
+
+
+rm(apa_lmm.ms, omega.ms, apa_omega.ms, LRT.ms, apa_LRT.ms, model.ms)
 ```
 
 ```{r, model_probe_latency, include=F }
@@ -64,7 +77,12 @@ rm(apa_lmm.ms, omega.ms, apa_omega.ms)
 ```{r, fixef_probe_latency, include=F  }
 ```
 
+```{r, ranef_probe_latency, include=F  }
+```
+
 ```{r apa_probe_latency, include=F}
+
+# fixed effects 
 apa_lmm.latency  <- apa_print(model.latency)
 
 apa_omega.latency <- omega.latency$Omega2_partial %>% apa_num()
@@ -72,7 +90,15 @@ apa_omega.latency <- omega.latency$Omega2_partial %>% apa_num()
 apa_latency_fixed <- apa_lmm.latency$table %>% 
   list_modify("omega"=apa_omega.latency) %>% label_variable(omega="$\\omega^2$")
 
-rm(apa_lmm.latency, omega.latency, apa_omega.latency)
+# random effects
+apa_LRT.latency <- tibble("Grouping" = c("Id", "Id", "Id")) %>% 
+  cbind("Random effect" = c("(Intercept)", "Condition1", "(Intercept) X Condition1")) %>% 
+  cbind("p.value" = c(NA, LRT.latency$p %>% apa_p(), NA)) 
+
+apa_latency_random <- apa_random_table(VarCorr(model.latency$full_model), apa_LRT.latency)
+  
+
+rm(apa_lmm.latency, omega.latency, apa_omega.latency, LRT.latency, apa_LRT.latency, model.latency)
 ```
 
 ```{r, model_probe_path, include=F  }
@@ -81,7 +107,12 @@ rm(apa_lmm.latency, omega.latency, apa_omega.latency)
 ```{r, fixef_probe_path, include=F  }
 ```
 
+```{r, ranef_probe_path, include=F  }
+```
+
 ```{r apa_probe_path, include=F}
+
+# fixed effects 
 apa_lmm.path <- apa_print(model.path)
 
 apa_omega.path <- omega.path$Omega2_partial %>% apa_num()
@@ -89,7 +120,15 @@ apa_omega.path <- omega.path$Omega2_partial %>% apa_num()
 apa_path_fixed <- apa_lmm.path$table %>% 
   list_modify("omega"=apa_omega.path) %>% label_variable(omega="$\\omega^2$")
 
-rm(apa_lmm.path, omega.path, apa_omega.path)
+# random effects
+apa_LRT.path <- tibble("Grouping" = c("Id", "Id", "Id")) %>% 
+  cbind("Random effect" = c("(Intercept)", "Condition1", "(Intercept) X Condition1")) %>% 
+  cbind("p.value" = c(NA, LRT.path$p %>% apa_p(), NA)) 
+
+apa_path_random <- apa_random_table(VarCorr(model.path$full_model), apa_LRT.path) 
+
+
+rm(apa_lmm.path, omega.path, apa_omega.path, LRT.path, apa_LRT.path, model.path)
 ```
 
 ```{r, model_probe_distance, include=F  }
@@ -98,7 +137,12 @@ rm(apa_lmm.path, omega.path, apa_omega.path)
 ```{r, fixef_probe_distance, include=F  }
 ```
 
+```{r, ranef_probe_distance, include=F  }
+```
+
 ```{r apa_probe_distance, include=F}
+
+# fixed effects 
 apa_lmm.distance <- apa_print(model.distance)
 
 apa_omega.distance <- omega.distance$Omega2_partial %>% apa_num()
@@ -106,7 +150,15 @@ apa_omega.distance <- omega.distance$Omega2_partial %>% apa_num()
 apa_distance_fixed <- apa_lmm.distance$table %>% 
   list_modify("omega"=apa_omega.distance) %>% label_variable(omega="$\\omega^2$")
 
-rm(apa_lmm.distance, omega.distance, apa_omega.distance)
+# random effects
+apa_LRT.distance <- tibble("Grouping" = c("Id", "Id", "Id")) %>% 
+  cbind("Random effect" = c("(Intercept)", "Condition1", "(Intercept) X Condition1")) %>% 
+  cbind("p.value" = c(NA, LRT.distance$p %>% apa_p(), NA)) 
+
+apa_distance_random <- apa_random_table(VarCorr(model.distance$full_model), apa_LRT.distance) 
+
+
+rm(apa_lmm.distance, omega.distance, apa_omega.distance, LRT.distance, apa_LRT.distance, model.distance)
 ```
 
 ```{r, model_probe_rotation_velocity, include=F  }
@@ -115,7 +167,12 @@ rm(apa_lmm.distance, omega.distance, apa_omega.distance)
 ```{r, fixef_probe_rotation_velocity, include=F  }
 ```
 
+```{r, ranef_probe_rotation_velocity, include=F  }
+```
+
 ```{r apa_probe_rotation_velocity, include=F }
+
+# fixed effects
 apa_lmm.rotation_velocity <- apa_print(model.rotation_velocity)
 
 apa_omega.rotation_velocity <- omega.rotation_velocity$Omega2_partial %>% apa_num()
@@ -124,6 +181,16 @@ apa_rotation_velocity_fixed <- apa_lmm.rotation_velocity$table %>%
   list_modify("omega"=apa_omega.rotation_velocity) %>% label_variable(omega="$\\omega^2$")
 
 rm(apa_lmm.rotation_velocity, omega.rotation_velocity , apa_omega.rotation_velocity)
+
+# random effects
+apa_LRT.rotation_velocity <- tibble("Grouping" = c("Id", "Id", "Id")) %>% 
+  cbind("Random effect" = c("(Intercept)", "Condition1", "(Intercept) X Condition1")) %>% 
+  cbind("p.value" = c(NA, LRT.rotation_velocity$p %>% apa_p(), NA)) 
+
+apa_rotation_velocity_random <- apa_random_table(VarCorr(model.rotation_velocity$full_model), apa_LRT.rotation_velocity) 
+
+
+rm(apa_lmm.rotation_velocity, omega.rotation_velocity, apa_omega.rotation_velocity, LRT.rotation_velocity, apa_LRT.rotation_velocity, model.rotation_velocity)
 ```
 
 ```{r apa_table_fixed, echo=F}
@@ -140,28 +207,16 @@ rm(apa_ms_fixed, apa_latency_fixed, apa_path_fixed, apa_distance_fixed, apa_rota
 
 \newpage
 
-```{r apa_table_random, echo=F}
+```{r, apa_table_random, echo=F }
+apa_table(
+  cbind(apa_ms_random,
+        apa_latency_random %>% list_modify("Grouping"=NULL, "Random effect"=NULL),
+        apa_path_random %>% list_modify("Grouping"=NULL, "Random effect"=NULL),
+        apa_distance_random %>% list_modify("Grouping"=NULL, "Random effect"=NULL),
+        apa_rotation_velocity_random %>% list_modify("Grouping"=NULL, "Random effect"=NULL))
+)
 
-apa_ms_random <- apa_random_table(VarCorr(model.ms$full_model))
-apa_latency_random <- apa_random_table(VarCorr(model.latency$full_model))
-apa_path_random <- apa_random_table(VarCorr(model.path$full_model))
-apa_distance_random <- apa_random_table(VarCorr(model.distance$full_model))
-apa_rotation_velocity_random <- apa_random_table(VarCorr(model.rotation_velocity$full_model))
-
-df_list <- list(apa_ms_random, 
-                apa_latency_random, 
-                apa_path_random, 
-                apa_distance_random, 
-                apa_rotation_velocity_random)
-
-temp <- df_list %>% 
-  reduce(full_join, by=c("Grouping", "Random effect")) 
-
-names(temp) <- c("Grouping", "Random effect", 
-                 "SD ms", "r ms", "SD t", "r t", "SD p", "r p", "SD d", "r d", "SD v", "r v")
-
-temp %>% 
-  knitr::kable()
+rm(apa_ms_random, apa_latency_random, apa_path_random, apa_distance_random, apa_rotation_velocity_random)
 ```
 
 \newpage
@@ -174,7 +229,12 @@ temp %>%
 ```{r, fixef_probe_ms_all, include=F  }
 ```
 
+```{r, ranef_probe_ms_all, include=F  }
+```
+
 ```{r apa_probe_ms_all, include=F}
+
+# fixed effects 
 apa_lmm.ms_all <- apa_print(model.ms_all)
 
 apa_omega.ms_all <- omega.ms_all$Omega2_partial %>% apa_num()
@@ -182,7 +242,16 @@ apa_omega.ms_all <- omega.ms_all$Omega2_partial %>% apa_num()
 apa_ms_all_fixed <- apa_lmm.ms_all$table %>% 
   list_modify("omega"=apa_omega.ms_all) %>% label_variable(omega="$\\omega^2$")
 
-rm(apa_lmm.ms_all, omega.ms_all , apa_omega.ms_all)
+# random effects
+apa_LRT.ms_all <- tibble("Grouping" = c("Id", "Id", "Id", "Id", "Id", "Id")) %>% 
+  cbind("Random effect" = c("(Intercept)",  "Session1", "Condition1", 
+                            "(Intercept) X Session1", "(Intercept) X Condition1", "Session1 X Condition1")) %>% 
+  cbind("p.value" = c(NA, LRT.ms_all_session$p %>% apa_p(), LRT.ms_all_condition$p %>% apa_p(), NA, NA, NA)) 
+
+apa_ms_all_random <- apa_random_table(VarCorr(model.ms_all$full_model), apa_LRT.ms_all) 
+
+
+rm(apa_lmm.ms_all, omega.ms_all , apa_omega.ms_all, LRT.ms_all_session, LRT.ms_all_condition, apa_LRT.ms_all, model.ms_all)
 ```
 
 ```{r apa_table_fixed_all, echo=F}
@@ -194,8 +263,11 @@ rm(apa_ms_all_fixed)
 ```
 
 ```{r apa_table_random_all, echo=F}
-apa_random_table(VarCorr(model.ms_all$full_model)) %>% 
-  knitr::kable()
+apa_table(
+  apa_ms_all_random
+)
+
+rm(apa_ms_all_random)
 ```
 
 \newpage
@@ -206,7 +278,12 @@ apa_random_table(VarCorr(model.ms_all$full_model)) %>%
 ```{r, fixef_probe_ms_wl, include=F  }
 ```
 
+```{r, ranef_probe_ms_wl, include=F  }
+```
+
 ```{r apa_probe_ms_wl, include=F}
+
+# fixed effects 
 apa_lmm.ms_wl <- apa_print(model.ms_wl)
 
 apa_omega.ms_wl <- omega.ms_wl$Omega2_partial %>% apa_num()
@@ -214,7 +291,15 @@ apa_omega.ms_wl <- omega.ms_wl$Omega2_partial %>% apa_num()
 apa_ms_wl_fixed <- apa_lmm.ms_wl$table %>% 
   list_modify("omega"=apa_omega.ms_wl) %>% label_variable(omega="$\\omega^2$")
 
-rm(apa_lmm.ms_wl, omega.ms_wl , apa_omega.ms_wl)
+# random effects 
+apa_LRT.ms_wl <- tibble("Grouping" = c("Id", "Id", "Id")) %>% 
+  cbind("Random effect" = c("(Intercept)", "Session1", "(Intercept) X Session1")) %>% 
+  cbind("p.value" = c(NA, LRT.ms_wl$p %>% apa_p(), NA)) 
+
+apa_ms_wl_random <- apa_random_table(VarCorr(model.ms_wl$full_model), apa_LRT.ms_wl) 
+
+
+rm(apa_lmm.ms_wl, omega.ms_wl , apa_omega.ms_wl, LRT.ms_wl, apa_LRT.ms_wl, model.ms_wl)
 ```
 
 ```{r apa_table_fixed_wl, echo=F}
@@ -226,6 +311,9 @@ rm(apa_ms_wl_fixed)
 ```
 
 ```{r apa_table_random_wl, echo=F}
-apa_random_table(VarCorr(model.ms_wl$full_model)) %>% 
-  knitr::kable()
+apa_table(
+  apa_ms_wl_random
+  )
+
+rm(apa_ms_wl_random)
 ```

@@ -203,7 +203,7 @@ bonferroni_fix <- function(list) {
   return(list)
 }
 
-apa_random_table <- function(varcor) {
+apa_random_table <- function(varcor, LRT) {
   varcor %>% as.data.frame() %>% 
     mutate(SD=if_else(is.na(var2), sdcor, NaN), 
            r=if_else(!is.na(var2), sdcor, NaN)) %>% 
@@ -215,7 +215,10 @@ apa_random_table <- function(varcor) {
     mutate_at(vars(`grp`), str_replace_all, pattern=".1", replacement="") %>% 
     mutate_at(vars(`grp`), str_replace_all, pattern=".2", replacement="") %>% 
     mutate_at(vars(-SD, -r), str_to_title) %>% 
-    rename(`Grouping`=grp)
+    rename(`Grouping`=grp) %>%   
+    full_join(LRT, by=c("Grouping", "Random effect")) %>% 
+    label_variable(SD="$SD$", r="$r$", p.value="$p$") %>%
+    arrange(Grouping)
 }
 ## ----
 
@@ -287,8 +290,10 @@ VarCorr(model.ms$full_model)
 ## ---- ranef_probe_ms
 model.ms_base <- mixed(memory_score ~ group*condition + cov_sex + cov_motor_score + 
                          (1|id), data=data_p1, expand_re=T)
-LRT.ms <- anova(model.ms_base, model.ms)  %>% select(Chisq, Df, `Pr(>Chisq)`) %>% slice(2) %>% rename(p=`Pr(>Chisq)`)
-rm(model.ms_base)
+model.ms_slope <- mixed(memory_score ~ group*condition + cov_sex + cov_motor_score + 
+                         (condition||id), data=data_p1, expand_re=T)
+LRT.ms <- anova(model.ms_base, model.ms_slope)  %>% select(Chisq, Df, `Pr(>Chisq)`) %>% slice(2) %>% rename(p=`Pr(>Chisq)`)
+rm(model.ms_base, model.ms_slope)
 ## ---- 
 rm(LRT.ms)
 
@@ -337,8 +342,10 @@ VarCorr(model.latency$full_model)
 ## ---- ranef_probe_latency
 model.latency_base <- mixed(time ~ group*condition + cov_sex + cov_motor_score + 
                            (1|id), data=data_p1, expand_re=T)
-LRT.latency <- anova(model.latency_base, model.latency)  %>% select(Chisq, Df, `Pr(>Chisq)`) %>% slice(2) %>% rename(p=`Pr(>Chisq)`)
-rm(model.latency_base)
+model.latency_slope <- mixed(time ~ group*condition + cov_sex + cov_motor_score + 
+                              (condition||id), data=data_p1, expand_re=T)
+LRT.latency <- anova(model.latency_base, model.latency_slope)  %>% select(Chisq, Df, `Pr(>Chisq)`) %>% slice(2) %>% rename(p=`Pr(>Chisq)`)
+rm(model.latency_base, model.latency_slope)
 ## ---- 
 rm(LRT.latency)
 
@@ -376,8 +383,10 @@ VarCorr(model.path$full_model)
 ## ---- ranef_probe_path
 model.path_base <- mixed(excess_path_length ~ group*condition + cov_sex + cov_motor_score +
                            (1|id), data=data_p1, expand_re=T)
-LRT.path <- anova(model.path_base, model.path)  %>% select(Chisq, Df, `Pr(>Chisq)`) %>% slice(2) %>% rename(p=`Pr(>Chisq)`)
-rm(model.path_base)
+model.path_slope <- mixed(excess_path_length ~ group*condition + cov_sex + cov_motor_score +
+                           (condition||id), data=data_p1, expand_re=T)
+LRT.path <- anova(model.path_base, model.path_slope)  %>% select(Chisq, Df, `Pr(>Chisq)`) %>% slice(2) %>% rename(p=`Pr(>Chisq)`)
+rm(model.path_base, model.path_slope)
 ## ---- 
 rm(LRT.path)
 
@@ -415,8 +424,10 @@ VarCorr(model.distance$full_model)
 ## ---- ranef_probe_distance
 model.distance_base <- mixed(excess_target_distance ~ group*condition + cov_sex + cov_motor_score + 
                                (1|id), data=data_p1, expand_re=T)
-LRT.distance <- anova(model.distance_base, model.distance)  %>% select(Chisq, Df, `Pr(>Chisq)`) %>% slice(2) %>% rename(p=`Pr(>Chisq)`)
-rm(model.distance_base)
+model.distance_slope <- mixed(excess_target_distance ~ group*condition + cov_sex + cov_motor_score + 
+                               (condition||id), data=data_p1, expand_re=T)
+LRT.distance <- anova(model.distance_base, model.distance_slope)  %>% select(Chisq, Df, `Pr(>Chisq)`) %>% slice(2) %>% rename(p=`Pr(>Chisq)`)
+rm(model.distance_base, model.distance_slope)
 ## ---- 
 rm(LRT.distance)
 
@@ -455,8 +466,10 @@ VarCorr(model.rotation_velocity$full_model)
 ## ---- ranef_probe_rotation_velocity
 model.rotation_velocity_base <- mixed(initial_rotation_velocity ~ group*condition + cov_sex + cov_motor_score +  
                                         (1|id), data=data_p1, expand_re=T)
-LRT.rotation_velocity <- anova(model.rotation_velocity_base, model.rotation_velocity)  %>% select(Chisq, Df, `Pr(>Chisq)`) %>% slice(2) %>% rename(p=`Pr(>Chisq)`)
-rm(model.rotation_velocity_base)
+model.rotation_velocity_slope <- mixed(initial_rotation_velocity ~ group*condition + cov_sex + cov_motor_score +  
+                                        (condition||id), data=data_p1, expand_re=T)
+LRT.rotation_velocity <- anova(model.rotation_velocity_base, model.rotation_velocity_slope)  %>% select(Chisq, Df, `Pr(>Chisq)`) %>% slice(2) %>% rename(p=`Pr(>Chisq)`)
+rm(model.rotation_velocity_base, model.rotation_velocity_slope)
 ## ---- 
 rm(LRT.rotation_velocity)
 
@@ -615,8 +628,10 @@ VarCorr(model.ms_wl$full_model)
 ## ---- ranef_probe_ms_wl
 model.ms_wl_base <- mixed(memory_score ~ group*session*condition + cov_sex + cov_motor_score +
                             (1|id), data=data_p_w, expand_re=T)
-LRT.ms_wl <- anova(model.ms_wl, model.ms_wl_base) %>% select(Chisq, Df, `Pr(>Chisq)`) %>% slice(2) %>% rename(p=`Pr(>Chisq)`)
-rm(model.ms_wl_base)
+model.ms_wl_slope <- mixed(memory_score ~ group*session*condition + cov_sex + cov_motor_score +
+                            (session||id), data=data_p_w, expand_re=T)
+LRT.ms_wl <- anova(model.ms_wl_base, model.ms_wl_slope) %>% select(Chisq, Df, `Pr(>Chisq)`) %>% slice(2) %>% rename(p=`Pr(>Chisq)`)
+rm(model.ms_wl_base, model.ms_wl_slope)
 ## ---- 
 rm(LRT.ms_wl)
 
