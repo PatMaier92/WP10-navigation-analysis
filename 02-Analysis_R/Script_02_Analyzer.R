@@ -89,6 +89,18 @@ data_p <- data %>%
             ~ .x - mean(.x, na.rm=T)) %>% 
   droplevels()
 
+data_p_e <- data %>% 
+  filter(condition %in% c("ego_ret")) %>%
+  mutate_at(vars(all_of(cov_names)), 
+            ~ .x - mean(.x, na.rm=T)) %>% 
+  droplevels()
+
+data_p_a <- data %>% 
+  filter(condition %in% c("allo_ret")) %>%
+  mutate_at(vars(all_of(cov_names)), 
+            ~ .x - mean(.x, na.rm=T)) %>% 
+  droplevels()
+
 data_p1 <- data %>% 
   filter(session==1, condition %in% c("allo_ret", "ego_ret")) %>%
   mutate_at(vars(all_of(cov_names)), 
@@ -587,9 +599,8 @@ rm(plot.ms_all, model.ms_all)
 
 
 # ------------------------------------------------------------------------------
-# ::: OPTIONAL: CONSOLIDATION ANALYSIS - MEMORY ACCURACY (PROBE TRIALS) ::: #
+# ::: SUPPLEMENT: CONSOLIDATION ANALYSIS - MEMORY ACCURACY (PROBE TRIALS) ::: #
 # ------------------------------------------------------------------------------
-
 
 # --- MEMORY SCORE (WELL LEARNED ITEMS, ALL PROBE TRIALS) --- #
 ## ---- model_probe_ms_wl
@@ -618,7 +629,7 @@ rm(omega.ms_wl)
 
 ## ---- post_hoc_probe_ms_wl
 emm.ms_wl_group_session <- emmeans(model.ms_wl, ~ group * session, lmer.df="satterthwaite")
-post.ms_wl_group_session <- summary(rbind(pairs(emm.ms_wl_group_session, simple="group"), pairs(emm.ms_wl_group_session, simple="session")),
+post.ms_wl_group_session <- summary(rbind(pairs(emm.ms_wl_group_session, simple="group"), pairs(emm.ms_wl_group_session, interaction="pairwise")), 
                                     infer=c(T,T), by=NULL, adjust="bonferroni")
 rm(emm.ms_wl_group_session)
 
@@ -632,15 +643,19 @@ plot.ms_wl <- afex_plot_wrapper(model.ms_wl, "session", "group", "condition", l_
 rm(plot.ms_wl)
 
 
+# ------------------------------------------------------------------------------
+# ::: OPTIONAL: CONSOLIDATION ANALYSIS - MEMORY ACCURACY (PROBE TRIALS) ::: #
+# ------------------------------------------------------------------------------
+
 # --- EGOCENTRIC MEMORY SCORE (BOTH SESSIONS PROBE TRIALS) --- #
 ## ---- model_probe_ms_ego
 model.ms_ego <- mixed(memory_score ~ group*session + cov_sex + cov_motor_score +
-                        (session|id), data=data_p %>% filter(condition=="ego_ret"), expand_re=T)
+                        (session|id), data=data_p_e, expand_re=T)
 ## ----
 
 ## ---- ranef_probe_ms_ego
 model.ms_ego_base <- mixed(memory_score ~ group*session + cov_sex + cov_motor_score +
-                             (1|id), data=data_p %>% filter(condition=="ego_ret"), expand_re=T)
+                             (1|id), data=data_p_e, expand_re=T)
 LRT.ms_ego_base <- anova(model.ms_ego, model.ms_ego_base) %>% select(Chisq, Df, `Pr(>Chisq)`) %>% slice(2) %>% rename(p=`Pr(>Chisq)`)
 rm(model.ms_ego_base)
 ## ---- 
@@ -653,10 +668,15 @@ rm(omega.ms_ego)
 
 ## ---- post_hoc_probe_ms_ego
 emm.ms_ego_group_session <- emmeans(model.ms_ego, ~ group * session, lmer.df="satterthwaite")
-post.ms_ego_group_session <- summary(rbind(pairs(emm.ms_ego_group_session, simple="group"), pairs(emm.ms_ego_group_session, simple="session")),
+post.ms_ego_group_session <- summary(rbind(pairs(emm.ms_ego_group_session, simple="group"), pairs(emm.ms_ego_group_session, interaction="pairwise")), 
                                      infer=c(T,T), by=NULL, adjust="bonferroni")
 rm(emm.ms_ego_group_session)
+
+post.ms_ego_group <- emmeans(model.ms_ego, pairwise ~ group, lmer.df="satterthwaite", adjust="bonferroni")$contrasts
+
+post.ms_ego_session <- emmeans(model.ms_ego, pairwise ~ session, lmer.df="satterthwaite")$contrasts
 ## ----
+rm(post.ms_ego_group_session, post.ms_ego_group, post.ms_ego_session)
 
 ## ---- plot_probe_ms_ego
 plot.ms_ego <- afex_plot_wrapper(model.ms_ego, "session", "group", NULL, l_memory_score, xlabel=NULL, ymax=1.2)
@@ -667,12 +687,12 @@ rm(plot.ms_ego, model.ms_ego)
 # --- ALLOCENTRIC MEMORY SCORE (BOTH SESSIONS PROBE TRIALS) --- #
 ## ---- model_probe_ms_allo
 model.ms_allo <- mixed(memory_score ~ group*session + cov_sex + cov_motor_score +
-                         (session|id), data=data_p %>% filter(condition=="allo_ret"), expand_re=T)
+                         (session|id), data=data_p_a, expand_re=T)
 ## ----
 
 ## ---- ranef_probe_ms_allo
 model.ms_allo_base <- mixed(memory_score ~ group*session + cov_sex + cov_motor_score +
-                             (1|id), data=data_p %>% filter(condition=="allo_ret"), expand_re=T)
+                             (1|id), data=data_p_a, expand_re=T)
 LRT.ms_allo_base <- anova(model.ms_allo, model.ms_allo_base) %>% select(Chisq, Df, `Pr(>Chisq)`) %>% slice(2) %>% rename(p=`Pr(>Chisq)`)
 rm(model.ms_allo_base)
 ## ---- 
@@ -682,6 +702,13 @@ rm(LRT.ms_allo_base)
 omega.ms_allo <- omega_squared(model.ms_allo, partial=T)
 ## ----
 rm(omega.ms_allo)
+
+## ---- post_hoc_probe_ms_allo
+post.ms_allo_group <- emmeans(model.ms_allo, pairwise ~ group, lmer.df="satterthwaite", adjust="bonferroni")$contrasts
+
+post.ms_allo_session <- emmeans(model.ms_allo, pairwise ~ session, lmer.df="satterthwaite")$contrasts
+## ---- 
+rm(post.ms_allo_group, post.ms_allo_session)
 
 ## ---- plot_probe_ms_allo
 plot.ms_allo <- afex_plot_wrapper(model.ms_allo, "session", "group", NULL, l_memory_score, xlabel=NULL, ymax=1.2)

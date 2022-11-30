@@ -248,11 +248,15 @@ To investigate age group and condition differences in memory accuracy during lea
 The LMM with memory score had a significantly better fit when including the *random slope for condition* compared to a model with random intercept only ($\chi^2$(`r apa_rs.condition$Df`) = `r apa_rs.condition$Chisq`, p `r apa_rs.condition$p`), meaning that there was substantial interindividual variation in how participants responded to the two conditions. This may explain the small effect sizes for the condition main effect and age group x condition interaction.
 
 ```{r, echo=F, fig.height=4, fig.width=4, fig.cap="Memory accuracy in learning session" }
-plot.ms + guides(fill=F, shape=F) & theme(legend.position="right", legend.justification="top")
+plot.ms + 
+  guides(fill=F, shape=F) & 
+  theme(legend.position="right", legend.justification="top")
+
+rm(plot.ms)
 ```
 
 ```{r, include=F}
-rm(model.ms, R2, apa_lmm.ms, apa_post.ms_group, apa_post.ms_group_chance, apa_post.ms_condition, apa_post.ms_group_condition, apa_post.ms_omega_group, apa_post.ms_omega_condition, apa_post.ms_omega_group_condition, apa_rs.condition, plot.ms)
+rm(model.ms, R2, apa_lmm.ms, apa_post.ms_group, apa_post.ms_group_chance, apa_post.ms_condition, apa_post.ms_group_condition, apa_post.ms_omega_group, apa_post.ms_omega_condition, apa_post.ms_omega_group_condition, apa_rs.condition)
 ```
 
 \newpage
@@ -733,9 +737,17 @@ apa_random_table(VarCorr(model.ms_wl$full_model)) %>%
 
 To further explore if age differences in the memory score during learning explain why we did not find any age-related differences in consolidation, we ran a control analysis including only items that were well-learned after the first session. Well-learned was defined as finding the correct goal (i.e., pressing the button in the correct alley or the adjacent intersection) in at least 2 out of 3 probe trials in both egocentric and allocentric conditions. Trials with items that did not meet this criterion were excluded. This reduced our sample to n = `r n_wl_YK` 6-8-yo, n = `r n_wl_OK` 9-11-yo, and n = `r n_wl_AD` adults. 
 
-Looking at the memory score for well-learned items only, we found the same main effects as in the previous analysis, namely a main effect of *age group* (`r apa_lmm.ms_wl$statistic$group`, $\omega^2 =$ `r apa_post.ms_wl_omega_group`), *condition* (`r apa_lmm.ms_wl$statistic$condition`, $\omega^2 =$ `r apa_post.ms_wl_omega_condition`) and *session* (`r apa_lmm.ms_wl$statistic$session`, $\omega^2 =$ `r apa_post.ms_wl_omega_session`). In addition, we did find evidence for an *age group x session* interaction (`r apa_lmm.ms_wl$statistic$group_session`, $\omega^2 =$ `r apa_post.ms_wl_omega_group_session`) for well-learned items. Post-hoc contrasts revealed there were no initial age-related differences in the memory score for well-learned items during learning (session 1 for 6-8-yo vs. 9-11-yo: `r apa_post.ms_wl_group_session$statistic$X1_YoungKids_OldKids`; 6-8-yo vs. adults: `r apa_post.ms_wl_group_session$statistic$X1_YoungKids_YoungAdults`; 9-11-yo vs. adults: `r apa_post.ms_wl_group_session$statistic$X1_OldKids_YoungAdults`) but that adults performed significantly better than both 6-8-yo children (`r apa_post.ms_wl_group_session$statistic$X2_YoungKids_YoungAdults`) and 9-11-yo children ((`r apa_post.ms_wl_group_session$statistic$X2_OldKids_YoungAdults`) after the two-week delay period. This implies that adults may profit from superior consolidation compared to children, considering a comparable level of initial learning. 
+Looking at the memory score for well-learned items only, we found the same main effects as in the previous analysis, namely a main effect of *age group* (`r apa_lmm.ms_wl$statistic$group`, $\omega^2 =$ `r apa_post.ms_wl_omega_group`), *condition* (`r apa_lmm.ms_wl$statistic$condition`, $\omega^2 =$ `r apa_post.ms_wl_omega_condition`) and *session* (`r apa_lmm.ms_wl$statistic$session`, $\omega^2 =$ `r apa_post.ms_wl_omega_session`). In addition, we did find evidence for an *age group x session* interaction (`r apa_lmm.ms_wl$statistic$group_session`, $\omega^2 =$ `r apa_post.ms_wl_omega_group_session`) for well-learned items. Post-hoc contrasts revealed there were no initial age differences in the memory score for well-learned items during learning, but that adults performed significantly better than both 6-8-yo children (`r apa_post.ms_wl_group_session$statistic$X2__YoungKids_YoungAdults`) and 9-11-yo children (`r apa_post.ms_wl_group_session$statistic$X2__OldKids_YoungAdults`) after the two-week delay period. This implies that adults may profit from superior consolidation compared to children, considering a comparable level of initial learning. Comparing the forgetting slopes directly between age groups, however, did not yield significant differences (session 1 vs 2 in 6-8-yo vs. 9-11-yo: `r apa_post.ms_wl_group_session$statistic$X_YoungKids_OldKids_1_2_`; in 6-8-yo vs. adults: `r apa_post.ms_wl_group_session$statistic$X_YoungKids_YoungAdults_1_2_`; in 9-11-yo vs adults: `r apa_post.ms_wl_group_session$statistic$X_OldKids_YoungAdults_1_2_`). 
 
-The LMM had a significantly better fit when including the *random slope for session* compared to a model with random intercept only ($\chi^2$(`r apa_rs.session$Df`) = `r apa_rs.session$Chisq`, p `r apa_rs.session$p`), meaning that there was still notable interindividual variation in participant's forgetting rates across the two-week delay period. 
+The LMM had a significantly better fit when including the *random slope for session* compared to a model with random intercept only ($\chi^2$(`r apa_rs.session$Df`) = `r apa_rs.session$Chisq`, p `r apa_rs.session$p`), meaning that there was notable interindividual variation in participant's forgetting rates across the two-week delay period.
+
+```{r, echo=F, fig.height=4, fig.width=5, fig.cap="Consolidation of memory for well-learned items" }
+plot.ms_wl + 
+  guides(fill=F, shape=F) & 
+  theme(legend.position="right", legend.justification="top")
+
+rm(plot.ms_wl)
+```
 
 ```{r, include=F}
 rm(model.ms_wl, apa_lmm.ms_wl, apa_post.ms_wl_group_session,apa_post.ms_wl_condition, apa_post.ms_wl_omega_group_session, apa_post.ms_wl_omega_group, apa_post.ms_wl_omega_condition, apa_post.ms_wl_omega_session, apa_rs.session, n_wl_YK, n_wl_OK, n_wl_AD)
@@ -743,9 +755,160 @@ rm(model.ms_wl, apa_lmm.ms_wl, apa_post.ms_wl_group_session,apa_post.ms_wl_condi
 
 ### Option 2: Seperate models for conditions
 
+Egocentric 
 
-### Supplement: Seperate models with well-learned items
+```{r, model_probe_ms_ego }
+```
 
+```{r, fixef_probe_ms_ego, include=F }
+```
+
+```{r, ranef_probe_ms_ego, include=F }
+```
+
+```{r, post_hoc_probe_ms_ego, include=F }
+```
+
+```{r, plot_probe_ms_ego, include=F }
+```
+
+```{r apa_probe_ms_ego, include=F}
+
+# model fit 
+R2 <- r2beta(model.ms_ego$full_model, method='nsj', partial=F) %>% mutate_all(apa_num)
+
+# fixed effects 
+apa_lmm.ms_ego <- apa_print(model.ms_ego)
+
+# group x session
+apa_post.ms_ego_omega_group_session <- omega.ms_ego %>% 
+  filter(Parameter=="group:session") %>% select(Omega2_partial) %>% apa_num()
+
+apa_post.ms_ego_group_session <- post.ms_ego_group_session %>%  apa_print() %>% bonferroni_fix()
+
+# group 
+apa_post.ms_ego_omega_group <- omega.ms_ego %>% 
+  filter(Parameter=="group") %>% select(Omega2_partial) %>% apa_num()
+
+apa_post.ms_ego_group <- post.ms_ego_group %>%  apa_print() %>% bonferroni_fix()
+
+# session 
+apa_post.ms_ego_omega_session <- omega.ms_ego %>% 
+  filter(Parameter=="session") %>% select(Omega2_partial) %>% apa_num()
+
+apa_post.ms_ego_session <- post.ms_ego_session %>%  apa_print()
+
+# random effects LRT 
+apa_rs.session <- LRT.ms_ego_base %>% mutate_at(vars(Chisq, Df), apa_df) %>% mutate_at(vars(p), apa_p, add_equals=T)
+
+
+rm(post.ms_ego_group_session, post.ms_ego_group, post.ms_ego_session, LRT.ms_ego_base, omega.ms_ego)
+```
+
+(ref:p-ms-ego-f-caption0) Fixed effects for memory score in probe.
+
+```{r table-probe-ms-ego-f0, echo=F}
+apa_table(
+  apa_lmm.ms_ego$table, 
+  caption="(ref:p-ms-ego-f-caption0)",
+  placement="h")
+```
+
+(ref:p-ms-ego-r-caption0) Random effects for memory score in probe.
+
+```{r table-probe-ms-ego-r0, echo=F}
+apa_random_table(VarCorr(model.ms_ego$full_model)) %>% 
+  knitr::kable(
+    caption="(ref:p-ms-ego-r-caption0)")
+```
+
+To test if egocentric memory consolidation improves with increasing age, we created a LMM with the memory score data from the egocentric condition from both sessions. The memory score was significantly affected by *age group* (`r apa_lmm.ms_ego$statistic$group`, $\omega^2 =$ `r apa_post.ms_ego_omega_group`) and *session* (`r apa_lmm.ms_ego$statistic$session`, $\omega^2 =$ `r apa_post.ms_ego_omega_session`). In addition, there was a trend for the *age group x session* interaction (`r apa_lmm.ms_ego$statistic$group_session`, $\omega^2 =$ `r apa_post.ms_ego_omega_group_session`). Post-hoc contrasts revealed that while there was a gradual increase in egocentric memory with increasing age in the learning session (session 1 in 6-8-yo vs. 9-11-yo: `r apa_post.ms_ego_group_session$statistic$X1__YoungKids_OldKids`, 6-8-yo vs. adults: `r apa_post.ms_ego_group_session$statistic$X1__YoungKids_YoungAdults`; 9-11-yo vs. adults: `r apa_post.ms_ego_group_session$statistic$X1__OldKids_YoungAdults`), after the two-week delay period only adults were better than both groups of children (session 2 in 6-8-yo vs. adults: `r apa_post.ms_ego_group_session$statistic$X2__YoungKids_YoungAdults`; 9-11-yo vs. adults: `r apa_post.ms_ego_group_session$statistic$X2__OldKids_YoungAdults`) but 9-11-yo children did not perform better than 6-8-yo children anymore. When comparing the forgetting slopes between age groups directly, we did not find any significant differences (session 1 vs session 2 in 6-8-yo vs. 9-11-yo: `r apa_post.ms_ego_group_session$statistic$X_YoungKids_OldKids_1_2_`; 6-8-yo vs. adults: `r apa_post.ms_ego_group_session$statistic$X_YoungKids_YoungAdults_1_2_`; 9-11-yo vs. adults `r apa_post.ms_ego_group_session$statistic$X_OldKids_YoungAdults_1_2_`). Thus, there was no clear evidence for age-related differences in the consolidation of egocentric memories acquired during navigation.
+
+The LMM had a significantly better fit when including the *random slope for session* compared to a model with random intercept only ($\chi^2$(`r apa_rs.session$Df`) = `r apa_rs.session$Chisq`, p `r apa_rs.session$p`), meaning that there was substantial interindividual variation in participant's forgetting rates across the two-week delay period - irrespective of their age.
+
+```{r, include=F}
+rm(model.ms_ego, apa_lmm.ms_ego, apa_post.ms_ego_group_session, apa_post.ms_ego_group, apa_post.ms_ego_session, apa_post.ms_ego_omega_group_session, apa_post.ms_ego_omega_group, apa_post.ms_ego_omega_session, apa_rs.session)
+```
+
+Allocentric 
+
+```{r, model_probe_ms_allo }
+```
+
+```{r, fixef_probe_ms_allo, include=F }
+```
+
+```{r, ranef_probe_ms_allo, include=F }
+```
+
+```{r, post_hoc_probe_ms_allo, include=F }
+```
+
+```{r, plot_probe_ms_allo, include=F }
+```
+
+```{r apa_probe_ms_allo, include=F}
+
+# model fit 
+R2 <- r2beta(model.ms_allo$full_model, method='nsj', partial=F) %>% mutate_all(apa_num)
+
+# fixed effects 
+apa_lmm.ms_allo <- apa_print(model.ms_allo)
+
+# group 
+apa_post.ms_allo_omega_group <- omega.ms_allo %>% 
+  filter(Parameter=="group") %>% select(Omega2_partial) %>% apa_num()
+
+apa_post.ms_allo_group <- post.ms_allo_group %>%  apa_print() %>% bonferroni_fix()
+
+# session 
+apa_post.ms_allo_omega_session <- omega.ms_allo %>% 
+  filter(Parameter=="session") %>% select(Omega2_partial) %>% apa_num()
+
+apa_post.ms_allo_session <- post.ms_allo_session %>%  apa_print()
+
+# random effects LRT 
+apa_rs.session <- LRT.ms_allo_base %>% mutate_at(vars(Chisq, Df), apa_df) %>% mutate_at(vars(p), apa_p, add_equals=T)
+
+
+rm(post.ms_allo_group_session, post.ms_allo_group, post.ms_allo_session, LRT.ms_allo_base, omega.ms_allo)
+```
+
+(ref:p-ms-allo-f-caption0) Fixed effects for memory score in probe.
+
+```{r table-probe-ms-allo-f0, echo=F}
+apa_table(
+  apa_lmm.ms_allo$table, 
+  caption="(ref:p-ms-allo-f-caption0)",
+  placement="h")
+```
+
+(ref:p-ms-allo-r-caption0) Random effects for memory score in probe.
+
+```{r table-probe-ms-allo-r0, echo=F}
+apa_random_table(VarCorr(model.ms_allo$full_model)) %>% 
+  knitr::kable(
+    caption="(ref:p-ms-allo-r-caption0)")
+```
+
+To test if allocentric memory consolidation improves with increasing age, we created a LMM with the memory score data from the allocentric condition from both sessions. The memory score was significantly affected by *age group* (`r apa_lmm.ms_allo$statistic$group`, $\omega^2 =$ `r apa_post.ms_allo_omega_group`) and post-hoc contrasts revealed that there was only a trend difference between the children groups (6-8-yo vs. 9-11-yo: `r apa_post.ms_allo_group$statistic$YoungKids_OldKids`) but significant differences between both groups of children and adults (6-8-yo vs. adults: `r apa_post.ms_allo_group$statistic$YoungKids_YoungAdults`; 9-11-yo vs. adults: `r apa_post.ms_allo_group$statistic$OldKids_YoungAdults`). In addition there was a main effects for *session* (`r apa_lmm.ms_allo$statistic$session`, $\omega^2 =$ `r apa_post.ms_allo_omega_session`) showing that allocentric memory deteriorated significantly over the 2-week time period between sessions. There was no *age group x session* interaction (`r apa_lmm.ms_allo$statistic$group_session`), and thus, no evidence for age-related differences in the consolidation of allocentric memories acquired during navigation.  
+
+The LMM had a significantly better fit when including the *random slope for session* compared to a model with random intercept only ($\chi^2$(`r apa_rs.session$Df`) = `r apa_rs.session$Chisq`, p `r apa_rs.session$p`), meaning that there was substantial interindividual variation in participant's forgetting rates across the two-week delay period - irrespective of their age.
+
+```{r, include=F}
+rm(model.ms_allo, apa_lmm.ms_allo, apa_post.ms_allo_group, apa_post.ms_allo_session, apa_post.ms_allo_omega_group, apa_post.ms_allo_omega_session, apa_rs.session)
+```
+
+```{r, echo=F, fig.height=4.5, fig.width=5, fig.cap="Consolidation of egocentric and allocentric memory" }
+(plot.ms_ego + labs(y="egocentric memory score")) + 
+  (plot.ms_allo + labs(y="allocentric memory score")) + 
+  plot_layout(nrow=1, guides="collect") & guides(shape=F, fill=F) &
+  theme(legend.position="top", legend.justification=c(-0.025,0))
+
+rm(plot.ms_ego, plot.ms_allo)
+```
+
+\newpage 
 
 ## **Post-navigational memory tasks**
 
@@ -1022,8 +1185,8 @@ plot.time_learn +
   plot.path_learn + 
   plot.distance_learn + 
   plot.rotation_velocity_learn + 
-  plot_layout(nrow=2, guides="collect") & 
-  guides(fill=F, shape=F) & theme(legend.position="top", legend.justification=c(-0.05,0))
+  plot_layout(nrow=2, guides="collect") & guides(shape=F, fill=F) &
+  theme(legend.position="top", legend.justification=c(-0.05,0))
 
 rm(plot.time_learn, plot.path_learn,plot.distance_learn, plot.rotation_velocity_learn)
 ```
