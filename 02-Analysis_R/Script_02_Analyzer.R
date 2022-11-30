@@ -34,6 +34,7 @@ library(lattice)
 library(corrplot)
 library(effectsize)
 library(papaja)
+library(tinylabels)
 ## ----
 
 

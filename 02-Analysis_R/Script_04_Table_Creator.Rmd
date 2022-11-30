@@ -44,48 +44,95 @@ rm(file_name)
 ```{r, model_probe_ms, include=F  }
 ```
 
+```{r, fixef_probe_ms, include=F  }
+```
+
 ```{r apa_probe_ms, include=F}
 apa_lmm.ms <- apa_print(model.ms)
+
+apa_omega.ms <- omega.ms$Omega2_partial %>% apa_num()
+
+apa_ms_fixed <- apa_lmm.ms$table %>% 
+  list_modify("omega"=apa_omega.ms) %>% label_variable(omega="$\\omega^2$")
+
+rm(apa_lmm.ms, omega.ms, apa_omega.ms)
 ```
 
-```{r, model_probe_time, include=F }
+```{r, model_probe_latency, include=F }
 ```
 
-```{r apa_probe_time, include=F}
-apa_lmm.time  <- apa_print(model.time)
+```{r, fixef_probe_latency, include=F  }
+```
+
+```{r apa_probe_latency, include=F}
+apa_lmm.latency  <- apa_print(model.latency)
+
+apa_omega.latency <- omega.latency$Omega2_partial %>% apa_num()
+
+apa_latency_fixed <- apa_lmm.latency$table %>% 
+  list_modify("omega"=apa_omega.latency) %>% label_variable(omega="$\\omega^2$")
+
+rm(apa_lmm.latency, omega.latency, apa_omega.latency)
 ```
 
 ```{r, model_probe_path, include=F  }
 ```
 
+```{r, fixef_probe_path, include=F  }
+```
+
 ```{r apa_probe_path, include=F}
 apa_lmm.path <- apa_print(model.path)
+
+apa_omega.path <- omega.path$Omega2_partial %>% apa_num()
+
+apa_path_fixed <- apa_lmm.path$table %>% 
+  list_modify("omega"=apa_omega.path) %>% label_variable(omega="$\\omega^2$")
+
+rm(apa_lmm.path, omega.path, apa_omega.path)
 ```
 
 ```{r, model_probe_distance, include=F  }
 ```
 
+```{r, fixef_probe_distance, include=F  }
+```
+
 ```{r apa_probe_distance, include=F}
 apa_lmm.distance <- apa_print(model.distance)
+
+apa_omega.distance <- omega.distance$Omega2_partial %>% apa_num()
+
+apa_distance_fixed <- apa_lmm.distance$table %>% 
+  list_modify("omega"=apa_omega.distance) %>% label_variable(omega="$\\omega^2$")
+
+rm(apa_lmm.distance, omega.distance, apa_omega.distance)
 ```
 
 ```{r, model_probe_rotation_velocity, include=F  }
 ```
 
+```{r, fixef_probe_rotation_velocity, include=F  }
+```
+
 ```{r apa_probe_rotation_velocity, include=F }
-apa_lmm.init_vel <- apa_print(model.rotation_velocity)
+apa_lmm.rotation_velocity <- apa_print(model.rotation_velocity)
+
+apa_omega.rotation_velocity <- omega.rotation_velocity$Omega2_partial %>% apa_num()
+
+apa_rotation_velocity_fixed <- apa_lmm.rotation_velocity$table %>% 
+  list_modify("omega"=apa_omega.rotation_velocity) %>% label_variable(omega="$\\omega^2$")
+
+rm(apa_lmm.rotation_velocity, omega.rotation_velocity , apa_omega.rotation_velocity)
 ```
 
 ```{r apa_table_fixed, echo=F}
-
-ms_f <- apa_lmm.ms$table
-t_f <- apa_lmm.time$table %>% list_modify("term"=NULL)
-p_f <- apa_lmm.path$table %>% list_modify("term"=NULL)
-d_f <- apa_lmm.distance$table %>% list_modify("term"=NULL)
-v_f <- apa_lmm.init_vel$table %>% list_modify("term"=NULL)
-
 apa_table(
-  cbind(ms_f, t_f, p_f, d_f, v_f)
+  cbind(apa_ms_fixed, 
+        apa_latency_fixed %>% list_modify("term"=NULL), 
+        apa_path_fixed %>% list_modify("term"=NULL), 
+        apa_distance_fixed %>% list_modify("term"=NULL), 
+        apa_rotation_velocity_fixed %>% list_modify("term"=NULL))
   )
 ```
 
@@ -93,15 +140,21 @@ apa_table(
 
 ```{r apa_table_random, echo=F}
 
-ms_r <- apa_random_table(VarCorr(model.ms$full_model))
-t_r <- apa_random_table(VarCorr(model.time$full_model))
-p_r <- apa_random_table(VarCorr(model.path$full_model))
-d_r <- apa_random_table(VarCorr(model.distance$full_model))
-v_r <- apa_random_table(VarCorr(model.rotation_velocity$full_model))
+apa_ms_random <- apa_random_table(VarCorr(model.ms$full_model))
+apa_latency_random <- apa_random_table(VarCorr(model.latency$full_model))
+apa_path_random <- apa_random_table(VarCorr(model.path$full_model))
+apa_distance_random <- apa_random_table(VarCorr(model.distance$full_model))
+apa_rotation_velocity_random <- apa_random_table(VarCorr(model.rotation_velocity$full_model))
 
-df_list <- list(ms_r, t_r, p_r, d_r, v_r)
+df_list <- list(apa_ms_random, 
+                apa_latency_random, 
+                apa_path_random, 
+                apa_distance_random, 
+                apa_rotation_velocity_random)
 
-temp <- df_list %>% reduce(full_join, by=c("Grouping", "Random effect")) 
+temp <- df_list %>% 
+  reduce(full_join, by=c("Grouping", "Random effect")) 
+
 names(temp) <- c("Grouping", "Random effect", 
                  "SD ms", "r ms", "SD t", "r t", "SD p", "r p", "SD d", "r d", "SD v", "r v")
 
@@ -111,24 +164,33 @@ temp %>%
 
 \newpage
 
-# Consolidation 
+# Long-term memory after consolidation period 
 
 ```{r, model_probe_ms_all, include=F  }
 ```
 
+```{r, fixef_probe_ms_all, include=F  }
+```
+
 ```{r apa_probe_ms_all, include=F}
 apa_lmm.ms_all <- apa_print(model.ms_all)
+
+apa_omega.ms_all <- omega.ms_all$Omega2_partial %>% apa_num()
+
+apa_ms_all_fixed <- apa_lmm.ms_all$table %>% 
+  list_modify("omega"=apa_omega.ms_all) %>% label_variable(omega="$\\omega^2$")
+
+rm(apa_lmm.ms_all, omega.ms_all , apa_omega.ms_all)
 ```
 
 ```{r apa_table_fixed_all, echo=F}
 apa_table(
-  apa_lmm.ms_all$table
-  )
+  apa_ms_all_fixed
+)
 ```
 
 ```{r apa_table_random_all, echo=F}
-temp <- apa_random_table(VarCorr(model.ms_all$full_model))
-temp %>% 
+apa_random_table(VarCorr(model.ms_all$full_model)) %>% 
   knitr::kable()
 ```
 
@@ -137,18 +199,27 @@ temp %>%
 ```{r, model_probe_ms_wl, include=F  }
 ```
 
+```{r, fixef_probe_ms_wl, include=F  }
+```
+
 ```{r apa_probe_ms_wl, include=F}
 apa_lmm.ms_wl <- apa_print(model.ms_wl)
+
+apa_omega.ms_wl <- omega.ms_wl$Omega2_partial %>% apa_num()
+
+apa_ms_wl_fixed <- apa_lmm.ms_wl$table %>% 
+  list_modify("omega"=apa_omega.ms_wl) %>% label_variable(omega="$\\omega^2$")
+
+rm(apa_lmm.ms_wl, omega.ms_wl , apa_omega.ms_wl)
 ```
 
 ```{r apa_table_fixed_wl, echo=F}
 apa_table(
-  apa_lmm.ms_wl$table
+  apa_ms_wl_fixed
   )
 ```
 
 ```{r apa_table_random_wl, echo=F}
-temp <- apa_random_table(VarCorr(model.ms_wl$full_model))
-temp %>% 
+apa_random_table(VarCorr(model.ms_wl$full_model)) %>% 
   knitr::kable()
 ```
