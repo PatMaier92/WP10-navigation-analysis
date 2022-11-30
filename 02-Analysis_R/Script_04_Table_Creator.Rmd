@@ -134,6 +134,8 @@ apa_table(
         apa_distance_fixed %>% list_modify("term"=NULL), 
         apa_rotation_velocity_fixed %>% list_modify("term"=NULL))
   )
+
+rm(apa_ms_fixed, apa_latency_fixed, apa_path_fixed, apa_distance_fixed, apa_rotation_velocity_fixed)
 ```
 
 \newpage
@@ -187,6 +189,8 @@ rm(apa_lmm.ms_all, omega.ms_all , apa_omega.ms_all)
 apa_table(
   apa_ms_all_fixed
 )
+
+rm(apa_ms_all_fixed)
 ```
 
 ```{r apa_table_random_all, echo=F}
@@ -217,6 +221,8 @@ rm(apa_lmm.ms_wl, omega.ms_wl , apa_omega.ms_wl)
 apa_table(
   apa_ms_wl_fixed
   )
+
+rm(apa_ms_wl_fixed)
 ```
 
 ```{r apa_table_random_wl, echo=F}
