@@ -235,9 +235,10 @@ apa_table(
 (ref:p-ms-r-caption0) Random effects for memory score in probe.
 
 ```{r table-probe-ms-r0, echo=F}
-apa_random_table(VarCorr(model.ms$full_model)) %>% 
-  knitr::kable(
-    caption="(ref:p-ms-r-caption0)")
+apa_table(
+  apa_random_table(VarCorr(model.ms$full_model)),
+  caption="(ref:p-ms-r-caption0)"
+)
 ```
 
 The model had a fit of $R2 = `r R2$Rsq`, [CI: `r R2$upper.CL`, `r R2$lower.CL`$].
@@ -319,9 +320,10 @@ apa_table(
 (ref:p-t-r-caption0) Random effects for latency in probe trials.
 
 ```{r table-probe-latency-r0, echo=F}
-apa_random_table(VarCorr(model.latency$full_model)) %>% 
-  knitr::kable(
-    caption="(ref:p-t-r-caption0)")
+apa_table(
+  apa_random_table(VarCorr(model.latency$full_model)),
+  caption="(ref:p-t-r-caption0)"
+  )
 ```
 
 The model had a fit of $R2 = `r R2$Rsq`, [CI: `r R2$upper.CL`, `r R2$lower.CL`$].
@@ -398,9 +400,10 @@ apa_table(
 (ref:p-ep-r-caption0) Random effects for excess path in probe trials.
 
 ```{r table-probe-excess-path-r0, echo=F}
-apa_random_table(VarCorr(model.path$full_model)) %>% 
-  knitr::kable(
-    caption="(ref:p-ep-r-caption0)")
+apa_table(
+  apa_random_table(VarCorr(model.path$full_model)),
+  caption="(ref:p-ep-r-caption0)"
+  )
 ```
 
 The model had a fit of $R2 = `r R2$Rsq`, [CI: `r R2$upper.CL`, `r R2$lower.CL`$].
@@ -475,9 +478,10 @@ apa_table(
 (ref:p-ed-r-caption-r0) Random effects for excess distance to goal in probe trials.
 
 ```{r table-probe-excess-distance-r0, echo=F}
-apa_random_table(VarCorr(model.distance$full_model)) %>% 
-  knitr::kable(
-    caption="(ref:p-ed-r-caption-r0)")
+apa_table(
+  apa_random_table(VarCorr(model.distance$full_model)),
+  caption="(ref:p-ed-r-caption-r0)"
+  )
 ```
 
 The model had a fit of $R2 = `r R2$Rsq`, [CI: `r R2$upper.CL`, `r R2$lower.CL`$].
@@ -545,9 +549,10 @@ apa_table(
 (ref:p-init-vel-r-caption-r0) Random effects for initial rotation veloctiy in probe trials.
 
 ```{r table-probe-init-vel-r0, echo=F}
-apa_random_table(VarCorr(model.rotation_velocity$full_model)) %>% 
-  knitr::kable(
-    caption="(ref:p-init-vel-r-caption-r0)")
+apa_table(
+  apa_random_table(VarCorr(model.rotation_velocity$full_model)),
+  caption="(ref:p-init-vel-r-caption-r0)"
+  )
 ```
 
 The model had a fit of $R2 = `r R2$Rsq`, [CI: `r R2$upper.CL`, `r R2$lower.CL`$].
@@ -646,9 +651,10 @@ apa_table(
 (ref:p-ms-all-r-caption0) Random effects for memory score in probe.
 
 ```{r table-probe-ms-all-r0, echo=F}
-apa_random_table(VarCorr(model.ms_all$full_model)) %>% 
-  knitr::kable(
-    caption="(ref:p-ms-all-r-caption0)")
+apa_table(
+  apa_random_table(VarCorr(model.ms_all$full_model)),
+  caption="(ref:p-ms-all-r-caption0)"
+  )
 ```
 
 Table\ \@ref(tab:table-probe-ms-f0)
@@ -730,9 +736,10 @@ apa_table(
 (ref:p-ms-wl-r-caption0) Random effects for memory score in probe (well learned items only).
 
 ```{r table-probe-ms-wl-r0, echo=F}
-apa_random_table(VarCorr(model.ms_wl$full_model)) %>% 
-  knitr::kable(
-    caption="(ref:p-ms-wl-r-caption0)")
+apa_table(
+  apa_random_table(VarCorr(model.ms_wl$full_model)),
+  caption="(ref:p-ms-wl-r-caption0)"
+  )
 ```
 
 To further explore if age differences in the memory score during learning explain why we did not find any age-related differences in consolidation, we ran a control analysis including only items that were well-learned after the first session. Well-learned was defined as finding the correct goal (i.e., pressing the button in the correct alley or the adjacent intersection) in at least 2 out of 3 probe trials in both egocentric and allocentric conditions. Trials with items that did not meet this criterion were excluded. This reduced our sample to n = `r n_wl_YK` 6-8-yo, n = `r n_wl_OK` 9-11-yo, and n = `r n_wl_AD` adults. 
@@ -817,9 +824,10 @@ apa_table(
 (ref:p-ms-ego-r-caption0) Random effects for memory score in probe.
 
 ```{r table-probe-ms-ego-r0, echo=F}
-apa_random_table(VarCorr(model.ms_ego$full_model)) %>% 
-  knitr::kable(
-    caption="(ref:p-ms-ego-r-caption0)")
+apa_table(
+  apa_random_table(VarCorr(model.ms_ego$full_model)),
+  caption="(ref:p-ms-ego-r-caption0)"
+  )
 ```
 
 To test if egocentric memory consolidation improves with increasing age, we created a LMM with the memory score data from the egocentric condition from both sessions. The memory score was significantly affected by *age group* (`r apa_lmm.ms_ego$statistic$group`, $\omega^2 =$ `r apa_post.ms_ego_omega_group`) and *session* (`r apa_lmm.ms_ego$statistic$session`, $\omega^2 =$ `r apa_post.ms_ego_omega_session`). In addition, there was a trend for the *age group x session* interaction (`r apa_lmm.ms_ego$statistic$group_session`, $\omega^2 =$ `r apa_post.ms_ego_omega_group_session`). Post-hoc contrasts revealed that while there was a gradual increase in egocentric memory with increasing age in the learning session (session 1 in 6-8-yo vs. 9-11-yo: `r apa_post.ms_ego_group_session$statistic$X1__YoungKids_OldKids`, 6-8-yo vs. adults: `r apa_post.ms_ego_group_session$statistic$X1__YoungKids_YoungAdults`; 9-11-yo vs. adults: `r apa_post.ms_ego_group_session$statistic$X1__OldKids_YoungAdults`), after the two-week delay period only adults were better than both groups of children (session 2 in 6-8-yo vs. adults: `r apa_post.ms_ego_group_session$statistic$X2__YoungKids_YoungAdults`; 9-11-yo vs. adults: `r apa_post.ms_ego_group_session$statistic$X2__OldKids_YoungAdults`) but 9-11-yo children did not perform better than 6-8-yo children anymore. When comparing the forgetting slopes between age groups directly, we did not find any significant differences (session 1 vs session 2 in 6-8-yo vs. 9-11-yo: `r apa_post.ms_ego_group_session$statistic$YoungKids_OldKids_1_2_`; 6-8-yo vs. adults: `r apa_post.ms_ego_group_session$statistic$YoungKids_YoungAdults_1_2_`; 9-11-yo vs. adults `r apa_post.ms_ego_group_session$statistic$OldKids_YoungAdults_1_2_`). Thus, there was no clear evidence for age-related differences in the consolidation of egocentric memories acquired during navigation.
@@ -886,9 +894,10 @@ apa_table(
 (ref:p-ms-allo-r-caption0) Random effects for memory score in probe.
 
 ```{r table-probe-ms-allo-r0, echo=F}
-apa_random_table(VarCorr(model.ms_allo$full_model)) %>% 
-  knitr::kable(
-    caption="(ref:p-ms-allo-r-caption0)")
+apa_table(
+  apa_random_table(VarCorr(model.ms_allo$full_model)),
+  caption="(ref:p-ms-allo-r-caption0)"
+  )
 ```
 
 To test if allocentric memory consolidation improves with increasing age, we created a LMM with the memory score data from the allocentric condition from both sessions. The memory score was significantly affected by *age group* (`r apa_lmm.ms_allo$statistic$group`, $\omega^2 =$ `r apa_post.ms_allo_omega_group`) and post-hoc contrasts revealed that there was only a trend difference between the children groups (6-8-yo vs. 9-11-yo: `r apa_post.ms_allo_group$statistic$YoungKids_OldKids`) but significant differences between both groups of children and adults (6-8-yo vs. adults: `r apa_post.ms_allo_group$statistic$YoungKids_YoungAdults`; 9-11-yo vs. adults: `r apa_post.ms_allo_group$statistic$OldKids_YoungAdults`). In addition there was a main effects for *session* (`r apa_lmm.ms_allo$statistic$session`, $\omega^2 =$ `r apa_post.ms_allo_omega_session`) showing that allocentric memory deteriorated significantly over the 2-week time period between sessions. There was no *age group x session* interaction (`r apa_lmm.ms_allo$statistic$group_session`), and thus, no evidence for age-related differences in the consolidation of allocentric memories acquired during navigation.  
@@ -1028,9 +1037,10 @@ apa_table(
 (ref:l-t-caption-r0) Random effects for time in training.
 
 ```{r table-learn-time-r0, echo=F}
-apa_random_table(VarCorr(model.time_learn$full_model)) %>% 
-  knitr::kable(
-    caption="(ref:l-t-caption-r0)")
+apa_table(
+  apa_random_table(VarCorr(model.time_learn$full_model)),
+  caption="(ref:l-t-caption-r0)"
+  )
 ```
 
 The model had a fit of $R2 = `r R2$Rsq`, [CI: `r R2$upper.CL`, `r R2$lower.CL`$].
@@ -1077,9 +1087,10 @@ apa_table(
 (ref:l-ep-caption-r0) Random effects for excess path length in training.
 
 ```{r table-learn-excess-path-r0, echo=F}
-apa_random_table(VarCorr(model.path_learn$full_model)) %>% 
-  knitr::kable(
-    caption="(ref:l-ep-caption-r0)")
+apa_table(
+  apa_random_table(VarCorr(model.path_learn$full_model)),
+  caption="(ref:l-ep-caption-r0)"
+  )
 ```
 
 The model had a fit of $R2 = `r R2$Rsq`, [CI: `r R2$upper.CL`, `r R2$lower.CL`$].
@@ -1125,9 +1136,10 @@ apa_table(
 (ref:l-ed-caption-r0) Random effects for excess distance to goal in training.
 
 ```{r table-learn-excess-distance-r0, echo=F}
-apa_random_table(VarCorr(model.distance_learn$full_model)) %>% 
-  knitr::kable(
-    caption="(ref:l-ed-caption-r0)")
+apa_table(
+  apa_random_table(VarCorr(model.distance_learn$full_model)),
+  caption="(ref:l-ed-caption-r0)"
+  )
 ```
 
 The model had a fit of $R2 = `r R2$Rsq`, [CI: `r R2$upper.CL`, `r R2$lower.CL`$].
@@ -1168,9 +1180,10 @@ apa_table(
 (ref:l-irv-caption-r0) Random effects for factor initial rotation velocity
 
 ```{r table-learn-rotation-velocity-r0, echo=F}
-apa_random_table(VarCorr(model.rotation_velocity_learn$full_model)) %>% 
-  knitr::kable(
-    caption="(ref:l-irv-caption-r0)")
+apa_table(
+  apa_random_table(VarCorr(model.rotation_velocity_learn$full_model)),
+  caption="(ref:l-irv-caption-r0)"
+  )
 ```
 
 The model had a fit of $R2 = `r R2$Rsq`, [CI: `r R2$upper.CL`, `r R2$lower.CL`$].

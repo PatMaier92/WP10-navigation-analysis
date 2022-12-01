@@ -197,14 +197,18 @@ options(contrasts=c(unordered="contr.sum", ordered="contr.poly"))
 
 
 ## ---- papaja_output_helper
-# for latex/papaja bug in emmeans output when using Bonferroni correction
+# fix for latex/papaja bug in emmeans output when using Bonferroni correction
 bonferroni_fix <- function(list) {
   list <- list %>% modify_depth(2, str_replace, pattern="\\\\scriptsize ", replacement="")
   return(list)
 }
 
-apa_random_table <- function(varcor, LRT) {
-  varcor %>% as.data.frame() %>% 
+# apa-style table for random effects 
+apa_random_table <- function(varcor, LRT=NULL) {
+  
+  # base table
+  table <- varcor %>% 
+    as.data.frame() %>% 
     mutate(SD=if_else(is.na(var2), sdcor, NaN), 
            r=if_else(!is.na(var2), sdcor, NaN)) %>% 
     mutate_at(vars(SD, r), round, 3) %>% 
@@ -215,10 +219,18 @@ apa_random_table <- function(varcor, LRT) {
     mutate_at(vars(`grp`), str_replace_all, pattern=".1", replacement="") %>% 
     mutate_at(vars(`grp`), str_replace_all, pattern=".2", replacement="") %>% 
     mutate_at(vars(-SD, -r), str_to_title) %>% 
-    rename(`Grouping`=grp) %>%   
-    full_join(LRT, by=c("Grouping", "Random effect")) %>% 
-    label_variable(SD="$SD$", r="$r$", p.value="$p$") %>%
-    arrange(Grouping)
+    rename(`Grouping`=grp) %>% 
+    label_variable(SD="$SD$", r="$r$")
+  
+  # optional: add LRT results 
+  if (!is.null(LRT)) {
+    table <- table %>%    
+      full_join(LRT, by=c("Grouping", "Random effect")) %>% 
+      label_variable(p.value="$p$") %>%
+      arrange(Grouping)
+  }
+  
+  return(table)
 }
 ## ----
 
