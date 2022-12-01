@@ -144,6 +144,8 @@ rm(cov_data, cov_names, data, well_learned)
 # factor level labels 
 group_labels <- c("YoungKids"="6-8-yo", "OldKids"="9-11-yo", "YoungAdults"="adults")
 condition_labels <- c("ego_ret"="egocentric", "allo_ret"="allocentric")
+plsc_labels <- c("latency"="latency", "excess_path"="excess path length", "excess_distance"="excess distance to goal", 
+                 "rotation_velocity", "initial rotation velocity", "layout"="layout score", "landmark"="landmark score", "position"="position score")
 
 # variable labels 
 l_session <- "session"
@@ -163,8 +165,7 @@ l_initial_rotation_velocity <- "initial rotation velocity"
 group_colors <- c("#FFE476", "#6699FF", "#e19686")
 group_colors_o <- c("#FD9A2A", "#003399", "#d56d56") #CC6600
 
-
-# plot function 
+# plot functions 
 afex_plot_wrapper <- function(model, xv, tv, pv, ylabel, xlabel=l_session, ymin=0, ymax=1) {
   p <- afex_plot(model, x=xv, trace=tv, panel=pv, id="id", 
                  error="model", dodge=0.8,
@@ -186,6 +187,19 @@ afex_plot_wrapper <- function(model, xv, tv, pv, ylabel, xlabel=l_session, ymin=
     labs(x=xlabel, y=ylabel)
   
   return(p)
+}
+
+scatter_plot_wrapper <- function(data, xv, yv, xlabel, ylabel){
+  ggplot(data, aes(x=get(xv), y=get(yv), color=factor(group))) + 
+    geom_point() + 
+    geom_smooth(method=lm, se=FALSE, aes(colour=NULL), color="grey") + 
+    scale_color_manual(values=group_colors, labels=group_labels) +
+    theme_bw(base_size=13) + 
+    theme(legend.position="top", legend.justification=c(0,0),
+          legend.title=element_blank(),
+          panel.grid=element_blank(),
+          strip.background=element_rect(color=NA, fill=NA)) +
+    labs(x=xlabel, y=ylabel)
 }
 ## ---- 
 
@@ -903,47 +917,62 @@ rm(data_gmda, CanAcc, DistAcc, AngleAcc, boxplot)
 # ::: CONSOLIDATION ANALYSIS - ANOVA ON PLSC LATENT PROFILE SCORE::: #
 # ------------------------------------------------------------------------------
 
-file_plsc_allo <-"../WP10_data/WP10_results/PLSC_LP_allo_2.txt"
-plsc_allo <- read.table(file_plsc_allo, sep=",", header=T)
+## ---- model_plsc_allo
+file_plsc_allo <-"../WP10_data/WP10_results/PLSC_LP_allo_2_by_1.txt"
+plsc_allo <- read.table(file_plsc_allo, sep=",", header=T) %>% 
+  mutate(group=factor(case_when(group=="1" ~ "YoungKids", group=="2" ~ "OldKids", T ~ "YoungAdults"), 
+                      levels=c("YoungKids", "OldKids", "YoungAdults")))
 rm(file_plsc_allo)
 
-model.plsc_allo <- aov_ez("id", "lp", plsc_allo, between=c("group"))
+model.plsc_allo <- aov_ez("id", "latent_profile_score", plsc_allo, between=c("group"))
 post.plsc_allo <- emmeans(model.plsc_allo, pairwise ~ group, adjust="bonferroni")$contrasts
-cor.test(plsc_allo$lp, plsc_allo$ms)
+cor.plsc_allo <- cor.test(plsc_allo$latent_profile_score, plsc_allo$memory_score, method="spearman")
+## ---- 
 
-ggplot(plsc_allo, aes(x=lp, y=ms, color=factor(group))) + 
-  geom_point() + 
-  geom_smooth(method=lm, se=FALSE, aes(colour=NULL), color="grey") + 
-  scale_color_manual(values=group_colors, labels=c("6-8yo","9-11yo","adults")) +
-  theme_bw(base_size=13) + 
-  theme(legend.position="top", legend.justification=c(0,0),
-        legend.title=element_blank(),
+## ---- plot_plsc_scatter_allo
+plot.plsc_allo <- scatter_plot_wrapper(plsc_allo, "latent_profile_score", "memory_score", "latent profile score", "allocentric memory score")
+## ----
+ggsave("plsc_allo.jpeg", width=4, height=3.5, dpi=600)
+
+## ---- plot_plsc_lv_allo
+file_plsc_allo <-"../WP10_data/WP10_results/PLSC_LV_allo_2_by_1.txt"
+plsc_allo_lv <- read.table(file_plsc_allo, sep=",", header=T)
+rm(file_plsc_allo)
+
+weights_allo <- plsc_allo_lv %>% 
+  select(-LV_sig) %>% 
+  pivot_longer(cols=everything()) %>% 
+  mutate(name=factor(name, levels=c("latency", "excess_path", "excess_distance", "rotation_velocity", "layout", "landmark", "position")),
+         type=factor(case_when(name %in% c("latency", "excess_path", "excess_distance", "rotation_velocity") ~ "nav", T ~ "post")))
+
+ggplot(weights_allo, aes(x=name, y=value, fill=type)) + 
+  geom_bar(stat="identity") + 
+  geom_hline(yintercept=-1.96, color="red", linetype='dotted') +
+  geom_hline(yintercept=1.96, color="red", linetype='dotted') +
+  #scale_fill_manual() + # add colors 
+  theme_bw(base_size=13) +
+  theme(legend.position="none", 
         panel.grid=element_blank(),
         strip.background=element_rect(color=NA, fill=NA)) +
-  labs(x="navigation score", 
-       y="allocentric score")
-ggsave("plsc_allo2.jpeg", width=4, height=3.5, dpi=600)
+  labs(title="allocentric", 
+       x=NULL, y="BSR (+-1.96)")
+## ----
 
-
-file_plsc_ego <-"../WP10_data/WP10_results/PLSC_LP_ego_2.txt"
-plsc_ego <- read.table(file_plsc_ego, sep=",", header=T)
+## ---- model_plsc_ego
+file_plsc_ego <-"../WP10_data/WP10_results/PLSC_LP_ego_2_by_1.txt"
+plsc_ego <- read.table(file_plsc_ego, sep=",", header=T) %>% 
+  mutate(group=factor(case_when(group=="1" ~ "YoungKids", group=="2" ~ "OldKids", T ~ "YoungAdults"), 
+                      levels=c("YoungKids", "OldKids", "YoungAdults")))
 rm(file_plsc_ego)
 
-model.plsc_ego <- aov_ez("id", "lp", plsc_ego, between=c("group"))
+model.plsc_ego <- aov_ez("id", "latent_profile_score", plsc_ego, between=c("group"))
 post.plsc_ego <- emmeans(model.plsc_ego, pairwise ~ group, adjust="bonferroni")$contrasts
-cor.test(plsc_ego$lp, plsc_ego$ms)
+cor.plsc_ego <- cor.test(plsc_ego$latent_profile_score, plsc_ego$memory_score)
+## ---- 
 
-ggplot(plsc_ego, aes(x=lp, y=ms, color=factor(group))) + 
-  geom_point() + 
-  geom_smooth(method=lm, se=FALSE, aes(colour=NULL), color="grey") + 
-  scale_color_manual(values=group_colors, labels=c("6-8yo","9-11yo","adults")) +
-  theme_bw(base_size=13) + 
-  theme(legend.position="top", legend.justification=c(0,0),
-        legend.title=element_blank(),
-        panel.grid=element_blank(),
-        strip.background=element_rect(color=NA, fill=NA)) +
-  labs(x="navigation score", 
-       y="egocentric score")
+## ---- plot_plsc_scatter_ego
+plot.plsc_ego <- scatter_plot_wrapper(plsc_ego, "latent_profile_score", "memory_score", "latent profile score", "egocentric memory score")
+## ----
 ggsave("plsc_ego.jpeg", width=4, height=3.5, dpi=600)
 
 
