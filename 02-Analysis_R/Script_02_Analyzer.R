@@ -152,7 +152,7 @@ l_session <- "session"
 l_trial_in_block <- "trial"
 l_memory_score <- "memory score"
 l_correct_alley <- "alley accuracy (%)"
-l_latency <- "latency (sec)"
+l_latency <- "latency"
 l_excess_path_length <- "excess path length"
 l_excess_distance_goal <- "excess distance to goal"
 l_rotation <- "sum of rotation"
@@ -164,8 +164,10 @@ l_initial_rotation_velocity <- "initial rotation velocity"
 # scales::show_col()
 group_colors <- c("#FFE476", "#6699FF", "#e19686")
 group_colors_o <- c("#FD9A2A", "#003399", "#d56d56") #CC6600
-plsc_colors <- c("#dfb3fb", "#7b52ad")
-plsc_colors_o <- c("#CA83F8", "#9575BD")
+# plsc_colors <- c("#dfb3fb", "#7b52ad")
+# plsc_colors_o <- c("#CA83F8", "#9575BD")
+plsc_colors <- c("#B0ACB9", "#9590A1")
+plsc_colors_o <- c("#4e4e4e", "#00000")
 
 # plot functions 
 afex_plot_wrapper <- function(model, xv, tv, pv, ylabel, xlabel=l_session, ymin=0, ymax=1) {
@@ -900,7 +902,7 @@ plot.position <- afex_plot(model.position, x="group", error="model",
         panel.grid.major.x=element_blank(),
         axis.text.x=element_blank(),
         axis.ticks.x=element_blank()) +
-  labs(x=NULL, y="landmark score")
+  labs(x=NULL, y="positioning score")
 rm(temp_data)
 ## ---- 
 rm(plot.position, model.position, post.position)
@@ -1006,13 +1008,13 @@ plot.plsc_lv_ego <- bar_plot_wrapper(weights_ego, plsc_colors, plsc_colors_o, pl
 (plot.plsc_lv_ego + labs(subtitle="Latent profile")) + 
   (plot.plsc_ego + theme(axis.title.x=element_text(margin=margin(t=-130, unit="pt")),
                          legend.direction="horizontal", legend.position=c(0,-0.4))) + 
-  plot_layout(widths=c(0.4, 0.6)) + plot_annotation(title="A. Egocentric")
+  plot_layout(widths=c(0.4, 0.6)) + plot_annotation(title="A Egocentric")
 ggsave("plsc_ego.jpeg", width=7, height=5.15, dpi=600)
 
 (plot.plsc_lv_allo + labs(subtitle="Latent profile")) + 
   (plot.plsc_allo + theme(axis.title.x=element_text(margin=margin(t=-130, unit="pt")),
                          legend.direction="horizontal", legend.position=c(0,-0.4))) + 
-  plot_layout(widths=c(0.4, 0.6)) + plot_annotation(title="B. Allocentric")
+  plot_layout(widths=c(0.4, 0.6)) + plot_annotation(title="B Allocentric")
 ggsave("plsc_allo.jpeg", width=7, height=5.15, dpi=600)
 
 # ############################################################################ #
