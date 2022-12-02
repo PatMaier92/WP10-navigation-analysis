@@ -166,8 +166,8 @@ group_colors <- c("#FFE476", "#6699FF", "#e19686")
 group_colors_o <- c("#FD9A2A", "#003399", "#d56d56") #CC6600
 # plsc_colors <- c("#dfb3fb", "#7b52ad")
 # plsc_colors_o <- c("#CA83F8", "#9575BD")
-plsc_colors <- c("#B0ACB9", "#9590A1")
-plsc_colors_o <- c("#4e4e4e", "#00000")
+plsc_colors <- c("#cdcad3", "#9590A1")
+plsc_colors_o <- c("#4e4e4e", "#000000")
 
 # plot functions 
 afex_plot_wrapper <- function(model, xv, tv, pv, ylabel, xlabel=l_session, ymin=0, ymax=1) {
@@ -212,7 +212,7 @@ scatter_plot_wrapper <- function(data, xv, yv, xlabel, ylabel){
 
 bar_plot_wrapper <- function(data, colors, colors_o, mylabels, mytitle, ymin=-11, ymax=11){
   p <- ggplot(data, aes(x=name, y=value, fill=type, color=type)) + 
-    geom_bar(stat="identity") + 
+    geom_bar(stat="identity", width=0.8) + 
     geom_hline(yintercept=-1.96, color="red", linetype='dashed', size=0.5) +
     geom_hline(yintercept=1.96, color="red", linetype='dashed', size=0.5) +
     scale_fill_manual(values=colors) +
@@ -223,9 +223,8 @@ bar_plot_wrapper <- function(data, colors, colors_o, mylabels, mytitle, ymin=-11
     theme(legend.position="none", 
           panel.grid.major.x=element_blank(),
           axis.text.x=element_text(angle=90, hjust=1, vjust=0.5)) +
-    labs(x=NULL, 
-         #title=paste("LV for long-delay", mytitle),
-         y="BSR")
+    labs(subtitle=paste("Latent", mytitle, "profile"),
+         x=NULL, y="BSR")
   
   return(p)
 }
@@ -972,7 +971,7 @@ weights_allo <- plsc_allo_lv %>%
   mutate(name=factor(name, levels=c("latency", "excess_path", "excess_distance", "rotation_velocity", "layout", "landmark", "position")),
          type=factor(case_when(name %in% c("latency", "excess_path", "excess_distance", "rotation_velocity") ~ "nav", T ~ "post")))
 
-plot.plsc_lv_allo <- bar_plot_wrapper(weights_allo, plsc_colors, plsc_colors_o, plsc_labels, "allocentric memory")
+plot.plsc_lv_allo <- bar_plot_wrapper(weights_allo, plsc_colors, plsc_colors_o, plsc_labels, "allocentric")
 ## ----
 
 ## ---- model_plsc_ego
@@ -1002,20 +1001,21 @@ weights_ego <- plsc_ego_lv %>%
   mutate(name=factor(name, levels=c("latency", "excess_path", "excess_distance", "rotation_velocity", "layout", "landmark", "position")),
          type=factor(case_when(name %in% c("latency", "excess_path", "excess_distance", "rotation_velocity") ~ "nav", T ~ "post")))
 
-plot.plsc_lv_ego <- bar_plot_wrapper(weights_ego, plsc_colors, plsc_colors_o, plsc_labels, "egocentric memory")
+plot.plsc_lv_ego <- bar_plot_wrapper(weights_ego, plsc_colors, plsc_colors_o, plsc_labels, "egocentric")
 ## ----
 
-(plot.plsc_lv_ego + labs(subtitle="Latent profile")) + 
-  (plot.plsc_ego + theme(axis.title.x=element_text(margin=margin(t=-130, unit="pt")),
-                         legend.direction="horizontal", legend.position=c(0,-0.4))) + 
-  plot_layout(widths=c(0.4, 0.6)) + plot_annotation(title="A Egocentric")
-ggsave("plsc_ego.jpeg", width=7, height=5.15, dpi=600)
 
-(plot.plsc_lv_allo + labs(subtitle="Latent profile")) + 
-  (plot.plsc_allo + theme(axis.title.x=element_text(margin=margin(t=-130, unit="pt")),
-                         legend.direction="horizontal", legend.position=c(0,-0.4))) + 
-  plot_layout(widths=c(0.4, 0.6)) + plot_annotation(title="B Allocentric")
-ggsave("plsc_allo.jpeg", width=7, height=5.15, dpi=600)
+plot.plsc_lv_ego + 
+  (plot.plsc_ego + theme(axis.title.x=element_text(margin=margin(t=-150, unit="pt")),
+                         legend.direction="horizontal", legend.position=c(0.1,-0.5))) + 
+  plot.plsc_lv_allo + 
+  (plot.plsc_allo + theme(axis.title.x=element_text(margin=margin(t=-150, unit="pt")),
+                          legend.direction="horizontal", legend.position=c(0.1,-0.5))) + 
+  plot_annotation(tag_levels=list(c("A", "", "B", ""))) + 
+  plot_layout(nrow=2, widths=c(0.35, 0.65)) 
+
+ggsave("plsc.jpeg", width=7.5, height=7.8, dpi=600)
+
 
 # ############################################################################ #
 # ############################################################################ #
