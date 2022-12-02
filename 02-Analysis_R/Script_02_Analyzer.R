@@ -144,8 +144,8 @@ rm(cov_data, cov_names, data, well_learned)
 # factor level labels 
 group_labels <- c("YoungKids"="6-8-yo", "OldKids"="9-11-yo", "YoungAdults"="adults")
 condition_labels <- c("ego_ret"="egocentric", "allo_ret"="allocentric")
-plsc_labels <- c("latency"="latency", "excess_path"="excess path length", "excess_distance"="excess distance to goal", 
-                 "rotation_velocity", "initial rotation velocity", "layout"="layout score", "landmark"="landmark score", "position"="position score")
+plsc_labels <- c("latency"="latency", "excess_path"="exc. path length", "excess_distance"="exc. distance goal", 
+                 "rotation_velocity"="init. rotation velocity", "layout"="layout score", "landmark"="landmark score", "position"="position score")
 
 # variable labels 
 l_session <- "session"
@@ -164,6 +164,8 @@ l_initial_rotation_velocity <- "initial rotation velocity"
 # scales::show_col()
 group_colors <- c("#FFE476", "#6699FF", "#e19686")
 group_colors_o <- c("#FD9A2A", "#003399", "#d56d56") #CC6600
+plsc_colors <- c("#dfb3fb", "#7b52ad")
+plsc_colors_o <- c("#CA83F8", "#9575BD")
 
 # plot functions 
 afex_plot_wrapper <- function(model, xv, tv, pv, ylabel, xlabel=l_session, ymin=0, ymax=1) {
@@ -190,16 +192,40 @@ afex_plot_wrapper <- function(model, xv, tv, pv, ylabel, xlabel=l_session, ymin=
 }
 
 scatter_plot_wrapper <- function(data, xv, yv, xlabel, ylabel){
-  ggplot(data, aes(x=get(xv), y=get(yv), color=factor(group))) + 
+  p <- ggplot(data, aes(x=get(xv), y=get(yv), color=factor(group))) + 
     geom_point() + 
-    geom_smooth(method=lm, se=FALSE, aes(colour=NULL), color="grey") + 
+    geom_smooth(method=lm, se=T, aes(colour=NULL), color="darkgrey") + 
+    stat_cor(aes(color=NULL), method="spearman", label.x=-2, label.y=2, p.accuracy=0.001, r.accuracy=0.01, show.legend=F) + 
     scale_color_manual(values=group_colors, labels=group_labels) +
+    coord_cartesian(ylim=c(-2,2), xlim=c(-2,2)) + 
     theme_bw(base_size=13) + 
-    theme(legend.position="top", legend.justification=c(0,0),
+    theme(legend.position="bottom", legend.justification=c(0,0),
           legend.title=element_blank(),
           panel.grid=element_blank(),
           strip.background=element_rect(color=NA, fill=NA)) +
     labs(x=xlabel, y=ylabel)
+  
+  return(p)
+}
+
+bar_plot_wrapper <- function(data, colors, colors_o, mylabels, mytitle, ymin=-11, ymax=11){
+  p <- ggplot(data, aes(x=name, y=value, fill=type, color=type)) + 
+    geom_bar(stat="identity") + 
+    geom_hline(yintercept=-1.96, color="red", linetype='dashed', size=0.5) +
+    geom_hline(yintercept=1.96, color="red", linetype='dashed', size=0.5) +
+    scale_fill_manual(values=colors) +
+    scale_color_manual(values=colors_o) +
+    scale_x_discrete(labels=mylabels) + 
+    coord_cartesian(ylim=c(ymin,ymax)) + 
+    theme_bw(base_size=13) +
+    theme(legend.position="none", 
+          panel.grid.major.x=element_blank(),
+          axis.text.x=element_text(angle=90, hjust=1, vjust=0.5)) +
+    labs(x=NULL, 
+         #title=paste("LV for long-delay", mytitle),
+         y="BSR")
+  
+  return(p)
 }
 ## ---- 
 
@@ -930,9 +956,8 @@ cor.plsc_allo <- cor.test(plsc_allo$latent_profile_score, plsc_allo$memory_score
 ## ---- 
 
 ## ---- plot_plsc_scatter_allo
-plot.plsc_allo <- scatter_plot_wrapper(plsc_allo, "latent_profile_score", "memory_score", "latent profile score", "allocentric memory score")
+plot.plsc_allo <- scatter_plot_wrapper(plsc_allo, "latent_profile_score", "memory_score", "latent profile score", "long-delay memory score")
 ## ----
-ggsave("plsc_allo.jpeg", width=4, height=3.5, dpi=600)
 
 ## ---- plot_plsc_lv_allo
 file_plsc_allo <-"../WP10_data/WP10_results/PLSC_LV_allo_2_by_1.txt"
@@ -945,17 +970,7 @@ weights_allo <- plsc_allo_lv %>%
   mutate(name=factor(name, levels=c("latency", "excess_path", "excess_distance", "rotation_velocity", "layout", "landmark", "position")),
          type=factor(case_when(name %in% c("latency", "excess_path", "excess_distance", "rotation_velocity") ~ "nav", T ~ "post")))
 
-ggplot(weights_allo, aes(x=name, y=value, fill=type)) + 
-  geom_bar(stat="identity") + 
-  geom_hline(yintercept=-1.96, color="red", linetype='dotted') +
-  geom_hline(yintercept=1.96, color="red", linetype='dotted') +
-  #scale_fill_manual() + # add colors 
-  theme_bw(base_size=13) +
-  theme(legend.position="none", 
-        panel.grid=element_blank(),
-        strip.background=element_rect(color=NA, fill=NA)) +
-  labs(title="allocentric", 
-       x=NULL, y="BSR (+-1.96)")
+plot.plsc_lv_allo <- bar_plot_wrapper(weights_allo, plsc_colors, plsc_colors_o, plsc_labels, "allocentric memory")
 ## ----
 
 ## ---- model_plsc_ego
@@ -971,14 +986,38 @@ cor.plsc_ego <- cor.test(plsc_ego$latent_profile_score, plsc_ego$memory_score)
 ## ---- 
 
 ## ---- plot_plsc_scatter_ego
-plot.plsc_ego <- scatter_plot_wrapper(plsc_ego, "latent_profile_score", "memory_score", "latent profile score", "egocentric memory score")
+plot.plsc_ego <- scatter_plot_wrapper(plsc_ego, "latent_profile_score", "memory_score", "latent profile score", "long-delay memory score")
 ## ----
-ggsave("plsc_ego.jpeg", width=4, height=3.5, dpi=600)
 
+## ---- plot_plsc_lv_ego
+file_plsc_ego <-"../WP10_data/WP10_results/PLSC_LV_ego_2_by_1.txt"
+plsc_ego_lv <- read.table(file_plsc_ego, sep=",", header=T)
+rm(file_plsc_ego)
+
+weights_ego <- plsc_ego_lv %>% 
+  select(-LV_sig) %>% 
+  pivot_longer(cols=everything()) %>% 
+  mutate(name=factor(name, levels=c("latency", "excess_path", "excess_distance", "rotation_velocity", "layout", "landmark", "position")),
+         type=factor(case_when(name %in% c("latency", "excess_path", "excess_distance", "rotation_velocity") ~ "nav", T ~ "post")))
+
+plot.plsc_lv_ego <- bar_plot_wrapper(weights_ego, plsc_colors, plsc_colors_o, plsc_labels, "egocentric memory")
+## ----
+
+(plot.plsc_lv_ego + labs(subtitle="Latent profile")) + 
+  (plot.plsc_ego + theme(axis.title.x=element_text(margin=margin(t=-130, unit="pt")),
+                         legend.direction="horizontal", legend.position=c(0,-0.4))) + 
+  plot_layout(widths=c(0.4, 0.6)) + plot_annotation(title="A. Egocentric")
+ggsave("plsc_ego.jpeg", width=7, height=5.15, dpi=600)
+
+(plot.plsc_lv_allo + labs(subtitle="Latent profile")) + 
+  (plot.plsc_allo + theme(axis.title.x=element_text(margin=margin(t=-130, unit="pt")),
+                         legend.direction="horizontal", legend.position=c(0,-0.4))) + 
+  plot_layout(widths=c(0.4, 0.6)) + plot_annotation(title="B. Allocentric")
+ggsave("plsc_allo.jpeg", width=7, height=5.15, dpi=600)
 
 # ############################################################################ #
 # ############################################################################ #
-.
+
 
 # ------------------------------------------------------------------------------
 # ::: SUPPLEMENT: LEARNING ANALYSIS - NAVIGATION BEHAVIOR (PROBE TRIALS) ::: #
