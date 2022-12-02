@@ -1008,6 +1008,98 @@ rm(plot.ms_all, plot.layout, plot.landmark, plot.position)
 
 \newpage 
 
+## Partial Least Square Correlation (PLSC) Analysis
+
+### Egocentric long-delay memory  
+
+```{r, model_plsc_ego, include=F}
+```
+
+```{r, plot_plsc_scatter_ego, include=F}
+```
+
+```{r, plot_plsc_lv_ego, include=F}
+```
+
+```{r apa_plsc_ego, include=F}
+
+# LV 
+apa_lv.weights_ego <- plsc_ego_lv %>% 
+  mutate_all(as.numeric) %>% 
+  mutate_at(vars(-LV_sig), apa_num) %>% mutate_at(vars(LV_sig), apa_p, add_equals=T)
+  
+# LPS 
+apa_aov.plsc_ego <- apa_print(model.plsc_ego)
+
+apa_post.plsc_ego <- post.plsc_ego %>% apa_print() %>% bonferroni_fix()
+
+apa_cor.plsc_ego <- cor.plsc_ego %>% apa_print()
+
+
+rm(plsc_ego_lv, model.plsc_ego, post.plsc_ego, cor.plsc_ego)
+```
+
+We applied PLSC to identify unique profiles in relation to either egocentric or allocentric long-term memory across age groups. For the egocentric condition, we identified a single reliable LV ($p$ `r apa_lv.weights_ego$LV_sig`) that optimally represents associations between long-delay egocentric memory and a profile of navigational indicators from the learning session and post-navigational indicators (`r apa_cor.plsc_ego$full_result`). We identified several stable components within the multivariate profile. Better long-delay egocentric memory was associated with a specific navigation pattern during learning, more specifically with shorter latency (BSR = `r apa_lv.weights_ego$latency`), more direct navigation (excess path length; BSR = `r apa_lv.weights_ego$excess_path`), and search near the goal (excess distance to goal; BSR = `r apa_lv.weights_ego$excess_distance`) but not with visual exploration at the first decision point (initial rotation velocity; BSR = `r apa_lv.weights_ego$rotation_velocity`). Better long-delay egocentric memory was also associated with the post-navigational tests, more specifically with a higher layout score (BSR = `r apa_lv.weights_ego$layout`); landmark identity score (BSR = `r apa_lv.weights_ego$landmark`) and landmark positioning score (BSR = `r apa_lv.weights_ego$position`). 
+
+As a second step, we investigated age-related differences in the egocentric latent profile score (E-LPS). A higher E-LPS indicates that an individual expressed the latent profile more strongly, which was associated with better egocentric long-delay memory. One-way ANOVA revealed significant age group differences in E-LPS (`r apa_aov.plsc_ego$statistic`), indicating that there was a gradual increase in the expression of the E-LPS with increasing age (6-8-yo vs. 9-11-yo: `r apa_post.plsc_ego$statistic$YoungKids_OldKids`; 6-8-yo vs. adults: `r apa_post.plsc_ego$statistic$YoungKids_YoungAdults`; 9-11-yo vs adults: `r apa_post.plsc_ego$statistic$OldKids_YoungAdults`), thus, paralleling the age-related differences in egocentric long-term memory.
+
+```{r, include=F}
+rm(apa_lv.weights_ego, apa_aov.plsc_ego, apa_post.plsc_ego, apa_cor.plsc_ego)
+```
+
+### Allocentric long-delay memory  
+
+```{r, model_plsc_allo, include=F}
+```
+
+```{r, plot_plsc_scatter_allo, include=F}
+```
+
+```{r, plot_plsc_lv_allo, include=F}
+```
+
+```{r apa_plsc_allo, include=F}
+
+# LV 
+apa_lv.weights_allo <- plsc_allo_lv %>% 
+  mutate_all(as.numeric) %>% 
+  mutate_at(vars(-LV_sig), apa_num) %>% mutate_at(vars(LV_sig), apa_p, add_equals=T)
+  
+# LPS 
+apa_aov.plsc_allo <- apa_print(model.plsc_allo)
+
+apa_post.plsc_allo <- post.plsc_allo %>% apa_print() %>% bonferroni_fix()
+
+apa_cor.plsc_allo <- cor.plsc_allo %>% apa_print()
+
+
+rm(plsc_allo_lv, model.plsc_allo, post.plsc_allo, cor.plsc_allo)
+```
+
+For the allocentric condition, we identified a single reliable LV ($p$ `r apa_lv.weights_allo$LV_sig`) that optimally represents associations between long-delay allocentric memory and a profile of navigational indicators from the learning session and post-navigational indicators (`r apa_cor.plsc_allo$full_result`). We identified several stable components within the multivariate profile. Better long-delay allocentric memory was associated with a specific navigation pattern during learning, more specifically with shorter latency (BSR = `r apa_lv.weights_allo$latency`), more direct navigation (excess path length; BSR = `r apa_lv.weights_allo$excess_path`), search near the goal (excess distance to goal; BSR = `r apa_lv.weights_allo$excess_distance`), and more visual exploration at the first decision point (initial rotation velocity; BSR = `r apa_lv.weights_allo$rotation_velocity`). Better long-delay allocentric memory was also associated with the post-navigational tests, more specifically with a higher layout score (BSR = `r apa_lv.weights_allo$layout`); landmark identity score (BSR = `r apa_lv.weights_allo$landmark`) and landmark positioning score (BSR = `r apa_lv.weights_allo$position`). 
+
+As a second step, we investigated age-related differences in the allocentric latent profile score (A-LPS). A higher A-LPS indicates that an individual expressed the latent profile more strongly, which was associated with better allocentric long-delay memory. One-way ANOVA revealed significant age group differences in A-LPS (`r apa_aov.plsc_allo$statistic`), indicating that there was a gradual increase in the expression of the A-LPS with increasing age (6-8-yo vs. 9-11-yo: `r apa_post.plsc_allo$statistic$YoungKids_OldKids`; 6-8-yo vs. adults: `r apa_post.plsc_allo$statistic$YoungKids_YoungAdults`; 9-11-yo vs adults: `r apa_post.plsc_allo$statistic$OldKids_YoungAdults`), thus, paralleling the age-related differences in allocentric long-term memory.
+
+```{r, include=F}
+rm(apa_lv.weights_allo, apa_aov.plsc_allo, apa_post.plsc_allo, apa_cor.plsc_allo)
+```
+
+```{r, echo=F, fig.height=7.8, fig.width=7.5, fig.cap="PLSC multivariate profiles" }
+
+plot.plsc_lv_ego + 
+  (plot.plsc_ego + theme(axis.title.x=element_text(margin=margin(t=-150, unit="pt")),
+                         legend.direction="horizontal", legend.position=c(0.1,-0.5))) + 
+  plot.plsc_lv_allo + 
+  (plot.plsc_allo + theme(axis.title.x=element_text(margin=margin(t=-150, unit="pt")),
+                          legend.direction="horizontal", legend.position=c(0.1,-0.5))) + 
+  plot_annotation(tag_levels=list(c("A", "", "B", ""))) + 
+  plot_layout(nrow=2, widths=c(0.35, 0.65)) 
+
+rm(plot.plsc_lv_ego, plot.plsc_ego, plot.plsc_lv_allo, plot.plsc_allo)
+```
+
+\newpage
+
 # Supplementary material 
 
 ## Navigation behavior
@@ -1215,12 +1307,6 @@ rm(plot.time_learn, plot.path_learn,plot.distance_learn, plot.rotation_velocity_
 ```
 
 \newpage 
-
-## Correlations & PLSC Analysis
-
-TBD 
-
-\newpage
 
 ## Motor Control Task 
 

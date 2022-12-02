@@ -118,7 +118,7 @@ for i=1:numel(data_cell)
     % combine data and write table
     id = data(:,1);
     group = data(:,2);
-    memory_score = plsinput.y;
+    memory_score = data(:,3);
     latent_profile_score = plsres.usc;
     PLSC_LP = table(id, group, memory_score, latent_profile_score);
     
