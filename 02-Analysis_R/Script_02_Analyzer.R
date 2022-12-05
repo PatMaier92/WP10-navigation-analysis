@@ -33,6 +33,7 @@ library(car)
 library(lattice)
 library(corrplot)
 library(effectsize)
+library(ggsignif)
 library(papaja)
 library(tinylabels)
 ## ----
@@ -170,7 +171,7 @@ plsc_colors <- c("#cdcad3", "#9590A1")
 plsc_colors_o <- c("#4e4e4e", "#000000")
 
 # plot functions 
-afex_plot_wrapper <- function(model, xv, tv, pv, ylabel, xlabel=l_session, ymin=0, ymax=1) {
+afex_plot_wrapper <- function(model, xv, tv, pv, ylabel, xlabel=l_session, ymin=0, ymax=1, tracevis=1) {
   p <- afex_plot(model, x=xv, trace=tv, panel=pv, id="id", 
                  error="model", dodge=0.8,
                  mapping=c("shape", "fill", "color"),
@@ -179,7 +180,7 @@ afex_plot_wrapper <- function(model, xv, tv, pv, ylabel, xlabel=l_session, ymin=
                  data_geom=geom_boxplot, 
                  data_arg=list(width=0.5, color="black", outlier.colour="lightgrey"),
                  point_arg=list(size=3), 
-                 line_arg=list(size=1.25),
+                 line_arg=list(size=1.25, linetype=tracevis),
                  error_arg=list(size=1.25, width=0)) + 
     scale_fill_manual(values=group_colors) + 
     scale_color_manual(values=group_colors_o) +
@@ -372,12 +373,23 @@ rm(emm.ms_group)
 
 post.ms_condition <- emmeans(model.ms, pairwise ~ condition, lmer.df="satterthwaite")$contrasts
 ## ----
-rm(post.ms_group, post.ms_group_chance, post.ms_session, post.ms_condition)
+rm(post.ms_group_condition, post.ms_group, post.ms_group_chance, post.ms_session, post.ms_condition)
 
 ## ---- plot_probe_ms
-plot.ms <- afex_plot_wrapper(model.ms, "condition", "group", NULL, l_memory_score, xlabel=NULL, ymax=1.2)
+p.values <- post.ms_group_condition %>%
+  add_significance(p.col="p.value", cutpoints = c(0, 0.001, 0.01, 0.05, 1), symbols = c("***", "**", "*", "ns")) %>% 
+  pull(p.value.signif)
+
+plot.ms <- afex_plot_wrapper(model.ms, "condition", "group", NULL, l_memory_score, xlabel=NULL, ymax=1.3, tracevis=0) + 
+  geom_signif(textsize=2.5, xmin=c(0.75, 0.75, 1.05), xmax=c(0.95, 1.25, 1.25), y_position=c(1.03, 1.1, 1.03), 
+              annotation=c(p.values[1], p.values[2], p.values[3]), color="black", tip_length=0) + 
+  geom_signif(textsize=2.5, xmin=c(1.75, 2.05), xmax=c(2.25, 2.25), y_position=c(1.1, 1.03), 
+              annotation=c(p.values[5], p.values[6]), color="black", tip_length=0) + 
+  geom_signif(textsize=2.5, xmin=1, xmax=2, y_position=1.25, annotation=c(p.values[8]), color="black", tip_length=0)
+
+rm(p.values)
 ## ----
-rm(plot.ms)
+rm(plot.ms, model.ms)
 
 
 # ------------------------------------------------------------------------------
@@ -420,7 +432,19 @@ rm(emm.latency_group_condition)
 rm(post.latency_group_condition)
 
 ## ---- plot_probe_latency 
-plot.latency <- afex_plot_wrapper(model.latency, "condition", "group", NULL, l_latency, xlabel=NULL, ymin=0, ymax=40)
+p.values <- post.latency_group_condition %>%
+  add_significance(p.col="p.value", cutpoints = c(0, 0.001, 0.01, 0.05, 1), symbols = c("***", "**", "*", "ns")) %>% 
+  pull(p.value.signif)
+
+plot.latency <- afex_plot_wrapper(model.latency, "condition", "group", NULL, l_latency, xlabel=NULL, ymin=0, ymax=46, tracevis=0) + 
+  geom_signif(textsize=2.5, xmin=c(0.75), xmax=c(1.25), y_position=c(38), 
+              annotation=c(p.values[2]), color="black", tip_length=0) + 
+  geom_signif(textsize=2.5, xmin=c(1.755), xmax=c(2.25), y_position=c(38), 
+              annotation=c(p.values[5]), color="black", tip_length=0) + 
+  geom_signif(textsize=2.5, xmin=c(1), xmax=c(2), y_position=c(44), 
+              annotation=c(paste("ego vs allo: all p", p.values[7])), color="black", tip_length=0)
+
+rm(p.values)
 ## ----
 rm(plot.latency, model.latency)
 
@@ -461,7 +485,19 @@ rm(emm.path_group_condition)
 rm(post.path_group_condition)
 
 ## ---- plot_probe_path
-plot.path <- afex_plot_wrapper(model.path, "condition", "group", NULL, l_excess_path_length, xlabel=NULL, ymin=0, ymax=1.5)
+p.values <- post.path_group_condition %>%
+  add_significance(p.col="p.value", cutpoints = c(0, 0.001, 0.01, 0.05, 1), symbols = c("***", "**", "*", "ns")) %>% 
+  pull(p.value.signif)
+
+plot.path <- afex_plot_wrapper(model.path, "condition", "group", NULL, l_excess_path_length, xlabel=NULL, ymin=0, ymax=1.35, tracevis=0) +
+  geom_signif(textsize=2.5, xmin=c(0.75), xmax=c(1.25), y_position=c(1), 
+              annotation=c(p.values[2]), color="black", tip_length=0) + 
+  geom_signif(textsize=2.5, xmin=c(1.755, 1.755, 2.05), xmax=c(1.95, 2.25, 2.25), y_position=c(1, 1.1, 1), 
+              annotation=c(p.values[4], p.values[5], p.values[6]), color="black", tip_length=0) + 
+  geom_signif(textsize=2.5, xmin=c(1), xmax=c(2), y_position=c(1.3), 
+              annotation=c(paste("ego vs allo: all p", p.values[7])), color="black", tip_length=0)
+
+rm(p.values)
 ## ----
 rm(plot.path, model.path)
 
@@ -503,7 +539,21 @@ post.distance_condition <- emmeans(model.distance, pairwise ~ condition, lmer.df
 rm(post.distance_group, post.distance_condition)
 
 ## ---- plot_probe_distance
-plot.distance <- afex_plot_wrapper(model.distance, "condition", "group", NULL, l_excess_distance_goal, xlabel=NULL, ymin=-0.25, ymax=0.25)
+p.values_g <- post.distance_group %>% as.data.frame() %>% 
+  add_significance(p.col="p.value", cutpoints = c(0, 0.001, 0.01, 0.05, 1), symbols = c("***", "**", "*", "ns")) %>% 
+  pull(p.value.signif)
+
+p.values_c <- post.distance_condition %>% as.data.frame() %>% 
+  add_significance(p.col="p.value", cutpoints = c(0, 0.001, 0.01, 0.05, 1), symbols = c("***", "**", "*", "ns")) %>% 
+  pull(p.value.signif)
+
+plot.distance <- afex_plot_wrapper(model.distance, "condition", "group", NULL, l_excess_distance_goal, xlabel=NULL, ymin=-0.25, ymax=0.29, tracevis=0) + 
+  geom_signif(textsize=2.5, xmin=c(1), xmax=c(2), y_position=c(0.27), 
+              annotation=c(paste("ego vs allo: all p", p.values_c)), color="black", tip_length=0) + 
+  geom_signif(textsize=2.5, xmin=c(1), xmax=c(2), y_position=c(0.22), 
+              annotation=c(paste("age groups: all p", p.values_g[1])), color="black", tip_length=0)
+
+rm(p.values_g, p.values_c)
 ## ----
 rm(plot.distance, model.distance)
 
@@ -544,9 +594,19 @@ rm(emm.init_vel_group_condition)
 rm(post.init_vel_group_condition)
 
 ## ---- plot_probe_rotation_velocity
-plot.rotation_velocity <- afex_plot_wrapper(model.rotation_velocity, "condition", "group", NULL, l_initial_rotation_velocity, xlabel=NULL, ymin=0, ymax=0.025)
+p.values <- post.init_vel_group_condition %>%
+  add_significance(p.col="p.value", cutpoints = c(0, 0.001, 0.01, 0.05, 1), symbols = c("***", "**", "*", "ns")) %>% 
+  pull(p.value.signif)
+
+plot.rotation_velocity <- afex_plot_wrapper(model.rotation_velocity, "condition", "group", NULL, l_initial_rotation_velocity, xlabel=NULL, ymin=0, ymax=0.0305, tracevis=0) +  
+  geom_signif(textsize=2.5, xmin=c(1.75, 1.75), xmax=c(1.95, 2.25), y_position=c(0.022, 0.024), 
+              annotation=c(p.values[4], p.values[5]), color="black", tip_length=0) + 
+  geom_signif(textsize=2.5, xmin=c(1), xmax=c(2), y_position=c(0.029), 
+              annotation=c(paste("ego vs allo: all p", p.values[7])), color="black", tip_length=0)
+
+rm(p.values)
 ## ----
-rm(plot.rotation_velocity)
+rm(plot.rotation_velocity, model.rotation_velocity)
 
 
 # ############################################################################ #
@@ -809,16 +869,18 @@ plot.layout <- ggplot(temp_data, aes(x=group, y=score, shape=group, color=group)
   geom_point(position=position_jitter(h=0, seed=100), color="lightgrey") + 
   stat_summary(fun=mean, na.rm=T, geom="point", size=5) + 
   scale_shape_manual(values=c(16, 17, 15), labels=group_labels, name=NULL) + 
-  scale_color_manual(values=group_colors, labels=group_labels, name=NULL) + 
+  scale_color_manual(values=group_colors_o, labels=group_labels, name=NULL) + 
   scale_x_discrete(labels=group_labels) + 
-  coord_cartesian(ylim=c(0,1)) +
+  coord_cartesian(ylim=c(0,1.1)) +
   theme_bw(base_size=13) +
   theme(legend.position="top", legend.justification=c(0,0),
         legend.title=NULL, 
         panel.grid.major.x=element_blank(),
         axis.ticks.x=element_blank(),
         axis.text.x=element_blank()) +
-  labs(x=NULL, y="layout accuracy (%)")
+  labs(x=NULL, y="layout accuracy (%)") +
+  geom_signif(textsize=2.5, xmin=c(1, 1, 2.1), xmax=c(1.9, 3, 3), y_position=c(0.95, 1.05, 0.95), 
+              annotation=c(post.layout$p.adj.signif[1], post.layout$p.adj.signif[2], post.layout$p.adj.signif[3]), color="black", tip_length=0) 
 
 temp_data2 <- temp_data %>% 
   filter(!is.na(layout_obj_1)) %>% 
@@ -862,8 +924,8 @@ plot.landmark <- afex_plot(model.landmark, x="group", error="model",
                            point_arg=list(size=3), 
                            line_arg=list(size=1),
                            error_arg=list(size=1, width=0.25)) +
-  scale_color_manual(values=group_colors) + 
-  coord_cartesian(ylim=c(0,1)) + 
+  scale_color_manual(values=group_colors_o) + 
+  coord_cartesian(ylim=c(0,1.1)) + 
   theme_bw(base_size=13) + 
   theme(legend.position="top", legend.justification=c(0,0),
         panel.grid.major.x=element_blank(),
@@ -886,6 +948,10 @@ post.position <- emmeans(model.position, pairwise ~ group, adjust="bonferroni")
 ## ---- 
 
 ## ---- plot_post_position
+p.values <- post.position$contrast %>% as.data.frame() %>% 
+  add_significance(p.col="p.value", cutpoints = c(0, 0.001, 0.01, 0.05, 1), symbols = c("***", "**", "*", "ns")) %>% 
+  pull(p.value.signif)
+
 plot.position <- afex_plot(model.position, x="group", error="model",
                        mapping=c("shape", "color"),
                        factor_levels=list(group=group_labels),
@@ -895,15 +961,17 @@ plot.position <- afex_plot(model.position, x="group", error="model",
                        point_arg=list(size=3), 
                        line_arg=list(size=1),
                        error_arg=list(size=1, width=0.25)) +
-  scale_color_manual(values=group_colors) + 
-  coord_cartesian(ylim=c(0,1)) + 
+  scale_color_manual(values=group_colors_o) + 
+  coord_cartesian(ylim=c(0,1.1)) + 
   theme_bw(base_size=13) + 
   theme(legend.position="top", legend.justification=c(0,0),
         panel.grid.major.x=element_blank(),
         axis.text.x=element_blank(),
         axis.ticks.x=element_blank()) +
-  labs(x=NULL, y="positioning score")
-rm(temp_data)
+  labs(x=NULL, y="positioning score") + 
+  geom_signif(textsize=2.5, xmin=c(1, 2.1), xmax=c(3, 3), y_position=c(1.05, 0.95), 
+              annotation=c(p.values[2], p.values[3]), color="black", tip_length=0) 
+rm(temp_data, p.values)
 ## ---- 
 rm(plot.position, model.position, post.position)
 
