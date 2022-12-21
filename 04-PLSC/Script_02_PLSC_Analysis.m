@@ -77,22 +77,24 @@ for i=1:numel(data_cell)
     %--------------------------------------------------------------------------
     % SAVE OUTPUT
     % -------------------------------------------------------------------------
-    % Bootstrap ratios for included variables
-    % get significance of extracted latent variable (should be < than 0.05)
-    LV_sig = plsres.perm_result.sprob;
+    % Latent variable significance (should be < than 0.05)
+    % and correlation with behavioral data 
+    LV = [plsres.perm_result.sprob; plsres.lvcorrs];
     
-    % Latent variable weights (should be < -1.96 or > +1.96)
-    % combine data and write table
-    LV = 1;
-    latency = plsres.boot_result.compare_u(1,LV);
-    excess_path = plsres.boot_result.compare_u(2,LV);
-    excess_distance = plsres.boot_result.compare_u(3,LV);
-    rotation_velocity = plsres.boot_result.compare_u(4,LV);
-    layout = plsres.boot_result.compare_u(5,LV);
-    landmark = plsres.boot_result.compare_u(6,LV);
-    position = plsres.boot_result.compare_u(7,LV);
-    PLSC_LV = table(LV_sig, latency, excess_path, excess_distance, rotation_velocity, layout, landmark, position);
+    % Latent variable weights / Bootstrap ratios (BSR) (should be < -1.96 or > +1.96)
+    % and correlations with behavioral data 
+    LV_n = 1;
+    cor = plsres.datamatcorrs_lst{1,1};
     
+    latency = [plsres.boot_result.compare_u(1,LV_n); cor(1)];
+    excess_path = [plsres.boot_result.compare_u(2,LV_n); cor(2)];
+    excess_distance = [plsres.boot_result.compare_u(3,LV_n); cor(3)];
+    rotation_velocity = [plsres.boot_result.compare_u(4,LV_n); cor(4)];
+    layout = [plsres.boot_result.compare_u(5,LV_n); cor(5)];
+    landmark = [plsres.boot_result.compare_u(6,LV_n); cor(6)];
+    position = [plsres.boot_result.compare_u(7,LV_n); cor(7)];
+    PLSC_LV = table(LV, latency, excess_path, excess_distance, rotation_velocity, layout, landmark, position);
+
     writetable(PLSC_LV,[path, 'PLSC_LV_', file_name, '.txt'])
     
         % figure; subplot(1,2,1);
@@ -131,6 +133,8 @@ for i=1:numel(data_cell)
         % ylabel(upper('memory score'),'fontweight','bold');
         % [R,P]=corrcoef(plsres.usc, plsinput.y, 'rows', 'complete');
         % title(strcat('r=',num2str(R(2,1)),', p=',num2str(P(2,1))));
+        
+    save([path, 'PLSC_full_results_', file_name, '.mat'],'plsres');
     %--------------------------------------------------------------------------
 end
 

@@ -197,7 +197,7 @@ afex_plot_wrapper <- function(model, xv, tv, pv, ylabel, xlabel=l_session, ymin=
 scatter_plot_wrapper <- function(data, xv, yv, xlabel, ylabel){
   p <- ggplot(data, aes(x=get(xv), y=get(yv), color=factor(group))) + 
     geom_point() + 
-    geom_smooth(method=lm, se=F, size=0.3) + 
+    #geom_smooth(method=lm, se=F, size=0.3) + 
     geom_smooth(method=lm, se=T, aes(colour=NULL), color="black", size=0.5) + 
     stat_cor(aes(color=NULL), method="spearman", label.x=0.2, label.y=3.5, p.accuracy=0.001, r.accuracy=0.01, show.legend=F) + 
     scale_color_manual(values=group_colors, labels=group_labels) +
@@ -230,13 +230,78 @@ bar_plot_wrapper <- function(data, colors, colors_o, mylabels, mytitle, ymin=-11
   
   return(p)
 }
+
+box_plot_wrapper <- function(data, colors, colors_o, ylabel, mylabels, ymin=-4, ymax=4){
+  p <- ggplot(data, aes(x=group, y=latent_profile_score, fill=group, color=group)) + 
+    geom_boxplot(width=0.75) + 
+    scale_fill_manual(values=colors) +
+    scale_color_manual(values=colors_o) +
+    scale_x_discrete(labels=mylabels) +
+    coord_cartesian(ylim=c(ymin, ymax)) + 
+    theme_bw(base_size=13) +
+    theme(legend.position="none",
+          panel.grid.major.x=element_blank(),
+          axis.text.x=element_text(angle=90, hjust=1, vjust=0.5)) +
+    labs(x=NULL, y=ylabel)
+  
+  return(p)
+}
 ## ---- 
 
 
 ## ---- analysis_settings
 # options("contrasts")
 options(contrasts=c(unordered="contr.sum", ordered="contr.poly"))
-## ---- 
+
+# function for statistical comparison of correlation coefficients with z-test
+cor.test.comparison <- function(plsc_data){
+  
+  # Pearson's correlations coefficients
+  r1 <- cor.test(~ memory_score + latent_profile_score, data=plsc_data, subset=(group=="YoungKids"), method="pearson") 
+  r2 <- cor.test(~ memory_score + latent_profile_score, data=plsc_data, subset=(group=="OldKids"), method="pearson") 
+  r3 <- cor.test(~ memory_score + latent_profile_score, data=plsc_data, subset=(group=="YoungAdults"), method="pearson") 
+  
+  # n (derived from df)
+  n_for_ztest <- function(r){
+    n <- (r$parameter %>% unname()) + 2
+    
+    return(n)
+  }
+  n1 <- n_for_ztest(r1)
+  n2 <- n_for_ztest(r2)
+  n3 <- n_for_ztest(r3)
+  
+  # Fisher's z transformation of coefficients
+  r_to_z <- function(r){
+    z <- 0.5 * log((1+r$estimate)/(1-r$estimate)) %>% 
+      unname()
+    
+    return(z)
+  }
+  Z1 <- r_to_z(r1)
+  Z2 <- r_to_z(r2)
+  Z3 <- r_to_z(r3)
+  
+  # z-test statistic (comparison of coefficients)
+  ztest <- function(za, zb, na, nb) {
+    Z <- (za - zb) / sqrt( 1 / (na - 3) + 1 / (nb - 3))
+    p <- round(2*pnorm(-abs(Z)), 4)
+    
+    return(p) 
+  }
+  ztest1 <- ztest(Z1, Z2, n1, n2)
+  ztest2 <- ztest(Z1, Z3, n1, n3)
+  ztest3 <- ztest(Z2, Z3, n2, n3)
+  
+  # summarize results 
+  r <- as.data.frame(cbind(r1$estimate, r2$estimate, r3$estimate), row.names="r")
+  colnames(r) <- c("6-8-yo", "9-11-yo", "adults")
+  p <- as.data.frame(cbind(ztest1, ztest2, ztest3), row.names="p")
+  colnames(p) <- c("6-8-yo vs. 9-11-yo", "6-8-yo vs. adults", "9-11-yo vs. adults")
+  results <- list(r=r, p=p)
+
+  return(results)
+}
 
 
 ## ---- papaja_output_helper
@@ -1022,11 +1087,24 @@ rm(file_plsc_ego)
 
 model.plsc_ego <- aov_ez("id", "latent_profile_score", plsc_ego, between=c("group"))
 post.plsc_ego <- emmeans(model.plsc_ego, pairwise ~ group, adjust="bonferroni")$contrasts
-cor.plsc_ego <- cor.test(plsc_ego$latent_profile_score, plsc_ego$memory_score, method="spearman")
+
+cor.plsc_ego <- cor.test.comparison(plsc_ego)
 ## ---- 
 
 ## ---- plot_plsc_scatter_ego
 plot.plsc_ego <- scatter_plot_wrapper(plsc_ego, "memory_score", "latent_profile_score", "egocentric long-delay memory", "E-LPS")
+
+plot.plsc_ego_lps <- box_plot_wrapper(plsc_ego, group_colors, group_colors_o, "E-LPS", group_labels)
+
+p.values <- post.plsc_ego %>% 
+  as.data.frame() %>%
+  add_significance(p.col="p.value", cutpoints = c(0, 0.001, 0.01, 0.05, 1), symbols = c("***", "**", "*", "ns")) %>% 
+  pull(p.value.signif)
+
+plot.plsc_ego_lps <- plot.plsc_ego_lps + 
+  geom_signif(textsize=2.5, xmin=c(1, 2.2, 1), xmax=c(1.8, 3, 3), y_position=c(3.2, 3.2, 3.7), 
+              annotation=c(p.values[1], p.values[2], p.values[3]), color="black", tip_length=0)
+rm(p.values)
 ## ----
 
 ## ---- plot_plsc_lv_ego
@@ -1035,13 +1113,15 @@ plsc_ego_lv <- read.table(file_plsc_ego, sep=",", header=T)
 rm(file_plsc_ego)
 
 weights_ego <- plsc_ego_lv %>% 
-  select(-LV_sig) %>% 
+  slice(1) %>% 
+  select(-LV) %>% 
   pivot_longer(cols=everything()) %>% 
   mutate(name=factor(name, levels=c("latency", "excess_path", "excess_distance", "rotation_velocity", "layout", "landmark", "position")),
          type=factor(case_when(name %in% c("latency", "excess_path", "excess_distance", "rotation_velocity") ~ "nav", T ~ "post")))
 
 plot.plsc_lv_ego <- bar_plot_wrapper(weights_ego, plsc_colors, plsc_colors_o, plsc_labels, "egocentric")
 ## ----
+rm(plsc_ego, model.plsc_ego, post.plsc_ego, cor.plsc_ego, plsc_ego_lv, weights_ego)
 
 
 ## ---- model_plsc_allo
@@ -1053,11 +1133,24 @@ rm(file_plsc_allo)
 
 model.plsc_allo <- aov_ez("id", "latent_profile_score", plsc_allo, between=c("group"))
 post.plsc_allo <- emmeans(model.plsc_allo, pairwise ~ group, adjust="bonferroni")$contrasts
-cor.plsc_allo <- cor.test(plsc_allo$latent_profile_score, plsc_allo$memory_score, method="spearman")
+
+cor.plsc_allo <- cor.test.comparison(plsc_allo)
 ## ---- 
 
 ## ---- plot_plsc_scatter_allo
 plot.plsc_allo <- scatter_plot_wrapper(plsc_allo, "memory_score", "latent_profile_score", "allocentric long-delay memory", "A-LPS")
+
+plot.plsc_allo_lps <- box_plot_wrapper(plsc_allo, group_colors, group_colors_o, "A-LPS", group_labels)
+
+p.values <- post.plsc_allo %>% 
+  as.data.frame() %>%
+  add_significance(p.col="p.value", cutpoints = c(0, 0.001, 0.01, 0.05, 1), symbols = c("***", "**", "*", "ns")) %>% 
+  pull(p.value.signif)
+
+plot.plsc_allo_lps <- plot.plsc_allo_lps + 
+  geom_signif(textsize=2.5, xmin=c(1, 2.2, 1), xmax=c(1.8, 3, 3), y_position=c(3.2, 3.2, 3.7), 
+              annotation=c(p.values[1], p.values[2], p.values[3]), color="black", tip_length=0)
+rm(p.values)
 ## ----
 
 ## ---- plot_plsc_lv_allo
@@ -1066,25 +1159,125 @@ plsc_allo_lv <- read.table(file_plsc_allo, sep=",", header=T)
 rm(file_plsc_allo)
 
 weights_allo <- plsc_allo_lv %>% 
-  select(-LV_sig) %>% 
+  slice(1) %>% 
+  select(-LV) %>% 
   pivot_longer(cols=everything()) %>% 
   mutate(name=factor(name, levels=c("latency", "excess_path", "excess_distance", "rotation_velocity", "layout", "landmark", "position")),
          type=factor(case_when(name %in% c("latency", "excess_path", "excess_distance", "rotation_velocity") ~ "nav", T ~ "post")))
 
 plot.plsc_lv_allo <- bar_plot_wrapper(weights_allo, plsc_colors, plsc_colors_o, plsc_labels, "allocentric")
 ## ----
+rm(plsc_allo, model.plsc_allo, post.plsc_allo, cor.plsc_allo, plsc_allo_lv, weights_allo)
 
 
 plot.plsc_lv_ego + 
   (plot.plsc_ego + theme(axis.title.x=element_text(margin=margin(t=-150, unit="pt")),
-                         legend.direction="horizontal", legend.position=c(0.1,-0.5))) + 
+                         legend.direction="horizontal", legend.position=c(0,-0.5))) + 
+  plot.plsc_ego_lps + 
   plot.plsc_lv_allo + 
   (plot.plsc_allo + theme(axis.title.x=element_text(margin=margin(t=-150, unit="pt")),
-                          legend.direction="horizontal", legend.position=c(0.1,-0.5))) + 
-  plot_annotation(tag_levels=list(c("A", "", "B", ""))) + 
-  plot_layout(nrow=2, widths=c(0.35, 0.65)) 
+                          legend.direction="horizontal", legend.position=c(0,-0.5))) + 
+  plot.plsc_allo_lps + 
+  plot_annotation(tag_levels=list(c("A", "", "", "B", "", ""))) + 
+  plot_layout(nrow=2, widths=c(0.325, 0.5, 0.175)) 
 
-ggsave("plsc.jpeg", width=7.5, height=7.8, dpi=600)
+ggsave("plsc.jpeg", width=7.8, height=7.8, dpi=600)
+
+
+# ------------------------------------------------------------------------------
+# ::: SUPPLEMENT: LEARNING ANALYSIS - ANOVA ON PLSC LATENT PROFILE SCORE ::: #
+# ------------------------------------------------------------------------------
+
+## ---- model_plsc_ego_l
+file_plsc_ego_l <-"../WP10_data/WP10_results/PLSC_LP_ego_1_by_1.txt"
+plsc_ego_l <- read.table(file_plsc_ego_l, sep=",", header=T) %>% 
+  mutate(group=factor(case_when(group=="1" ~ "YoungKids", group=="2" ~ "OldKids", T ~ "YoungAdults"), 
+                      levels=c("YoungKids", "OldKids", "YoungAdults")))
+rm(file_plsc_ego_l)
+
+model.plsc_ego_l <- aov_ez("id", "latent_profile_score", plsc_ego_l, between=c("group"))
+post.plsc_ego_l <- emmeans(model.plsc_ego_l, pairwise ~ group, adjust="bonferroni")$contrasts
+
+cor.plsc_ego_l <- cor.test.comparison(plsc_ego_l)
+## ---- 
+
+## ---- plot_plsc_scatter_ego_l
+plot.plsc_ego_l <- scatter_plot_wrapper(plsc_ego_l, "memory_score", "latent_profile_score", "egocentric long-delay memory", "E-LPS")
+
+plot.plsc_ego_lps_l <- box_plot_wrapper(plsc_ego_l, group_colors, group_colors_o, "E-LPS", group_labels)
+
+p.values <- post.plsc_ego_l %>% 
+  as.data.frame() %>%
+  add_significance(p.col="p.value", cutpoints = c(0, 0.001, 0.01, 0.05, 1), symbols = c("***", "**", "*", "ns")) %>% 
+  pull(p.value.signif)
+
+plot.plsc_ego_lps_l <- plot.plsc_ego_lps_l + 
+  geom_signif(textsize=2.5, xmin=c(1, 2.2, 1), xmax=c(1.8, 3, 3), y_position=c(3.2, 3.2, 3.7), 
+              annotation=c(p.values[1], p.values[2], p.values[3]), color="black", tip_length=0)
+rm(p.values)
+## ----
+
+## ---- plot_plsc_lv_ego_l
+file_plsc_ego_l <-"../WP10_data/WP10_results/PLSC_LV_ego_1_by_1.txt"
+plsc_ego_lv_l <- read.table(file_plsc_ego_l, sep=",", header=T)
+rm(file_plsc_ego_l)
+
+weights_ego_l <- plsc_ego_lv_l %>% 
+  slice(1) %>% 
+  select(-LV) %>% 
+  pivot_longer(cols=everything()) %>% 
+  mutate(name=factor(name, levels=c("latency", "excess_path", "excess_distance", "rotation_velocity", "layout", "landmark", "position")),
+         type=factor(case_when(name %in% c("latency", "excess_path", "excess_distance", "rotation_velocity") ~ "nav", T ~ "post")))
+
+plot.plsc_lv_ego_l <- bar_plot_wrapper(weights_ego_l, plsc_colors, plsc_colors_o, plsc_labels, "egocentric", ymin=-24, ymax=11)
+## ----
+rm(plsc_ego_l, model.plsc_ego_l, post.plsc_ego_l, cor.plsc_ego_l, plsc_ego_lv_l, weights_ego_l)
+
+
+## ---- model_plsc_allo_l
+file_plsc_allo_l <-"../WP10_data/WP10_results/PLSC_LP_allo_1_by_1.txt"
+plsc_allo_l <- read.table(file_plsc_allo_l, sep=",", header=T) %>% 
+  mutate(group=factor(case_when(group=="1" ~ "YoungKids", group=="2" ~ "OldKids", T ~ "YoungAdults"), 
+                      levels=c("YoungKids", "OldKids", "YoungAdults")))
+rm(file_plsc_allo_l)
+
+model.plsc_allo_l <- aov_ez("id", "latent_profile_score", plsc_allo_l, between=c("group"))
+post.plsc_allo_l <- emmeans(model.plsc_allo_l, pairwise ~ group, adjust="bonferroni")$contrasts
+
+cor.plsc_allo_l <- cor.test.comparison(plsc_allo_l)
+## ---- 
+
+## ---- plot_plsc_scatter_allo_l
+plot.plsc_allo_l <- scatter_plot_wrapper(plsc_allo_l, "memory_score", "latent_profile_score", "allocentric long-delay memory", "A-LPS")
+
+plot.plsc_allo_lps_l <- box_plot_wrapper(plsc_allo_l, group_colors, group_colors_o, "A-LPS", group_labels)
+
+p.values <- post.plsc_allo_l %>% 
+  as.data.frame() %>%
+  add_significance(p.col="p.value", cutpoints = c(0, 0.001, 0.01, 0.05, 1), symbols = c("***", "**", "*", "ns")) %>% 
+  pull(p.value.signif)
+
+plot.plsc_allo_lps_l <- plot.plsc_allo_lps_l + 
+  geom_signif(textsize=2.5, xmin=c(1, 2.2, 1), xmax=c(1.8, 3, 3), y_position=c(3.2, 3.2, 3.7), 
+              annotation=c(p.values[1], p.values[2], p.values[3]), color="black", tip_length=0)
+rm(p.values)
+## ----
+
+## ---- plot_plsc_lv_allo_l
+file_plsc_allo_l <-"../WP10_data/WP10_results/PLSC_LV_allo_1_by_1.txt"
+plsc_allo_lv_l <- read.table(file_plsc_allo_l, sep=",", header=T)
+rm(file_plsc_allo_l)
+
+weights_allo_l <- plsc_allo_lv_l %>% 
+  slice(1) %>% 
+  select(-LV) %>% 
+  pivot_longer(cols=everything()) %>% 
+  mutate(name=factor(name, levels=c("latency", "excess_path", "excess_distance", "rotation_velocity", "layout", "landmark", "position")),
+         type=factor(case_when(name %in% c("latency", "excess_path", "excess_distance", "rotation_velocity") ~ "nav", T ~ "post")))
+
+plot.plsc_lv_allo_l <- bar_plot_wrapper(weights_allo_l, plsc_colors, plsc_colors_o, plsc_labels, "allocentric", ymin=-24, ymax=11)
+## ----
+rm(plsc_allo_l, model.plsc_allo_l, post.plsc_allo_l, cor.plsc_allo_l, plsc_allo_lv_l, weights_allo_l)
 
 
 # ############################################################################ #
