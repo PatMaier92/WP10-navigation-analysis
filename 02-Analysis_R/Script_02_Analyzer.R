@@ -199,7 +199,7 @@ scatter_plot_wrapper <- function(data, xv, yv, xlabel, ylabel){
     geom_point() + 
     #geom_smooth(method=lm, se=F, size=0.3) + 
     geom_smooth(method=lm, se=T, aes(colour=NULL), color="black", size=0.5) + 
-    stat_cor(aes(color=NULL), method="spearman", label.x=0.2, label.y=3.5, p.accuracy=0.001, r.accuracy=0.01, show.legend=F) + 
+    stat_cor(aes(color=NULL), method="pearson", label.x=0.2, label.y=3.5, p.accuracy=0.001, r.accuracy=0.01, show.legend=F) + 
     scale_color_manual(values=group_colors, labels=group_labels) +
     coord_cartesian(ylim=c(-4,4), xlim=c(0.2,1)) + 
     theme_bw(base_size=13) + 
@@ -1663,7 +1663,7 @@ corr_ms <- data_p %>%
               values_from=memory_score) %>% 
   ungroup()
 
-cor.test(corr_ms$ms_ego_ret, corr_ms$ms_allo_ret, method="spearman")
+cor.test(corr_ms$ms_ego_ret, corr_ms$ms_allo_ret, method="pearson")
 ## ----
 
 ## ---- corr_memory_navigation
