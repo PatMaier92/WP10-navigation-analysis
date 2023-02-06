@@ -21,17 +21,23 @@ path = '../WP10_data/WP10_results/';
 load([path, 'wp10_plsc_allo_2_by_1.mat']);
 data_allo_2_by_1 = cellfun(@str2num, m); clear m;
 
+load([path, 'wp10_plsc_allo_2_by_2.mat']);
+data_allo_2_by_2 = cellfun(@str2num, m); clear m;
+
 load([path, 'wp10_plsc_allo_1_by_1.mat']);
 data_allo_1_by_1 = cellfun(@str2num, m); clear m;
 
 load([path, 'wp10_plsc_ego_2_by_1.mat']);
 data_ego_2_by_1 = cellfun(@str2num, m); clear m;
 
+load([path, 'wp10_plsc_ego_2_by_2.mat']);
+data_ego_2_by_2 = cellfun(@str2num, m); clear m;
+
 load([path, 'wp10_plsc_ego_1_by_1.mat']);
 data_ego_1_by_1 = cellfun(@str2num, m); clear m;
 
-data_cell = {data_allo_2_by_1 data_ego_2_by_1 data_allo_1_by_1 data_ego_1_by_1};
-data_names = {'allo_2_by_1' 'ego_2_by_1' 'allo_1_by_1' 'ego_1_by_1'}; 
+data_cell = {data_allo_2_by_1 data_ego_2_by_1 data_allo_1_by_1 data_ego_1_by_1 data_allo_2_by_1 data_ego_2_by_1};
+data_names = {'allo_2_by_1' 'ego_2_by_1' 'allo_1_by_1' 'ego_1_by_1' 'allo_2_by_2' 'ego_2_by_2'}; 
 %--------------------------------------------------------------------------
 %--------------------------------------------------------------------------
 % CONFIGURATION

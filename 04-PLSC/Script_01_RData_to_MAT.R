@@ -42,7 +42,7 @@ pt_data <- pt_data %>%
 
 
 # process data for plsc analysis 
-data_for_plsc <- function(d_sm, d_pt, ms_session){
+data_for_plsc <- function(d_sm, d_pt, ms_session, nav_session=1){
   
   # data wrangling 
   # memory from session 2
@@ -55,10 +55,18 @@ data_for_plsc <- function(d_sm, d_pt, ms_session){
       arrange(group, id) %>% 
       mutate(group=case_when(group=="YoungKids" ~ "1", group=="OldKids" ~ "2", T ~ "3"))
     
-    d_nav <- d_sm %>% 
-      filter(session==1) %>% 
-      group_by(id) %>% 
-      summarise_at(vars(time, excess_path_length, excess_target_distance, initial_rotation_velocity), mean, na.rm=T)
+    if (nav_session==1){
+      d_nav <- d_sm %>% 
+        filter(session==1) %>% 
+        group_by(id) %>% 
+        summarise_at(vars(time, excess_path_length, excess_target_distance, initial_rotation_velocity), mean, na.rm=T)
+    } 
+    else if (nav_session==2) {
+      d_nav <- d_sm %>% 
+        filter(session==2) %>% 
+        group_by(id) %>% 
+        summarise_at(vars(time, excess_path_length, excess_target_distance, initial_rotation_velocity), mean, na.rm=T)
+    }
     
     d <- d_ms %>% 
       left_join(d_nav, by="id") %>% 
@@ -90,6 +98,11 @@ plsc_allo_2_by_1 <- data_for_plsc(sm_data %>% filter(condition %in% c("allo_ret"
 writeMat(con="../WP10_data/WP10_results/wp10_plsc_allo_2_by_1.mat", m=as.matrix(plsc_allo_2_by_1))
 rm(plsc_allo_2_by_1)
 
+# allo memory score 2 by navigation session 2
+plsc_allo_2_by_2 <- data_for_plsc(sm_data %>% filter(condition %in% c("allo_ret")), pt_data, ms_session=2, nav_session=2)
+writeMat(con="../WP10_data/WP10_results/wp10_plsc_allo_2_by_2.mat", m=as.matrix(plsc_allo_2_by_2))
+rm(plsc_allo_2_by_2)
+
 # allo memory score 1 by navigation session 1 
 plsc_allo_1_by_1 <- data_for_plsc(sm_data %>% filter(condition %in% c("allo_ret")), pt_data, ms_session=1)
 writeMat(con="../WP10_data/WP10_results/wp10_plsc_allo_1_by_1.mat", m=as.matrix(plsc_allo_1_by_1))
@@ -100,6 +113,11 @@ rm(plsc_allo_1_by_1)
 plsc_ego_2_by_1 <- data_for_plsc(sm_data %>% filter(condition %in% c("ego_ret")), pt_data, ms_session=2)
 writeMat(con="../WP10_data/WP10_results/wp10_plsc_ego_2_by_1.mat", m=as.matrix(plsc_ego_2_by_1))
 rm(plsc_ego_2_by_1)
+
+# ego memory score 2 by navigation session 2
+plsc_ego_2_by_2 <- data_for_plsc(sm_data %>% filter(condition %in% c("ego_ret")), pt_data, ms_session=2, nav_session=2)
+writeMat(con="../WP10_data/WP10_results/wp10_plsc_ego_2_by_2.mat", m=as.matrix(plsc_ego_2_by_2))
+rm(plsc_ego_2_by_2)
 
 # ego memory score 1 by navigation session 1
 plsc_ego_1_by_1 <- data_for_plsc(sm_data %>% filter(condition %in% c("ego_ret")), pt_data, ms_session=1)
