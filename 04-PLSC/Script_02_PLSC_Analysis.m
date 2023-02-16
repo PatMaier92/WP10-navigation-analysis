@@ -18,26 +18,125 @@ addpath(genpath(pwd)) % add subfolder functions to path
 %--------------------------------------------------------------------------
 path = '../WP10_data/WP10_results/';
 
-load([path, 'wp10_plsc_allo_2_by_1.mat']);
-data_allo_2_by_1 = cellfun(@str2num, m); clear m;
 
-load([path, 'wp10_plsc_allo_2_by_2.mat']);
-data_allo_2_by_2 = cellfun(@str2num, m); clear m;
+% load([path, 'wp10_plsc_1_by_1.mat']);
+% data_1_by_1 = cellfun(@str2num, m); clear m;
+% 
+% load([path, 'wp10_plsc_2_by_1.mat']);
+% data_2_by_1 = cellfun(@str2num, m); clear m;
+% 
+% load([path, 'wp10_plsc_2_by_2.mat']);
+% data_2_by_2 = cellfun(@str2num, m); clear m;
+% 
+% load([path, 'wp10_plsc_ret_by_1.mat']);
+% data_ret_by_1 = cellfun(@str2num, m); clear m;
+% 
+% load([path, 'wp10_plsc_ret_by_learn_1.mat']);
+% data_ret_by_learn_1 = cellfun(@str2num, m); clear m;
+% 
+% load([path, 'wp10_plsc_ret_by_learn_1_init.mat']);
+% data_ret_by_learn_1_init = cellfun(@str2num, m); clear m;
+% 
+% 
+% load([path, 'wp10_plsc_allo_1_by_1.mat']);
+% data_allo_1_by_1 = cellfun(@str2num, m); clear m;
+% 
+% load([path, 'wp10_plsc_allo_2_by_1.mat']);
+% data_allo_2_by_1 = cellfun(@str2num, m); clear m;
+% 
+% load([path, 'wp10_plsc_allo_2_by_2.mat']);
+% data_allo_2_by_2 = cellfun(@str2num, m); clear m;
+% 
+% load([path, 'wp10_plsc_allo_ret_by_1.mat']);
+% data_allo_ret_by_1 = cellfun(@str2num, m); clear m;
+% 
+% load([path, 'wp10_plsc_allo_ret_by_learn_1.mat']);
+% data_allo_ret_by_learn_1 = cellfun(@str2num, m); clear m;
+% 
+% load([path, 'wp10_plsc_allo_ret_by_learn_1_init.mat']);
+% data_allo_ret_by_learn_1_init = cellfun(@str2num, m); clear m;
+% 
+% 
+% load([path, 'wp10_plsc_ego_1_by_1.mat']);
+% data_ego_1_by_1 = cellfun(@str2num, m); clear m;
+% 
+% load([path, 'wp10_plsc_ego_2_by_1.mat']);
+% data_ego_2_by_1 = cellfun(@str2num, m); clear m;
+% 
+% load([path, 'wp10_plsc_ego_2_by_2.mat']);
+% data_ego_2_by_2 = cellfun(@str2num, m); clear m;
+% 
+% load([path, 'wp10_plsc_ego_ret_by_1.mat']);
+% data_ego_ret_by_1 = cellfun(@str2num, m); clear m;
+% 
+% load([path, 'wp10_plsc_ego_ret_by_learn_1.mat']);
+% data_ego_ret_by_learn_1 = cellfun(@str2num, m); clear m;
+% 
+% load([path, 'wp10_plsc_ego_ret_by_learn_1_init.mat']);
+% data_ego_ret_by_learn_1_init = cellfun(@str2num, m); clear m;
+% 
+% 
+% load([path, 'wp10_plsc_wl_1_by_1.mat']);
+% data_wl_1_by_1 = cellfun(@str2num, m); clear m;
+% 
+% load([path, 'wp10_plsc_wl_2_by_1.mat']);
+% data_wl_2_by_1 = cellfun(@str2num, m); clear m;
+% 
+% load([path, 'wp10_plsc_wl_2_by_2.mat']);
+% data_wl_2_by_2 = cellfun(@str2num, m); clear m;
+% 
+% load([path, 'wp10_plsc_wl_ret_by_1.mat']);
+% data_wl_ret_by_1 = cellfun(@str2num, m); clear m;
+% 
+% load([path, 'wp10_plsc_wl_ret_by_learn_1.mat']);
+% data_wl_ret_by_learn_1 = cellfun(@str2num, m); clear m;
+% 
+% load([path, 'wp10_plsc_wl_ret_by_learn_1_init.mat']);
+% data_wl_ret_by_learn_1_init = cellfun(@str2num, m); clear m;
+% 
+% 
+% load([path, 'wp10_plsc_allo_wl_1_by_1.mat']);
+% data_allo_wl_1_by_1 = cellfun(@str2num, m); clear m;
+% 
+% load([path, 'wp10_plsc_allo_wl_2_by_1.mat']);
+% data_allo_wl_2_by_1 = cellfun(@str2num, m); clear m;
+% 
+% load([path, 'wp10_plsc_allo_wl_2_by_2.mat']);
+% data_allo_wl_2_by_2 = cellfun(@str2num, m); clear m;
+% 
+% load([path, 'wp10_plsc_allo_wl_ret_by_1.mat']);
+% data_allo_wl_ret_by_1 = cellfun(@str2num, m); clear m;
+% 
+% load([path, 'wp10_plsc_allo_wl_ret_by_learn_1.mat']);
+% data_allo_wl_ret_by_learn_1 = cellfun(@str2num, m); clear m;
+% 
+% load([path, 'wp10_plsc_allo_wl_ret_by_learn_1_init.mat']);
+% data_allo_wl_ret_by_learn_1_init = cellfun(@str2num, m); clear m;
+% 
+% 
+% load([path, 'wp10_plsc_ego_wl_1_by_1.mat']);
+% data_ego_wl_1_by_1 = cellfun(@str2num, m); clear m;
+% 
+% load([path, 'wp10_plsc_ego_wl_2_by_1.mat']);
+% data_ego_wl_2_by_1 = cellfun(@str2num, m); clear m;
+% 
+% load([path, 'wp10_plsc_ego_wl_2_by_2.mat']);
+% data_ego_wl_2_by_2 = cellfun(@str2num, m); clear m;
+% 
+% load([path, 'wp10_plsc_ego_wl_ret_by_1.mat']);
+% data_ego_wl_ret_by_1 = cellfun(@str2num, m); clear m;
+% 
+% load([path, 'wp10_plsc_ego_wl_ret_by_learn_1.mat']);
+% data_ego_wl_ret_by_learn_1 = cellfun(@str2num, m); clear m;
+% 
+% load([path, 'wp10_plsc_ego_wl_ret_by_learn_1_init.mat']);
+% data_ego_wl_ret_by_learn_1_init = cellfun(@str2num, m); clear m;
 
-load([path, 'wp10_plsc_allo_1_by_1.mat']);
-data_allo_1_by_1 = cellfun(@str2num, m); clear m;
 
-load([path, 'wp10_plsc_ego_2_by_1.mat']);
-data_ego_2_by_1 = cellfun(@str2num, m); clear m;
+% data_cell = {data_allo_2_by_1 data_ego_2_by_1 data_allo_1_by_1 data_ego_1_by_1 data_allo_2_by_1 data_ego_2_by_1};
+% data_names = {'allo_2_by_1' 'ego_2_by_1' 'allo_1_by_1' 'ego_1_by_1' 'allo_2_by_2' 'ego_2_by_2'}; 
 
-load([path, 'wp10_plsc_ego_2_by_2.mat']);
-data_ego_2_by_2 = cellfun(@str2num, m); clear m;
 
-load([path, 'wp10_plsc_ego_1_by_1.mat']);
-data_ego_1_by_1 = cellfun(@str2num, m); clear m;
-
-data_cell = {data_allo_2_by_1 data_ego_2_by_1 data_allo_1_by_1 data_ego_1_by_1 data_allo_2_by_1 data_ego_2_by_1};
-data_names = {'allo_2_by_1' 'ego_2_by_1' 'allo_1_by_1' 'ego_1_by_1' 'allo_2_by_2' 'ego_2_by_2'}; 
 %--------------------------------------------------------------------------
 %--------------------------------------------------------------------------
 % CONFIGURATION
@@ -103,24 +202,24 @@ for i=1:numel(data_cell)
 
     writetable(PLSC_LV,[path, 'PLSC_LV_', file_name, '.txt'])
     
-        % figure; subplot(1,2,1);
-        % bar(plsres.boot_result.compare_u(:,sig_LV),'k'); hold on;
-        % set(gca,'xticklabels',{'latency','path','distance','init.vel','layout', 'landmark', 'position'}, 'fontsize', 12);
-        % box off; grid on;
-        % lh = line([0,numel(plsres.boot_result.compare_u)+1],[2,2]);
-        % set(lh, 'color','r','linestyle',"--');
-        % lh = line([0,numel(plsres.boot_result.compare_u)+1],[-2,-2]);
-        % set(lh, 'color','r','linestyle','--');
-        % title('LV profile');
-        % ylim([-12 6]);
-        %
-        % subplot(1,2,2);
-        % bar(plsres.boot_result.orig_corr(:,1),'k'); hold on;
-        % set(gca,'xticklabels',{''});
-        % box off; grid on; grid minor; ylim([-1,1]); xlim([0,2]);
-        % lh1 = line([1,1],[plsres.boot_result.llcorr_adj(1,1),plsres.boot_result.ulcorr_adj(1,1)]);
-        % set(lh1, 'color','r');
-        % title('LV correlation with memory score');
+%         figure; subplot(1,2,1);
+%         bar(plsres.boot_result.compare_u(:,LV_n),'k'); hold on;
+%         set(gca,'xticklabels',{'latency','path','distance','init.vel','layout', 'landmark', 'position'}, 'fontsize', 12);
+%         box off; grid on;
+%         lh = line([0,numel(plsres.boot_result.compare_u)+1],[2,2]);
+%         set(lh, 'color','r','linestyle','--');
+%         lh = line([0,numel(plsres.boot_result.compare_u)+1],[-2,-2]);
+%         set(lh, 'color','r','linestyle','--');
+%         title('LV profile');
+%         ylim([-12 6]);
+%         
+%         subplot(1,2,2);
+%         bar(plsres.boot_result.orig_corr(:,1),'k'); hold on;
+%         set(gca,'xticklabels',{''});
+%         box off; grid on; grid minor; ylim([-1,1]); xlim([0,2]);
+%         lh1 = line([1,1],[plsres.boot_result.llcorr_adj(1,1),plsres.boot_result.ulcorr_adj(1,1)]);
+%         set(lh1, 'color','r');
+%         title('LV correlation with memory score');
     
     % Latent profile scores
     % combine data and write table
@@ -132,13 +231,13 @@ for i=1:numel(data_cell)
     
     writetable(PLSC_LP, [path, 'PLSC_LP_', file_name, '.txt']); 
     
-        % figure;
-        % gscatter(plsres.usc, plsinput.y, group);
-        % set(gca,'fontsize', 12);
-        % xlabel(upper('LV profile score'),'fontweight','bold');
-        % ylabel(upper('memory score'),'fontweight','bold');
-        % [R,P]=corrcoef(plsres.usc, plsinput.y, 'rows', 'complete');
-        % title(strcat('r=',num2str(R(2,1)),', p=',num2str(P(2,1))));
+%         figure;
+%         gscatter(plsres.usc, plsinput.y, group);
+%         set(gca,'fontsize', 12);
+%         xlabel(upper('LV profile score'),'fontweight','bold');
+%         ylabel(upper('memory score'),'fontweight','bold');
+%         [R,P]=corrcoef(plsres.usc, plsinput.y, 'rows', 'complete');
+%         title(strcat('r=',num2str(R(2,1)),', p=',num2str(P(2,1))));
         
     save([path, 'PLSC_full_results_', file_name, '.mat'],'plsres');
     %--------------------------------------------------------------------------
