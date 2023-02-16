@@ -80,6 +80,18 @@ data_for_plsc <- function(d_sm, d_pt, ms_session, ms_condition, nav_session, nav
       summarise_at(vars(memory_score), mean, na.rm=T) %>% 
       arrange(group, id) %>% 
       mutate(group=case_when(group=="YoungKids" ~ "1", group=="OldKids" ~ "2", T ~ "3"))
+    
+    if (ms_session==2){
+      d_ms_pre <- d_sm %>% 
+        filter(session==1, condition %in% ms_condition) %>% 
+        group_by(id) %>% 
+        summarise_at(vars(memory_score), mean, na.rm=T) %>% 
+        arrange(id) %>% 
+        rename(memory_score_pre=memory_score)
+      
+      d_ms <- d_ms %>% 
+        left_join(d_ms_pre, by="id")
+    }
   }
   else if (ms_session==3) {
     # retention rate 
@@ -115,17 +127,17 @@ data_for_plsc <- function(d_sm, d_pt, ms_session, ms_condition, nav_session, nav
 # --- all items 
 
 # overall memory score 1 by navigation session 1 
-plsc_1_by_1 <- data_for_plsc(sm_data, pt_data, ms_session=1, c("ego_ret", "allo_ret"), nav_session=1, c("ego_ret", "allo_ret"),)
+plsc_1_by_1 <- data_for_plsc(sm_data, pt_data, ms_session=1, c("ego_ret", "allo_ret"), nav_session=1, c("ego_ret", "allo_ret"))
 writeMat(con="../WP10_data/WP10_results/wp10_plsc_1_by_1.mat", m=as.matrix(plsc_1_by_1))
 rm(plsc_1_by_1)
 
 # overall memory score 2 by navigation session 1
-plsc_2_by_1 <- data_for_plsc(sm_data, pt_data, ms_session=2, c("ego_ret", "allo_ret"), nav_session=1, c("ego_ret", "allo_ret"),)
+plsc_2_by_1 <- data_for_plsc(sm_data, pt_data, ms_session=2, c("ego_ret", "allo_ret"), nav_session=1, c("ego_ret", "allo_ret"))
 writeMat(con="../WP10_data/WP10_results/wp10_plsc_2_by_1.mat", m=as.matrix(plsc_2_by_1))
 rm(plsc_2_by_1)
 
 # overall memory score 2 by navigation session 2
-plsc_2_by_2 <- data_for_plsc(sm_data, pt_data, ms_session=2, c("ego_ret", "allo_ret"), nav_session=2, c("ego_ret", "allo_ret"),)
+plsc_2_by_2 <- data_for_plsc(sm_data, pt_data, ms_session=2, c("ego_ret", "allo_ret"), nav_session=2, c("ego_ret", "allo_ret"))
 writeMat(con="../WP10_data/WP10_results/wp10_plsc_2_by_2.mat", m=as.matrix(plsc_2_by_2))
 rm(plsc_2_by_2)
 
