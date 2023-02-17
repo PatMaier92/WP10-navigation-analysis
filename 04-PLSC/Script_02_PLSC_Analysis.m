@@ -132,7 +132,6 @@ path = '../WP10_data/WP10_results/';
 % load([path, 'wp10_plsc_ego_wl_ret_by_learn_1_init.mat']);
 % data_ego_wl_ret_by_learn_1_init = cellfun(@str2num, m); clear m;
 
-
 % data_cell = {data_allo_2_by_1 data_ego_2_by_1 data_allo_1_by_1 data_ego_1_by_1 data_allo_2_by_1 data_ego_2_by_1};
 % data_names = {'allo_2_by_1' 'ego_2_by_1' 'allo_1_by_1' 'ego_1_by_1' 'allo_2_by_2' 'ego_2_by_2'}; 
 
@@ -163,7 +162,7 @@ for i=1:numel(data_cell)
     plsinput.y = data(:,3);
     
     % explanatory behavioral data
-    plsinput.X = data(:,4:10);
+    plsinput.X = data(:,4:size(data,2));
     
     % z-standardization
     plsinput.y = zscore(plsinput.y,0,1);
@@ -177,7 +176,21 @@ for i=1:numel(data_cell)
     
     % input arguments: data, number of subjects, number of conditions, specific settings
     n_subj = size(plsinput.y,1);
-    plsres = pls_analysis({ plsinput.X }, n_subj, 1, cfg.pls);
+    %     n_subj = histc(data(:,2),unique(data(:,2)));
+    
+    datamat1_allgroups = plsinput.X;
+    %     datamat1_group1 = plsinput.X(1:n_subj(1),:);
+    %     datamat1_group2 = plsinput.X(n_subj(1)+1:n_subj(1)+n_subj(2),:);
+    %     datamat1_group3 = plsinput.X(n_subj(1)+n_subj(2)+1:end,:);
+    
+    n_con = 1; 
+%     n_con = 2; 
+%     n_subj = size(plsinput.y,1)/2;
+%     cfg.pls.stacked_designdata = repmat([-1; 1],n_subj,1); 
+    
+    plsres = pls_analysis({ datamat1_allgroups }, n_subj, n_con, cfg.pls);
+    %     plsres = pls_analysis({ datamat1_group1,datamat1_group2,datamat1_group3 }, n_subj, 1, cfg.pls);
+ 
     %--------------------------------------------------------------------------
     %--------------------------------------------------------------------------
     % SAVE OUTPUT
@@ -191,54 +204,64 @@ for i=1:numel(data_cell)
     LV_n = 1;
     cor = plsres.datamatcorrs_lst{1,1};
     
-    latency = [plsres.boot_result.compare_u(1,LV_n); cor(1)];
-    excess_path = [plsres.boot_result.compare_u(2,LV_n); cor(2)];
-    excess_distance = [plsres.boot_result.compare_u(3,LV_n); cor(3)];
-    rotation_velocity = [plsres.boot_result.compare_u(4,LV_n); cor(4)];
-    layout = [plsres.boot_result.compare_u(5,LV_n); cor(5)];
-    landmark = [plsres.boot_result.compare_u(6,LV_n); cor(6)];
-    position = [plsres.boot_result.compare_u(7,LV_n); cor(7)];
-    PLSC_LV = table(LV, latency, excess_path, excess_distance, rotation_velocity, layout, landmark, position);
-
-    writetable(PLSC_LV,[path, 'PLSC_LV_', file_name, '.txt'])
+%     latency = [plsres.boot_result.compare_u(1,LV_n); cor(1)];
+%     excess_path = [plsres.boot_result.compare_u(2,LV_n); cor(2)];
+%     excess_distance = [plsres.boot_result.compare_u(3,LV_n); cor(3)];
+%     rotation_velocity = [plsres.boot_result.compare_u(4,LV_n); cor(4)];
+%     layout = [plsres.boot_result.compare_u(5,LV_n); cor(5)];
+%     landmark = [plsres.boot_result.compare_u(6,LV_n); cor(6)];
+%     position = [plsres.boot_result.compare_u(7,LV_n); cor(7)];
+%     PLSC_LV = table(LV, latency, excess_path, excess_distance, rotation_velocity, layout, landmark, position);
+% 
+%     writetable(PLSC_LV,[path, 'PLSC_LV_', file_name, '.txt'])
     
 %         figure; subplot(1,2,1);
 %         bar(plsres.boot_result.compare_u(:,LV_n),'k'); hold on;
-%         set(gca,'xticklabels',{'latency','path','distance','init.vel','layout', 'landmark', 'position'}, 'fontsize', 12);
+%         set(gca,'xticklabels',{'pre.memory','latency','path','distance','init.vel','layout', 'landmark', 'position'}, 'fontsize', 12);
 %         box off; grid on;
-%         lh = line([0,numel(plsres.boot_result.compare_u)+1],[2,2]);
+%         lh = line([0,size(plsres.boot_result.compare_u,1)+1],[2,2]);
 %         set(lh, 'color','r','linestyle','--');
-%         lh = line([0,numel(plsres.boot_result.compare_u)+1],[-2,-2]);
+%         lh = line([0,size(plsres.boot_result.compare_u,1)+1],[-2,-2]);
 %         set(lh, 'color','r','linestyle','--');
+%         ylim([-12 12]);
 %         title('LV profile');
-%         ylim([-12 6]);
+%         hold off;
 %         
 %         subplot(1,2,2);
-%         bar(plsres.boot_result.orig_corr(:,1),'k'); hold on;
-%         set(gca,'xticklabels',{''});
-%         box off; grid on; grid minor; ylim([-1,1]); xlim([0,2]);
-%         lh1 = line([1,1],[plsres.boot_result.llcorr_adj(1,1),plsres.boot_result.ulcorr_adj(1,1)]);
-%         set(lh1, 'color','r');
+%         n_dim = size(plsres.boot_result.orig_corr,1); 
+%         bar(1:n_dim, plsres.boot_result.orig_corr(:,LV_n),'k'); hold on; 
+%         if n_dim==1
+%             set(gca,'xticklabels','');  
+%         elseif n_dim==3
+%             set(gca,'xticklabels',{'6-8yo','9-11yo','adults'}, 'fontsize', 12);
+%         end
+%         box off; grid on; grid minor;
+%         for p = 1:n_dim
+%             lh1 = line([p,p],[plsres.boot_result.llcorr_adj(p,LV_n),plsres.boot_result.ulcorr_adj(p,LV_n)]); 
+%             set(lh1, 'color','r');
+%         end
+%         xlim([0,n_dim+1]); ylim([-1,1]);
 %         title('LV correlation with memory score');
-    
+%         hold off; 
+     
     % Latent profile scores
     % combine data and write table
     id = data(:,1);
     group = data(:,2);
     memory_score = data(:,3);
-    latent_profile_score = plsres.usc;
+    latent_profile_score = plsres.usc(:,LV_n);
     PLSC_LP = table(id, group, memory_score, latent_profile_score);
     
     writetable(PLSC_LP, [path, 'PLSC_LP_', file_name, '.txt']); 
     
 %         figure;
-%         gscatter(plsres.usc, plsinput.y, group);
+%         gscatter(plsres.usc(:,LV_n), plsinput.y, group);
 %         set(gca,'fontsize', 12);
 %         xlabel(upper('LV profile score'),'fontweight','bold');
 %         ylabel(upper('memory score'),'fontweight','bold');
-%         [R,P]=corrcoef(plsres.usc, plsinput.y, 'rows', 'complete');
-%         title(strcat('r=',num2str(R(2,1)),', p=',num2str(P(2,1))));
-        
+%         [R,P]=corrcoef(plsres.usc(:,LV_n), plsinput.y, 'rows', 'complete');
+%         title(strcat('r=',num2str(R(2,1)),', p=',num2str(P(2,1))));   
+       
     save([path, 'PLSC_full_results_', file_name, '.mat'],'plsres');
     %--------------------------------------------------------------------------
 end
