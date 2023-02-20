@@ -19,6 +19,25 @@ addpath(genpath(pwd)) % add subfolder functions to path
 path = '../WP10_data/WP10_results/';
 
 
+load([path, 'wp10_plsc_2_by_1_c.mat']);
+data_2_by_1_c = cellfun(@str2num, m); clear m;
+
+load([path, 'wp10_plsc_2_by_learn_1_c.mat']);
+data_2_by_learn_1_c = cellfun(@str2num, m); clear m;
+
+load([path, 'wp10_plsc_1_2_by_1.mat']);
+data_1_2_by_1 = cellfun(@str2num, m); clear m;
+
+load([path, 'wp10_plsc_1_2_by_learn_1.mat']);
+data_1_2_by_learn_1 = cellfun(@str2num, m); clear m;
+
+load([path, 'wp10_plsc_ego_1_2_by_1_c.mat']);
+data_ego_2_by_1_c = cellfun(@str2num, m); clear m;
+
+load([path, 'wp10_plsc_allo_1_2_by_1_c.mat']);
+data_allo_2_by_1_c = cellfun(@str2num, m); clear m;
+
+
 % load([path, 'wp10_plsc_1_by_1.mat']);
 % data_1_by_1 = cellfun(@str2num, m); clear m;
 % 
@@ -142,8 +161,9 @@ path = '../WP10_data/WP10_results/';
 %--------------------------------------------------------------------------
 cfg.pls = [];
 cfg.pls.method   = 3; % regular behavior PLS
-cfg.pls.num_perm = 5000; % number of permutations
-cfg.pls.num_boot = 5000; % number of bootstrap tests
+% cfg.pls.method   = 5; % non-rotated behavior PLS (with contrasts) 
+cfg.pls.num_perm = 500; % 5000; % number of permutations
+cfg.pls.num_boot = 500; % 5000; % number of bootstrap tests
 cfg.pls.clim     = 95; % confidence interval level
 %--------------------------------------------------------------------------
 %--------------------------------------------------------------------------
@@ -153,16 +173,17 @@ for i=1:numel(data_cell)
     % set data 
     data = data_cell{i};
     file_name = data_names{i};
-    
     %--------------------------------------------------------------------------
     % CREATE THE BASIC MATRCIES / VECTORS
     %--------------------------------------------------------------------------
     % NOTE: all data needs to be sorted subjects X data
     % behavioral output
-    plsinput.y = data(:,3);
-    
+%     plsinput.y = data(:,3);
+    plsinput.y = data(:,4);
+     
     % explanatory behavioral data
-    plsinput.X = data(:,4:size(data,2));
+%     plsinput.X = data(:,4:size(data,2));
+    plsinput.X = data(:,5:size(data,2));
     
     % z-standardization
     plsinput.y = zscore(plsinput.y,0,1);
@@ -175,22 +196,26 @@ for i=1:numel(data_cell)
     cfg.pls.stacked_behavdata = plsinput.y;
     
     % input arguments: data, number of subjects, number of conditions, specific settings
-    n_subj = size(plsinput.y,1);
-    %     n_subj = histc(data(:,2),unique(data(:,2)));
+    %     n_subj = size(plsinput.y,1); % none 
+    %     n_subj = histc(data(:,2),unique(data(:,2))); % group
+    %     n_subj = size(plsinput.y,1)/2; % condition
+    n_subj = histc(data(:,2),unique(data(:,2))) / 2; % condition, group
     
-    datamat1_allgroups = plsinput.X;
-    %     datamat1_group1 = plsinput.X(1:n_subj(1),:);
-    %     datamat1_group2 = plsinput.X(n_subj(1)+1:n_subj(1)+n_subj(2),:);
-    %     datamat1_group3 = plsinput.X(n_subj(1)+n_subj(2)+1:end,:);
+    %     datamat1_allgroups = plsinput.X;
+    datamat1_group1 = plsinput.X(1:n_subj(1),:);
+    datamat1_group2 = plsinput.X(n_subj(1)+1:n_subj(1)+n_subj(2),:);
+    datamat1_group3 = plsinput.X(n_subj(1)+n_subj(2)+1:end,:);
     
-    n_con = 1; 
-%     n_con = 2; 
-%     n_subj = size(plsinput.y,1)/2;
-%     cfg.pls.stacked_designdata = repmat([-1; 1],n_subj,1); 
+    %     n_con = 1; % none
+    n_con = 2; % condition
+    %     cfg.pls.stacked_designdata=[1; -1];
+    %     cfg.pls.stacked_designdata=[1; -1; 1; -1; 1; -1]; 
+    %     cfg.pls.stacked_designdata=[ 1 0 0 1; -1 0 0 -1; 1 1 0 0; -1 -1 0 0; 1 0 1 0; -1 0 -1 0];
     
-    plsres = pls_analysis({ datamat1_allgroups }, n_subj, n_con, cfg.pls);
-    %     plsres = pls_analysis({ datamat1_group1,datamat1_group2,datamat1_group3 }, n_subj, 1, cfg.pls);
- 
+    % run plsc 
+    %     plsres = pls_analysis({ datamat1_allgroups }, n_subj, n_con, cfg.pls);
+    plsres = pls_analysis({ datamat1_group1,datamat1_group2,datamat1_group3 }, n_subj, n_con, cfg.pls);
+    
     %--------------------------------------------------------------------------
     %--------------------------------------------------------------------------
     % SAVE OUTPUT
@@ -217,7 +242,7 @@ for i=1:numel(data_cell)
     
 %         figure; subplot(1,2,1);
 %         bar(plsres.boot_result.compare_u(:,LV_n),'k'); hold on;
-%         set(gca,'xticklabels',{'pre.memory','latency','path','distance','init.vel','layout', 'landmark', 'position'}, 'fontsize', 12);
+%         set(gca,'xticklabels',{'latency','path','distance','init.vel','layout', 'landmark', 'position'}, 'fontsize', 12);
 %         box off; grid on;
 %         lh = line([0,size(plsres.boot_result.compare_u,1)+1],[2,2]);
 %         set(lh, 'color','r','linestyle','--');
