@@ -16,144 +16,53 @@ addpath(genpath(pwd)) % add subfolder functions to path
 %--------------------------------------------------------------------------
 % LOAD DATA 
 %--------------------------------------------------------------------------
+% load raw data 
 path = '../WP10_data/WP10_results/';
 
+load([path, 'wp10_plsc_allSC_by_Nea1PT.mat']);
+data_allSC_by_Nea1PT = cellfun(@str2num, m); clear m;
 
-load([path, 'wp10_plsc_2_by_1_c.mat']);
-data_2_by_1_c = cellfun(@str2num, m); clear m;
+load([path, 'wp10_plsc_allSC_by_Nl1PT.mat']);
+data_allSC_by_Nl1PT = cellfun(@str2num, m); clear m;
 
-load([path, 'wp10_plsc_2_by_learn_1_c.mat']);
-data_2_by_learn_1_c = cellfun(@str2num, m); clear m;
+load([path, 'wp10_plsc_allS_by_Nea1PT.mat']);
+data_allS_by_Nea1PT = cellfun(@str2num, m); clear m;
 
-load([path, 'wp10_plsc_1_2_by_1.mat']);
-data_1_2_by_1 = cellfun(@str2num, m); clear m;
+load([path, 'wp10_plsc_allS_by_Nl1PT.mat']);
+data_allS_by_Nl1PT = cellfun(@str2num, m); clear m;
 
-load([path, 'wp10_plsc_1_2_by_learn_1.mat']);
-data_1_2_by_learn_1 = cellfun(@str2num, m); clear m;
+% reshape data for analysis 
+% memory by session & condition combined by navigation 1 ego/allo 
+data_allSC_combined_by_Nea1PT=data_allSC_by_Nea1PT;
+data_allSC_combined_by_Nea1PT(:,3)=sscanf(sprintf('%d%d,',[data_allSC_by_Nea1PT(:,3).';data_allSC_by_Nea1PT(:,4).']),'%d,'); 
+data_allSC_combined_by_Nea1PT(:,4)=[]; 
 
-load([path, 'wp10_plsc_ego_1_2_by_1_c.mat']);
-data_ego_2_by_1_c = cellfun(@str2num, m); clear m;
+% memory for session 2 by condition combined by navigation 1 ego/allo (pre memory as indicator)
+T1 = array2table(data_allSC_by_Nea1PT);
+T2 = unstack(T1, 5, 3, 'VariableNamingRule', 'preserve'); % reshape session long to wide
+order=[1:3 12 4:11]; 
+data_S2allC_by_Nea1PT=table2array(T2(:,order));
+clear T1 T2 order; 
+clear data_allSC_by_Nea1PT;
 
-load([path, 'wp10_plsc_allo_1_2_by_1_c.mat']);
-data_allo_2_by_1_c = cellfun(@str2num, m); clear m;
+% memory by session & condition combined by navigation 1 learn
+data_allSC_combined_by_Nl1PT=data_allSC_by_Nl1PT;
+data_allSC_combined_by_Nl1PT(:,3)=sscanf(sprintf('%d%d,',[data_allSC_by_Nl1PT(:,3).';data_allSC_by_Nl1PT(:,4).']),'%d,'); 
+data_allSC_combined_by_Nl1PT(:,4)=[]; 
 
+% memory for session 2 by condition combined by navigation 1 learn (pre memory as indicator)
+T1 = array2table(data_allSC_by_Nl1PT);
+T2 = unstack(T1, 5, 3, 'VariableNamingRule', 'preserve'); % reshape session long to wide
+order=[1:3 12 4:11]; 
+data_S2allC_by_Nl1PT=table2array(T2(:,order));
+clear T1 T2 order; 
+clear data_allSC_by_Nl1PT;
 
-% load([path, 'wp10_plsc_1_by_1.mat']);
-% data_1_by_1 = cellfun(@str2num, m); clear m;
-% 
-% load([path, 'wp10_plsc_2_by_1.mat']);
-% data_2_by_1 = cellfun(@str2num, m); clear m;
-% 
-% load([path, 'wp10_plsc_2_by_2.mat']);
-% data_2_by_2 = cellfun(@str2num, m); clear m;
-% 
-% load([path, 'wp10_plsc_ret_by_1.mat']);
-% data_ret_by_1 = cellfun(@str2num, m); clear m;
-% 
-% load([path, 'wp10_plsc_ret_by_learn_1.mat']);
-% data_ret_by_learn_1 = cellfun(@str2num, m); clear m;
-% 
-% load([path, 'wp10_plsc_ret_by_learn_1_init.mat']);
-% data_ret_by_learn_1_init = cellfun(@str2num, m); clear m;
-% 
-% 
-% load([path, 'wp10_plsc_allo_1_by_1.mat']);
-% data_allo_1_by_1 = cellfun(@str2num, m); clear m;
-% 
-% load([path, 'wp10_plsc_allo_2_by_1.mat']);
-% data_allo_2_by_1 = cellfun(@str2num, m); clear m;
-% 
-% load([path, 'wp10_plsc_allo_2_by_2.mat']);
-% data_allo_2_by_2 = cellfun(@str2num, m); clear m;
-% 
-% load([path, 'wp10_plsc_allo_ret_by_1.mat']);
-% data_allo_ret_by_1 = cellfun(@str2num, m); clear m;
-% 
-% load([path, 'wp10_plsc_allo_ret_by_learn_1.mat']);
-% data_allo_ret_by_learn_1 = cellfun(@str2num, m); clear m;
-% 
-% load([path, 'wp10_plsc_allo_ret_by_learn_1_init.mat']);
-% data_allo_ret_by_learn_1_init = cellfun(@str2num, m); clear m;
-% 
-% 
-% load([path, 'wp10_plsc_ego_1_by_1.mat']);
-% data_ego_1_by_1 = cellfun(@str2num, m); clear m;
-% 
-% load([path, 'wp10_plsc_ego_2_by_1.mat']);
-% data_ego_2_by_1 = cellfun(@str2num, m); clear m;
-% 
-% load([path, 'wp10_plsc_ego_2_by_2.mat']);
-% data_ego_2_by_2 = cellfun(@str2num, m); clear m;
-% 
-% load([path, 'wp10_plsc_ego_ret_by_1.mat']);
-% data_ego_ret_by_1 = cellfun(@str2num, m); clear m;
-% 
-% load([path, 'wp10_plsc_ego_ret_by_learn_1.mat']);
-% data_ego_ret_by_learn_1 = cellfun(@str2num, m); clear m;
-% 
-% load([path, 'wp10_plsc_ego_ret_by_learn_1_init.mat']);
-% data_ego_ret_by_learn_1_init = cellfun(@str2num, m); clear m;
-% 
-% 
-% load([path, 'wp10_plsc_wl_1_by_1.mat']);
-% data_wl_1_by_1 = cellfun(@str2num, m); clear m;
-% 
-% load([path, 'wp10_plsc_wl_2_by_1.mat']);
-% data_wl_2_by_1 = cellfun(@str2num, m); clear m;
-% 
-% load([path, 'wp10_plsc_wl_2_by_2.mat']);
-% data_wl_2_by_2 = cellfun(@str2num, m); clear m;
-% 
-% load([path, 'wp10_plsc_wl_ret_by_1.mat']);
-% data_wl_ret_by_1 = cellfun(@str2num, m); clear m;
-% 
-% load([path, 'wp10_plsc_wl_ret_by_learn_1.mat']);
-% data_wl_ret_by_learn_1 = cellfun(@str2num, m); clear m;
-% 
-% load([path, 'wp10_plsc_wl_ret_by_learn_1_init.mat']);
-% data_wl_ret_by_learn_1_init = cellfun(@str2num, m); clear m;
-% 
-% 
-% load([path, 'wp10_plsc_allo_wl_1_by_1.mat']);
-% data_allo_wl_1_by_1 = cellfun(@str2num, m); clear m;
-% 
-% load([path, 'wp10_plsc_allo_wl_2_by_1.mat']);
-% data_allo_wl_2_by_1 = cellfun(@str2num, m); clear m;
-% 
-% load([path, 'wp10_plsc_allo_wl_2_by_2.mat']);
-% data_allo_wl_2_by_2 = cellfun(@str2num, m); clear m;
-% 
-% load([path, 'wp10_plsc_allo_wl_ret_by_1.mat']);
-% data_allo_wl_ret_by_1 = cellfun(@str2num, m); clear m;
-% 
-% load([path, 'wp10_plsc_allo_wl_ret_by_learn_1.mat']);
-% data_allo_wl_ret_by_learn_1 = cellfun(@str2num, m); clear m;
-% 
-% load([path, 'wp10_plsc_allo_wl_ret_by_learn_1_init.mat']);
-% data_allo_wl_ret_by_learn_1_init = cellfun(@str2num, m); clear m;
-% 
-% 
-% load([path, 'wp10_plsc_ego_wl_1_by_1.mat']);
-% data_ego_wl_1_by_1 = cellfun(@str2num, m); clear m;
-% 
-% load([path, 'wp10_plsc_ego_wl_2_by_1.mat']);
-% data_ego_wl_2_by_1 = cellfun(@str2num, m); clear m;
-% 
-% load([path, 'wp10_plsc_ego_wl_2_by_2.mat']);
-% data_ego_wl_2_by_2 = cellfun(@str2num, m); clear m;
-% 
-% load([path, 'wp10_plsc_ego_wl_ret_by_1.mat']);
-% data_ego_wl_ret_by_1 = cellfun(@str2num, m); clear m;
-% 
-% load([path, 'wp10_plsc_ego_wl_ret_by_learn_1.mat']);
-% data_ego_wl_ret_by_learn_1 = cellfun(@str2num, m); clear m;
-% 
-% load([path, 'wp10_plsc_ego_wl_ret_by_learn_1_init.mat']);
-% data_ego_wl_ret_by_learn_1_init = cellfun(@str2num, m); clear m;
+% tbd
+%data(data(:,3)==1,:)
 
-% data_cell = {data_allo_2_by_1 data_ego_2_by_1 data_allo_1_by_1 data_ego_1_by_1 data_allo_2_by_1 data_ego_2_by_1};
-% data_names = {'allo_2_by_1' 'ego_2_by_1' 'allo_1_by_1' 'ego_1_by_1' 'allo_2_by_2' 'ego_2_by_2'}; 
-
+data_cell = {data_allSC_combined_by_Nea1PT data_allSC_combined_by_Nl1PT};
+data_names = {'allSC_combined_by_Nea1PT' 'allSC_combined_by_Nl1PT'}; 
 
 %--------------------------------------------------------------------------
 %--------------------------------------------------------------------------
@@ -163,7 +72,7 @@ cfg.pls = [];
 cfg.pls.method   = 3; % regular behavior PLS
 % cfg.pls.method   = 5; % non-rotated behavior PLS (with contrasts) 
 cfg.pls.num_perm = 500; % 5000; % number of permutations
-cfg.pls.num_boot = 500; % 5000; % number of bootstrap tests
+cfg.pls.num_boot = 5000; % 5000; % number of bootstrap tests
 cfg.pls.clim     = 95; % confidence interval level
 %--------------------------------------------------------------------------
 %--------------------------------------------------------------------------
@@ -178,11 +87,9 @@ for i=1:numel(data_cell)
     %--------------------------------------------------------------------------
     % NOTE: all data needs to be sorted subjects X data
     % behavioral output
-%     plsinput.y = data(:,3);
     plsinput.y = data(:,4);
      
     % explanatory behavioral data
-%     plsinput.X = data(:,4:size(data,2));
     plsinput.X = data(:,5:size(data,2));
     
     % z-standardization
@@ -195,26 +102,28 @@ for i=1:numel(data_cell)
     % add the 'behavioral data'
     cfg.pls.stacked_behavdata = plsinput.y;
     
-    % input arguments: data, number of subjects, number of conditions, specific settings
-    %     n_subj = size(plsinput.y,1); % none 
-    %     n_subj = histc(data(:,2),unique(data(:,2))); % group
-    %     n_subj = size(plsinput.y,1)/2; % condition
-    n_subj = histc(data(:,2),unique(data(:,2))) / 2; % condition, group
+    % set condition number  
+    n_con = 1; % none
+    %     n_con = 2; % condition
+    %     cfg.pls.stacked_designdata=[1; -1]; 
+    %     n_con = 4; % condition
+    %     cfg.pls.stacked_designdata=[1 -1 1 -1; 1 1 -1 -1; 1 0 -1 0; 0 1 0 -1; 1 -1 0 0; 0 0 1 -1]';
+    %     cfg.pls.stacked_designdata=[1 0 0 1; -1 0 0 -1; 1 1 0 0; -1 -1 0 0; 1 0 1 0; -1 0 -1 0];
     
-    %     datamat1_allgroups = plsinput.X;
-    datamat1_group1 = plsinput.X(1:n_subj(1),:);
-    datamat1_group2 = plsinput.X(n_subj(1)+1:n_subj(1)+n_subj(2),:);
-    datamat1_group3 = plsinput.X(n_subj(1)+n_subj(2)+1:end,:);
+    % set group number
+    n_subj = size(plsinput.y,1) / n_con; % condition
+    %     n_subj = histc(data(:,2),unique(data(:,2))) / n_con; % condition, group
     
-    %     n_con = 1; % none
-    n_con = 2; % condition
-    %     cfg.pls.stacked_designdata=[1; -1];
-    %     cfg.pls.stacked_designdata=[1; -1; 1; -1; 1; -1]; 
-    %     cfg.pls.stacked_designdata=[ 1 0 0 1; -1 0 0 -1; 1 1 0 0; -1 -1 0 0; 1 0 1 0; -1 0 -1 0];
+    % set data 
+    datamat1_allgroups = plsinput.X;
+    %     datamat1_group1 = plsinput.X(1:n_subj(1),:);
+    %     datamat1_group2 = plsinput.X(n_subj(1)+1:n_subj(1)+n_subj(2),:);
+    %     datamat1_group3 = plsinput.X(n_subj(1)+n_subj(2)+1:end,:);
     
     % run plsc 
-    %     plsres = pls_analysis({ datamat1_allgroups }, n_subj, n_con, cfg.pls);
-    plsres = pls_analysis({ datamat1_group1,datamat1_group2,datamat1_group3 }, n_subj, n_con, cfg.pls);
+    % input arguments: data, number of subjects, number of conditions, specific settings
+    plsres = pls_analysis({ datamat1_allgroups }, n_subj, n_con, cfg.pls);
+    %     plsres = pls_analysis({ datamat1_group1,datamat1_group2,datamat1_group3 }, n_subj, n_con, cfg.pls);
     
     %--------------------------------------------------------------------------
     %--------------------------------------------------------------------------
@@ -240,34 +149,34 @@ for i=1:numel(data_cell)
 % 
 %     writetable(PLSC_LV,[path, 'PLSC_LV_', file_name, '.txt'])
     
-%         figure; subplot(1,2,1);
-%         bar(plsres.boot_result.compare_u(:,LV_n),'k'); hold on;
-%         set(gca,'xticklabels',{'latency','path','distance','init.vel','layout', 'landmark', 'position'}, 'fontsize', 12);
-%         box off; grid on;
-%         lh = line([0,size(plsres.boot_result.compare_u,1)+1],[2,2]);
-%         set(lh, 'color','r','linestyle','--');
-%         lh = line([0,size(plsres.boot_result.compare_u,1)+1],[-2,-2]);
-%         set(lh, 'color','r','linestyle','--');
-%         ylim([-12 12]);
-%         title('LV profile');
-%         hold off;
-%         
-%         subplot(1,2,2);
-%         n_dim = size(plsres.boot_result.orig_corr,1); 
-%         bar(1:n_dim, plsres.boot_result.orig_corr(:,LV_n),'k'); hold on; 
-%         if n_dim==1
-%             set(gca,'xticklabels','');  
-%         elseif n_dim==3
-%             set(gca,'xticklabels',{'6-8yo','9-11yo','adults'}, 'fontsize', 12);
-%         end
-%         box off; grid on; grid minor;
-%         for p = 1:n_dim
-%             lh1 = line([p,p],[plsres.boot_result.llcorr_adj(p,LV_n),plsres.boot_result.ulcorr_adj(p,LV_n)]); 
-%             set(lh1, 'color','r');
-%         end
-%         xlim([0,n_dim+1]); ylim([-1,1]);
-%         title('LV correlation with memory score');
-%         hold off; 
+        figure; subplot(1,2,1);
+        bar(plsres.boot_result.compare_u(:,LV_n),'k'); hold on;
+        set(gca,'xticklabels',{'latency','path','distance','init.vel','layout', 'landmark', 'position'}, 'fontsize', 12);
+        box off; grid on;
+        lh = line([0,size(plsres.boot_result.compare_u,1)+1],[2,2]);
+        set(lh, 'color','r','linestyle','--');
+        lh = line([0,size(plsres.boot_result.compare_u,1)+1],[-2,-2]);
+        set(lh, 'color','r','linestyle','--');
+        ylim([-12 12]);
+        title('LV profile');
+        hold off;
+        
+        subplot(1,2,2);
+        n_dim = size(plsres.boot_result.orig_corr,1); 
+        bar(1:n_dim, plsres.boot_result.orig_corr(:,LV_n),'k'); hold on; 
+        if n_dim==1
+            set(gca,'xticklabels','');  
+        elseif n_dim==3
+            set(gca,'xticklabels',{'6-8yo','9-11yo','adults'}, 'fontsize', 12);
+        end
+        box off; grid on; grid minor;
+        for p = 1:n_dim
+            lh1 = line([p,p],[plsres.boot_result.llcorr_adj(p,LV_n),plsres.boot_result.ulcorr_adj(p,LV_n)]); 
+            set(lh1, 'color','r');
+        end
+        xlim([0,n_dim+1]); ylim([-1,1]);
+        title('LV correlation with memory score');
+        hold off; 
      
     % Latent profile scores
     % combine data and write table
