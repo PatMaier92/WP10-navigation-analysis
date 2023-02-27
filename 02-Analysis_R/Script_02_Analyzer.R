@@ -1437,6 +1437,29 @@ plot.rotation_velocity <- afex_plot_wrapper(model.rotation_velocity, "condition"
 rm(plot.rotation_velocity, model.rotation_velocity)
 
 
+# --- INITIAL ROTATION (SESSION 1 PROBE TRIALS) --- # 
+## ---- model_probe_initial_rotation
+model.initial_rotation <- mixed(initial_rotation ~ group*condition + cov_sex + cov_motor_score + 
+                                  (condition||id), data=data_p1, expand_re=T)
+## ----
+
+# random effects
+VarCorr(model.initial_rotation$full_model)
+
+# fixed effects
+model.initial_rotation
+
+## ---- post_hoc_probe_initial_rotation
+post.ms_condition <- emmeans(model.initial_rotation, pairwise ~ condition, lmer.df="satterthwaite")$contrasts
+## ---- 
+rm(post.ms_condition)
+
+## ---- plot_probe_initial_rotation
+plot.initial_rotation <- afex_plot_wrapper(model.initial_rotation, "condition", "group", NULL, l_rotation, xlabel=NULL, ymin=0, ymax=5)
+## ---- 
+rm(plot.initial_rotation, model.initial_rotation)
+
+
 # ------------------------------------------------------------------------------
 # ::: SUPPLEMENT: LEARNING ANALYSIS - NAVIGATION BEHAVIOR (LEARNING TRIALS) ::: #
 # ------------------------------------------------------------------------------
@@ -1536,6 +1559,32 @@ model.rotation_velocity_learn
 plot.rotation_velocity_learn <- afex_plot_wrapper(model.rotation_velocity_learn, "trial_in_block", "group", NULL, l_initial_rotation_velocity, xlabel=l_trial_in_block, ymin=0, ymax=0.025)
 ## ----
 rm(plot.rotation_velocity_learn, model.rotation_velocity_learn)
+
+
+# --- INITIAL ROTATION  (LEARNING TRIALS) --- # 
+## ---- model_learn_initial_rotation
+model.initial_rotation_learn <- mixed(initial_rotation ~ group*trial_in_block + cov_sex + cov_motor_score + 
+                                        (1|id), data=data_l, expand_re=T)
+## ----
+
+# random effects
+VarCorr(model.initial_rotation_learn$full_model)
+
+# fixed effects
+model.initial_rotation_learn
+
+## ---- post_hoc_learn_initial_rotation
+emm.learn_rotation_group_trial <- emmeans(model.initial_rotation_learn, ~ group * trial_in_block, lmer.df="satterthwaite")
+
+post.learn_rotation_group_trial1 <- contrast(emm.learn_rotation_group_trial, by="group", interaction=c("poly"), max.degree=2)
+post.learn_rotation_group_trial2 <- pairs(emm.learn_rotation_group_trial, interaction=c("pairwise", "poly"), max.degree=2, adjust="bonferroni")
+## ----
+rm(emm.learn_rotation_group_trial, post.learn_rotation_group_trial1, post.learn_rotation_group_trial2) 
+
+## ---- plot_learn_initial_rotation
+plot.initial_rotation_learn <- afex_plot_wrapper(model.initial_rotation_learn, "trial_in_block", "group", NULL, "initial rotation", xlabel=l_trial_in_block, ymax=2)
+## ----
+rm(plot.initial_rotation_learn, model.initial_rotation_learn)
 
 
 # ------------------------------------------------------------------------------
