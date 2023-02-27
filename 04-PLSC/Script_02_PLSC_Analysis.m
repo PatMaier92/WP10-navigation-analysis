@@ -19,80 +19,61 @@ addpath(genpath(pwd)) % add subfolder functions to path
 % load raw data 
 path = '../WP10_data/WP10_results/';
 
+
 % % data based on ego/allo navigation trials 
+% load([path, 'wp10_plsc_all_by_NeaS1PT.mat']);
+% data_all_by_NeaS1PT = cellfun(@str2num, m); clear m;
+% 
 % load([path, 'wp10_plsc_allSC_by_NeaS1PT.mat']);
 % data_allSC_by_NeaS1PT = cellfun(@str2num, m); clear m;
-% 
-% % load([path, 'wp10_plsc_allS_by_NeaS1PT.mat']);
-% % data_allS_by_NeaS1PT = cellfun(@str2num, m); clear m;
 % 
 % % reshape data for analysis 
 % % memory by session & condition combined by navigation 1 ego/allo 
 % data_allSC_combined_by_NeaS1PT=data_allSC_by_NeaS1PT;
 % data_allSC_combined_by_NeaS1PT(:,3)=sscanf(sprintf('%d%d,',[data_allSC_by_NeaS1PT(:,3).';data_allSC_by_NeaS1PT(:,4).']),'%d,'); 
 % data_allSC_combined_by_NeaS1PT(:,4)=[]; 
+% clear data_allSC_by_NeaS1PT;
 % 
-% % memory for session 2 by condition combined by navigation 1 ego/allo (pre memory as indicator)
-% T1 = array2table(data_allSC_by_NeaS1PT);
-% T2 = unstack(T1, 5, 3, 'VariableNamingRule', 'preserve'); % reshape session long to wide
-% order=[1:3 12 4:11]; 
-% data_S2allC_by_NeaS1PT=table2array(T2(:,order));
-% clear T1 T2 order; 
-% clear data_allSC_by_Nea1PT;
-% 
-% % ego memory for session 2 by navigation 1 ego/allo (pre memory as indicator)
-% data_egoS2_by_NeS1PT=data_S2allC_by_NeaS1PT(data_S2allC_by_NeaS1PT(:,3)==5,:); 
-% 
-% % allo memory for session 2 by navigation 1 ego/allo (pre memory as indicator)
-% data_alloS2_by_NaS1PT=data_S2allC_by_NeaS1PT(data_S2allC_by_NeaS1PT(:,3)==6,:); 
-% 
-% data_cell = { data_egoS2_by_NeS1PT data_alloS2_by_NaS1PT data_egoS2_by_NeS1PT data_alloS2_by_NaS1PT data_S2allC_by_NeaS1PT data_allSC_combined_by_NeaS1PT};
-% data_names = { 'egoS2_by_NeS1PT' 'alloS2_by_NaS1PT' 'egoS2_by_NeS1PT' 'alloS2_by_NaS1PT' 'S2allC_by_NeaS1PT' 'allSC_combined_by_NeaS1PT' }; 
-% analysis_method = { 3 3 5 5 5 5 }; 
-% n_conditions = { 1 1 1 1 2 4 }; 
-% by_group = { 0 0 1 1 1 0 }; 
+% data_cell = { data_all_by_NeaS1PT data_all_by_NeaS1PT data_all_by_NeaS1PT ...
+%     data_allSC_combined_by_NeaS1PT data_allSC_combined_by_NeaS1PT data_allSC_combined_by_NeaS1PT data_allSC_combined_by_NeaS1PT };
+% data_names = { 'all_by_NeaS1PT' 'all_by_NeaS1PT' 'all_by_NeaS1PT' ...
+%     'allSC_combined_by_NeaS1PT' 'allSC_combined_by_NeaS1PT' 'allSC_combined_by_NeaS1PT' 'allSC_combined_by_NeaS1PT' }; 
+% analysis_method = { 3 3 5 3 3 5 5 }; 
+% n_conditions = { 1 1 1 4 4 4 4 }; 
+% by_group = { 0 1 1 0 1 0 1 }; 
 % design_contrasts = { [] [] ... % n rows = n conditions x n groups, sorted as condition in group; n colums =  n desired contrasts
-%     [1 -1 0; 1 0 -1; 0 1 -1]' [1 -1 0; 1 0 -1; 0 1 -1]' ...
-%     [1 -1 1 -1 1 -1; 1 -1 0 0 0 0; 0 0 1 -1 0 0; 0 0 0 0 1 -1]' ... 
-%     [1 -1 0 0 ; 0 0 1 -1; 1 0 -1 0; 0 1 0 -1]' }; 
+%     [1 -1 0; 1 0 -1; 0 1 -1]' ... 
+%     [] [] ...
+%     [1 -1 0 0 ; 0 0 1 -1; 1 0 -1 0; 0 1 0 -1]' ...
+%     [1 -1 0 0 1 -1 0 0 1 -1 0 0; 0 0 1 -1  0 0 1 -1 0 0 1 -1; 1 0 -1 0 1 0 -1 0 1 0 -1 0; 0 1 0 -1 0 1 0 -1 0 1 0 -1]' }; 
 
 
-% data based on learning navigation trials 
-load([path, 'wp10_plsc_allSC_by_NlS1PT.mat']);
-data_allSC_by_NlS1PT = cellfun(@str2num, m); clear m;
-
-% load([path, 'wp10_plsc_allS_by_NlS1PT.mat']);
-% data_allS_by_NlS1PT = cellfun(@str2num, m); clear m;
-
-% reshape data for analysis 
-% memory by session & condition combined by navigation 1 learn
-data_allSC_combined_by_NlS1PT=data_allSC_by_NlS1PT;
-data_allSC_combined_by_NlS1PT(:,3)=sscanf(sprintf('%d%d,',[data_allSC_by_NlS1PT(:,3).';data_allSC_by_NlS1PT(:,4).']),'%d,'); 
-data_allSC_combined_by_NlS1PT(:,4)=[]; 
-
-% memory for session 2 by condition combined by navigation 1 learn (pre memory as indicator)
-T1 = array2table(data_allSC_by_NlS1PT);
-T2 = unstack(T1, 5, 3, 'VariableNamingRule', 'preserve'); % reshape session long to wide
-order=[1:3 12 4:11]; 
-data_S2allC_by_NlS1PT=table2array(T2(:,order));
-clear T1 T2 order; 
-clear data_allSC_by_Nl1PT;
-
-% ego memory for session 2 by navigation 1 learn (pre memory as indicator)
-data_egoS2_by_NlS1PT=data_S2allC_by_NlS1PT(data_S2allC_by_NlS1PT(:,3)==5,:); 
-
-% allo memory for session 2 by navigation 1 learn (pre memory as indicator)
-data_alloS2_by_NlS1PT=data_S2allC_by_NlS1PT(data_S2allC_by_NlS1PT(:,3)==6,:); 
-
-data_cell = { data_egoS2_by_NlS1PT data_alloS2_by_NlS1PT data_egoS2_by_NlS1PT data_alloS2_by_NlS1PT data_S2allC_by_NlS1PT data_allSC_combined_by_NlS1PT};
-data_names = { 'egoS2_by_NlS1PT' 'alloS2_by_NlS1PT' 'egoS2_by_NlS1PT' 'alloS2_by_NlS1PT' 'S2allC_by_NlS1PT' 'allSC_combined_by_NlS1PT' }; 
-analysis_method = { 3 3 5 5 5 5 }; 
-n_conditions = { 1 1 1 1 2 4 }; 
-by_group = { 0 0 1 1 1 0 }; 
-design_contrasts = { [] [] ... % n rows = n conditions x n groups, sorted as condition in group; n colums =  n desired contrasts
-    [1 -1 0; 1 0 -1; 0 1 -1]' [1 -1 0; 1 0 -1; 0 1 -1]' ...
-    [1 -1 1 -1 1 -1; 1 -1 0 0 0 0; 0 0 1 -1 0 0; 0 0 0 0 1 -1]' ... 
-    [1 -1 0 0 ; 0 0 1 -1; 1 0 -1 0; 0 1 0 -1]' }; 
+% % data based on learning navigation trials 
+% load([path, 'wp10_plsc_all_by_NlS1PT.mat']);
+% data_all_by_NlS1PT = cellfun(@str2num, m); clear m;
+% 
+% load([path, 'wp10_plsc_allSC_by_NlS1PT.mat']);
+% data_allSC_by_NlS1PT = cellfun(@str2num, m); clear m;
+% 
+% % reshape data for analysis 
+% % memory by session & condition combined by navigation 1 learn
+% data_allSC_combined_by_NlS1PT=data_allSC_by_NlS1PT;
+% data_allSC_combined_by_NlS1PT(:,3)=sscanf(sprintf('%d%d,',[data_allSC_by_NlS1PT(:,3).';data_allSC_by_NlS1PT(:,4).']),'%d,'); 
+% data_allSC_combined_by_NlS1PT(:,4)=[]; 
+% clear data_allSC_by_NlS1PT;
+%  
+% data_cell = { data_all_by_NlS1PT data_all_by_NlS1PT data_all_by_NlS1PT ...
+%     data_allSC_combined_by_NlS1PT data_allSC_combined_by_NlS1PT data_allSC_combined_by_NlS1PT data_allSC_combined_by_NlS1PT };
+% data_names = { 'all_by_NlS1PT' 'all_by_NlS1PT' 'all_by_NlS1PT' ...
+%     'allSC_combined_by_NlS1PT' 'allSC_combined_by_NlS1PT' 'allSC_combined_by_NlS1PT' 'allSC_combined_by_NlS1PT' }; 
+% analysis_method = { 3 3 5 3 3 5 5 }; 
+% n_conditions = { 1 1 1 4 4 4 4 }; 
+% by_group = { 0 1 1 0 1 0 1 }; 
+% design_contrasts = { [] [] ... % n rows = n conditions x n groups, sorted as condition in group; n colums =  n desired contrasts
+%     [1 -1 0; 1 0 -1; 0 1 -1]' ... 
+%     [] [] ...
+%     [1 -1 0 0 ; 0 0 1 -1; 1 0 -1 0; 0 1 0 -1]' ...
+%     [1 -1 0 0 1 -1 0 0 1 -1 0 0; 0 0 1 -1  0 0 1 -1 0 0 1 -1; 1 0 -1 0 1 0 -1 0 1 0 -1 0; 0 1 0 -1 0 1 0 -1 0 1 0 -1]' }; 
 
 
 for i=1:numel(data_cell)
@@ -107,7 +88,7 @@ for i=1:numel(data_cell)
     
     % behavioral explanatory data
     plsinput.X = data(:,5:size(data,2));
-    
+
     % z-standardization
     plsinput.y = zscore(plsinput.y,0,1);
     plsinput.X = zscore(plsinput.X,0,1);
@@ -142,7 +123,7 @@ for i=1:numel(data_cell)
     end   
     %--------------------------------------------------------------------------
     %--------------------------------------------------------------------------
-    % RUN PLS
+    % RUN PLS AND SAVE OUTPUT
     %--------------------------------------------------------------------------
     % input arguments: data, number of subjects, number of conditions, specific settings
     if by_group{i}==0
@@ -150,104 +131,39 @@ for i=1:numel(data_cell)
     elseif by_group{i}==1
         plsres = pls_analysis({ datamat1_group1, datamat1_group2, datamat1_group3 }, n_subj, n_con, cfg.pls);
     end
-    % plsres.perm_result.sprob
+
+    save([path, '/PLSC_', file_name, '/full_results_m', int2str(cfg.pls.method), '_g', int2str(size(n_subj,1)), '.mat'],'plsres');
     
-    save([path, 'PLSC_full_results_', file_name, '_m', int2str(cfg.pls.method),'.mat'],'plsres');
-    
-    clear n_subj n_con cfg datamat*; 
+    clear n_con cfg datamat*; 
     %--------------------------------------------------------------------------
     %--------------------------------------------------------------------------
-    % SAVE OUTPUT
+    % DATA VIZUALIZATION
     % -------------------------------------------------------------------------
-    PLSC_LV = []; 
     for LV_n=1:numel(plsres.perm_result.sprob)
-        p=plsres.perm_result.sprob(LV_n); 
         
         % Latent variable significance (should be < than 0.05)
-        LV = repmat(LV_n,2,1);
-        LV_p = repmat(round(p,3),2,1);
+        p=plsres.perm_result.sprob(LV_n);
         
         % Latent variable weights
         % Bootstrap ratios (BSR) (should be < -1.96 or > +1.96)
-        % correlations with behavioral data and standard error 
+        % calculated as correlation/standard error (for method 3) 
+        % or salience u/se (for method 5)
         BSR = plsres.boot_result.compare_u(:,LV_n);
-        if size(plsres.datamatcorrs_lst{1,1},1)==1 % TBD CHECK for different methods/conditions
-            cor = plsres.datamatcorrs_lst{1,1}'; 
-        else
-            cor = plsres.datamatcorrs_lst{1,1}(LV_n,:)'; 
-        end
-        se = plsres.boot_result.u_se(:,LV_n); % u = plsres.u(:,LV_n); 
-        
-        % BSR table 
-        latency = [BSR(1); cor(1)];
-        excess_path = [BSR(2); cor(2)];
-        excess_distance = [BSR(3); cor(3)];
-        rotation_velocity = [BSR(4); cor(4)];
-        layout = [BSR(5); cor(5)];
-        landmark = [BSR(6); cor(6)];
-        position = [BSR(7); cor(7)];
-        if size(BSR,1)==8
-            pre_memory = [BSR(8); cor(8)];
-            plsc_lv = table(LV, LV_p, latency, excess_path, excess_distance, rotation_velocity, layout, landmark, position, pre_memory);
-        else
-            plsc_lv = table(LV, LV_p, latency, excess_path, excess_distance, rotation_velocity, layout, landmark, position);
-        end
-        PLSC_LV=[PLSC_LV; plsc_lv]; 
-        clear latency excess_path excess_distance rotation_velocity layout landmark position pre_memory plsc_lv;
-        
-        % BSR plots 
-        if plsres.method==3
+               
+        % Plot 
+        % BSR with threshold and LV correlations with 95%-CI
+        if p < 0.05
             
-            figure; subplot(1,2,1);
-            n_dim=numel(cor);
-            bar(cor(:)./se,'k'); hold on;
-            if size(cor,1)==8
-                set(gca,'xticklabels',{'latency','path','distance','init.vel','layout', 'landmark', 'position', 'pre.memory'});
-            else
-                set(gca,'xticklabels',{'latency','path','distance','init.vel','layout', 'landmark', 'position'});
-            end
-            box off; grid on;
-            lh = line([0,size(BSR,1)+1],[2,2]);
-            set(lh, 'color','r','linestyle','--');
-            lh = line([0,size(BSR,1)+1],[-2,-2]);
-            set(lh, 'color','r','linestyle','--');
-            ylim([-12 12]);
-            title(['BSR for LV with p-value=', num2str(round(p,3))]);
-            hold off;
-            
-            subplot(1,2,2);
-            bar(cor(:),'k'); hold on;
-            if size(cor,1)==8
-                set(gca,'xticklabels',{'latency','path','distance','init.vel','layout', 'landmark', 'position', 'pre.memory'});
-            else
-                set(gca,'xticklabels',{'latency','path','distance','init.vel','layout', 'landmark', 'position'});
-            end
-            box off; grid on;
-            for nd = 1:n_dim
-                lh1 = line([nd,nd],[cor(nd)+1.96*se(nd),cor(nd)-1.96*se(nd)]);
-                set(lh1, 'color','r');
-            end
-            ylim([-1 1]);
-            title('Mean Correlation +- 1.96*SE');
-            hold off;
-            clear n_dim lh*; 
-
-        elseif plsres.method==5 
-       
-            figure; subplot(1,2,1);
+            fig = figure('visible','off'); subplot(1,2,1);
             bar(BSR(:),'k'); hold on;
-            if size(BSR,1)==8
-                set(gca,'xticklabels',{'latency','path','distance','init.vel','layout', 'landmark', 'position', 'pre.memory'});
-            else
-                set(gca,'xticklabels',{'latency','path','distance','init.vel','layout', 'landmark', 'position'});
-            end
+            set(gca,'xticklabels',{'latency','path','distance','init.rot','layout','landmark','position'});
             box off; grid on;
-            lh = line([0,size(BSR,1)+1],[2,2]);
+            lh = line([0,size(BSR,1)+1],[1.96,1.96]);
             set(lh, 'color','r','linestyle','--');
-            lh = line([0,size(BSR,1)+1],[-2,-2]);
+            lh = line([0,size(BSR,1)+1],[-1.96,-1.96]);
             set(lh, 'color','r','linestyle','--');
             ylim([-12 12]);
-            title(['BSR for LV with p-value=', num2str(round(p,3))]);
+            title(['BSR for LV ', num2str(LV_n), ' with p-value=', num2str(round(p,3))]);
             hold off;
             
             subplot(1,2,2);
@@ -259,44 +175,59 @@ for i=1:numel(data_cell)
                 set(lh1, 'color','r');
             end
             xlim([0,n_dim+1]); ylim([-1,1]);
-            title('Correlation LV with memory');
+            title(['Correlation [95%-CI] with memory for LV ', num2str(LV_n)]);
             hold off;
-            clear n_dim nd lh*; 
+            clear n_dim nd lh*;
+            
+            saveas(fig,[path, '/PLSC_', file_name, '/Plot_LV_m', int2str(plsres.method), '_g', int2str(size(n_subj,1)), '_lv', int2str(LV_n),'.png']);
+        
+%             if plsres.method==3
+%                 
+%                 % Plot
+%                 % LV weights correlations with CI based on standard error
+%                 cor = plsres.datamatcorrs_lst{1,1}'; % TBD datamatcorrs change change shape based on settings
+%                 se = plsres.boot_result.u_se(:,LV_n);
+%                 
+%                 fig = figure('visible','off');
+%                 n_dim = numel(cor);
+%                 bar(cor(:),'k'); hold on;
+%                 set(gca,'xticklabels',{'latency','path','distance','init.rot','layout', 'landmark', 'position'});
+%                 box off; grid on;
+%                 for nd = 1:n_dim
+%                     lh1 = line([nd,nd],[cor(nd)+1.96*se(nd),cor(nd)-1.96*se(nd)]);
+%                     set(lh1, 'color','r');
+%                 end
+%                 ylim([-1 1]);
+%                 title('Mean Correlation +- 1.96*SE');
+%                 hold off;
+%                 clear n_dim lh*;
+%                 
+%             end
             
         end
-        % saveas(p,'plot.jpeg')
         
+        clear BSR cor se;
     end 
     
-    writetable(PLSC_LV,[path, 'PLSC_LV_', file_name, '_m', int2str(plsres.method), '.txt']);
-    clear PLSC_LV p LV_p BSR cor u se; 
-    
-    % Latent profile scores
+    % Latent profile scores (LPS)
     % indicates an individual's expression of the profile
-    if plsres.method==3
-        
-        LV = repmat(LV_n,size(data,1),1);
-        id = data(:,1);
+    if plsres.method==3 && numel(plsres.perm_result.sprob)==1 && p < 0.05
+              
+        % Plot 
+        % LPS scatter (grouped) and general correlation
         group = data(:,2);
-        memory_score = data(:,3);
-        latent_profile_score = plsres.usc(:,LV_n);
-        PLSC_LP = table(LV, id, group, memory_score, latent_profile_score);
-        
-        writetable(PLSC_LP, [path, 'PLSC_LP_', file_name, '_m', int2str(plsres.method), '.txt']);
-        clear PLSC_LP LV id memory_score latent_profile_score;
-        
-        figure;
+        fig=figure('visible','off');
         gscatter(plsres.usc(:,LV_n), plsinput.y, group);
         xlabel(upper('LV profile score'),'fontweight','bold');
         ylabel(upper('memory score'),'fontweight','bold');
         [R,P]=corrcoef(plsres.usc(:,LV_n), plsinput.y, 'rows', 'complete');
         title(strcat('r=',num2str(R(2,1)),', p=',num2str(P(2,1))));
         clear R P group;
-        % saveas(p,'plot.jpeg')
+        saveas(fig,[path, '/PLSC_', file_name, '/Plot_LP_m', int2str(plsres.method), '_g', int2str(size(n_subj,1)), '.png']);
         
     end
 
-    clear data file_name plsinput plsres; 
+    clear p n_subj data file_name plsinput plsres; 
     %--------------------------------------------------------------------------
 end
 
