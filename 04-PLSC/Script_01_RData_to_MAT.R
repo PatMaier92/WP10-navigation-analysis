@@ -77,7 +77,7 @@ data_for_plsc <- function(d_sm, d_pt, ms_session, ms_condition, nav_session, nav
       group_by(id)
   }
   d_nav <- d_nav %>% 
-    summarise_at(vars(time, excess_path_length, excess_target_distance, initial_rotation), mean, na.rm=T)
+    summarise_at(vars(time, excess_path_length, excess_target_distance, initial_rotation, initial_rotation_velocity, rotation), mean, na.rm=T)
   
   # memory 
   d_ms <- d_sm %>% 
@@ -122,21 +122,43 @@ data_for_plsc <- function(d_sm, d_pt, ms_session, ms_condition, nav_session, nav
 # ------------------------------------------------------------------------------
 
 # --- all items 
-plsc_allSC_by_NeaS1PT <- data_for_plsc(sm_data, pt_data, ms_session=c(1,2), c("ego_ret", "allo_ret"), nav_session=1, c("ego_ret", "allo_ret"))
-writeMat(con="../WP10_data/WP10_results/wp10_plsc_allSC_by_NeaS1PT.mat", m=as.matrix(plsc_allSC_by_NeaS1PT))
-rm(plsc_allSC_by_NeaS1PT)
+# plsc_allSC_by_NeaS1PT <- data_for_plsc(sm_data, pt_data, ms_session=c(1,2), c("ego_ret", "allo_ret"), nav_session=1, c("ego_ret", "allo_ret"))
+# writeMat(con="../WP10_data/WP10_results/wp10_plsc_allSC_by_NeaS1PT.mat", m=as.matrix(plsc_allSC_by_NeaS1PT))
+# rm(plsc_allSC_by_NeaS1PT)
+# 
+# plsc_allSC_by_NlS1PT <- data_for_plsc(sm_data, pt_data, ms_session=c(1,2), c("ego_ret", "allo_ret"), nav_session=1, c("main_learn"))
+# writeMat(con="../WP10_data/WP10_results/wp10_plsc_allSC_by_NlS1PT.mat", m=as.matrix(plsc_allSC_by_NlS1PT))
+# rm(plsc_allSC_by_NlS1PT)
+# 
+# plsc_all_by_NeaS1PT <- data_for_plsc(sm_data, pt_data, ms_session=c(1,2), c("ego_ret", "allo_ret"), nav_session=1, c("ego_ret", "allo_ret"), by_condition=F, by_session=F)
+# writeMat(con="../WP10_data/WP10_results/wp10_plsc_all_by_NeaS1PT.mat", m=as.matrix(plsc_all_by_NeaS1PT))
+# rm(plsc_all_by_NeaS1PT)
+# 
+# plsc_all_by_NlS1PT <- data_for_plsc(sm_data, pt_data, ms_session=c(1,2), c("ego_ret", "allo_ret"), nav_session=1, c("main_learn"), by_condition=F, by_session=F)
+# writeMat(con="../WP10_data/WP10_results/wp10_plsc_all_by_NlS1PT.mat", m=as.matrix(plsc_all_by_NlS1PT))
+# rm(plsc_all_by_NlS1PT)
 
-plsc_allSC_by_NlS1PT <- data_for_plsc(sm_data, pt_data, ms_session=c(1,2), c("ego_ret", "allo_ret"), nav_session=1, c("main_learn"))
-writeMat(con="../WP10_data/WP10_results/wp10_plsc_allSC_by_NlS1PT.mat", m=as.matrix(plsc_allSC_by_NlS1PT))
-rm(plsc_allSC_by_NlS1PT)
 
-plsc_all_by_NeaS1PT <- data_for_plsc(sm_data, pt_data, ms_session=c(1,2), c("ego_ret", "allo_ret"), nav_session=1, c("ego_ret", "allo_ret"), by_condition=F, by_session=F)
-writeMat(con="../WP10_data/WP10_results/wp10_plsc_all_by_NeaS1PT.mat", m=as.matrix(plsc_all_by_NeaS1PT))
-rm(plsc_all_by_NeaS1PT)
+age_data <- sm_data %>% 
+  select(id, group, age) %>% unique() %>% 
+  group_by(group) %>% 
+  mutate(age=ifelse(is.na(age), mean(age, na.rm=TRUE), age)) %>% 
+  ungroup %>% select(-group)
 
-plsc_all_by_NlS1PT <- data_for_plsc(sm_data, pt_data, ms_session=c(1,2), c("ego_ret", "allo_ret"), nav_session=1, c("main_learn"), by_condition=F, by_session=F)
-writeMat(con="../WP10_data/WP10_results/wp10_plsc_all_by_NlS1PT.mat", m=as.matrix(plsc_all_by_NlS1PT))
-rm(plsc_all_by_NlS1PT)
+plsc_age_by_NeaS1PT <- data_for_plsc(sm_data, pt_data, ms_session=c(1,2), c("ego_ret", "allo_ret"), nav_session=1, c("ego_ret", "allo_ret"), by_condition=F, by_session=F) %>% 
+  left_join(age_data) %>% relocate(age, .before=time) 
+writeMat(con="../WP10_data/WP10_results/wp10_plsc_age_by_NeaS1PT.mat", m=as.matrix(plsc_age_by_NeaS1PT))
+rm(plsc_age_by_NeaS1PT)
+
+plsc_age_by_NlS1PT <- data_for_plsc(sm_data, pt_data, ms_session=c(1,2), c("ego_ret", "allo_ret"), nav_session=1, c("main_learn"), by_condition=F, by_session=F) %>% 
+  left_join(age_data) %>% relocate(age, .before=time) 
+writeMat(con="../WP10_data/WP10_results/wp10_plsc_age_by_NlS1PT.mat", m=as.matrix(plsc_age_by_NlS1PT))
+rm(plsc_age_by_NlS1PT)
+
+plsc_ageSC_by_NeaS1PT <- data_for_plsc(sm_data, pt_data, ms_session=c(1,2), c("ego_ret", "allo_ret"), nav_session=1, c("ego_ret", "allo_ret")) %>% 
+  left_join(age_data) %>% relocate(age, .before=time) 
+writeMat(con="../WP10_data/WP10_results/wp10_plsc_ageSC_by_NeaS1PT.mat", m=as.matrix(plsc_ageSC_by_NeaS1PT))
+rm(plsc_ageSC_by_NeaS1PT)
 
 
 # ------------------------------------------------------------------------------

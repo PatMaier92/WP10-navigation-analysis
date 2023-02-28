@@ -76,6 +76,47 @@ path = '../WP10_data/WP10_results/';
 %     [1 -1 0 0 1 -1 0 0 1 -1 0 0; 0 0 1 -1  0 0 1 -1 0 0 1 -1; 1 0 -1 0 1 0 -1 0 1 0 -1 0; 0 1 0 -1 0 1 0 -1 0 1 0 -1]' }; 
 
 
+% age data
+% by ego/allo
+load([path, 'wp10_plsc_age_by_NeaS1PT.mat']);
+data_age_by_NeaS1PT = cellfun(@str2num, m); clear m;
+memory = data_age_by_NeaS1PT(:,4); 
+data_age_by_NeaS1PT(:,4) = []; 
+
+load([path, 'wp10_plsc_ageSC_by_NeaS1PT.mat']);
+data_ageSC_by_NeaS1PT = cellfun(@str2num, m); clear m;
+i_ego_1 = data_ageSC_by_NeaS1PT(:,3)==1 & data_ageSC_by_NeaS1PT(:,4)==5; 
+memory_ego_1 = data_ageSC_by_NeaS1PT(i_ego_1,5); 
+i_allo_1 = data_ageSC_by_NeaS1PT(:,3)==1 & data_ageSC_by_NeaS1PT(:,4)==6; 
+memory_allo_1 = data_ageSC_by_NeaS1PT(i_allo_1,5); 
+i_ego_2 = data_ageSC_by_NeaS1PT(:,3)==2 & data_ageSC_by_NeaS1PT(:,4)==5; 
+memory_ego_2 = data_ageSC_by_NeaS1PT(i_ego_2,5); 
+i_allo_2 = data_ageSC_by_NeaS1PT(:,3)==2 & data_ageSC_by_NeaS1PT(:,4)==6; 
+memory_allo_2 = data_ageSC_by_NeaS1PT(i_allo_2,5); 
+data_ageSC_by_NeaS1PT(:,5)=[]; 
+
+retention_rate_allo = memory_allo_2./memory_allo_1;
+retention_rate_ego = memory_ego_2./memory_ego_1;
+
+data_ageSC_by_NeaS1PT = data_ageSC_by_NeaS1PT(data_ageSC_by_NeaS1PT(:,3)==1,:); 
+data_ageSC_by_NeaS1PT(:,3) = []; 
+clear i_*; 
+
+% by learning 
+load([path, 'wp10_plsc_age_by_NlS1PT.mat']);
+data_age_by_NlS1PT = cellfun(@str2num, m); clear m;
+memory = data_age_by_NlS1PT(:,4); 
+data_age_by_NlS1PT(:,4) = []; 
+
+data_cell = { data_age_by_NlS1PT data_age_by_NeaS1PT data_ageSC_by_NeaS1PT data_ageSC_by_NeaS1PT };
+data_names = { 'age_by_NlS1PT' 'age_by_NeaS1PT' 'ageC_by_NeaS1PT' 'ageC_by_NeaS1PT' }; 
+analysis_method = { 3 3 3 5 }; 
+n_conditions = { 1 1 2 2 }; 
+by_group = { 0 0 0 0 }; 
+design_contrasts = { [] [] ... % n rows = n conditions x n groups, sorted as condition in group; n colums =  n desired contrasts
+     [] [1 -1 ]' }; 
+
+
 for i=1:numel(data_cell)
     %--------------------------------------------------------------------------
     % CONFIGURATION
@@ -154,15 +195,15 @@ for i=1:numel(data_cell)
         % BSR with threshold and LV correlations with 95%-CI
         if p < 0.05
             
-            fig = figure('visible','off'); subplot(1,2,1);
+            fig = figure('visible','on'); subplot(1,2,1);
             bar(BSR(:),'k'); hold on;
-            set(gca,'xticklabels',{'latency','path','distance','init.rot','layout','landmark','position'});
+            set(gca,'xticklabels',{'latency','path','distance','init.rot','init.vel','tot.rot','layout','landmark','position'});
             box off; grid on;
             lh = line([0,size(BSR,1)+1],[1.96,1.96]);
             set(lh, 'color','r','linestyle','--');
             lh = line([0,size(BSR,1)+1],[-1.96,-1.96]);
             set(lh, 'color','r','linestyle','--');
-            ylim([-12 12]);
+            % ylim([-12 12]);
             title(['BSR for LV ', num2str(LV_n), ' with p-value=', num2str(round(p,3))]);
             hold off;
             
@@ -215,16 +256,37 @@ for i=1:numel(data_cell)
               
         % Plot 
         % LPS scatter (grouped) and general correlation
+%         group = data(:,2);
+%         fig=figure('visible','off');
+%         gscatter(plsres.usc(:,LV_n), plsinput.y, group);
+%         gscatter(age, plsres.usc(:,LV_n), group);
+%         xlabel(upper('LV profile score'),'fontweight','bold');
+%         ylabel(upper('memory score'),'fontweight','bold');
+%         [R,P]=corrcoef(plsres.usc(:,LV_n), plsinput.y, 'rows', 'complete');
+%         title(strcat('r=',num2str(R(2,1)),', p=',num2str(P(2,1))));
+%         clear R P group;
+%         saveas(fig,[path, '/PLSC_', file_name, '/Plot_LP_m', int2str(plsres.method), '_g', int2str(size(n_subj,1)), '.png']);
+        
         group = data(:,2);
-        fig=figure('visible','off');
-        gscatter(plsres.usc(:,LV_n), plsinput.y, group);
-        xlabel(upper('LV profile score'),'fontweight','bold');
-        ylabel(upper('memory score'),'fontweight','bold');
-        [R,P]=corrcoef(plsres.usc(:,LV_n), plsinput.y, 'rows', 'complete');
+        age = data(:,4); 
+        fig=figure('visible','on');
+        gscatter(age, plsres.usc(:,LV_n), group);
+        xlabel(upper('Age'),'fontweight','bold');
+        ylabel(upper('LV profile score'),'fontweight','bold');
+        [R,P]=corrcoef(plsres.usc(:,LV_n), age, 'rows', 'complete');
+        title(strcat('r=',num2str(R(2,1)),', p=',num2str(P(2,1))));
+        clear R P group age;
+        saveas(fig,[path, '/PLSC_', file_name, '/Plot_LP_AGE_m', int2str(plsres.method), '_g', int2str(size(n_subj,1)), '.png']);
+        
+        group = data(:,2);
+        fig=figure('visible','on');
+        gscatter(memory, plsres.usc(:,LV_n), group);
+        xlabel(upper('Memory'),'fontweight','bold');
+        ylabel(upper('LV profile score'),'fontweight','bold');
+        [R,P]=corrcoef(plsres.usc(:,LV_n), memory, 'rows', 'complete');
         title(strcat('r=',num2str(R(2,1)),', p=',num2str(P(2,1))));
         clear R P group;
-        saveas(fig,[path, '/PLSC_', file_name, '/Plot_LP_m', int2str(plsres.method), '_g', int2str(size(n_subj,1)), '.png']);
-        
+        saveas(fig,[path, '/PLSC_', file_name, '/Plot_LP_MEM_m', int2str(plsres.method), '_g', int2str(size(n_subj,1)), '.png']);
     end
 
     clear p n_subj data file_name plsinput plsres; 
