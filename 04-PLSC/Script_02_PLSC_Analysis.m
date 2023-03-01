@@ -19,103 +19,22 @@ addpath(genpath(pwd)) % add subfolder functions to path
 % load raw data 
 path = '../WP10_data/WP10_results/';
 
+% age by session 1 learning trials
+data_age_by_NlS1PT = readtable([path, 'wp10_plsc_age_by_NlS1PT.txt']); 
 
-% % data based on ego/allo navigation trials 
-% load([path, 'wp10_plsc_all_by_NeaS1PT.mat']);
-% data_all_by_NeaS1PT = cellfun(@str2num, m); clear m;
-% 
-% load([path, 'wp10_plsc_allSC_by_NeaS1PT.mat']);
-% data_allSC_by_NeaS1PT = cellfun(@str2num, m); clear m;
-% 
-% % reshape data for analysis 
-% % memory by session & condition combined by navigation 1 ego/allo 
-% data_allSC_combined_by_NeaS1PT=data_allSC_by_NeaS1PT;
-% data_allSC_combined_by_NeaS1PT(:,3)=sscanf(sprintf('%d%d,',[data_allSC_by_NeaS1PT(:,3).';data_allSC_by_NeaS1PT(:,4).']),'%d,'); 
-% data_allSC_combined_by_NeaS1PT(:,4)=[]; 
-% clear data_allSC_by_NeaS1PT;
-% 
-% data_cell = { data_all_by_NeaS1PT data_all_by_NeaS1PT data_all_by_NeaS1PT ...
-%     data_allSC_combined_by_NeaS1PT data_allSC_combined_by_NeaS1PT data_allSC_combined_by_NeaS1PT data_allSC_combined_by_NeaS1PT };
-% data_names = { 'all_by_NeaS1PT' 'all_by_NeaS1PT' 'all_by_NeaS1PT' ...
-%     'allSC_combined_by_NeaS1PT' 'allSC_combined_by_NeaS1PT' 'allSC_combined_by_NeaS1PT' 'allSC_combined_by_NeaS1PT' }; 
-% analysis_method = { 3 3 5 3 3 5 5 }; 
-% n_conditions = { 1 1 1 4 4 4 4 }; 
-% by_group = { 0 1 1 0 1 0 1 }; 
-% design_contrasts = { [] [] ... % n rows = n conditions x n groups, sorted as condition in group; n colums =  n desired contrasts
-%     [1 -1 0; 1 0 -1; 0 1 -1]' ... 
-%     [] [] ...
-%     [1 -1 0 0 ; 0 0 1 -1; 1 0 -1 0; 0 1 0 -1]' ...
-%     [1 -1 0 0 1 -1 0 0 1 -1 0 0; 0 0 1 -1  0 0 1 -1 0 0 1 -1; 1 0 -1 0 1 0 -1 0 1 0 -1 0; 0 1 0 -1 0 1 0 -1 0 1 0 -1]' }; 
+% age by session 1 probe trials (supplemental analysis) 
+data_age_by_NpS1PT = readtable([path, 'wp10_plsc_age_by_NpS1PT.txt']); 
 
+% memory data 
+memory_table = readtable([path, 'wp10_plsc_memory.txt']); 
 
-% % data based on learning navigation trials 
-% load([path, 'wp10_plsc_all_by_NlS1PT.mat']);
-% data_all_by_NlS1PT = cellfun(@str2num, m); clear m;
-% 
-% load([path, 'wp10_plsc_allSC_by_NlS1PT.mat']);
-% data_allSC_by_NlS1PT = cellfun(@str2num, m); clear m;
-% 
-% % reshape data for analysis 
-% % memory by session & condition combined by navigation 1 learn
-% data_allSC_combined_by_NlS1PT=data_allSC_by_NlS1PT;
-% data_allSC_combined_by_NlS1PT(:,3)=sscanf(sprintf('%d%d,',[data_allSC_by_NlS1PT(:,3).';data_allSC_by_NlS1PT(:,4).']),'%d,'); 
-% data_allSC_combined_by_NlS1PT(:,4)=[]; 
-% clear data_allSC_by_NlS1PT;
-%  
-% data_cell = { data_all_by_NlS1PT data_all_by_NlS1PT data_all_by_NlS1PT ...
-%     data_allSC_combined_by_NlS1PT data_allSC_combined_by_NlS1PT data_allSC_combined_by_NlS1PT data_allSC_combined_by_NlS1PT };
-% data_names = { 'all_by_NlS1PT' 'all_by_NlS1PT' 'all_by_NlS1PT' ...
-%     'allSC_combined_by_NlS1PT' 'allSC_combined_by_NlS1PT' 'allSC_combined_by_NlS1PT' 'allSC_combined_by_NlS1PT' }; 
-% analysis_method = { 3 3 5 3 3 5 5 }; 
-% n_conditions = { 1 1 1 4 4 4 4 }; 
-% by_group = { 0 1 1 0 1 0 1 }; 
-% design_contrasts = { [] [] ... % n rows = n conditions x n groups, sorted as condition in group; n colums =  n desired contrasts
-%     [1 -1 0; 1 0 -1; 0 1 -1]' ... 
-%     [] [] ...
-%     [1 -1 0 0 ; 0 0 1 -1; 1 0 -1 0; 0 1 0 -1]' ...
-%     [1 -1 0 0 1 -1 0 0 1 -1 0 0; 0 0 1 -1  0 0 1 -1 0 0 1 -1; 1 0 -1 0 1 0 -1 0 1 0 -1 0; 0 1 0 -1 0 1 0 -1 0 1 0 -1]' }; 
-
-
-% age data
-% by ego/allo
-load([path, 'wp10_plsc_age_by_NeaS1PT.mat']);
-data_age_by_NeaS1PT = cellfun(@str2num, m); clear m;
-memory = data_age_by_NeaS1PT(:,4); 
-data_age_by_NeaS1PT(:,4) = []; 
-
-load([path, 'wp10_plsc_ageSC_by_NeaS1PT.mat']);
-data_ageSC_by_NeaS1PT = cellfun(@str2num, m); clear m;
-i_ego_1 = data_ageSC_by_NeaS1PT(:,3)==1 & data_ageSC_by_NeaS1PT(:,4)==5; 
-memory_ego_1 = data_ageSC_by_NeaS1PT(i_ego_1,5); 
-i_allo_1 = data_ageSC_by_NeaS1PT(:,3)==1 & data_ageSC_by_NeaS1PT(:,4)==6; 
-memory_allo_1 = data_ageSC_by_NeaS1PT(i_allo_1,5); 
-i_ego_2 = data_ageSC_by_NeaS1PT(:,3)==2 & data_ageSC_by_NeaS1PT(:,4)==5; 
-memory_ego_2 = data_ageSC_by_NeaS1PT(i_ego_2,5); 
-i_allo_2 = data_ageSC_by_NeaS1PT(:,3)==2 & data_ageSC_by_NeaS1PT(:,4)==6; 
-memory_allo_2 = data_ageSC_by_NeaS1PT(i_allo_2,5); 
-data_ageSC_by_NeaS1PT(:,5)=[]; 
-
-retention_rate_allo = memory_allo_2./memory_allo_1;
-retention_rate_ego = memory_ego_2./memory_ego_1;
-
-data_ageSC_by_NeaS1PT = data_ageSC_by_NeaS1PT(data_ageSC_by_NeaS1PT(:,3)==1,:); 
-data_ageSC_by_NeaS1PT(:,3) = []; 
-clear i_*; 
-
-% by learning 
-load([path, 'wp10_plsc_age_by_NlS1PT.mat']);
-data_age_by_NlS1PT = cellfun(@str2num, m); clear m;
-memory = data_age_by_NlS1PT(:,4); 
-data_age_by_NlS1PT(:,4) = []; 
-
-data_cell = { data_age_by_NlS1PT data_age_by_NeaS1PT data_ageSC_by_NeaS1PT data_ageSC_by_NeaS1PT };
-data_names = { 'age_by_NlS1PT' 'age_by_NeaS1PT' 'ageC_by_NeaS1PT' 'ageC_by_NeaS1PT' }; 
-analysis_method = { 3 3 3 5 }; 
-n_conditions = { 1 1 2 2 }; 
-by_group = { 0 0 0 0 }; 
+data_cell = { data_age_by_NlS1PT data_age_by_NpS1PT data_age_by_NpS1PT };
+data_names = { 'age_by_NlS1PT' 'age_by_NpS1PT' 'age_by_NpS1PT' }; 
+analysis_method = { 3 3 5 }; 
+n_conditions = { 1 2 2 }; 
+by_group = { 0 0 0 }; 
 design_contrasts = { [] [] ... % n rows = n conditions x n groups, sorted as condition in group; n colums =  n desired contrasts
-     [] [1 -1 ]' }; 
-
+     [1 -1 ]' }; 
 
 for i=1:numel(data_cell)
     %--------------------------------------------------------------------------
@@ -125,10 +44,10 @@ for i=1:numel(data_cell)
     file_name = data_names{i};
     
     % behavioral output data
-    plsinput.y = data(:,4);
+    plsinput.y = data.age;
     
     % behavioral explanatory data
-    plsinput.X = data(:,5:size(data,2));
+    plsinput.X = table2array(data(:,5:size(data,2)));
 
     % z-standardization
     plsinput.y = zscore(plsinput.y,0,1);
@@ -136,8 +55,8 @@ for i=1:numel(data_cell)
 
     % cfg settings
     cfg.pls = [];
-    cfg.pls.num_perm = 500; % 5000; % number of permutations
-    cfg.pls.num_boot = 500; % 5000; % number of bootstrap tests
+    cfg.pls.num_perm = 5000; % 500; % number of permutations
+    cfg.pls.num_boot = 5000; % 500; % number of bootstrap tests
     cfg.pls.clim     = 95; % confidence interval level
 
     % analysis method: 3=regular behavior PLS; 5=non-rotated behavior PLS
@@ -195,9 +114,9 @@ for i=1:numel(data_cell)
         % BSR with threshold and LV correlations with 95%-CI
         if p < 0.05
             
-            fig = figure('visible','on'); subplot(1,2,1);
+            fig = figure('visible','off'); subplot(1,2,1);
             bar(BSR(:),'k'); hold on;
-            set(gca,'xticklabels',{'latency','path','distance','init.rot','init.vel','tot.rot','layout','landmark','position'});
+            set(gca,'xticklabels',data.Properties.VariableNames(5:end)); 
             box off; grid on;
             lh = line([0,size(BSR,1)+1],[1.96,1.96]);
             set(lh, 'color','r','linestyle','--');
@@ -232,7 +151,7 @@ for i=1:numel(data_cell)
 %                 fig = figure('visible','off');
 %                 n_dim = numel(cor);
 %                 bar(cor(:),'k'); hold on;
-%                 set(gca,'xticklabels',{'latency','path','distance','init.rot','layout', 'landmark', 'position'});
+%                 set(gca,'xticklabels',data.Properties.VariableNames(5:end)); 
 %                 box off; grid on;
 %                 for nd = 1:n_dim
 %                     lh1 = line([nd,nd],[cor(nd)+1.96*se(nd),cor(nd)-1.96*se(nd)]);
@@ -256,36 +175,22 @@ for i=1:numel(data_cell)
               
         % Plot 
         % LPS scatter (grouped) and general correlation
-%         group = data(:,2);
-%         fig=figure('visible','off');
-%         gscatter(plsres.usc(:,LV_n), plsinput.y, group);
-%         gscatter(age, plsres.usc(:,LV_n), group);
-%         xlabel(upper('LV profile score'),'fontweight','bold');
-%         ylabel(upper('memory score'),'fontweight','bold');
-%         [R,P]=corrcoef(plsres.usc(:,LV_n), plsinput.y, 'rows', 'complete');
-%         title(strcat('r=',num2str(R(2,1)),', p=',num2str(P(2,1))));
-%         clear R P group;
-%         saveas(fig,[path, '/PLSC_', file_name, '/Plot_LP_m', int2str(plsres.method), '_g', int2str(size(n_subj,1)), '.png']);
-        
-        group = data(:,2);
-        age = data(:,4); 
-        fig=figure('visible','on');
-        gscatter(age, plsres.usc(:,LV_n), group);
+        fig = figure('visible','off'); 
+        gscatter(data.age, plsres.usc(:,LV_n), data.group);
         xlabel(upper('Age'),'fontweight','bold');
         ylabel(upper('LV profile score'),'fontweight','bold');
-        [R,P]=corrcoef(plsres.usc(:,LV_n), age, 'rows', 'complete');
+        [R,P]=corrcoef(plsres.usc(:,LV_n), data.age, 'rows', 'complete');
         title(strcat('r=',num2str(R(2,1)),', p=',num2str(P(2,1))));
-        clear R P group age;
+        clear R P;
         saveas(fig,[path, '/PLSC_', file_name, '/Plot_LP_AGE_m', int2str(plsres.method), '_g', int2str(size(n_subj,1)), '.png']);
         
-        group = data(:,2);
-        fig=figure('visible','on');
-        gscatter(memory, plsres.usc(:,LV_n), group);
+        fig = figure('visible','off'); 
+        gscatter(memory_table.memoryAvg, plsres.usc(:,LV_n), data.group);
         xlabel(upper('Memory'),'fontweight','bold');
         ylabel(upper('LV profile score'),'fontweight','bold');
-        [R,P]=corrcoef(plsres.usc(:,LV_n), memory, 'rows', 'complete');
+        [R,P]=corrcoef(plsres.usc(:,LV_n), memory_table.memoryAvg, 'rows', 'complete');
         title(strcat('r=',num2str(R(2,1)),', p=',num2str(P(2,1))));
-        clear R P group;
+        clear R P;
         saveas(fig,[path, '/PLSC_', file_name, '/Plot_LP_MEM_m', int2str(plsres.method), '_g', int2str(size(n_subj,1)), '.png']);
     end
 
