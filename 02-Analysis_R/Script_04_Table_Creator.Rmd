@@ -161,36 +161,34 @@ apa_distance_random <- apa_random_table(VarCorr(model.distance$full_model), apa_
 rm(apa_lmm.distance, omega.distance, apa_omega.distance, LRT.distance, apa_LRT.distance, model.distance)
 ```
 
-```{r, model_probe_rotation_velocity, include=F  }
+```{r, model_probe_initial_rotation, include=F  }
 ```
 
-```{r, fixef_probe_rotation_velocity, include=F  }
+```{r, fixef_probe_initial_rotation, include=F  }
 ```
 
-```{r, ranef_probe_rotation_velocity, include=F  }
+```{r, ranef_probe_initial_rotation, include=F  }
 ```
 
-```{r apa_probe_rotation_velocity, include=F }
+```{r apa_probe_initial_rotation, include=F }
 
 # fixed effects
-apa_lmm.rotation_velocity <- apa_print(model.rotation_velocity)
+apa_lmm.initial_rotation <- apa_print(model.initial_rotation)
 
-apa_omega.rotation_velocity <- omega.rotation_velocity$Omega2_partial %>% apa_num()
+apa_omega.initial_rotation <- omega.initial_rotation$Omega2_partial %>% apa_num()
 
-apa_rotation_velocity_fixed <- apa_lmm.rotation_velocity$table %>% 
-  list_modify("omega"=apa_omega.rotation_velocity) %>% label_variable(omega="$\\omega^2$")
-
-rm(apa_lmm.rotation_velocity, omega.rotation_velocity , apa_omega.rotation_velocity)
+apa_initial_rotation_fixed <- apa_lmm.initial_rotation$table %>% 
+  list_modify("omega"=apa_omega.initial_rotation) %>% label_variable(omega="$\\omega^2$")
 
 # random effects
-apa_LRT.rotation_velocity <- tibble("Grouping" = c("Id", "Id", "Id")) %>% 
+apa_LRT.initial_rotation <- tibble("Grouping" = c("Id", "Id", "Id")) %>% 
   cbind("Random effect" = c("(Intercept)", "Condition1", "(Intercept) X Condition1")) %>% 
-  cbind("p.value" = c(NA, LRT.rotation_velocity$p %>% apa_p(), NA)) 
+  cbind("p.value" = c(NA, LRT.initial_rotation$p %>% apa_p(), NA)) 
 
-apa_rotation_velocity_random <- apa_random_table(VarCorr(model.rotation_velocity$full_model), apa_LRT.rotation_velocity) 
+apa_initial_rotation_random <- apa_random_table(VarCorr(model.initial_rotation$full_model), apa_LRT.initial_rotation) 
 
 
-rm(apa_lmm.rotation_velocity, omega.rotation_velocity, apa_omega.rotation_velocity, LRT.rotation_velocity, apa_LRT.rotation_velocity, model.rotation_velocity)
+rm(apa_lmm.initial_rotation, omega.initial_rotation, apa_omega.initial_rotation, LRT.initial_rotation, apa_LRT.initial_rotation, model.initial_rotation)
 ```
 
 ```{r apa_table_fixed, echo=F}
@@ -199,10 +197,10 @@ apa_table(
         apa_latency_fixed %>% list_modify("term"=NULL), 
         apa_path_fixed %>% list_modify("term"=NULL), 
         apa_distance_fixed %>% list_modify("term"=NULL), 
-        apa_rotation_velocity_fixed %>% list_modify("term"=NULL))
+        apa_initial_rotation_fixed %>% list_modify("term"=NULL))
   )
 
-rm(apa_ms_fixed, apa_latency_fixed, apa_path_fixed, apa_distance_fixed, apa_rotation_velocity_fixed)
+rm(apa_ms_fixed, apa_latency_fixed, apa_path_fixed, apa_distance_fixed, apa_initial_rotation_fixed)
 ```
 
 \newpage
@@ -213,10 +211,10 @@ apa_table(
         apa_latency_random %>% list_modify("Grouping"=NULL, "Random effect"=NULL),
         apa_path_random %>% list_modify("Grouping"=NULL, "Random effect"=NULL),
         apa_distance_random %>% list_modify("Grouping"=NULL, "Random effect"=NULL),
-        apa_rotation_velocity_random %>% list_modify("Grouping"=NULL, "Random effect"=NULL))
+        apa_initial_rotation_random %>% list_modify("Grouping"=NULL, "Random effect"=NULL))
 )
 
-rm(apa_ms_random, apa_latency_random, apa_path_random, apa_distance_random, apa_rotation_velocity_random)
+rm(apa_ms_random, apa_latency_random, apa_path_random, apa_distance_random, apa_initial_rotation_random)
 ```
 
 \newpage
