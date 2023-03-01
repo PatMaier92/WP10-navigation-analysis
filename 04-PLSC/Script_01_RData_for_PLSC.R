@@ -82,7 +82,7 @@ data_for_plsc <- function(d_sm, d_pt, d_age, ms_session, ms_condition, nav_sessi
       group_by(id)
   }
   d_nav <- d_nav %>% 
-    summarise_at(vars(time, excess_path_length, excess_target_distance, initial_rotation, initial_rotation_velocity, rotation), mean, na.rm=T)
+    summarise_at(vars(time, excess_path_length, excess_target_distance, initial_rotation), mean, na.rm=T)
   
   # memory 
   d_ms <- d_sm %>% 
