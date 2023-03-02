@@ -467,7 +467,7 @@ plot.time_learn +
   plot_layout(nrow=2, guides="collect") & guides(shape=F, fill=F) &
   theme(legend.position="top", legend.justification=c(-0.05,0))
 
-rm(plot.time_learn, plot.path_learn, plot.distance_learn, plot.initial_rotation_learn)
+#rm(plot.time_learn, plot.path_learn, plot.distance_learn, plot.initial_rotation_learn)
 ```
 
 \newpage
@@ -1185,9 +1185,9 @@ mc_plot <- function(data, xvar, yvar, my_colors, my_labels, y_label){
   return(p)
 }
 
-mc_time <- mc_plot(practise, "group", "time", group_colors, group_labels, l_latency)
-mc_excess_path <- mc_plot(practise, "group", "excess_path_length", group_colors, group_labels, l_excess_path_length)
-# mc_rotation <- mc_plot(practise, "group", "rotation", group_colors, group_labels, l_rotation)
+mc_time <- mc_plot(practise, "group", "time", group_colors_f, group_labels, l_latency)
+mc_excess_path <- mc_plot(practise, "group", "excess_path_length", group_colors_f, group_labels, l_excess_path_length)
+# mc_rotation <- mc_plot(practise, "group", "rotation", group_colors_f, group_labels, l_rotation)
 
 mc_time + mc_excess_path + 
   plot_annotation("Navigation behavior in motor control task") + 
@@ -1234,8 +1234,8 @@ n_excluded_t <- sm_orig %>%
 
 ggplot(data_excluded %>% filter(exclude_trial_matlab==1), aes(x=n, fill=group, color=group)) + 
   geom_histogram(binwidth=1) + 
-  scale_fill_manual(labels=group_labels, values=group_colors) + 
-  scale_color_manual(labels=group_labels, values=group_colors_o) +
+  scale_fill_manual(labels=group_labels, values=group_colors_f) + 
+  scale_color_manual(labels=group_labels, values=group_colors_c) +
   theme_bw(base_size=13) + 
   theme(legend.position=c(0.8,0.8),
         legend.key.size=unit(0.5, 'cm')) + 
