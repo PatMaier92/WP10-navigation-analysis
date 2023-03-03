@@ -71,150 +71,149 @@ apa_ms_random <- apa_random_table(VarCorr(model.ms$full_model), apa_LRT.ms)
 rm(apa_lmm.ms, omega.ms, apa_omega.ms, LRT.ms, apa_LRT.ms, model.ms)
 ```
 
-```{r, model_probe_latency, include=F }
+```{r, model_learn_latency, include=F }
 ```
 
-```{r, fixef_probe_latency, include=F  }
+```{r, fixef_learn_latency, include=F  }
 ```
 
-```{r, ranef_probe_latency, include=F  }
+```{r, ranef_learn_latency, include=F  }
 ```
 
-```{r apa_probe_latency, include=F}
+```{r apa_learn_latency, include=F}
 
 # fixed effects 
-apa_lmm.latency  <- apa_print(model.latency)
+apa_lmm.latency_learn  <- apa_print(model.latency_learn)
 
-apa_omega.latency <- omega.latency$Omega2_partial %>% apa_num()
+apa_omega.latency_learn <- omega.latency_learn$Omega2_partial %>% apa_num()
 
-apa_latency_fixed <- apa_lmm.latency$table %>% 
-  list_modify("omega"=apa_omega.latency) %>% label_variable(omega="$\\omega^2$")
+apa_latency_learn_fixed <- apa_lmm.latency_learn$table %>% 
+  list_modify("omega"=apa_omega.latency_learn) %>% label_variable(omega="$\\omega^2$")
 
-# random effects
-apa_LRT.latency <- tibble("Grouping" = c("Id", "Id", "Id")) %>% 
-  cbind("Random effect" = c("(Intercept)", "Condition1", "(Intercept) X Condition1")) %>% 
-  cbind("p.value" = c(NA, LRT.latency$p %>% apa_p(), NA)) 
-
-apa_latency_random <- apa_random_table(VarCorr(model.latency$full_model), apa_LRT.latency)
+# # random effects
+# apa_LRT.latency_learn <- tibble("Grouping" = c("Id", "Id", "Id")) %>% 
+#   cbind("Random effect" = c("(Intercept)", "Condition1", "(Intercept) X Condition1")) %>% 
+#   cbind("p.value" = c(NA, LRT.latency_learn$p %>% apa_p(), NA)) 
+# 
+# apa_latency_learn_random <- apa_random_table(VarCorr(model.latency_learn_learn$full_model), apa_LRT.latency_learn)
   
 
-rm(apa_lmm.latency, omega.latency, apa_omega.latency, LRT.latency, apa_LRT.latency, model.latency)
+rm(apa_lmm.latency_learn, omega.latency_learn, apa_omega.latency_learn, LRT.latency_learn, apa_LRT.latency, model.latency_learn_learn)
 ```
 
-```{r, model_probe_path, include=F  }
+```{r, model_learn_path, include=F  }
 ```
 
-```{r, fixef_probe_path, include=F  }
+```{r, fixef_learn_path, include=F  }
 ```
 
-```{r, ranef_probe_path, include=F  }
+```{r, ranef_learn_path, include=F  }
 ```
 
-```{r apa_probe_path, include=F}
+```{r apa_learn_path, include=F}
 
 # fixed effects 
-apa_lmm.path <- apa_print(model.path)
+apa_lmm.path_learn <- apa_print(model.path_learn)
 
-apa_omega.path <- omega.path$Omega2_partial %>% apa_num()
+apa_omega.path_learn <- omega.path_learn$Omega2_partial %>% apa_num()
 
-apa_path_fixed <- apa_lmm.path$table %>% 
-  list_modify("omega"=apa_omega.path) %>% label_variable(omega="$\\omega^2$")
+apa_path_learn_fixed <- apa_lmm.path_learn$table %>% 
+  list_modify("omega"=apa_omega.path_learn) %>% label_variable(omega="$\\omega^2$")
 
-# random effects
-apa_LRT.path <- tibble("Grouping" = c("Id", "Id", "Id")) %>% 
-  cbind("Random effect" = c("(Intercept)", "Condition1", "(Intercept) X Condition1")) %>% 
-  cbind("p.value" = c(NA, LRT.path$p %>% apa_p(), NA)) 
+# # random effects
+# apa_LRT.path_learn <- tibble("Grouping" = c("Id", "Id", "Id")) %>% 
+#   cbind("Random effect" = c("(Intercept)", "Condition1", "(Intercept) X Condition1")) %>% 
+#   cbind("p.value" = c(NA, LRT.path_learn$p %>% apa_p(), NA)) 
+# 
+# apa_path_learn_random <- apa_random_table(VarCorr(model.path_learn$full_model), apa_LRT.path_learn) 
 
-apa_path_random <- apa_random_table(VarCorr(model.path$full_model), apa_LRT.path) 
 
-
-rm(apa_lmm.path, omega.path, apa_omega.path, LRT.path, apa_LRT.path, model.path)
+rm(apa_lmm.path_learn, omega.path_learn, apa_omega.path_learn, LRT.path_learn, apa_LRT.path_learn, model.path_learn)
 ```
 
-```{r, model_probe_distance, include=F  }
+```{r, model_learn_distance, include=F  }
 ```
 
-```{r, fixef_probe_distance, include=F  }
+```{r, fixef_learn_distance, include=F  }
 ```
 
-```{r, ranef_probe_distance, include=F  }
+```{r, ranef_learn_distance, include=F  }
 ```
 
-```{r apa_probe_distance, include=F}
+```{r apa_learn_distance, include=F}
 
 # fixed effects 
-apa_lmm.distance <- apa_print(model.distance)
+apa_lmm.distance_learn <- apa_print(model.distance_learn)
 
-apa_omega.distance <- omega.distance$Omega2_partial %>% apa_num()
+apa_omega.distance_learn <- omega.distance_learn$Omega2_partial %>% apa_num()
 
-apa_distance_fixed <- apa_lmm.distance$table %>% 
-  list_modify("omega"=apa_omega.distance) %>% label_variable(omega="$\\omega^2$")
+apa_distance_learn_fixed <- apa_lmm.distance_learn$table %>% 
+  list_modify("omega"=apa_omega.distance_learn) %>% label_variable(omega="$\\omega^2$")
 
-# random effects
-apa_LRT.distance <- tibble("Grouping" = c("Id", "Id", "Id")) %>% 
-  cbind("Random effect" = c("(Intercept)", "Condition1", "(Intercept) X Condition1")) %>% 
-  cbind("p.value" = c(NA, LRT.distance$p %>% apa_p(), NA)) 
+# # random effects
+# apa_LRT.distance_learn <- tibble("Grouping" = c("Id", "Id", "Id")) %>% 
+#   cbind("Random effect" = c("(Intercept)", "Condition1", "(Intercept) X Condition1")) %>% 
+#   cbind("p.value" = c(NA, LRT.distance_learn$p %>% apa_p(), NA)) 
+# 
+# apa_distance_learn_random <- apa_random_table(VarCorr(model.distance_learn$full_model), apa_LRT.distance_learn) 
 
-apa_distance_random <- apa_random_table(VarCorr(model.distance$full_model), apa_LRT.distance) 
 
-
-rm(apa_lmm.distance, omega.distance, apa_omega.distance, LRT.distance, apa_LRT.distance, model.distance)
+rm(apa_lmm.distance_learn, omega.distance_learn, apa_omega.distance_learn, LRT.distance_learn, apa_LRT.distance_learn, model.distance_learn)
 ```
 
-```{r, model_probe_initial_rotation, include=F  }
+```{r, model_learn_initial_rotation, include=F  }
 ```
 
-```{r, fixef_probe_initial_rotation, include=F  }
+```{r, fixef_learn_initial_rotation, include=F  }
 ```
 
-```{r, ranef_probe_initial_rotation, include=F  }
+```{r, ranef_learn_initial_rotation, include=F  }
 ```
 
-```{r apa_probe_initial_rotation, include=F }
+```{r apa_learn_initial_rotation, include=F }
 
 # fixed effects
-apa_lmm.initial_rotation <- apa_print(model.initial_rotation)
+apa_lmm.initial_rotation_learn <- apa_print(model.initial_rotation_learn)
 
-apa_omega.initial_rotation <- omega.initial_rotation$Omega2_partial %>% apa_num()
+apa_omega.initial_rotation_learn <- omega.initial_rotation_learn$Omega2_partial %>% apa_num()
 
-apa_initial_rotation_fixed <- apa_lmm.initial_rotation$table %>% 
-  list_modify("omega"=apa_omega.initial_rotation) %>% label_variable(omega="$\\omega^2$")
+apa_initial_rotation_learn_fixed <- apa_lmm.initial_rotation_learn$table %>% 
+  list_modify("omega"=apa_omega.initial_rotation_learn) %>% label_variable(omega="$\\omega^2$")
 
-# random effects
-apa_LRT.initial_rotation <- tibble("Grouping" = c("Id", "Id", "Id")) %>% 
-  cbind("Random effect" = c("(Intercept)", "Condition1", "(Intercept) X Condition1")) %>% 
-  cbind("p.value" = c(NA, LRT.initial_rotation$p %>% apa_p(), NA)) 
+# # random effects
+# apa_LRT.initial_rotation_learn <- tibble("Grouping" = c("Id", "Id", "Id")) %>% 
+#   cbind("Random effect" = c("(Intercept)", "Condition1", "(Intercept) X Condition1")) %>% 
+#   cbind("p.value" = c(NA, LRT.initial_rotation_learn$p %>% apa_p(), NA)) 
+# 
+# apa_initial_rotation_learn_random <- apa_random_table(VarCorr(model.initial_rotation_learn$full_model), apa_LRT.initial_rotation_learn) 
 
-apa_initial_rotation_random <- apa_random_table(VarCorr(model.initial_rotation$full_model), apa_LRT.initial_rotation) 
 
-
-rm(apa_lmm.initial_rotation, omega.initial_rotation, apa_omega.initial_rotation, LRT.initial_rotation, apa_LRT.initial_rotation, model.initial_rotation)
+rm(apa_lmm.initial_rotation_learn, omega.initial_rotation_learn, apa_omega.initial_rotation_learn, LRT.initial_rotation_learn, apa_LRT.initial_rotation_learn, model.initial_rotation_learn)
 ```
 
 ```{r apa_table_fixed, echo=F}
 apa_table(
-  cbind(apa_ms_fixed, 
-        apa_latency_fixed %>% list_modify("term"=NULL), 
-        apa_path_fixed %>% list_modify("term"=NULL), 
-        apa_distance_fixed %>% list_modify("term"=NULL), 
-        apa_initial_rotation_fixed %>% list_modify("term"=NULL))
+  cbind(apa_latency_learn_fixed,
+        apa_path_learn_fixed %>% list_modify("term"=NULL), 
+        apa_distance_learn_fixed %>% list_modify("term"=NULL), 
+        apa_initial_rotation_learn_fixed %>% list_modify("term"=NULL))
   )
 
-rm(apa_ms_fixed, apa_latency_fixed, apa_path_fixed, apa_distance_fixed, apa_initial_rotation_fixed)
+rm(apa_latency_learn_fixed, apa_path_learn_fixed, apa_distance_learn_fixed, apa_initial_rotation_learn_fixed)
 ```
 
 \newpage
 
 ```{r, apa_table_random, echo=F }
-apa_table(
-  cbind(apa_ms_random,
-        apa_latency_random %>% list_modify("Grouping"=NULL, "Random effect"=NULL),
-        apa_path_random %>% list_modify("Grouping"=NULL, "Random effect"=NULL),
-        apa_distance_random %>% list_modify("Grouping"=NULL, "Random effect"=NULL),
-        apa_initial_rotation_random %>% list_modify("Grouping"=NULL, "Random effect"=NULL))
-)
-
-rm(apa_ms_random, apa_latency_random, apa_path_random, apa_distance_random, apa_initial_rotation_random)
+# apa_table(
+#   cbind(apa_ms_random,
+#         apa_latency_random %>% list_modify("Grouping"=NULL, "Random effect"=NULL),
+#         apa_path_random %>% list_modify("Grouping"=NULL, "Random effect"=NULL),
+#         apa_distance_random %>% list_modify("Grouping"=NULL, "Random effect"=NULL),
+#         apa_initial_rotation_random %>% list_modify("Grouping"=NULL, "Random effect"=NULL))
+# )
+# 
+# rm(apa_ms_random, apa_latency_random, apa_path_random, apa_distance_random, apa_initial_rotation_random)
 ```
 
 \newpage

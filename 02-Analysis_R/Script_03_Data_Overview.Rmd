@@ -127,7 +127,7 @@ $$\text{Memory score} = \text{percentile rank of the Euclidean distance value on
 
 *Navigation behavior*: 
 
-* **Time**: Time to complete the trial in seconds.
+* **Latency**: Time to complete the trial in seconds.
 * **Excess path length** (metric): This measure reflects how directly participants navigated to the remembered goal location (Suthana 2012; Jacobs 2016; Bellmund 2019). It is calculated as the travelled path length minus the ideal path length to the remembered location. The path lengths are calculated as summation of Euclidean distances between x-/y-coordinates over time. 
 $$\text{(Ideal) path length} = \sum_{i=1}^{n} \sqrt{(x_{i}-x_{i+1})^2 + (y_{i}-y_{i+1})^2}$$
 $$\text{Excess path length} = (path-path_{ideal})$$
@@ -138,7 +138,6 @@ $$\text{Excess distance to goal} = (distance-distance_{ideal})$$
 $$\text{Initial rotation} = \sum_{i=1}^{n_{initial}} | (z_{i}-z_{i+1})| $$
 
 ![Visualization of variables of interest](./pics/Var_all.jpg){width=300px,height=500x}
-
 
 # Statistical analysis
 
@@ -267,52 +266,56 @@ rm(model.ms, R2, apa_lmm.ms, apa_post.ms_group, apa_post.ms_group_chance, apa_po
 
 #### **Latency (training trials)**
 
-```{r, model_learn_time}
+```{r, model_learn_latency}
 ```
 
-```{r, post_hoc_learn_time, include=F}
+```{r, post_hoc_learn_latency, include=F}
 ```
 
-```{r, plot_learn_time, include=F}
+```{r, plot_learn_latency, include=F}
 ```
 
-```{r apa_learn_time, include=F}
-R2 <- r2beta(model.time_learn$full_model, method='nsj', partial=F) %>% mutate_all(apa_num)
+```{r apa_learn_latency, include=F}
+R2 <- r2beta(model.latency_learn$full_model, method='nsj', partial=F) %>% mutate_all(apa_num)
 
-apa_lmm.learn_time <- apa_print(model.time_learn)
+apa_lmm.learn_latency <- apa_print(model.latency_learn)
 
-apa_post.learn_time_group <- post.learn_time_group %>% apa_print() %>% bonferroni_fix()
+apa_post.learn_latency_group <- post.learn_latency_group %>% apa_print() %>% bonferroni_fix()
 
-apa_post.learn_time_trial <- post.learn_time_trial %>% apa_print() %>% bonferroni_fix()
+apa_post.learn_latency_trial <- post.learn_latency_trial %>% apa_print() %>% bonferroni_fix()
 
-rm(post.learn_time_group, post.learn_time_trial)
+rm(post.learn_latency_group, post.learn_latency_trial)
 ```
 
-(ref:l-t-caption-f0) Fixed effects for time in training.
+(ref:l-t-caption-f0) Fixed effects for latency in training.
 
-```{r table-learn-time-f0, echo=F}
+```{r table-learn-latency-f0, echo=F}
 apa_table(
-  apa_lmm.learn_time$table,
+  apa_lmm.learn_latency$table,
   caption="(ref:l-t-caption-f0)",
   placement="h")
 ```
 
-(ref:l-t-caption-r0) Random effects for time in training.
+(ref:l-t-caption-r0) Random effects for latency in training.
 
-```{r table-learn-time-r0, echo=F}
+```{r table-learn-latency-r0, echo=F}
 apa_table(
-  apa_random_table(VarCorr(model.time_learn$full_model)),
+  apa_random_table(VarCorr(model.latency_learn$full_model)),
   caption="(ref:l-t-caption-r0)"
   )
 ```
 
 The model had a fit of $R2 = `r R2$Rsq`, [CI: `r R2$upper.CL`, `r R2$lower.CL`$].
 
-There was a main effect of *group* (`r apa_lmm.learn_time$statistic$group`), showing that 6-8-yo children required significantly more time than 9-11-yo children (`r apa_post.learn_time_group$statistic$YoungKids_OldKids`) and adults (`r  apa_post.learn_time_group$statistic$YoungKids_YoungAdults`). There was a main effect of *trial in block* (`r apa_lmm.learn_time$statistic$trial_in_block`). Here, time in the first trial per block was significantly higher than in all other trials. 
-(Table\ \@ref(tab:table-learn-time-f0))
+Latency decreased significantly across training trials in all age groups. In addition, there was a main effect of age group, showing that 6-8-yo children required significantly more time to complete the training trials than both 9-11-yo children (`r apa_post.learn_latency_group$statistic$YoungKids_OldKids`) and adults (`r  apa_post.learn_latency_group$statistic$YoungKids_YoungAdults`). 
+
+*trial in block* (`r apa_lmm.learn_latency$statistic$trial_in_block`)
+*age group* (`r apa_lmm.learn_latency$statistic$group`)
+
+(Table\ \@ref(tab:table-learn-latency-f0))
 
 ```{r, include=F}
-rm(model.time_learn, R2, apa_lmm.learn_time, apa_post.learn_time_group, apa_post.learn_time_trial)
+rm(model.latency_learn, R2, apa_lmm.learn_latency, apa_post.learn_latency_group, apa_post.learn_latency_trial)
 ```
 
 #### **Excess path length (training trials)**
@@ -358,7 +361,12 @@ apa_table(
 
 The model had a fit of $R2 = `r R2$Rsq`, [CI: `r R2$upper.CL`, `r R2$lower.CL`$].
 
-There was a main effect of *group* (`r apa_lmm.learn_path$statistic$group`), showing a gradual decrease in excess path length with increasing age (6-8-yo vs. 9-11-yo: `r apa_post.learn_path_group$statistic$YoungKids_OldKids`; 6-8-yo vs. adults: `r apa_post.learn_path_group$statistic$YoungKids_YoungAdults`; 9-11-yo vs. adults: `r apa_post.learn_path_group$statistic$OldKids_YoungAdults`). There was a main effect of *trial in block* (`r apa_lmm.learn_path$statistic$trial_in_block`). Here, excess path length in the first trial per block was significantly higher than in all other trials. (Table\ \@ref(tab:table-learn-excess-path-f0))
+Similarly, participants in all age groups had a significant decrease in excess path length across trials and older participants were able to navigate more directly (i.e., shorter excess path length) than younger ones (6-8-yo vs. 9-11-yo: `r apa_post.learn_path_group$statistic$YoungKids_OldKids`; 6-8-yo vs. adults: `r apa_post.learn_path_group$statistic$YoungKids_YoungAdults`; 9-11-yo vs. adults: `r apa_post.learn_path_group$statistic$OldKids_YoungAdults`).
+
+*trial in block* (`r apa_lmm.learn_path$statistic$trial_in_block`)
+*age group* (`r apa_lmm.learn_path$statistic$group`)
+
+(Table\ \@ref(tab:table-learn-excess-path-f0))
 
 ```{r, include=F}
 rm(model.path_learn, R2, apa_lmm.learn_path, apa_post.learn_path_group, apa_post.learn_path_trial)
@@ -407,7 +415,11 @@ apa_table(
 
 The model had a fit of $R2 = `r R2$Rsq`, [CI: `r R2$upper.CL`, `r R2$lower.CL`$].
 
-There was a main effect of *group* (`r apa_lmm.learn_distance$statistic$group`), showing that 6-8-yo children had a significantly higher excess distance to the goal than 9-11-yo children (`r apa_post.learn_distance_group$statistic$YoungKids_OldKids`) and adults (`r  apa_post.learn_distance_group$statistic$YoungKids_YoungAdults`). There was a main effect of *trial in block* (`r apa_lmm.learn_distance$statistic$trial_in_block`). Here, excess distance to the goal in the first trial per block was significantly higher than in all the other trials. 
+Participants in all age groups had a significant decrease in excess distance to goal across trials, meaning that they searched closer to the goal location after the first trial. Again, there was a general age difference indicating that even though 6-8-yo children improved across trials, they still searched further away from the goal location than both 9-11-yo children (`r apa_post.learn_distance_group$statistic$YoungKids_OldKids`) and adults (`r apa_post.learn_distance_group$statistic$YoungKids_YoungAdults`). 
+
+*trial in block* (`r apa_lmm.learn_distance$statistic$trial_in_block`)
+*age group* (`r apa_lmm.learn_distance$statistic$group`)
+
 (Table\ \@ref(tab:table-learn-excess-distance-f0))
 
 ```{r, include=F}
@@ -429,6 +441,10 @@ rm(model.distance_learn, R2, apa_lmm.learn_distance, apa_post.learn_distance_gro
 R2 <- r2beta(model.initial_rotation_learn$full_model, method='nsj', partial=F) %>% mutate_all(apa_num)
 
 apa_lmm.learn_initial_rotation <- apa_print(model.initial_rotation_learn)
+
+apa_post.learn_initial_rotation_group_trial <- post.learn_initial_rotation_group_trial %>% apa_print() %>% bonferroni_fix()
+
+rm(post.learn_initial_rotation_group_trial)
 ```
 
 (ref:l-ir-caption-f0) Fixed effects for factor initial rotation
@@ -451,34 +467,24 @@ apa_table(
 
 The model had a fit of $R2 = `r R2$Rsq`, [CI: `r R2$upper.CL`, `r R2$lower.CL`$].
 
-TBD
+Initial rotation significantly decreased across training trials only in adults (linear change across trials: `r apa_post.learn_initial_rotation_group_trial$statistic$YoungAdults_Linear`) but stayed at a constant level in both groups of children. This indicates that adults, but not children, adjusted their level of deliberation and visual exploration at the first decision point according to task demands. 
 
+*interaction* (`r apa_lmm.learn_initial_rotation$statistic$group_trial_in_block`)
 (Table\ \@ref(tab:table-learn-initial-rotation-f0)). 
 
 ```{r, include=F}
-rm(model.initial_rotation_learn, R2, apa_lmm.learn_initial_rotation)
+rm(model.initial_rotation_learn, R2, apa_lmm.learn_initial_rotation, apa_post.learn_initial_rotation_group_trial)
 ```
 
 ```{r, echo=F, fig.height=6, fig.width=8, fig.cap="Navigation behavior" }
-plot.time_learn + 
+plot.latency_learn + 
   plot.path_learn + 
   plot.distance_learn + 
   plot.initial_rotation_learn + 
   plot_layout(nrow=2, guides="collect") & guides(shape=F, fill=F) &
   theme(legend.position="top", legend.justification=c(-0.05,0))
 
-#rm(plot.time_learn, plot.path_learn, plot.distance_learn, plot.initial_rotation_learn)
-```
-
-\newpage
-
-```{r, echo=F, fig.height=7, fig.width=10, fig.cap="Memory accuracy and navigation efficiency in learning session" }
-# plot.ms + guide_area() + plot_spacer() + plot_spacer() +
-#   plot.latency + plot.path + plot.distance + plot.rotation_velocity  +
-#   plot_annotation(tag_levels=list(c("A", "B", NULL, NULL, NULL))) + 
-#   plot_layout(nrow=2, guides="collect") & guides(fill=F, shape=F) & theme(legend.direction="vertical")
-
-#rm(plot.ms, plot.latency, plot.path, plot.distance, plot.rotation_velocity)
+rm(plot.latency_learn, plot.path_learn, plot.distance_learn, plot.initial_rotation_learn)
 ```
 
 \newpage
@@ -1185,24 +1191,24 @@ mc_plot <- function(data, xvar, yvar, my_colors, my_labels, y_label){
   return(p)
 }
 
-mc_time <- mc_plot(practise, "group", "time", group_colors_f, group_labels, l_latency)
+mc_latency <- mc_plot(practise, "group", "time", group_colors_f, group_labels, l_latency)
 mc_excess_path <- mc_plot(practise, "group", "excess_path_length", group_colors_f, group_labels, l_excess_path_length)
 # mc_rotation <- mc_plot(practise, "group", "rotation", group_colors_f, group_labels, l_rotation)
 
-mc_time + mc_excess_path + 
+mc_latency + mc_excess_path + 
   plot_annotation("Navigation behavior in motor control task") + 
   plot_layout(guides="collect") & theme(legend.position="top", legend.justification=c(0,0))
 
-rm(mc_time, mc_excess_path, mc_rotation, mc_plot)
+rm(mc_latency, mc_excess_path, mc_rotation, mc_plot)
 ```
 
 ```{r, model_motor_control, include=F }
 ```
 
 ```{r apa_motor_control, include=F}
-apa_aov.motor_time <- apa_print(model.motor_time)
-post_aov.motor_time_group <- post.motor_time %>% apa_print() %>% bonferroni_fix()
-rm(model.motor_time, post.motor_time)
+apa_aov.motor_latency <- apa_print(model.motor_latency)
+post_aov.motor_latency_group <- post.motor_latency %>% apa_print() %>% bonferroni_fix()
+rm(model.motor_latency, post.motor_latency)
 
 apa_aov.motor_path <- apa_print(model.motor_path)
 post_aov.motor_path_group <- post.motor_path %>% apa_print() %>% bonferroni_fix()
@@ -1211,7 +1217,7 @@ rm(model.motor_path, post.motor_path)
 rm(practise)
 ```
 
-There were significant *age group* differences the motor control task, aimed to assess the ability to use a joystick in the initial practise phase. Specifically, 6-8-yo children required more time to solve the task (`r apa_aov.motor_time$statistic$group`; 6-8-yo vs. 9-11-yo: `r post_aov.motor_time_group$statistic$YoungKids_OldKids`; 6-8-yo vs. adults: `r post_aov.motor_time_group$statistic$YoungKids_YoungAdults`) and had longer excess path lengths (`r apa_aov.motor_path$statistic$group`; 6-8-yo vs. 9-11-yo: `r post_aov.motor_path_group$statistic$YoungKids_OldKids`; 6-8-yo vs. adults: `r post_aov.motor_path_group$statistic$YoungKids_YoungAdults`). Thus, we computed a covariate by averaging the z-scored time and z-scored excess path length during practise and used this covariate to account for differences in joystick abilities. 
+There were significant *age group* differences the motor control task, aimed to assess the ability to use a joystick in the initial practise phase. Specifically, 6-8-yo children required more time to solve the task (`r apa_aov.motor_latency$statistic$group`; 6-8-yo vs. 9-11-yo: `r post_aov.motor_latency_group$statistic$YoungKids_OldKids`; 6-8-yo vs. adults: `r post_aov.motor_latency_group$statistic$YoungKids_YoungAdults`) and had longer excess path lengths (`r apa_aov.motor_path$statistic$group`; 6-8-yo vs. 9-11-yo: `r post_aov.motor_path_group$statistic$YoungKids_OldKids`; 6-8-yo vs. adults: `r post_aov.motor_path_group$statistic$YoungKids_YoungAdults`). Thus, we computed a covariate by averaging the z-scored time and z-scored excess path length during practise and used this covariate to account for differences in joystick abilities. 
 
 ## Excluded trials 
 

@@ -398,29 +398,36 @@ rm(dots_ego, dots_allo)
 # ::: SESSION 1 ANALYSIS - NAVIGATION BEHAVIOR DURING LEARNING TRIALS ::: #
 # ------------------------------------------------------------------------------
 
-# --- TIME (LEARNING TRIALS) --- # 
-## ---- model_learn_time
-model.time_learn <- mixed(time ~ group*trial_in_block + cov_sex + cov_motor_score + 
+# --- LATENCY (LEARNING TRIALS) --- # 
+## ---- model_learn_latency
+model.latency_learn <- mixed(time ~ group*trial_in_block + cov_sex + cov_motor_score + 
                             (1|id), data=data_l, expand_re=T)
 ## ----
 
 # random effects
-VarCorr(model.time_learn$full_model)
+VarCorr(model.latency_learn$full_model)
+
+## ---- ranef_learn_latency
+## ----
 
 # fixed effects
-model.time_learn
+model.latency_learn
 
-## ---- post_hoc_learn_time 
-post.learn_time_group <- emmeans(model.time_learn, pairwise ~ group, lmer.df="satterthwaite", adjust="bonferroni")$contrasts
-
-post.learn_time_trial <- emmeans(model.time_learn, pairwise ~ trial_in_block, lmer.df="satterthwaite", adjust="bonferroni")$contrasts
+## ---- fixef_learn_latency
+omega.latency_learn <- omega_squared(model.latency_learn, partial=T)
 ## ----
-rm(post.learn_time_group, post.learn_time_trial)
 
-## ---- plot_learn_time
-plot.time_learn <- afex_lineplot_wrapper(model.time_learn, "trial_in_block", "group", NULL, l_latency, xlabel=l_trial_in_block, ymin=0, ymax=35)
+## ---- post_hoc_learn_latency 
+post.learn_latency_group <- emmeans(model.latency_learn, pairwise ~ group, lmer.df="satterthwaite", adjust="bonferroni")$contrasts
+
+post.learn_latency_trial <- emmeans(model.latency_learn, pairwise ~ trial_in_block, lmer.df="satterthwaite", adjust="bonferroni")$contrasts
 ## ----
-rm(plot.time_learn, model.time_learn)
+rm(post.learn_latency_group, post.learn_latency_trial)
+
+## ---- plot_learn_latency
+plot.latency_learn <- afex_lineplot_wrapper(model.latency_learn, "trial_in_block", "group", NULL, l_latency, xlabel=l_trial_in_block, ymin=0, ymax=35)
+## ----
+rm(plot.latency_learn, model.latency_learn)
 
 
 # --- EXCESS PATH LENGTH TO CHOSEN TARGET (LEARNING TRIALS) --- # 
@@ -432,8 +439,15 @@ model.path_learn <- mixed(excess_path_length ~ group*trial_in_block + cov_sex + 
 # random effects
 VarCorr(model.path_learn$full_model)
 
+## ---- ranef_learn_path
+## ----
+
 # fixed effects
 model.path_learn
+
+## ---- fixef_learn_path
+omega.path_learn <- omega_squared(model.path_learn, partial=T)
+## ----
 
 ## ---- post_hoc_learn_path
 post.learn_path_group <- emmeans(model.path_learn, pairwise ~ group, lmer.df="satterthwaite", adjust="bonferroni")$contrasts
@@ -457,8 +471,15 @@ model.distance_learn <- mixed(excess_target_distance ~ group*trial_in_block + co
 # random effects
 VarCorr(model.distance_learn$full_model)
 
+## ---- ranef_learn_distance
+## ----
+
 # fixed effects
 model.distance_learn
+
+## ---- fixef_learn_distance
+omega.distance_learn <- omega_squared(model.distance_learn, partial=T)
+## ----
 
 ## ---- post_hoc_learn_distance 
 post.learn_distance_group <- emmeans(model.distance_learn, pairwise ~ group, lmer.df="satterthwaite", adjust="bonferroni")$contrasts
@@ -482,16 +503,23 @@ model.initial_rotation_learn <- mixed(initial_rotation ~ group*trial_in_block + 
 # random effects
 VarCorr(model.initial_rotation_learn$full_model)
 
+## ---- ranef_learn_initial_rotation
+## ----
+
 # fixed effects
 model.initial_rotation_learn
+
+## ---- fixef_learn_initial_rotation
+omega.initial_rotation_learn <- omega_squared(model.initial_rotation_learn, partial=T)
+## ----
 
 ## ---- post_hoc_learn_initial_rotation
 emm.learn_initial_rotation_group_trial <- emmeans(model.initial_rotation_learn, ~ group * trial_in_block, lmer.df="satterthwaite")
 
-post.learn_initial_rotation_group_trial1 <- contrast(emm.learn_initial_rotation_group_trial, by="group", interaction=c("poly"), max.degree=2)
-post.learn_initial_rotation_group_trial2 <- pairs(emm.learn_initial_rotation_group_trial, interaction=c("pairwise", "poly"), max.degree=2, adjust="bonferroni")
+post.learn_initial_rotation_group_trial <- summary(rbind(contrast(emm.learn_initial_rotation_group_trial, by="group", interaction=c("poly"), max.degree=1)), adjust="bonferroni")
+# pairwise: pairs(emm.learn_initial_rotation_group_trial, interaction=c("pairwise", "poly"), max.degree=1, adjust="bonferroni")
 ## ----
-rm(emm.learn_initial_rotation_group_trial, post.learn_initial_rotation_group_trial1, post.learn_initial_rotation_group_trial2) 
+rm(emm.learn_initial_rotation_group_trial, post.learn_initial_rotation_group_trial) 
 
 ## ---- plot_learn_initial_rotation
 plot.initial_rotation_learn <- afex_lineplot_wrapper(model.initial_rotation_learn, "trial_in_block", "group", NULL, l_initial_rotation, xlabel=l_trial_in_block, ymax=1.3, ybreaks=c(0,0.25,0.5,0.75,1,1.25))
@@ -858,8 +886,8 @@ rm(plot.position, model.position, post.position)
 
 ## ---- model_motor_control
 # time: GROUPS DIFFER SIGNIFICANTLY 
-model.motor_time <- aov_ez("id", "time", practise, between=c("group"))
-post.motor_time <- emmeans(model.motor_time, pairwise ~ group, adjust="bonferroni")$contrasts
+model.motor_latency <- aov_ez("id", "time", practise, between=c("group"))
+post.motor_latency <- emmeans(model.motor_latency, pairwise ~ group, adjust="bonferroni")$contrasts
 
 # excess path length: DIFFER SIGNIFICANTLY
 model.motor_path <- aov_ez("id", "excess_path_length", practise, between=c("group"))
