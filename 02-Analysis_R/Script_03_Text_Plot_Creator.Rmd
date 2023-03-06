@@ -1,5 +1,5 @@
 ---
-title: "Text creator for WP10 Starmaze project"
+title: "Text and Plot creator for WP10 Starmaze project"
 author: "Patrizia Maier"
 date: "`r format(Sys.time(), '%d %B, %Y')`"
 output: 
@@ -251,6 +251,18 @@ plot.latency_train +
   plot_layout(nrow=2, guides="collect") & guides(shape=F, fill=F) &
   theme(legend.position="top", legend.justification=c(-0.05,0))
 
+plot.latency_train <- plot.latency_train + theme(legend.position="none")
+ggsave("../WP10_data/Plots/latency_train.jpg", plot.latency_train, width=4.2, height=3.3, dpi=600)
+
+plot.path_train <- plot.path_train + theme(legend.position="none")
+ggsave("../WP10_data/Plots/path_train.jpg", plot.path_train, width=4.2, height=3.3, dpi=600)
+
+plot.distance_train <- plot.distance_train + theme(legend.position="none")
+ggsave("../WP10_data/Plots/distance_train.jpg", plot.distance_train, width=4.2, height=3.3, dpi=600)
+
+plot.initial_rotation_train <- plot.initial_rotation_train + theme(legend.position="none")
+ggsave("../WP10_data/Plots/initial_rotation_train.jpg", plot.initial_rotation_train, width=4.2, height=3.3, dpi=600)
+
 rm(plot.latency_train, plot.path_train, plot.distance_train, plot.initial_rotation_train)
 ```
 
@@ -320,6 +332,9 @@ plot.ms +
   guides(fill=F, shape=F) & 
   theme(legend.position="right", legend.justification="top")
 
+plot.ms <- plot.ms + theme(legend.position="none")
+ggsave("../WP10_data/Plots/memory_probe_1.jpg", plot.ms, width=4.2, height=3.3, dpi=600)
+
 rm(plot.ms)
 ```
 
@@ -386,6 +401,17 @@ rm(post.ms_all_group, post.ms_all_group_chance, post.ms_all_condition, post.ms_a
 To test if spatial memory consolidation improves with increasing age, we created a LMM with the memory score data from both sessions and conditions. In parallel to our previous analysis, the memory score was generally affected by age, with a gradual increase in memory performance with increasing age (6-8-yo vs. 9-11-yo: `r apa_post.ms_all_group$statistic$YoungKids_OldKids`; 6-8-yo vs. adults: `r apa_post.ms_all_group$statistic$YoungKids_YoungAdults`; 9-11-yo vs. adults: `r apa_post.ms_all_group$statistic$OldKids_YoungAdults`) and condition, with better performance in the egocentric than the allocentric condition. Memory deteriorated significantly over the two-week time period between sessions. Notably, none of the interactions between age group and session were significant, meaning that the amount of memory deterioration was not significantly higher in children compared to adults. One reason for the absence of age-related differences the consolidation of egocentric and allocentric memories acquired during navigation may be the pronounced group differences after learning. We ran a control analysis using only well-learned pairs (details in the supplement), where we found some evidence for age-related differences in spatial memory consolidation.
 
 The LMM had a significantly better fit when including the random slope for session ($\chi^2$(`r apa_rs.session$Df`) = `r apa_rs.session$Chisq`, p `r apa_rs.session$p`), meaning that there was substantial interindividual variation in forgetting rates across the two-week delay period - irrespective of their age. Likewise, the model fit improved when including the random slope for condition ($\chi^2$(`r apa_rs.condition$Df`) = `r apa_rs.condition$Chisq`, p `r apa_rs.condition$p`). 
+
+```{r, echo=F, fig.height=3.5, fig.width=4.8, fig.cap="Spatial memmory consolidation across session" }
+plot.ms_all + 
+  guides(fill=F, shape=F) & 
+  theme(legend.position="right", legend.justification="top")
+
+plot.ms_all <- plot.ms_all + theme(legend.position="none")
+ggsave("../WP10_data/Plots/memory_probe_con.jpg", plot.ms_all, width=4.8, height=3.5, dpi=600)
+
+# rm(plot.ms_all)
+```
 
 ```{r, include=F}
 rm(model.ms_all, apa_lmm.ms_all, apa_post.ms_all_group, apa_post.ms_all_group_chance, apa_post.ms_all_condition, apa_post.ms_all_session, apa_post.ms_all_omega_group, apa_post.ms_all_omega_condition, apa_post.ms_all_omega_session, apa_rs.condition, apa_rs.session)
@@ -465,6 +491,15 @@ plot.ms_all +
   plot_annotation(tag_levels=list(c("A", "B", NULL, NULL))) + 
   plot_layout(nrow=1, width=c(0.4,0.2,0.2,0.2), guides="collect") & guides(fill=F, shape=F) & 
   theme(legend.position="bottom", legend.justification=c(-0.025,0))
+
+plot.layout <- plot.layout + theme(legend.position="none")
+ggsave("../WP10_data/Plots/post_layout.jpg", plot.layout, width=2.5, height=3.3, dpi=600)
+
+plot.landmark <- plot.landmark + theme(legend.position="none")
+ggsave("../WP10_data/Plots/post_landmark.jpg", plot.landmark, width=2.5, height=3.3, dpi=600)
+
+plot.position <- plot.position + theme(legend.position="none")
+ggsave("../WP10_data/Plots/post_position.jpg", plot.position, width=2.5, height=3.3, dpi=600)
 
 rm(plot.ms_all, plot.layout, plot.landmark, plot.position)
 ```
@@ -743,10 +778,13 @@ The results paralleled our previous analysis, namely we found main effects for a
 
 The LMM had a significantly better fit when including the random slope for session ($\chi^2$(`r apa_rs.session$Df`) = `r apa_rs.session$Chisq`, p `r apa_rs.session$p`), meaning that there was interindividual variation in participant's forgetting rates across the two-week delay period.
 
-```{r, echo=F, fig.height=4, fig.width=5, fig.cap="Consolidation of memory for well-learned pairs" }
+```{r, echo=F, fig.height=3.5, fig.width=4.8, fig.cap="Spatial memory consolidation across sessions for well-learned pairs" }
 plot.ms_wl + 
   guides(fill=F, shape=F) & 
   theme(legend.position="right", legend.justification="top")
+
+plot.ms_wl <- plot.ms_wl + theme(legend.position="none")
+ggsave("../WP10_data/Plots/memory_probe_con_wl.jpg", plot.ms_wl, width=4.8, height=3.5, dpi=600)
 
 rm(plot.ms_wl)
 ```
@@ -978,6 +1016,18 @@ plot.latency_probe +
   plot.initial_rotation_probe + 
   plot_layout(nrow=1, guides="collect") & 
   guides(fill=F, shape=F) & theme(legend.position="top", legend.justification=c(-0.025,0))
+
+plot.latency_probe <- plot.latency_probe + theme(legend.position="none")
+ggsave("../WP10_data/Plots/latency_probe.jpg", plot.latency_probe, width=4.2, height=3.3, dpi=600)
+
+plot.path_probe <- plot.path_probe + theme(legend.position="none")
+ggsave("../WP10_data/Plots/path_probe.jpg", plot.path_probe, width=4.2, height=3.3, dpi=600)
+
+plot.distance_probe <- plot.distance_probe + theme(legend.position="none")
+ggsave("../WP10_data/Plots/distance_probe.jpg", plot.distance_probe, width=4.2, height=3.3, dpi=600)
+
+plot.initial_rotation_probe <- plot.initial_rotation_probe + theme(legend.position="none")
+ggsave("../WP10_data/Plots/initial_rotation_probe.jpg", plot.initial_rotation_probe, width=4.2, height=3.3, dpi=600)
 
 rm(plot.latency_probe, plot.path_probe, plot.distance_probe, plot.initial_rotation_probe)
 ```
