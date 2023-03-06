@@ -248,7 +248,7 @@ To investigate age group and condition differences in memory accuracy during lea
 
 The LMM with memory score had a significantly better fit when including the *random slope for condition* compared to a model with random intercept only ($\chi^2$(`r apa_rs.condition$Df`) = `r apa_rs.condition$Chisq`, p `r apa_rs.condition$p`), meaning that there was substantial interindividual variation in how participants responded to the two conditions. This may explain the small effect sizes for the condition main effect and age group x condition interaction.
 
-```{r, echo=F, fig.height=4, fig.width=4, fig.cap="Memory accuracy in learning session" }
+```{r, echo=F, fig.height=4, fig.width=4, fig.cap="Memory accuracy in learning session probe trials" }
 plot.ms + 
   guides(fill=F, shape=F) & 
   theme(legend.position="right", legend.justification="top")
@@ -476,7 +476,7 @@ Initial rotation significantly decreased across training trials only in adults (
 rm(model.initial_rotation_train, R2, apa_lmm.train_initial_rotation, apa_post.train_initial_rotation_group_trial)
 ```
 
-```{r, echo=F, fig.height=6, fig.width=8, fig.cap="Navigation behavior" }
+```{r, echo=F, fig.height=6, fig.width=8, fig.cap="Navigation behavior in learning session training trials" }
 plot.latency_train + 
   plot.path_train + 
   plot.distance_train + 
@@ -875,37 +875,37 @@ rm(plot.ms_all, plot.layout, plot.landmark, plot.position)
 ```{r apa_probe_latency, include=F}
 
 # model fit
-R2 <- r2beta(model.latency$full_model, method='nsj', partial=F) %>% mutate_all(apa_num)
+R2 <- r2beta(model.latency_probe$full_model, method='nsj', partial=F) %>% mutate_all(apa_num)
 
 # fixed effects
-apa_lmm.latency  <- apa_print(model.latency)
+apa_lmm.latency_probe  <- apa_print(model.latency_probe)
 
 # group x condition 
-apa_post.latency_omega_group_condition <- omega.latency %>% 
+apa_post.latency_probe_omega_group_condition <- omega.latency_probe %>% 
   filter(Parameter=="group:condition") %>% select(Omega2_partial) %>% apa_num()
 
-apa_post.latency_group_condition <- post.latency_group_condition %>% apa_print() %>% bonferroni_fix()
+apa_post.latency_probe_group_condition <- post.latency_probe_group_condition %>% apa_print() %>% bonferroni_fix()
 
 # group 
-apa_post.latency_omega_group <- omega.latency %>% 
+apa_post.latency_probe_omega_group <- omega.latency_probe %>% 
   filter(Parameter=="group") %>% select(Omega2_partial) %>% apa_num()
 
 # condition
-apa_post.latency_omega_condition <- omega.latency %>% 
+apa_post.latency_probe_omega_condition <- omega.latency_probe %>% 
   filter(Parameter=="condition") %>% select(Omega2_partial) %>% apa_num()
 
 # random effects LRT 
-apa_rs.condition <- LRT.latency %>% mutate_at(vars(Chisq, Df), apa_df) %>% mutate_at(vars(p), apa_p, add_equals=T)
+apa_rs.condition <- LRT.latency_probe %>% mutate_at(vars(Chisq, Df), apa_df) %>% mutate_at(vars(p), apa_p, add_equals=T)
 
 
-rm(post.latency_group_condition, LRT.latency, omega.latency)
+rm(post.latency_probe_group_condition, LRT.latency_probe, omega.latency_probe)
 ```
 
 (ref:p-t-f-caption0) Fixed effects for latency in probe trials.
 
 ```{r table-probe-latency-f0, echo=F}
 apa_table(
-  apa_lmm.latency$table,
+  apa_lmm.latency_probe$table,
   caption="(ref:p-t-f-caption0)",
   placement="h")
 ```
@@ -914,7 +914,7 @@ apa_table(
 
 ```{r table-probe-latency-r0, echo=F}
 apa_table(
-  apa_random_table(VarCorr(model.latency$full_model)),
+  apa_random_table(VarCorr(model.latency_probe$full_model)),
   caption="(ref:p-t-r-caption0)"
   )
 ```
@@ -922,18 +922,18 @@ apa_table(
 The model had a fit of $R2 = `r R2$Rsq`, [CI: `r R2$upper.CL`, `r R2$lower.CL`$].
 Table\ \@ref(tab:table-probe-latency-f0)
 
-Next, we wanted to look at navigation efficiency during learning, starting with latency. For latency, the *age group* effect (`r apa_lmm.latency$statistic$group`, $\omega^2 =$ `r apa_post.latency_omega_group`), *condition* effect (`r apa_lmm.latency$statistic$condition`, $\omega^2 =$ `r apa_post.latency_omega_condition`) and *age group x condition* interaction were significant (`r apa_lmm.latency$statistic$group_condition`, $\omega^2 =$ `r apa_post.latency_omega_group_condition`). Post-hoc contrasts revealed that participants from all age groups had a higher latency in the allocentric condition (egocentric vs. allocentric in 6-8-yo: `r apa_post.latency_group_condition$statistic$YoungKids_Egoret_alloret`; 9-11-yo: `r apa_post.latency_group_condition$statistic$OldKids_Egoret_alloret`; adults: `r apa_post.latency_group_condition$statistic$YoungAdults_Egoret_alloret`). 6-8-yo children had a higher latency than adults in the egocentric (`r apa_post.latency_group_condition$statistic$Egoret_YoungKids_YoungAdults`) and allocentric condition (`r apa_post.latency_group_condition$statistic$Alloret_YoungKids_YoungAdults`). There was a trend for a significant difference between 9-11-yo children and adults in allocentric (`r apa_post.latency_group_condition$statistic$Alloret_OldKids_YoungAdults`).
+Next, we wanted to look at navigation efficiency during learning, starting with latency. For latency, the *age group* effect (`r apa_lmm.latency_probe$statistic$group`, $\omega^2 =$ `r apa_post.latency_probe_omega_group`), *condition* effect (`r apa_lmm.latency_probe$statistic$condition`, $\omega^2 =$ `r apa_post.latency_probe_omega_condition`) and *age group x condition* interaction were significant (`r apa_lmm.latency_probe$statistic$group_condition`, $\omega^2 =$ `r apa_post.latency_probe_omega_group_condition`). Post-hoc contrasts revealed that participants from all age groups had a higher latency in the allocentric condition (egocentric vs. allocentric in 6-8-yo: `r apa_post.latency_probe_group_condition$statistic$YoungKids_Egoret_alloret`; 9-11-yo: `r apa_post.latency_probe_group_condition$statistic$OldKids_Egoret_alloret`; adults: `r apa_post.latency_probe_group_condition$statistic$YoungAdults_Egoret_alloret`). 6-8-yo children had a higher latency than adults in the egocentric (`r apa_post.latency_probe_group_condition$statistic$Egoret_YoungKids_YoungAdults`) and allocentric condition (`r apa_post.latency_probe_group_condition$statistic$Alloret_YoungKids_YoungAdults`). There was a trend for a significant difference between 9-11-yo children and adults in allocentric (`r apa_post.latency_probe_group_condition$statistic$Alloret_OldKids_YoungAdults`).
 
 The LMM with latency did not have a significantly better fit when including the *random slope for condition* compared to a model with random intercept only ($\chi^2$(`r apa_rs.condition$Df`) = `r apa_rs.condition$Chisq`, p `r apa_rs.condition$p`).
 
 ```{r table-probe-latency2, echo=F}
 apa_table(
-  apa_post.latency_group_condition$table %>% remove_rownames(),
+  apa_lmm.latency_probe$table %>% remove_rownames(),
   placement="h")
 ```
 
 ```{r, include=F}
-rm(model.latency, R2, apa_lmm.latency, apa_post.latency_group_condition, apa_post.latency_omega_group_condition, apa_post.latency_omega_group, apa_post.latency_omega_condition, apa_rs.condition)
+rm(model.latency_probe, R2, apa_lmm.latency_probe, apa_post.latency_probe_group_condition, apa_post.latency_probe_omega_group_condition, apa_post.latency_probe_omega_group, apa_post.latency_probe_omega_condition, apa_rs.condition)
 ```
 
 ### **Excess path length (probe session 1)**
@@ -955,37 +955,37 @@ rm(model.latency, R2, apa_lmm.latency, apa_post.latency_group_condition, apa_pos
 
 ```{r apa_probe_path, include=F}
 # model fit
-R2 <- r2beta(model.path$full_model, method='nsj', partial=F) %>% mutate_all(apa_num)
+R2 <- r2beta(model.path_probe$full_model, method='nsj', partial=F) %>% mutate_all(apa_num)
 
 # fixed effects 
-apa_lmm.path <- apa_print(model.path)
+apa_lmm.path_probe <- apa_print(model.path_probe)
 
 # group x condition 
-apa_post.path_omega_group_condition <- omega.path %>% 
+apa_post.path_probe_omega_group_condition <- omega.path_probe %>% 
   filter(Parameter=="group:condition") %>% select(Omega2_partial) %>% apa_num()
 
-apa_post.path_group_condition <- post.path_group_condition %>% apa_print() %>% bonferroni_fix()
+apa_post.path_probe_group_condition <- post.path_probe_group_condition %>% apa_print() %>% bonferroni_fix()
 
 # group
-apa_post.path_omega_group <- omega.path %>% 
+apa_post.path_probe_omega_group <- omega.path_probe %>% 
   filter(Parameter=="group") %>% select(Omega2_partial) %>% apa_num()
 
 # condition
-apa_post.path_omega_condition <- omega.path %>% 
+apa_post.path_probe_omega_condition <- omega.path_probe %>% 
   filter(Parameter=="condition") %>% select(Omega2_partial) %>% apa_num()
 
 # random effects LRT 
-apa_rs.condition <- LRT.path %>% mutate_at(vars(Chisq, Df), apa_df) %>% mutate_at(vars(p), apa_p, add_equals=T)
+apa_rs.condition <- LRT.path_probe %>% mutate_at(vars(Chisq, Df), apa_df) %>% mutate_at(vars(p), apa_p, add_equals=T)
 
 
-rm(post.path_group_condition, LRT.path, omega.path)
+rm(post.path_probe_group_condition, LRT.path_probe, omega.path_probe)
 ```
 
 (ref:p-ep-f-caption0) Fixed effects for excess path in probe trials.
 
 ```{r table-probe-excess-path-f0, echo=F}
 apa_table(
-  apa_lmm.path$table,
+  apa_lmm.path_probe$table,
   caption="(ref:p-ep-caption0)",
   placement="h")
 ```
@@ -994,7 +994,7 @@ apa_table(
 
 ```{r table-probe-excess-path-r0, echo=F}
 apa_table(
-  apa_random_table(VarCorr(model.path$full_model)),
+  apa_random_table(VarCorr(model.path_probe$full_model)),
   caption="(ref:p-ep-r-caption0)"
   )
 ```
@@ -1002,18 +1002,18 @@ apa_table(
 The model had a fit of $R2 = `r R2$Rsq`, [CI: `r R2$upper.CL`, `r R2$lower.CL`$].
 Table\ \@ref(tab:table-probe-excess-path-f0)
 
-For excess path length, the *age group* effect (`r apa_lmm.path$statistic$group`, $\omega^2 =$ `r apa_post.path_omega_group`), *condition* effect (`r apa_lmm.path$statistic$condition`, $\omega^2 =$ `r apa_post.path_omega_condition`) and *age group x condition* interaction were significant (`r apa_lmm.path$statistic$group_condition`, $\omega^2 =$ `r apa_post.path_omega_group_condition`). Post-hoc contrasts revealed that participants from all age groups had longer excess path lengths in the allocentric condition (egocentric vs. allocentric in 6-8-yo: `r apa_post.path_group_condition$statistic$YoungKids_Egoret_alloret`; 9-11-yo: `r apa_post.path_group_condition$statistic$OldKids_Egoret_alloret`; adults: `r apa_post.path_group_condition$statistic$YoungAdults_Egoret_alloret`). In the egocentric condition, 6-8-yo children had significantly longer excess paths than adults (`r apa_post.path_group_condition$statistic$Egoret_YoungKids_YoungAdults`), in the allocentric condition there was a gradual decrease in excess path with increasing age (6-8-yo vs. adults: `r apa_post.path_group_condition$statistic$Alloret_YoungKids_YoungAdults`; 6-8-yo vs. 9-11-yo: `r apa_post.path_group_condition$statistic$Alloret_YoungKids_OldKids`;9-11-yo vs. adults: `r apa_post.path_group_condition$statistic$Alloret_OldKids_YoungAdults`).
+For excess path length, the *age group* effect (`r apa_lmm.path_probe$statistic$group`, $\omega^2 =$ `r apa_post.path_probe_omega_group`), *condition* effect (`r apa_lmm.path_probe$statistic$condition`, $\omega^2 =$ `r apa_post.path_probe_omega_condition`) and *age group x condition* interaction were significant (`r apa_lmm.path_probe$statistic$group_condition`, $\omega^2 =$ `r apa_post.path_probe_omega_group_condition`). Post-hoc contrasts revealed that participants from all age groups had longer excess path lengths in the allocentric condition (egocentric vs. allocentric in 6-8-yo: `r apa_post.path_probe_group_condition$statistic$YoungKids_Egoret_alloret`; 9-11-yo: `r apa_post.path_probe_group_condition$statistic$OldKids_Egoret_alloret`; adults: `r apa_post.path_probe_group_condition$statistic$YoungAdults_Egoret_alloret`). In the egocentric condition, 6-8-yo children had significantly longer excess paths than adults (`r apa_post.path_probe_group_condition$statistic$Egoret_YoungKids_YoungAdults`), in the allocentric condition there was a gradual decrease in excess path with increasing age (6-8-yo vs. adults: `r apa_post.path_probe_group_condition$statistic$Alloret_YoungKids_YoungAdults`; 6-8-yo vs. 9-11-yo: `r apa_post.path_probe_group_condition$statistic$Alloret_YoungKids_OldKids`;9-11-yo vs. adults: `r apa_post.path_probe_group_condition$statistic$Alloret_OldKids_YoungAdults`).
 
 The LMM with excess path length did not have a significantly better fit when including the *random slope for condition* compared to a model with random intercept only ($\chi^2$(`r apa_rs.condition$Df`) = `r apa_rs.condition$Chisq`, p `r apa_rs.condition$p`).
 
 ```{r table-probe-excess-path2, echo=F}
 apa_table(
-  apa_post.path_group_condition$table %>% remove_rownames(),
+  apa_post.path_probe_group_condition$table %>% remove_rownames(),
   placement="h")
 ```
 
 ```{r, include=F}
-rm(model.path, apa_lmm.path, apa_post.path_group_condition, apa_post.path_omega_group_condition, apa_post.path_omega_group, apa_post.path_omega_condition, apa_rs.condition)
+rm(model.path_probe, apa_lmm.path_probe, apa_post.path_probe_group_condition, apa_post.path_probe_omega_group_condition, apa_post.path_probe_omega_group, apa_post.path_probe_omega_condition, apa_rs.condition)
 ```
 
 ### **Excess distance to goal (probe session 1**
@@ -1035,35 +1035,35 @@ rm(model.path, apa_lmm.path, apa_post.path_group_condition, apa_post.path_omega_
 
 ```{r apa_probe_distance, include=F}
 # model fit 
-R2 <- r2beta(model.distance$full_model, method='nsj', partial=F) %>% mutate_all(apa_num)
+R2 <- r2beta(model.distance_probe$full_model, method='nsj', partial=F) %>% mutate_all(apa_num)
 
 # fixed effects 
-apa_lmm.distance <- apa_print(model.distance)
+apa_lmm.distance_probe <- apa_print(model.distance_probe)
 
 # group 
-apa_post.distance_omega_group <- omega.distance %>% 
+apa_post.distance_probe_omega_group <- omega.distance_probe %>% 
   filter(Parameter=="group") %>% select(Omega2_partial) %>% apa_num()
 
-apa_post.distance_group <- post.distance_group %>% apa_print() %>% bonferroni_fix()
+apa_post.distance_probe_group <- post.distance_probe_group %>% apa_print() %>% bonferroni_fix()
 
 # condition
-apa_post.distance_omega_condition <- omega.distance %>% 
+apa_post.distance_probe_omega_condition <- omega.distance_probe %>% 
   filter(Parameter=="condition") %>% select(Omega2_partial) %>% apa_num()
 
-apa_post.distance_condition <- post.distance_condition %>% apa_print()
+apa_post.distance_probe_condition <- post.distance_probe_condition %>% apa_print()
 
 # random effects LRT
-apa_rs.condition <- LRT.distance %>% mutate_at(vars(Chisq, Df), apa_df) %>% mutate_at(vars(p), apa_p, add_equals=T)
+apa_rs.condition <- LRT.distance_probe %>% mutate_at(vars(Chisq, Df), apa_df) %>% mutate_at(vars(p), apa_p, add_equals=T)
 
 
-rm(post.distance_group, post.distance_condition, LRT.distance, omega.distance)
+rm(post.distance_probe_group, post.distance_probe_condition, LRT.distance_probe, omega.distance_probe)
 ```
 
 (ref:p-ed-caption-f0) Fixed effects for excess distance to goal in probe trials.
 
 ```{r table-probe-excess-distance-f0, echo=F}
 apa_table(
-  apa_lmm.distance$table,
+  apa_lmm.distance_probe$table,
   caption="(ref:p-ed-caption-f0)",
   placement="h")
 ```
@@ -1072,7 +1072,7 @@ apa_table(
 
 ```{r table-probe-excess-distance-r0, echo=F}
 apa_table(
-  apa_random_table(VarCorr(model.distance$full_model)),
+  apa_random_table(VarCorr(model.distance_probe$full_model)),
   caption="(ref:p-ed-r-caption-r0)"
   )
 ```
@@ -1080,12 +1080,12 @@ apa_table(
 The model had a fit of $R2 = `r R2$Rsq`, [CI: `r R2$upper.CL`, `r R2$lower.CL`$].
 Table\ \@ref(tab:table-probe-excess-distance-f0)
 
-For excess distance to goal, we found a significant main effect for *age group* (`r apa_lmm.distance$statistic$group`, $\omega^2 =$ `r apa_post.distance_omega_group`). Post-hoc contrasts revealed a gradual decrease in excess distance to goal with increasing age, meaning that that older participants searched in closer proximity to the actual goal locations (6-8-yo vs. 9-11-yo: `r apa_post.distance_group$statistic$YoungKids_OldKids`; 6-8-yo vs. adults: `r apa_post.distance_group$statistic$YoungKids_YoungAdults`; 9-11-yo vs. adults: `r apa_post.distance_group$statistic$OldKids_YoungAdults`). Additionally, there was a main effect of *condition* (`r apa_lmm.distance$statistic$condition`, $\omega^2 =$ `r apa_post.distance_omega_condition`), with an increased excess distance to goal in the allocentric compared to the egocentric condition.
+For excess distance to goal, we found a significant main effect for *age group* (`r apa_lmm.distance_probe$statistic$group`, $\omega^2 =$ `r apa_post.distance_probe_omega_group`). Post-hoc contrasts revealed a gradual decrease in excess distance to goal with increasing age, meaning that that older participants searched in closer proximity to the actual goal locations (6-8-yo vs. 9-11-yo: `r apa_post.distance_probe_group$statistic$YoungKids_OldKids`; 6-8-yo vs. adults: `r apa_post.distance_probe_group$statistic$YoungKids_YoungAdults`; 9-11-yo vs. adults: `r apa_post.distance_probe_group$statistic$OldKids_YoungAdults`). Additionally, there was a main effect of *condition* (`r apa_lmm.distance_probe$statistic$condition`, $\omega^2 =$ `r apa_post.distance_probe_omega_condition`), with an increased excess distance to goal in the allocentric compared to the egocentric condition.
 
 The LMM with excess distance to goal did have a significantly better fit when including the *random slope for condition* compared to a model with random intercept only ($\chi^2$(`r apa_rs.condition$Df`) = `r apa_rs.condition$Chisq`, p `r apa_rs.condition$p`).
 
 ```{r, include=F}
-rm(model.distance, apa_lmm.distance, apa_post.distance_group, apa_post.distance_condition, apa_post.distance_omega_group, apa_post.distance_omega_condition, apa_rs.condition)
+rm(model.distance_probe, apa_lmm.distance_probe, apa_post.distance_probe_group, apa_post.distance_probe_condition, apa_post.distance_probe_omega_group, apa_post.distance_probe_omega_condition, apa_rs.condition)
 ```
 
 ### **Initial rotation (probe session 1)**
@@ -1108,29 +1108,29 @@ rm(model.distance, apa_lmm.distance, apa_post.distance_group, apa_post.distance_
 ```{r apa_probe_initial_rotation, include=F }
 
 # model fit
-R2 <- r2beta(model.initial_rotation$full_model, method='nsj', partial=F) %>% mutate_all(apa_num)
+R2 <- r2beta(model.initial_rotation_probe$full_model, method='nsj', partial=F) %>% mutate_all(apa_num)
 
 # fixed effects
-apa_lmm.init_rot <- apa_print(model.initial_rotation)
+apa_lmm.init_rot_probe <- apa_print(model.initial_rotation_probe)
 
 # condition 
-apa_post.initial_rotation_omega_condition <- omega.initial_rotation %>% 
+apa_post.initial_rotation_probe_omega_condition <- omega.initial_rotation_probe %>% 
   filter(Parameter=="condition") %>% select(Omega2_partial) %>% apa_num()
 
-apa_post.init_rot_condition <- post.init_rot_condition %>% apa_print()
+apa_post.init_rot_probe_condition <- post.init_rot_probe_condition %>% apa_print()
 
 # random effects LRT 
-apa_rs.condition <- LRT.initial_rotation %>% mutate_at(vars(Chisq, Df), apa_df) %>% mutate_at(vars(p), apa_p, add_equals=T)
+apa_rs.condition <- LRT.initial_rotation_probe %>% mutate_at(vars(Chisq, Df), apa_df) %>% mutate_at(vars(p), apa_p, add_equals=T)
 
 
-rm(post.init_rot_group_condition, LRT.initial_rotation, omega.initial_rotation)
+rm(post.init_rot_probe_group_condition, LRT.initial_rotation_probe, omega.initial_rotation_probe)
 ```
 
 (ref:p-init-rot-f-caption0) Fixed effects for initial rotation in probe trials.
 
 ```{r table-probe-init-rot-f0, echo=F}
 apa_table(
-  apa_lmm.init_rot$table,
+  apa_lmm.init_rot_probe$table,
   caption="(ref:p-init-rot-f-caption0)",
   placement="h")
 ```
@@ -1139,7 +1139,7 @@ apa_table(
 
 ```{r table-probe-init-rot-r0, echo=F}
 apa_table(
-  apa_random_table(VarCorr(model.initial_rotation$full_model)),
+  apa_random_table(VarCorr(model.initial_rotation_probe$full_model)),
   caption="(ref:p-init-rot-r-caption-r0)"
   )
 ```
@@ -1147,30 +1147,30 @@ apa_table(
 The model had a fit of $R2 = `r R2$Rsq`, [CI: `r R2$upper.CL`, `r R2$lower.CL`$].
 Table\ \@ref(tab:table-probe-init-rot-f0)
 
-For initial rotation, there was a significant main effect for *condition* (`r apa_lmm.init_rot$statistic$condition`, $\omega^2 =$ `r apa_post.initial_rotation_omega_condition`). All groups had significantly higher initial rotation velocity in the allocentric condition (`r apa_post.init_rot_condition$statistic`). 
+For initial rotation, there was a significant main effect for *condition* (`r apa_lmm.init_rot_probe$statistic$condition`, $\omega^2 =$ `r apa_post.initial_rotation_probe_omega_condition`). All groups had significantly higher initial rotation velocity in the allocentric condition (`r apa_post.init_rot_probe_condition$statistic`). 
 
 The LMM with initial rotation did have a significantly better fit when including the *random slope for condition* compared to a model with random intercept only ($\chi^2$(`r apa_rs.condition$Df`) = `r apa_rs.condition$Chisq`, p `r apa_rs.condition$p`).
 
 ```{r, include=F}
-rm(model.initial_rotation, apa_lmm.init_rot, apa_post.init_rot_condition, apa_post.rotation_omega_condition, apa_rs.condition)
+rm(model.initial_rotation_probe, apa_lmm.init_rot_probe, apa_post.init_rot_probe_condition, apa_post.initial_rotation_probe_omega_condition, apa_rs.condition)
 ```
 
-```{r, echo=F, fig.height=4.5, fig.width=10, fig.cap="Navigation efficiency in learning session" }
-plot.latency + 
-  plot.path + 
-  plot.distance + 
-  plot.initial_rotation + 
+```{r, echo=F, fig.height=4.5, fig.width=10, fig.cap="Navigation in learning session probe trials" }
+plot.latency_probe + 
+  plot.path_probe + 
+  plot.distance_probe + 
+  plot.initial_rotation_probe + 
   plot_layout(nrow=1, guides="collect") & 
   guides(fill=F, shape=F) & theme(legend.position="top", legend.justification=c(-0.025,0))
 
-rm(plot.latency, plot.path, plot.distance, plot.initial_rotation)
+rm(plot.latency_probe, plot.path_probe, plot.distance_probe, plot.initial_rotation_probe)
 ```
  
 ## Motor Control Task 
 
 ![Motor control practise task](./pics/Motor_Control.jpg){width=600px}
 
-```{r, echo=F, fig.height=3, fig.width=6, fig.cap="Navigation behavior in practise trials." }
+```{r, echo=F, fig.height=3, fig.width=6, fig.cap="Navigation in practise trials." }
 
 mc_plot <- function(data, xvar, yvar, my_colors, my_labels, y_label){
   p <- ggplot(data, aes(x=get(xvar), y=get(yvar), color=get(xvar), shape=get(xvar))) + 

@@ -407,9 +407,6 @@ model.latency_train <- mixed(time ~ group*trial_in_block + cov_sex + cov_motor_s
 # random effects
 VarCorr(model.latency_train$full_model)
 
-## ---- ranef_train_latency
-## ----
-
 # fixed effects
 model.latency_train
 
@@ -438,9 +435,6 @@ model.path_train <- mixed(excess_path_length ~ group*trial_in_block + cov_sex + 
 
 # random effects
 VarCorr(model.path_train$full_model)
-
-## ---- ranef_train_path
-## ----
 
 # fixed effects
 model.path_train
@@ -471,9 +465,6 @@ model.distance_train <- mixed(excess_target_distance ~ group*trial_in_block + co
 # random effects
 VarCorr(model.distance_train$full_model)
 
-## ---- ranef_train_distance
-## ----
-
 # fixed effects
 model.distance_train
 
@@ -502,9 +493,6 @@ model.initial_rotation_train <- mixed(initial_rotation ~ group*trial_in_block + 
 
 # random effects
 VarCorr(model.initial_rotation_train$full_model)
-
-## ---- ranef_train_initial_rotation
-## ----
 
 # fixed effects
 model.initial_rotation_train
@@ -1018,45 +1006,45 @@ rm(data_gmda, CanAcc, DistAcc, AngleAcc, boxplot)
 
 # --- LATENCY (SESSION 1 PROBE TRIALS) --- # 
 ## ---- model_probe_latency
-model.latency <- mixed(time ~ group*condition + cov_sex + cov_motor_score + 
-                         (condition||id), data=data_p1, expand_re=T)
+model.latency_probe <- mixed(time ~ group*condition + cov_sex + cov_motor_score + 
+                               (condition||id), data=data_p1, expand_re=T)
 ## ----
 
 # random effects
-VarCorr(model.latency$full_model)
+VarCorr(model.latency_probe$full_model)
 
 ## ---- ranef_probe_latency
 model.latency_base <- mixed(time ~ group*condition + cov_sex + cov_motor_score + 
                               (1|id), data=data_p1, expand_re=T)
 model.latency_slope <- mixed(time ~ group*condition + cov_sex + cov_motor_score + 
                                (condition||id), data=data_p1, expand_re=T)
-LRT.latency <- anova(model.latency_base, model.latency_slope)  %>% select(Chisq, Df, `Pr(>Chisq)`) %>% slice(2) %>% rename(p=`Pr(>Chisq)`)
+LRT.latency_probe <- anova(model.latency_base, model.latency_slope)  %>% select(Chisq, Df, `Pr(>Chisq)`) %>% slice(2) %>% rename(p=`Pr(>Chisq)`)
 rm(model.latency_base, model.latency_slope)
 ## ---- 
-rm(LRT.latency)
+rm(LRT.latency_probe)
 
 # fixed effects 
-model.latency
+model.latency_probe
 
 ## ---- fixef_probe_latency
-omega.latency <- omega_squared(model.latency, partial=T)
+omega.latency_probe <- omega_squared(model.latency_probe, partial=T)
 ## ----
-rm(omega.latency)
+rm(omega.latency_probe)
 
 ## ---- post_hoc_probe_latency
-emm.latency_group_condition <- emmeans(model.latency, ~ group * condition, lmer.df="satterthwaite")
-post.latency_group_condition <- summary(rbind(pairs(emm.latency_group_condition, simple="group"), pairs(emm.latency_group_condition, simple="condition")), 
-                                        infer=c(T,T), by=NULL, adjust="bonferroni")
-rm(emm.latency_group_condition)
+emm.latency_probe_group_condition <- emmeans(model.latency_probe, ~ group * condition, lmer.df="satterthwaite")
+post.latency_probe_group_condition <- summary(rbind(pairs(emm.latency_probe_group_condition, simple="group"), pairs(emm.latency_probe_group_condition, simple="condition")), 
+                                              infer=c(T,T), by=NULL, adjust="bonferroni")
+rm(emm.latency_probe_group_condition)
 ## ----
-rm(post.latency_group_condition)
+rm(emm.latency_probe_group_condition)
 
 ## ---- plot_probe_latency 
-p.values <- post.latency_group_condition %>%
+p.values <- post.latency_probe_group_condition %>%
   add_significance(p.col="p.value", cutpoints = c(0, 0.001, 0.01, 0.05, 1), symbols = c("***", "**", "*", "ns")) %>% 
   pull(p.value.signif)
 
-plot.latency <- afex_boxplot_wrapper(model.latency, "condition", "group", NULL, l_latency, xlabel=NULL, ymin=0, ymax=45, tracevis=0) + 
+plot.latency_probe <- afex_boxplot_wrapper(model.latency_probe, "condition", "group", NULL, l_latency, xlabel=NULL, ymin=0, ymax=45, tracevis=0) + 
   geom_signif(textsize=2.5, xmin=c(0.75), xmax=c(1.25), y_position=c(44), 
               annotation=c(p.values[2]), color="black", tip_length=0) + 
   geom_signif(textsize=2.5, xmin=c(1.755), xmax=c(2.25), y_position=c(44), 
@@ -1066,50 +1054,50 @@ plot.latency <- afex_boxplot_wrapper(model.latency, "condition", "group", NULL, 
 
 rm(p.values)
 ## ----
-rm(plot.latency, model.latency)
+rm(plot.latency_probe, model.latency_probe)
 
 
 # --- EXCESS PATH LENGTH TO CHOSEN TARGET (SESSION 1 PROBE TRIALS) --- # 
 ## ---- model_probe_path
-model.path <- mixed(excess_path_length ~ group*condition + cov_sex + cov_motor_score +
-                      (condition||id), data=data_p1, expand_re=T)
+model.path_probe <- mixed(excess_path_length ~ group*condition + cov_sex + cov_motor_score +
+                            (condition||id), data=data_p1, expand_re=T)
 ## ----
 
 # random effects
-VarCorr(model.path$full_model)
+VarCorr(model.path_probe$full_model)
 
 ## ---- ranef_probe_path
 model.path_base <- mixed(excess_path_length ~ group*condition + cov_sex + cov_motor_score +
                            (1|id), data=data_p1, expand_re=T)
 model.path_slope <- mixed(excess_path_length ~ group*condition + cov_sex + cov_motor_score +
                             (condition||id), data=data_p1, expand_re=T)
-LRT.path <- anova(model.path_base, model.path_slope)  %>% select(Chisq, Df, `Pr(>Chisq)`) %>% slice(2) %>% rename(p=`Pr(>Chisq)`)
+LRT.path_probe <- anova(model.path_base, model.path_slope)  %>% select(Chisq, Df, `Pr(>Chisq)`) %>% slice(2) %>% rename(p=`Pr(>Chisq)`)
 rm(model.path_base, model.path_slope)
 ## ---- 
-rm(LRT.path)
+rm(LRT.path_probe)
 
 # fixed effects
-model.path
+model.path_probe
 
 ## ---- fixef_probe_path
-omega.path <- omega_squared(model.path, partial=T)
+omega.path_probe <- omega_squared(model.path_probe, partial=T)
 ## ----
-rm(omega.path)
+rm(omega.path_probe)
 
 ## ---- post_hoc_probe_path
-emm.path_group_condition <- emmeans(model.path, ~ group * condition, lmer.df="satterthwaite")
-post.path_group_condition <- summary(rbind(pairs(emm.path_group_condition, simple="group"), pairs(emm.path_group_condition, simple="condition")),
+emm.path_probe_group_condition <- emmeans(model.path_probe, ~ group * condition, lmer.df="satterthwaite")
+post.path_probe_group_condition <- summary(rbind(pairs(emm.path_probe_group_condition, simple="group"), pairs(emm.path_probe_group_condition, simple="condition")),
                                      infer=c(T,T), by=NULL, adjust="bonferroni")
-rm(emm.path_group_condition)
+rm(emm.path_probe_group_condition)
 ## ----
-rm(post.path_group_condition)
+rm(post.path_probe_group_condition)
 
 ## ---- plot_probe_path
-p.values <- post.path_group_condition %>%
+p.values <- post.path_probe_group_condition %>%
   add_significance(p.col="p.value", cutpoints = c(0, 0.001, 0.01, 0.05, 1), symbols = c("***", "**", "*", "ns")) %>% 
   pull(p.value.signif)
 
-plot.path <- afex_boxplot_wrapper(model.path, "condition", "group", NULL, l_excess_path_length, xlabel=NULL, ymin=0, ymax=110, tracevis=0) +
+plot.path_probe <- afex_boxplot_wrapper(model.path_probe, "condition", "group", NULL, l_excess_path_length, xlabel=NULL, ymin=0, ymax=110, tracevis=0) +
   geom_signif(textsize=2.5, xmin=c(0.75), xmax=c(1.25), y_position=c(110), 
               annotation=c(p.values[2]), color="black", tip_length=0) + 
   geom_signif(textsize=2.5, xmin=c(1.755, 1.755, 2.05), xmax=c(1.95, 2.25, 2.25), y_position=c(110, 115, 110), 
@@ -1119,55 +1107,55 @@ plot.path <- afex_boxplot_wrapper(model.path, "condition", "group", NULL, l_exce
 
 rm(p.values)
 ## ----
-rm(plot.path, model.path)
+rm(plot.path_probe, model.path_probe)
 
 
 # --- EXCESS AVERAGE DISTANCE TO TARGET (SESSION 1 PROBE TRIALS) --- # 
 ## ---- model_probe_distance
-model.distance <- mixed(excess_target_distance ~ group*condition + cov_sex + cov_motor_score + 
-                          (condition|id), data=data_p1, expand_re=T)
+model.distance_probe <- mixed(excess_target_distance ~ group*condition + cov_sex + cov_motor_score + 
+                                (condition|id), data=data_p1, expand_re=T)
 ## ----
 
 # random effects
-VarCorr(model.distance$full_model)
+VarCorr(model.distance_probe$full_model)
 
 ## ---- ranef_probe_distance
 model.distance_base <- mixed(excess_target_distance ~ group*condition + cov_sex + cov_motor_score + 
                                (1|id), data=data_p1, expand_re=T)
 model.distance_slope <- mixed(excess_target_distance ~ group*condition + cov_sex + cov_motor_score + 
                                 (condition||id), data=data_p1, expand_re=T)
-LRT.distance <- anova(model.distance_base, model.distance_slope)  %>% select(Chisq, Df, `Pr(>Chisq)`) %>% slice(2) %>% rename(p=`Pr(>Chisq)`)
+LRT.distance_probe <- anova(model.distance_base, model.distance_slope)  %>% select(Chisq, Df, `Pr(>Chisq)`) %>% slice(2) %>% rename(p=`Pr(>Chisq)`)
 rm(model.distance_base, model.distance_slope)
 ## ---- 
-rm(LRT.distance)
+rm(LRT.distance_probe)
 
 # fixed effects 
 model.distance
 
 ## ---- fixef_probe_distance
-omega.distance <- omega_squared(model.distance, partial=T)
+omega.distance_probe <- omega_squared(model.distance_probe, partial=T)
 ## ----
-rm(omega.distance)
+rm(omega.distance_probe)
 
 ## ---- post_hoc_probe_distance
-emm.distance_group <- emmeans(model.distance, ~ group, lmer.df="satterthwaite")
-post.distance_group <- pairs(emm.distance_group, adjust="bonferroni")
-rm(emm.distance_group)
+emm.distance_probe_group <- emmeans(model.distance_probe, ~ group, lmer.df="satterthwaite")
+post.distance_probe_group <- pairs(emm.distance_probe_group, adjust="bonferroni")
+rm(emm.distance_probe_group)
 
-post.distance_condition <- emmeans(model.distance, pairwise ~ condition, lmer.df="satterthwaite")$contrasts
+post.distance_probe_condition <- emmeans(model.distance_probe, pairwise ~ condition, lmer.df="satterthwaite")$contrasts
 ## ----
-rm(post.distance_group, post.distance_condition)
+rm(post.distance_probe_group, post.distance_probe_condition)
 
 ## ---- plot_probe_distance
-p.values_g <- post.distance_group %>% as.data.frame() %>% 
+p.values_g <- post.distance_probe_group %>% as.data.frame() %>% 
   add_significance(p.col="p.value", cutpoints = c(0, 0.001, 0.01, 0.05, 1), symbols = c("***", "**", "*", "ns")) %>% 
   pull(p.value.signif)
 
-p.values_c <- post.distance_condition %>% as.data.frame() %>% 
+p.values_c <- post.distance_probe_condition %>% as.data.frame() %>% 
   add_significance(p.col="p.value", cutpoints = c(0, 0.001, 0.01, 0.05, 1), symbols = c("***", "**", "*", "ns")) %>% 
   pull(p.value.signif)
 
-plot.distance <- afex_boxplot_wrapper(model.distance, "condition", "group", NULL, l_excess_distance_goal, xlabel=NULL, ymin=-25, ymax=25, ybreaks=c(-20,-10,0,10,20,30), tracevis=0) + 
+plot.distance_probe <- afex_boxplot_wrapper(model.distance_probe, "condition", "group", NULL, l_excess_distance_goal, xlabel=NULL, ymin=-25, ymax=25, ybreaks=c(-20,-10,0,10,20,30), tracevis=0) + 
   geom_signif(textsize=2.5, xmin=c(1), xmax=c(2), y_position=c(28), 
               annotation=c(paste("ego vs allo: all p", p.values_c)), color="black", tip_length=0) + 
   geom_signif(textsize=2.5, xmin=c(1), xmax=c(2), y_position=c(24), 
@@ -1175,53 +1163,53 @@ plot.distance <- afex_boxplot_wrapper(model.distance, "condition", "group", NULL
 
 rm(p.values_g, p.values_c)
 ## ----
-rm(plot.distance, model.distance)
+rm(plot.distance_probe, model.distance_probe)
 
 
 # --- INITIAL ROTATION (SESSION 1 PROBE TRIALS) --- # 
 ## ---- model_probe_initial_rotation
-model.initial_rotation <- mixed(initial_rotation ~ group*condition + cov_sex + cov_motor_score +  
-                                  (condition||id), data=data_p1, expand_re=T)
+model.initial_rotation_probe <- mixed(initial_rotation ~ group*condition + cov_sex + cov_motor_score +  
+                                        (condition||id), data=data_p1, expand_re=T)
 ## ----
 
 # random effects
-VarCorr(model.initial_rotation$full_model)
+VarCorr(model.initial_rotation_probe$full_model)
 
 ## ---- ranef_probe_initial_rotation
 model.initial_rotation_base <- mixed(initial_rotation ~ group*condition + cov_sex + cov_motor_score +  
                                         (1|id), data=data_p1, expand_re=T)
 model.initial_rotation_slope <- mixed(initial_rotation ~ group*condition + cov_sex + cov_motor_score +  
                                          (condition||id), data=data_p1, expand_re=T)
-LRT.initial_rotation <- anova(model.initial_rotation_base, model.initial_rotation_slope) %>% select(Chisq, Df, `Pr(>Chisq)`) %>% slice(2) %>% rename(p=`Pr(>Chisq)`)
+LRT.initial_rotation_probe <- anova(model.initial_rotation_base, model.initial_rotation_slope) %>% select(Chisq, Df, `Pr(>Chisq)`) %>% slice(2) %>% rename(p=`Pr(>Chisq)`)
 rm(model.initial_rotation_base, model.initial_rotation_slope)
 ## ---- 
-rm(LRT.initial_rotation)
+rm(LRT.initial_rotation_probe)
 
 # fixed effects 
-model.initial_rotation
+model.initial_rotation_probe
 
 ## ---- fixef_probe_initial_rotation
-omega.initial_rotation <- omega_squared(model.initial_rotation, partial=T)
+omega.initial_rotation_probe <- omega_squared(model.initial_rotation_probe, partial=T)
 ## ----
-rm(omega.initial_rotation)
+rm(omega.initial_rotation_probe)
 
 ## ---- post_hoc_probe_initial_rotation
-post.init_rot_condition <- emmeans(model.initial_rotation, pairwise ~ condition, lmer.df="satterthwaite")$contrasts
+post.init_rot_probe_condition <- emmeans(model.initial_rotation_probe, pairwise ~ condition, lmer.df="satterthwaite")$contrasts
 ## ----
-rm(post.init_rot_condition)
+rm(post.init_rot_probe_condition)
 
 ## ---- plot_probe_initial_rotation
-p.values <- post.init_rot_condition %>% as.data.frame() %>% 
+p.values <- post.init_rot_probe_condition %>% as.data.frame() %>% 
   add_significance(p.col="p.value", cutpoints = c(0, 0.001, 0.01, 0.05, 1), symbols = c("***", "**", "*", "ns")) %>% 
   pull(p.value.signif)
 
-plot.initial_rotation <- afex_boxplot_wrapper(model.initial_rotation, "condition", "group", NULL, l_initial_rotation, xlabel=NULL, ymin=0, ymax=4.5, tracevis=0) +
+plot.initial_rotation_probe <- afex_boxplot_wrapper(model.initial_rotation_probe, "condition", "group", NULL, l_initial_rotation, xlabel=NULL, ymin=0, ymax=4.5, tracevis=0) +
   geom_signif(textsize=2.5, xmin=c(1), xmax=c(2), y_position=c(4.9), 
               annotation=c(paste("ego vs allo: all p", p.values[1])), color="black", tip_length=0)
 
 rm(p.values)
 ## ----
-rm(plot.initial_rotation, model.initial_rotation)
+rm(plot.initial_rotation_probe, model.initial_rotation_probe)
 
 
 # --- EXCESS PATH EDIT DISTANCE (SESSION 1 PROBE TRIALS) --- # 
