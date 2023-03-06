@@ -266,32 +266,32 @@ rm(model.ms, R2, apa_lmm.ms, apa_post.ms_group, apa_post.ms_group_chance, apa_po
 
 #### **Latency (training trials)**
 
-```{r, model_learn_latency}
+```{r, model_train_latency}
 ```
 
-```{r, post_hoc_learn_latency, include=F}
+```{r, post_hoc_train_latency, include=F}
 ```
 
-```{r, plot_learn_latency, include=F}
+```{r, plot_train_latency, include=F}
 ```
 
-```{r apa_learn_latency, include=F}
-R2 <- r2beta(model.latency_learn$full_model, method='nsj', partial=F) %>% mutate_all(apa_num)
+```{r apa_train_latency, include=F}
+R2 <- r2beta(model.latency_train$full_model, method='nsj', partial=F) %>% mutate_all(apa_num)
 
-apa_lmm.learn_latency <- apa_print(model.latency_learn)
+apa_lmm.train_latency <- apa_print(model.latency_train)
 
-apa_post.learn_latency_group <- post.learn_latency_group %>% apa_print() %>% bonferroni_fix()
+apa_post.train_latency_group <- post.train_latency_group %>% apa_print() %>% bonferroni_fix()
 
-apa_post.learn_latency_trial <- post.learn_latency_trial %>% apa_print() %>% bonferroni_fix()
+apa_post.train_latency_trial <- post.train_latency_trial %>% apa_print() %>% bonferroni_fix()
 
-rm(post.learn_latency_group, post.learn_latency_trial)
+rm(post.train_latency_group, post.train_latency_trial)
 ```
 
 (ref:l-t-caption-f0) Fixed effects for latency in training.
 
 ```{r table-learn-latency-f0, echo=F}
 apa_table(
-  apa_lmm.learn_latency$table,
+  apa_lmm.train_latency$table,
   caption="(ref:l-t-caption-f0)",
   placement="h")
 ```
@@ -300,52 +300,52 @@ apa_table(
 
 ```{r table-learn-latency-r0, echo=F}
 apa_table(
-  apa_random_table(VarCorr(model.latency_learn$full_model)),
+  apa_random_table(VarCorr(model.latency_train$full_model)),
   caption="(ref:l-t-caption-r0)"
   )
 ```
 
 The model had a fit of $R2 = `r R2$Rsq`, [CI: `r R2$upper.CL`, `r R2$lower.CL`$].
 
-Latency decreased significantly across training trials in all age groups. In addition, there was a main effect of age group, showing that 6-8-yo children required significantly more time to complete the training trials than both 9-11-yo children (`r apa_post.learn_latency_group$statistic$YoungKids_OldKids`) and adults (`r  apa_post.learn_latency_group$statistic$YoungKids_YoungAdults`). 
+Latency decreased significantly across training trials in all age groups. In addition, there was a main effect of age group, showing that 6-8-yo children required significantly more time to complete the training trials than both 9-11-yo children (`r apa_post.train_latency_group$statistic$YoungKids_OldKids`) and adults (`r  apa_post.train_latency_group$statistic$YoungKids_YoungAdults`). 
 
-*trial in block* (`r apa_lmm.learn_latency$statistic$trial_in_block`)
-*age group* (`r apa_lmm.learn_latency$statistic$group`)
+*trial in block* (`r apa_lmm.train_latency$statistic$trial_in_block`)
+*age group* (`r apa_lmm.train_latency$statistic$group`)
 
 (Table\ \@ref(tab:table-learn-latency-f0))
 
 ```{r, include=F}
-rm(model.latency_learn, R2, apa_lmm.learn_latency, apa_post.learn_latency_group, apa_post.learn_latency_trial)
+rm(model.latency_train, R2, apa_lmm.train_latency, apa_post.train_latency_group, apa_post.train_latency_trial)
 ```
 
 #### **Excess path length (training trials)**
 
-```{r, model_learn_path }
+```{r, model_train_path }
 ```
 
-```{r, post_hoc_learn_path, include=F}
+```{r, post_hoc_train_path, include=F}
 ```
 
-```{r, plot_learn_path, include=F}
+```{r, plot_train_path, include=F}
 ```
 
-```{r apa_learn_path, include=F}
-R2 <- r2beta(model.path_learn$full_model, method='nsj', partial=F) %>% mutate_all(apa_num)
+```{r apa_train_path, include=F}
+R2 <- r2beta(model.path_train$full_model, method='nsj', partial=F) %>% mutate_all(apa_num)
 
-apa_lmm.learn_path <- apa_print(model.path_learn)
+apa_lmm.train_path <- apa_print(model.path_train)
 
-apa_post.learn_path_group <- post.learn_path_group %>% apa_print() %>% bonferroni_fix()
+apa_post.train_path_group <- post.train_path_group %>% apa_print() %>% bonferroni_fix()
 
-apa_post.learn_path_trial <- post.learn_path_trial %>% apa_print() %>% bonferroni_fix()
+apa_post.train_path_trial <- post.train_path_trial %>% apa_print() %>% bonferroni_fix()
 
-rm(post.learn_path_group, post.learn_path_trial)
+rm(post.train_path_group, post.train_path_trial)
 ```
 
 (ref:l-ep-caption-f0) Fixed effects for excess path length in training.
 
 ```{r table-learn-excess-path-f0, echo=F}
 apa_table(
-  apa_lmm.learn_path$table,
+  apa_lmm.train_path$table,
   caption="(ref:l-ep-caption-f0)",
   placement="h")
 ```
@@ -354,52 +354,52 @@ apa_table(
 
 ```{r table-learn-excess-path-r0, echo=F}
 apa_table(
-  apa_random_table(VarCorr(model.path_learn$full_model)),
+  apa_random_table(VarCorr(model.path_train$full_model)),
   caption="(ref:l-ep-caption-r0)"
   )
 ```
 
 The model had a fit of $R2 = `r R2$Rsq`, [CI: `r R2$upper.CL`, `r R2$lower.CL`$].
 
-Similarly, participants in all age groups had a significant decrease in excess path length across trials and older participants were able to navigate more directly (i.e., shorter excess path length) than younger ones (6-8-yo vs. 9-11-yo: `r apa_post.learn_path_group$statistic$YoungKids_OldKids`; 6-8-yo vs. adults: `r apa_post.learn_path_group$statistic$YoungKids_YoungAdults`; 9-11-yo vs. adults: `r apa_post.learn_path_group$statistic$OldKids_YoungAdults`).
+Similarly, participants in all age groups had a significant decrease in excess path length across trials and older participants were able to navigate more directly (i.e., shorter excess path length) than younger ones (6-8-yo vs. 9-11-yo: `r apa_post.train_path_group$statistic$YoungKids_OldKids`; 6-8-yo vs. adults: `r apa_post.train_path_group$statistic$YoungKids_YoungAdults`; 9-11-yo vs. adults: `r apa_post.train_path_group$statistic$OldKids_YoungAdults`).
 
-*trial in block* (`r apa_lmm.learn_path$statistic$trial_in_block`)
-*age group* (`r apa_lmm.learn_path$statistic$group`)
+*trial in block* (`r apa_lmm.train_path$statistic$trial_in_block`)
+*age group* (`r apa_lmm.train_path$statistic$group`)
 
 (Table\ \@ref(tab:table-learn-excess-path-f0))
 
 ```{r, include=F}
-rm(model.path_learn, R2, apa_lmm.learn_path, apa_post.learn_path_group, apa_post.learn_path_trial)
+rm(model.path_train, R2, apa_lmm.train_path, apa_post.train_path_group, apa_post.train_path_trial)
 ```
 
 #### **Excess distance to goal (training trials)**
 
-```{r, model_learn_distance }
+```{r, model_train_distance }
 ```
 
-```{r, post_hoc_learn_distance, include=F}
+```{r, post_hoc_train_distance, include=F}
 ```
 
-```{r, plot_learn_distance, include=F}
+```{r, plot_train_distance, include=F}
 ```
 
-```{r apa_learn__distance, include=F}
-R2 <- r2beta(model.distance_learn$full_model, method='nsj', partial=F) %>% mutate_all(apa_num)
+```{r apa_train__distance, include=F}
+R2 <- r2beta(model.distance_train$full_model, method='nsj', partial=F) %>% mutate_all(apa_num)
 
-apa_lmm.learn_distance <- apa_print(model.distance_learn)
+apa_lmm.train_distance <- apa_print(model.distance_train)
 
-apa_post.learn_distance_group <- post.learn_distance_group %>% apa_print() %>% bonferroni_fix()
+apa_post.train_distance_group <- post.train_distance_group %>% apa_print() %>% bonferroni_fix()
 
-apa_post.learn_distance_trial <- post.learn_distance_trial %>% apa_print() %>% bonferroni_fix()
+apa_post.train_distance_trial <- post.train_distance_trial %>% apa_print() %>% bonferroni_fix()
 
-rm(post.learn_distance_group, post.learn_distance_trial)
+rm(post.train_distance_group, post.train_distance_trial)
 ```
 
 (ref:l-ed-caption-f0) Fixed effects for excess distance to goal in training.
 
 ```{r table-learn-excess-distance-f0, echo=F}
 apa_table(
-  apa_lmm.learn_distance$table,
+  apa_lmm.train_distance$table,
   caption="(ref:l-ed-caption-f0)",
   placement="h")
 ```
@@ -408,50 +408,50 @@ apa_table(
 
 ```{r table-learn-excess-distance-r0, echo=F}
 apa_table(
-  apa_random_table(VarCorr(model.distance_learn$full_model)),
+  apa_random_table(VarCorr(model.distance_train$full_model)),
   caption="(ref:l-ed-caption-r0)"
   )
 ```
 
 The model had a fit of $R2 = `r R2$Rsq`, [CI: `r R2$upper.CL`, `r R2$lower.CL`$].
 
-Participants in all age groups had a significant decrease in excess distance to goal across trials, meaning that they searched closer to the goal location after the first trial. Again, there was a general age difference indicating that even though 6-8-yo children improved across trials, they still searched further away from the goal location than both 9-11-yo children (`r apa_post.learn_distance_group$statistic$YoungKids_OldKids`) and adults (`r apa_post.learn_distance_group$statistic$YoungKids_YoungAdults`). 
+Participants in all age groups had a significant decrease in excess distance to goal across trials, meaning that they searched closer to the goal location after the first trial. Again, there was a general age difference indicating that even though 6-8-yo children improved across trials, they still searched further away from the goal location than both 9-11-yo children (`r apa_post.train_distance_group$statistic$YoungKids_OldKids`) and adults (`r apa_post.train_distance_group$statistic$YoungKids_YoungAdults`). 
 
-*trial in block* (`r apa_lmm.learn_distance$statistic$trial_in_block`)
-*age group* (`r apa_lmm.learn_distance$statistic$group`)
+*trial in block* (`r apa_lmm.train_distance$statistic$trial_in_block`)
+*age group* (`r apa_lmm.train_distance$statistic$group`)
 
 (Table\ \@ref(tab:table-learn-excess-distance-f0))
 
 ```{r, include=F}
-rm(model.distance_learn, R2, apa_lmm.learn_distance, apa_post.learn_distance_group, apa_post.learn_distance_trial)
+rm(model.distance_train, R2, apa_lmm.train_distance, apa_post.train_distance_group, apa_post.train_distance_trial)
 ```
 
 #### **Initial rotation (training trials)**
 
-```{r, model_learn_initial_rotation }
+```{r, model_train_initial_rotation }
 ```
 
-```{r, post_hoc_learn_initial_rotation, include=F}
+```{r, post_hoc_train_initial_rotation, include=F}
 ```
 
-```{r, plot_learn_initial_rotation, include=F}
+```{r, plot_train_initial_rotation, include=F}
 ```
 
-```{r apa_learn_initial_rotation, include=F}
-R2 <- r2beta(model.initial_rotation_learn$full_model, method='nsj', partial=F) %>% mutate_all(apa_num)
+```{r apa_train_initial_rotation, include=F}
+R2 <- r2beta(model.initial_rotation_train$full_model, method='nsj', partial=F) %>% mutate_all(apa_num)
 
-apa_lmm.learn_initial_rotation <- apa_print(model.initial_rotation_learn)
+apa_lmm.train_initial_rotation <- apa_print(model.initial_rotation_train)
 
-apa_post.learn_initial_rotation_group_trial <- post.learn_initial_rotation_group_trial %>% apa_print() %>% bonferroni_fix()
+apa_post.train_initial_rotation_group_trial <- post.train_initial_rotation_group_trial %>% apa_print() %>% bonferroni_fix()
 
-rm(post.learn_initial_rotation_group_trial)
+rm(post.train_initial_rotation_group_trial)
 ```
 
 (ref:l-ir-caption-f0) Fixed effects for factor initial rotation
 
 ```{r table-learn-initial-rotation-f0, echo=F}
 apa_table(
-  apa_lmm.learn_initial_rotation$table,
+  apa_lmm.train_initial_rotation$table,
   caption="(ref:l-ir-caption-f0)",
   placement="h")
 ```
@@ -460,31 +460,31 @@ apa_table(
 
 ```{r table-learn-initial-rotation-r0, echo=F}
 apa_table(
-  apa_random_table(VarCorr(model.initial_rotation_learn$full_model)),
+  apa_random_table(VarCorr(model.initial_rotation_train$full_model)),
   caption="(ref:l-ir-caption-r0)"
   )
 ```
 
 The model had a fit of $R2 = `r R2$Rsq`, [CI: `r R2$upper.CL`, `r R2$lower.CL`$].
 
-Initial rotation significantly decreased across training trials only in adults (linear change across trials: `r apa_post.learn_initial_rotation_group_trial$statistic$YoungAdults_Linear`) but stayed at a constant level in both groups of children. This indicates that adults, but not children, adjusted their level of deliberation and visual exploration at the first decision point according to task demands. 
+Initial rotation significantly decreased across training trials only in adults (linear change across trials: `r apa_post.train_initial_rotation_group_trial$statistic$YoungAdults_Linear`) but stayed at a constant level in both groups of children. This indicates that adults, but not children, adjusted their level of deliberation and visual exploration at the first decision point according to task demands. 
 
-*interaction* (`r apa_lmm.learn_initial_rotation$statistic$group_trial_in_block`)
+*interaction* (`r apa_lmm.train_initial_rotation$statistic$group_trial_in_block`)
 (Table\ \@ref(tab:table-learn-initial-rotation-f0)). 
 
 ```{r, include=F}
-rm(model.initial_rotation_learn, R2, apa_lmm.learn_initial_rotation, apa_post.learn_initial_rotation_group_trial)
+rm(model.initial_rotation_train, R2, apa_lmm.train_initial_rotation, apa_post.train_initial_rotation_group_trial)
 ```
 
 ```{r, echo=F, fig.height=6, fig.width=8, fig.cap="Navigation behavior" }
-plot.latency_learn + 
-  plot.path_learn + 
-  plot.distance_learn + 
-  plot.initial_rotation_learn + 
+plot.latency_train + 
+  plot.path_train + 
+  plot.distance_train + 
+  plot.initial_rotation_train + 
   plot_layout(nrow=2, guides="collect") & guides(shape=F, fill=F) &
   theme(legend.position="top", legend.justification=c(-0.05,0))
 
-rm(plot.latency_learn, plot.path_learn, plot.distance_learn, plot.initial_rotation_learn)
+rm(plot.latency_train, plot.path_train, plot.distance_train, plot.initial_rotation_train)
 ```
 
 \newpage
