@@ -457,7 +457,7 @@ post.learn_path_trial <- emmeans(model.path_learn, pairwise ~ trial_in_block, lm
 rm(post.learn_path_group, post.learn_path_trial)
 
 ## ---- plot_learn_path
-plot.path_learn <- afex_lineplot_wrapper(model.path_learn, "trial_in_block", "group", NULL, l_excess_path_length, xlabel=l_trial_in_block, ymin=0, ymax=0.85)
+plot.path_learn <- afex_lineplot_wrapper(model.path_learn, "trial_in_block", "group", NULL, l_excess_path_length, xlabel=l_trial_in_block, ymin=0, ymax=85)
 ## ----
 rm(plot.path_learn, model.path_learn)
 
@@ -489,7 +489,7 @@ post.learn_distance_trial <- emmeans(model.distance_learn, pairwise ~ trial_in_b
 rm(post.learn_distance_group, post.learn_distance_trial)
 
 ## ---- plot_learn_distance
-plot.distance_learn <- afex_lineplot_wrapper(model.distance_learn, "trial_in_block", "group", NULL, l_excess_distance_goal, xlabel=l_trial_in_block, ymin=0, ymax=0.085)
+plot.distance_learn <- afex_lineplot_wrapper(model.distance_learn, "trial_in_block", "group", NULL, l_excess_distance_goal, xlabel=l_trial_in_block, ymin=0, ymax=8.5)
 ## ----
 rm(plot.distance_learn, model.distance_learn)
 
@@ -1109,12 +1109,12 @@ p.values <- post.path_group_condition %>%
   add_significance(p.col="p.value", cutpoints = c(0, 0.001, 0.01, 0.05, 1), symbols = c("***", "**", "*", "ns")) %>% 
   pull(p.value.signif)
 
-plot.path <- afex_boxplot_wrapper(model.path, "condition", "group", NULL, l_excess_path_length, xlabel=NULL, ymin=0, ymax=1.1, tracevis=0) +
-  geom_signif(textsize=2.5, xmin=c(0.75), xmax=c(1.25), y_position=c(1.1), 
+plot.path <- afex_boxplot_wrapper(model.path, "condition", "group", NULL, l_excess_path_length, xlabel=NULL, ymin=0, ymax=110, tracevis=0) +
+  geom_signif(textsize=2.5, xmin=c(0.75), xmax=c(1.25), y_position=c(110), 
               annotation=c(p.values[2]), color="black", tip_length=0) + 
-  geom_signif(textsize=2.5, xmin=c(1.755, 1.755, 2.05), xmax=c(1.95, 2.25, 2.25), y_position=c(1.1, 1.15, 1.1), 
+  geom_signif(textsize=2.5, xmin=c(1.755, 1.755, 2.05), xmax=c(1.95, 2.25, 2.25), y_position=c(110, 115, 110), 
               annotation=c(p.values[4], p.values[5], p.values[6]), color="black", tip_length=0) + 
-  geom_signif(textsize=2.5, xmin=c(1), xmax=c(2), y_position=c(1.225), 
+  geom_signif(textsize=2.5, xmin=c(1), xmax=c(2), y_position=c(122), 
               annotation=c(paste("ego vs allo: all p", p.values[7])), color="black", tip_length=0)
 
 rm(p.values)
@@ -1167,10 +1167,10 @@ p.values_c <- post.distance_condition %>% as.data.frame() %>%
   add_significance(p.col="p.value", cutpoints = c(0, 0.001, 0.01, 0.05, 1), symbols = c("***", "**", "*", "ns")) %>% 
   pull(p.value.signif)
 
-plot.distance <- afex_boxplot_wrapper(model.distance, "condition", "group", NULL, l_excess_distance_goal, xlabel=NULL, ymin=-0.25, ymax=0.25, ybreaks=c(-0.2,-0.1,0,0.1,0.2,0.3), tracevis=0) + 
-  geom_signif(textsize=2.5, xmin=c(1), xmax=c(2), y_position=c(0.28), 
+plot.distance <- afex_boxplot_wrapper(model.distance, "condition", "group", NULL, l_excess_distance_goal, xlabel=NULL, ymin=-25, ymax=25, ybreaks=c(-20,-10,0,10,20,30), tracevis=0) + 
+  geom_signif(textsize=2.5, xmin=c(1), xmax=c(2), y_position=c(28), 
               annotation=c(paste("ego vs allo: all p", p.values_c)), color="black", tip_length=0) + 
-  geom_signif(textsize=2.5, xmin=c(1), xmax=c(2), y_position=c(0.24), 
+  geom_signif(textsize=2.5, xmin=c(1), xmax=c(2), y_position=c(24), 
               annotation=c(paste("age groups: all p", p.values_g[1])), color="black", tip_length=0)
 
 rm(p.values_g, p.values_c)

@@ -57,9 +57,11 @@ sm_data <- sm_data %>%
   select(-condition2)
 
 
-# temp: remove 25034
+# temp: remove 25034 & scale excess path, excess distance
 sm_data <- sm_data %>% 
-  filter(id != 25034)
+  filter(id != 25034) %>% 
+  mutate(excess_path_length = excess_path_length * 100,
+         excess_target_distance = excess_target_distance * 100)
 
 
 # save as RData
