@@ -126,7 +126,7 @@ rm(cov_data, cov_names, data, well_trained)
 
 ## ---- plot_settings
 # factor level labels 
-group_labels <- c("YoungKids"="6-8-yo", "OldKids"="9-11-yo", "YoungAdults"="adults")
+group_labels <- c("YoungKids"="6-8YO", "OldKids"="9-11YO", "YoungAdults"="AD")
 condition_labels <- c("ego_ret"="egocentric", "allo_ret"="allocentric")
 plsc_labels <- c("latency"="latency", "excess_path"="exc. path length", "excess_distance"="exc. distance goal", 
                  "initial_rotation"="initial rotation", "layout"="layout score", "landmark"="landmark score", "position"="position score")
@@ -162,9 +162,9 @@ afex_boxplot_wrapper <- function(model, xv, tv, pv, ylabel, xlabel=l_session, ym
                  error_arg=list(size=1.25, width=0)) + 
     scale_fill_manual(values=group_colors_f) + 
     scale_color_manual(values=group_colors_c) +
-    scale_y_continuous(breaks=ybreaks, expand=expansion(mult=c(0, 0.2))) + 
+    scale_y_continuous(breaks=ybreaks, expand=expansion(mult=c(0, 0.3))) + 
     coord_cartesian(ylim=c(ymin, ymax)) + 
-    theme_classic(base_size=13) + 
+    theme_classic(base_size=14) + 
     theme(legend.position="top", legend.justification=c(0,0),
           strip.background=element_rect(color=NA, fill=NA)) +
     labs(x=xlabel, y=ylabel)
@@ -185,7 +185,7 @@ afex_lineplot_wrapper <- function(model, xv, tv, pv, ylabel, xlabel=l_session, y
     scale_color_manual(values=group_colors_c) +
     scale_y_continuous(breaks=ybreaks, expand=expansion(mult=c(0, 0.1))) + 
     coord_cartesian(ylim=c(ymin, ymax)) + 
-    theme_classic(base_size=13) + 
+    theme_classic(base_size=14) + 
     theme(legend.position="top", legend.justification=c(0,0),
           strip.background=element_rect(color=NA, fill=NA)) +
     labs(x=xlabel, y=ylabel)
@@ -201,7 +201,7 @@ scatter_plot_wrapper <- function(data, xv, yv, xlabel, ylabel){
     stat_cor(aes(color=NULL), method="pearson", label.x=0.2, label.y=3.5, p.accuracy=0.001, r.accuracy=0.01, show.legend=F) + 
     scale_color_manual(values=group_colors_f, labels=group_labels) +
     coord_cartesian(ylim=c(-4,4), xlim=c(0.2,1)) + 
-    theme_classic(base_size=13) + 
+    theme_classic(base_size=14) + 
     theme(legend.position="bottom", legend.justification=c(0,0),
           legend.title=element_blank(),
           panel.grid=element_blank(),
@@ -220,7 +220,7 @@ bar_plot_wrapper <- function(data, colors, colors_o, mylabels, mytitle, ymin=-11
     scale_color_manual(values=colors_o) +
     scale_x_discrete(labels=mylabels) + 
     coord_cartesian(ylim=c(ymin,ymax)) + 
-    theme_classic(base_size=13) + 
+    theme_classic(base_size=14) + 
     theme(legend.position="none", 
           panel.grid.major.x=element_blank(),
           axis.text.x=element_text(angle=90, hjust=1, vjust=0.5)) +
@@ -237,7 +237,7 @@ box_plot_wrapper <- function(data, colors, colors_o, ylabel, mylabels, ymin=-4, 
     scale_color_manual(values=colors_o) +
     scale_x_discrete(labels=mylabels) +
     coord_cartesian(ylim=c(ymin, ymax)) + 
-    theme_classic(base_size=13) + 
+    theme_classic(base_size=14) + 
     theme(legend.position="none",
           panel.grid.major.x=element_blank(),
           axis.text.x=element_text(angle=90, hjust=1, vjust=0.5)) +
@@ -294,9 +294,9 @@ cor.test.comparison <- function(plsc_data){
   
   # summarize results 
   r <- as.data.frame(cbind(r1$estimate, r2$estimate, r3$estimate), row.names="r")
-  colnames(r) <- c("6-8-yo", "9-11-yo", "adults")
+  colnames(r) <- c("6-8YO", "9-11YO", "AD")
   p <- as.data.frame(cbind(ztest1, ztest2, ztest3), row.names="p")
-  colnames(p) <- c("6-8-yo vs. 9-11-yo", "6-8-yo vs. adults", "9-11-yo vs. adults")
+  colnames(p) <- c("6-8YO vs. 9-11YO", "6-8YO vs. AD", "9-11YO vs. AD")
   results <- list(r=r, p=p)
 
   return(results)
@@ -422,7 +422,16 @@ post.train_latency_trial <- emmeans(model.latency_train, pairwise ~ trial_in_blo
 rm(post.train_latency_group, post.train_latency_trial)
 
 ## ---- plot_train_latency
-plot.latency_train <- afex_lineplot_wrapper(model.latency_train, "trial_in_block", "group", NULL, l_latency, xlabel=l_trial_in_block, ymin=0, ymax=35)
+p.values <- post.train_latency_group %>% as.data.frame() %>% 
+  mutate(p.value_text=if_else(p.value < 0.001, "p < 0.001", paste0("p = ", round(p.value, 3)))) %>% 
+  pull(p.value_text)
+
+plot.latency_train <- afex_lineplot_wrapper(model.latency_train, "trial_in_block", "group", NULL, l_latency, xlabel=l_trial_in_block, ymin=0, ymax=35) + 
+  annotate("text", x=2, y=36, label=paste0("6-8YO vs. 9-11YO: ", p.values[1]), color="black", hjust=0, size=3.5) + 
+  annotate("text", x=2, y=34, label=paste0("6-8YO vs. AD: ", p.values[2]), color="black", hjust=0, size=3.5) +
+  annotate("text", x=2, y=30, label="trial 1 vs. 2-8: p < 0.001", color="black", hjust=0, size=3.5)
+
+rm(p.values)
 ## ----
 rm(plot.latency_train, model.latency_train)
 
@@ -451,7 +460,17 @@ post.train_path_trial <- emmeans(model.path_train, pairwise ~ trial_in_block, lm
 rm(post.train_path_group, post.train_path_trial)
 
 ## ---- plot_train_path
-plot.path_train <- afex_lineplot_wrapper(model.path_train, "trial_in_block", "group", NULL, l_excess_path_length, xlabel=l_trial_in_block, ymin=0, ymax=85)
+p.values <- post.train_path_group %>% as.data.frame() %>% 
+  mutate(p.value_text=if_else(p.value < 0.001, "p < 0.001", paste0("p = ", round(p.value, 3)))) %>% 
+  pull(p.value_text)
+
+plot.path_train <- afex_lineplot_wrapper(model.path_train, "trial_in_block", "group", NULL, l_excess_path_length, xlabel=l_trial_in_block, ymin=0, ymax=85) + 
+  annotate("text", x=2, y=85, label=paste0("6-8YO vs. 9-11YO: ", p.values[1]), color="black", hjust=0, size=3.5) + 
+  annotate("text", x=2, y=80, label=paste0("6-8YO vs. AD: ", p.values[2]), color="black", hjust=0, size=3.5) +
+  annotate("text", x=2, y=75, label=paste0("9-11YO vs. AD: ", p.values[3]), color="black", hjust=0, size=3.5) +
+  annotate("text", x=2, y=65, label="trial 1 vs. 2-8: p < 0.001", color="black", hjust=0, size=3.5) 
+
+rm(p.values)
 ## ----
 rm(plot.path_train, model.path_train)
 
@@ -480,7 +499,16 @@ post.train_distance_trial <- emmeans(model.distance_train, pairwise ~ trial_in_b
 rm(post.train_distance_group, post.train_distance_trial)
 
 ## ---- plot_train_distance
-plot.distance_train <- afex_lineplot_wrapper(model.distance_train, "trial_in_block", "group", NULL, l_excess_distance_goal, xlabel=l_trial_in_block, ymin=0, ymax=8.5)
+p.values <- post.train_distance_group %>% as.data.frame() %>% 
+  mutate(p.value_text=if_else(p.value < 0.001, "p < 0.001", paste0("p = ", round(p.value, 3)))) %>% 
+  pull(p.value_text)
+
+plot.distance_train <- afex_lineplot_wrapper(model.distance_train, "trial_in_block", "group", NULL, l_excess_distance_goal, xlabel=l_trial_in_block, ymin=0, ymax=8.5) + 
+  annotate("text", x=2, y=8, label=paste0("6-8YO vs. 9-11YO: ", p.values[1]), color="black", hjust=0, size=3.5) + 
+  annotate("text", x=2, y=7.5, label=paste0("6-8YO vs. AD: ", p.values[2]), color="black", hjust=0, size=3.5) +
+  annotate("text", x=2, y=6.5, label="trial 1 vs. 2-8: p < 0.001", color="black", hjust=0, size=3.5) 
+
+rm(p.values)
 ## ----
 rm(plot.distance_train, model.distance_train)
 
@@ -510,7 +538,14 @@ post.train_initial_rotation_group_trial <- summary(rbind(contrast(emm.train_init
 rm(emm.train_initial_rotation_group_trial, post.train_initial_rotation_group_trial) 
 
 ## ---- plot_train_initial_rotation
-plot.initial_rotation_train <- afex_lineplot_wrapper(model.initial_rotation_train, "trial_in_block", "group", NULL, l_initial_rotation, xlabel=l_trial_in_block, ymax=1.3, ybreaks=c(0,0.25,0.5,0.75,1,1.25))
+p.values <- post.train_initial_rotation_group_trial %>% as.data.frame() %>% 
+  mutate(p.value_text=if_else(p.value < 0.001, "p < 0.001", paste0("p = ", round(p.value, 3)))) %>% 
+  pull(p.value_text)
+
+plot.initial_rotation_train <- afex_lineplot_wrapper(model.initial_rotation_train, "trial_in_block", "group", NULL, l_initial_rotation, xlabel=l_trial_in_block, ymax=1.3, ybreaks=c(0,0.25,0.5,0.75,1,1.25)) +
+  annotate("text", x=2, y=1.3, label=paste0("change across trials in AD: ", p.values[3]), color="black", hjust=0, size=3.5)
+
+rm(p.values)
 ## ----
 rm(plot.initial_rotation_train, model.initial_rotation_train)
 
@@ -563,16 +598,17 @@ post.ms_condition <- emmeans(model.ms, pairwise ~ condition, lmer.df="satterthwa
 rm(post.ms_group_condition, post.ms_group, post.ms_group_chance, post.ms_session, post.ms_condition)
 
 ## ---- plot_probe_ms
-p.values <- post.ms_group_condition %>%
-  add_significance(p.col="p.value", cutpoints = c(0, 0.001, 0.01, 0.05, 1), symbols = c("***", "**", "*", "ns")) %>% 
-  pull(p.value.signif)
+p.values <- post.ms_group_condition %>% 
+  mutate(p.value_text=if_else(p.value < 0.001, "< 0.001", as.character(round(p.value, 3)))) %>% 
+  pull(p.value_text)
 
 plot.ms <- afex_boxplot_wrapper(model.ms, "condition", "group", NULL, l_memory_score, xlabel=NULL, ymin=0, ymax=1, ybreaks=c(0,0.25,0.5,0.75,1), tracevis=0) + 
-  geom_signif(textsize=2.5, xmin=c(0.75, 0.75, 1.05), xmax=c(0.95, 1.25, 1.25), y_position=c(1.03, 1.1, 1.03), 
+  geom_signif(textsize=3, xmin=c(0.75, 0.75, 1.05), xmax=c(0.95, 1.25, 1.25), y_position=c(1.05, 1.15, 1.05), 
               annotation=c(p.values[1], p.values[2], p.values[3]), color="black", tip_length=0) + 
-  geom_signif(textsize=2.5, xmin=c(1.75, 2.05), xmax=c(2.25, 2.25), y_position=c(1.1, 1.03), 
+  geom_signif(textsize=3, xmin=c(1.75, 2.05), xmax=c(2.25, 2.25), y_position=c(1.15, 1.05), 
               annotation=c(p.values[5], p.values[6]), color="black", tip_length=0) + 
-  geom_signif(textsize=2.5, xmin=1, xmax=2, y_position=1.25, annotation=c(p.values[8]), color="black", tip_length=0)
+  geom_signif(textsize=3, xmin=1, xmax=2, y_position=1.25, 
+              annotation=c(p.values[8]), color="black", tip_length=0)
 
 rm(p.values)
 ## ----
@@ -652,13 +688,13 @@ plot.layout <- ggplot(temp_data, aes(x=group, y=score, fill=group, color=group))
   scale_x_discrete(labels=group_labels) + 
   scale_y_continuous(breaks=c(0,0.25,0.5,0.75,1), expand=expansion(mult=c(0, 0.1))) + 
   coord_cartesian(ylim=c(0,1)) +
-  theme_classic(base_size=13) + 
+  theme_classic(base_size=14) + 
   theme(legend.position="top", legend.justification=c(0,0),
         legend.title=NULL, 
         axis.ticks.x=element_blank(),
         axis.text.x=element_blank()) +
   labs(x=NULL, y="layout accuracy (%)") +
-  geom_signif(textsize=2.5, xmin=c(1, 1, 2.1), xmax=c(1.9, 3, 3), y_position=c(0.94, 1, 0.94), 
+  geom_signif(textsize=3, xmin=c(1, 1, 2.1), xmax=c(1.9, 3, 3), y_position=c(0.94, 1, 0.94), 
               annotation=c(post.layout$p.adj.signif[1], post.layout$p.adj.signif[2], post.layout$p.adj.signif[3]), color="black", tip_length=0) 
 
 temp_data2 <- temp_data %>% 
@@ -674,7 +710,7 @@ plot.layout_detailed <- ggplot(temp_data2, aes(x=group, y=perc, fill=layout_obj_
   scale_x_discrete(labels=group_labels) + 
   scale_fill_brewer(palette="Pastel1", direction=-1, name=NULL) + 
   coord_cartesian(ylim=c(0,1)) +
-  theme_classic(base_size=13) + 
+  theme_classic(base_size=14) + 
   theme(legend.position="top", legend.justification=c(0,0),
         legend.title=NULL) +
   labs(x=NULL, y="responses (%)")
@@ -705,7 +741,7 @@ plot.landmark <- afex_plot(model.landmark, x="group", error="model",
   scale_color_manual(values=group_colors_c) + 
   scale_y_continuous(breaks=c(0,0.25,0.5,0.75,1), expand=expansion(mult=c(0, 0.1))) + 
   coord_cartesian(ylim=c(0,1)) +
-  theme_classic(base_size=13) + 
+  theme_classic(base_size=14) + 
   theme(legend.position="top", legend.justification=c(0,0),
         axis.text.x=element_blank(),
         axis.ticks.x=element_blank()) +
@@ -742,12 +778,12 @@ plot.position <- afex_plot(model.position, x="group", error="model",
   scale_color_manual(values=group_colors_c) + 
   scale_y_continuous(breaks=c(0,0.25,0.5,0.75,1), expand=expansion(mult=c(0, 0.1))) + 
   coord_cartesian(ylim=c(0,1)) +
-  theme_classic(base_size=13) + 
+  theme_classic(base_size=14) + 
   theme(legend.position="top", legend.justification=c(0,0),
         axis.text.x=element_blank(),
         axis.ticks.x=element_blank()) +
   labs(x=NULL, y="positioning score") + 
-  geom_signif(textsize=2.5, xmin=c(1, 2.1), xmax=c(3, 3), y_position=c(1, 0.94), 
+  geom_signif(textsize=3, xmin=c(1, 2.1), xmax=c(3, 3), y_position=c(1, 0.94), 
               annotation=c(p.values[2], p.values[3]), color="black", tip_length=0) 
 rm(temp_data, p.values)
 ## ---- 
@@ -782,7 +818,7 @@ rm(plot.position, model.position, post.position)
 #   pull(p.value.signif)
 # 
 # plot.plsc_ego_lps <- plot.plsc_ego_lps + 
-#   geom_signif(textsize=2.5, xmin=c(1, 2.2, 1), xmax=c(1.8, 3, 3), y_position=c(3.2, 3.2, 3.7), 
+#   geom_signif(textsize=3, xmin=c(1, 2.2, 1), xmax=c(1.8, 3, 3), y_position=c(3.2, 3.2, 3.7), 
 #               annotation=c(p.values[1], p.values[2], p.values[3]), color="black", tip_length=0)
 # rm(p.values)
 # ## ----
@@ -828,7 +864,7 @@ rm(plot.position, model.position, post.position)
 #   pull(p.value.signif)
 # 
 # plot.plsc_allo_lps <- plot.plsc_allo_lps + 
-#   geom_signif(textsize=2.5, xmin=c(1, 2.2, 1), xmax=c(1.8, 3, 3), y_position=c(3.2, 3.2, 3.7), 
+#   geom_signif(textsize=3, xmin=c(1, 2.2, 1), xmax=c(1.8, 3, 3), y_position=c(3.2, 3.2, 3.7), 
 #               annotation=c(p.values[1], p.values[2], p.values[3]), color="black", tip_length=0)
 # rm(p.values)
 # ## ----
@@ -1045,11 +1081,11 @@ p.values <- post.latency_probe_group_condition %>%
   pull(p.value.signif)
 
 plot.latency_probe <- afex_boxplot_wrapper(model.latency_probe, "condition", "group", NULL, l_latency, xlabel=NULL, ymin=0, ymax=45, tracevis=0) + 
-  geom_signif(textsize=2.5, xmin=c(0.75), xmax=c(1.25), y_position=c(44), 
+  geom_signif(textsize=3, xmin=c(0.75), xmax=c(1.25), y_position=c(44), 
               annotation=c(p.values[2]), color="black", tip_length=0) + 
-  geom_signif(textsize=2.5, xmin=c(1.755), xmax=c(2.25), y_position=c(44), 
+  geom_signif(textsize=3, xmin=c(1.755), xmax=c(2.25), y_position=c(44), 
               annotation=c(p.values[5]), color="black", tip_length=0) + 
-  geom_signif(textsize=2.5, xmin=c(1), xmax=c(2), y_position=c(47), 
+  geom_signif(textsize=3, xmin=c(1), xmax=c(2), y_position=c(47), 
               annotation=c(paste("ego vs allo: all p", p.values[7])), color="black", tip_length=0)
 
 rm(p.values)
@@ -1098,11 +1134,11 @@ p.values <- post.path_probe_group_condition %>%
   pull(p.value.signif)
 
 plot.path_probe <- afex_boxplot_wrapper(model.path_probe, "condition", "group", NULL, l_excess_path_length, xlabel=NULL, ymin=0, ymax=110, tracevis=0) +
-  geom_signif(textsize=2.5, xmin=c(0.75), xmax=c(1.25), y_position=c(110), 
+  geom_signif(textsize=3, xmin=c(0.75), xmax=c(1.25), y_position=c(110), 
               annotation=c(p.values[2]), color="black", tip_length=0) + 
-  geom_signif(textsize=2.5, xmin=c(1.755, 1.755, 2.05), xmax=c(1.95, 2.25, 2.25), y_position=c(110, 115, 110), 
+  geom_signif(textsize=3, xmin=c(1.755, 1.755, 2.05), xmax=c(1.95, 2.25, 2.25), y_position=c(110, 115, 110), 
               annotation=c(p.values[4], p.values[5], p.values[6]), color="black", tip_length=0) + 
-  geom_signif(textsize=2.5, xmin=c(1), xmax=c(2), y_position=c(122), 
+  geom_signif(textsize=3, xmin=c(1), xmax=c(2), y_position=c(122), 
               annotation=c(paste("ego vs allo: all p", p.values[7])), color="black", tip_length=0)
 
 rm(p.values)
@@ -1156,9 +1192,9 @@ p.values_c <- post.distance_probe_condition %>% as.data.frame() %>%
   pull(p.value.signif)
 
 plot.distance_probe <- afex_boxplot_wrapper(model.distance_probe, "condition", "group", NULL, l_excess_distance_goal, xlabel=NULL, ymin=-25, ymax=25, ybreaks=c(-20,-10,0,10,20,30), tracevis=0) + 
-  geom_signif(textsize=2.5, xmin=c(1), xmax=c(2), y_position=c(28), 
+  geom_signif(textsize=3, xmin=c(1), xmax=c(2), y_position=c(28), 
               annotation=c(paste("ego vs allo: all p", p.values_c)), color="black", tip_length=0) + 
-  geom_signif(textsize=2.5, xmin=c(1), xmax=c(2), y_position=c(24), 
+  geom_signif(textsize=3, xmin=c(1), xmax=c(2), y_position=c(24), 
               annotation=c(paste("age groups: all p", p.values_g[1])), color="black", tip_length=0)
 
 rm(p.values_g, p.values_c)
@@ -1204,7 +1240,7 @@ p.values <- post.init_rot_probe_condition %>% as.data.frame() %>%
   pull(p.value.signif)
 
 plot.initial_rotation_probe <- afex_boxplot_wrapper(model.initial_rotation_probe, "condition", "group", NULL, l_initial_rotation, xlabel=NULL, ymin=0, ymax=4.5, tracevis=0) +
-  geom_signif(textsize=2.5, xmin=c(1), xmax=c(2), y_position=c(4.9), 
+  geom_signif(textsize=3, xmin=c(1), xmax=c(2), y_position=c(4.9), 
               annotation=c(paste("ego vs allo: all p", p.values[1])), color="black", tip_length=0)
 
 rm(p.values)
@@ -1299,7 +1335,7 @@ ggplot(temp, aes(x=age, y=memory_score, color=condition)) +
   geom_smooth(method="lm") +
   scale_color_manual(values=c("#8742f5", "#f59042"), labels=c("ego", "allo")) +
   coord_cartesian(ylim=c(0,1)) + 
-  theme_bw(base_size=13) + 
+  theme_bw(base_size=14) + 
   theme(legend.position="top", legend.justification=c(0,0),
         panel.grid.major.x=element_blank(),
         strip.background=element_rect(color=NA, fill=NA)) +
