@@ -252,16 +252,16 @@ plot.latency_train +
   theme(legend.position="top", legend.justification=c(-0.05,0))
 
 plot.latency_train <- plot.latency_train + theme(legend.position="none")
-ggsave("../WP10_data/Plots/latency_train.jpg", plot.latency_train, width=4.2, height=3.3, dpi=600)
+ggsave("../WP10_data/Plots/latency_train.jpg", plot.latency_train, width=4.0, height=3.0, dpi=600)
 
 plot.path_train <- plot.path_train + theme(legend.position="none")
-ggsave("../WP10_data/Plots/path_train.jpg", plot.path_train, width=4.2, height=3.3, dpi=600)
+ggsave("../WP10_data/Plots/path_train.jpg", plot.path_train, width=4.0, height=3.0, dpi=600)
 
 plot.distance_train <- plot.distance_train + theme(legend.position="none")
-ggsave("../WP10_data/Plots/distance_train.jpg", plot.distance_train, width=4.2, height=3.3, dpi=600)
+ggsave("../WP10_data/Plots/distance_train.jpg", plot.distance_train, width=4.0, height=3.0, dpi=600)
 
 plot.initial_rotation_train <- plot.initial_rotation_train + theme(legend.position="none")
-ggsave("../WP10_data/Plots/initial_rotation_train.jpg", plot.initial_rotation_train, width=4.2, height=3.3, dpi=600)
+ggsave("../WP10_data/Plots/initial_rotation_train.jpg", plot.initial_rotation_train, width=4.0, height=3.0, dpi=600)
 
 rm(plot.latency_train, plot.path_train, plot.distance_train, plot.initial_rotation_train)
 ```
@@ -333,7 +333,7 @@ plot.ms +
   theme(legend.position="right", legend.justification="top")
 
 plot.ms <- plot.ms + theme(legend.position="none")
-ggsave("../WP10_data/Plots/memory_probe_1.jpg", plot.ms, width=4.2, height=3.3, dpi=600)
+ggsave("../WP10_data/Plots/memory_probe_1.jpg", plot.ms, width=4.0, height=3.0, dpi=600)
 
 rm(plot.ms)
 ```
