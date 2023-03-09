@@ -422,13 +422,11 @@ post.train_latency_trial <- emmeans(model.latency_train, pairwise ~ trial_in_blo
 rm(post.train_latency_group, post.train_latency_trial)
 
 ## ---- plot_train_latency
-p.values <- post.train_latency_group %>% as.data.frame() %>% 
-  mutate(p.value_text=if_else(p.value < 0.001, "p < 0.001", paste0("p = ", round(p.value, 3)))) %>% 
-  pull(p.value_text)
+p.values <- post.train_latency_group %>% as.data.frame() %>% pull(p.value) %>% apa_p(add_equals=T)
 
 plot.latency_train <- afex_lineplot_wrapper(model.latency_train, "trial_in_block", "group", NULL, l_latency, xlabel=l_trial_in_block, ymin=0, ymax=35) + 
-  annotate("text", x=2, y=36, label=paste0("6-8YO vs. 9-11YO: ", p.values[1]), color="black", hjust=0, size=3.5) + 
-  annotate("text", x=2, y=34, label=paste0("6-8YO vs. AD: ", p.values[2]), color="black", hjust=0, size=3.5) +
+  annotate("text", x=2, y=36, label=paste0("6-8YO vs. 9-11YO: p ", p.values[1]), color="black", hjust=0, size=3.5) + 
+  annotate("text", x=2, y=34, label=paste0("6-8YO vs. AD: p ", p.values[2]), color="black", hjust=0, size=3.5) +
   annotate("text", x=2, y=30, label="trial 1 vs. 2-8: p < 0.001", color="black", hjust=0, size=3.5)
 
 rm(p.values)
@@ -460,14 +458,12 @@ post.train_path_trial <- emmeans(model.path_train, pairwise ~ trial_in_block, lm
 rm(post.train_path_group, post.train_path_trial)
 
 ## ---- plot_train_path
-p.values <- post.train_path_group %>% as.data.frame() %>% 
-  mutate(p.value_text=if_else(p.value < 0.001, "p < 0.001", paste0("p = ", round(p.value, 3)))) %>% 
-  pull(p.value_text)
+p.values <- post.train_path_group %>% as.data.frame() %>% pull(p.value) %>% apa_p(add_equals=T)
 
 plot.path_train <- afex_lineplot_wrapper(model.path_train, "trial_in_block", "group", NULL, l_excess_path_length, xlabel=l_trial_in_block, ymin=0, ymax=85) + 
-  annotate("text", x=2, y=85, label=paste0("6-8YO vs. 9-11YO: ", p.values[1]), color="black", hjust=0, size=3.5) + 
-  annotate("text", x=2, y=80, label=paste0("6-8YO vs. AD: ", p.values[2]), color="black", hjust=0, size=3.5) +
-  annotate("text", x=2, y=75, label=paste0("9-11YO vs. AD: ", p.values[3]), color="black", hjust=0, size=3.5) +
+  annotate("text", x=2, y=85, label=paste0("6-8YO vs. 9-11YO: p ", p.values[1]), color="black", hjust=0, size=3.5) + 
+  annotate("text", x=2, y=80, label=paste0("6-8YO vs. AD: p ", p.values[2]), color="black", hjust=0, size=3.5) +
+  annotate("text", x=2, y=75, label=paste0("9-11YO vs. AD: p ", p.values[3]), color="black", hjust=0, size=3.5) +
   annotate("text", x=2, y=65, label="trial 1 vs. 2-8: p < 0.001", color="black", hjust=0, size=3.5) 
 
 rm(p.values)
@@ -499,13 +495,11 @@ post.train_distance_trial <- emmeans(model.distance_train, pairwise ~ trial_in_b
 rm(post.train_distance_group, post.train_distance_trial)
 
 ## ---- plot_train_distance
-p.values <- post.train_distance_group %>% as.data.frame() %>% 
-  mutate(p.value_text=if_else(p.value < 0.001, "p < 0.001", paste0("p = ", round(p.value, 3)))) %>% 
-  pull(p.value_text)
+p.values <- post.train_distance_group %>% as.data.frame() %>% pull(p.value) %>% apa_p(add_equals=T)
 
 plot.distance_train <- afex_lineplot_wrapper(model.distance_train, "trial_in_block", "group", NULL, l_excess_distance_goal, xlabel=l_trial_in_block, ymin=0, ymax=8.5) + 
-  annotate("text", x=2, y=8, label=paste0("6-8YO vs. 9-11YO: ", p.values[1]), color="black", hjust=0, size=3.5) + 
-  annotate("text", x=2, y=7.5, label=paste0("6-8YO vs. AD: ", p.values[2]), color="black", hjust=0, size=3.5) +
+  annotate("text", x=2, y=8, label=paste0("6-8YO vs. 9-11YO: p ", p.values[1]), color="black", hjust=0, size=3.5) + 
+  annotate("text", x=2, y=7.5, label=paste0("6-8YO vs. AD: p ", p.values[2]), color="black", hjust=0, size=3.5) +
   annotate("text", x=2, y=6.5, label="trial 1 vs. 2-8: p < 0.001", color="black", hjust=0, size=3.5) 
 
 rm(p.values)
@@ -538,12 +532,10 @@ post.train_initial_rotation_group_trial <- summary(rbind(contrast(emm.train_init
 rm(emm.train_initial_rotation_group_trial, post.train_initial_rotation_group_trial) 
 
 ## ---- plot_train_initial_rotation
-p.values <- post.train_initial_rotation_group_trial %>% as.data.frame() %>% 
-  mutate(p.value_text=if_else(p.value < 0.001, "p < 0.001", paste0("p = ", round(p.value, 3)))) %>% 
-  pull(p.value_text)
+p.values <- post.train_initial_rotation_group_trial %>% as.data.frame() %>% pull(p.value) %>% apa_p(add_equals=T)
 
 plot.initial_rotation_train <- afex_lineplot_wrapper(model.initial_rotation_train, "trial_in_block", "group", NULL, l_initial_rotation, xlabel=l_trial_in_block, ymax=1.3, ybreaks=c(0,0.25,0.5,0.75,1,1.25)) +
-  annotate("text", x=2, y=1.3, label=paste0("change across trials in AD: ", p.values[3]), color="black", hjust=0, size=3.5)
+  annotate("text", x=2, y=1.3, label=paste0("change across trials in AD: p ", p.values[3]), color="black", hjust=0, size=3.5)
 
 rm(p.values)
 ## ----
@@ -598,9 +590,7 @@ post.ms_condition <- emmeans(model.ms, pairwise ~ condition, lmer.df="satterthwa
 rm(post.ms_group_condition, post.ms_group, post.ms_group_chance, post.ms_session, post.ms_condition)
 
 ## ---- plot_probe_ms
-p.values <- post.ms_group_condition %>% 
-  mutate(p.value_text=if_else(p.value < 0.001, "< 0.001", as.character(round(p.value, 3)))) %>% 
-  pull(p.value_text)
+p.values <- post.ms_group_condition %>% pull(p.value) %>% apa_p(add_equals=T) %>% str_replace("= ", "")
 
 plot.ms <- afex_boxplot_wrapper(model.ms, "condition", "group", NULL, l_memory_score, xlabel=NULL, ymin=0, ymax=1, ybreaks=c(0,0.25,0.5,0.75,1), tracevis=0) + 
   geom_signif(textsize=3, xmin=c(0.75, 0.75, 1.05), xmax=c(0.95, 1.25, 1.25), y_position=c(1.05, 1.15, 1.05), 
@@ -661,7 +651,21 @@ post.ms_all_condition <- emmeans(model.ms_all, pairwise ~ condition, lmer.df="sa
 rm(post.ms_all_group, post.ms_all_group_chance, post.ms_all_session, post.ms_all_condition)
 
 ## ---- plot_probe_ms_all
+p.values_group <- post.ms_all_group %>% as.data.frame() %>% pull(p.value) %>% apa_p(add_equals=T) %>% str_replace("= ", "")
+p.values_session <- post.ms_all_session %>% as.data.frame() %>% pull(p.value) %>% apa_p(add_equals=T) %>% str_replace("= ", "")
+p.values_condition <- post.ms_all_condition %>% as.data.frame() %>% pull(p.value) %>% apa_p(add_equals=T) %>% str_replace("= ", "")
+
+# TBD 
 plot.ms_all <- afex_boxplot_wrapper(model.ms_all, "session", "group", "condition", l_memory_score, ymin=0, ymax=1, ybreaks=c(0,0.25,0.5,0.75,1))
+
+plot <- plot.ms_all + 
+  annotate("text", x=2, y=1, label=paste0("6-8YO vs. 9-11YO: p ", p.values_group[1]), color="black", hjust=0, size=3.5) + 
+  annotate("text", x=2, y=1.2, label=paste0("6-8YO vs. AD: p ", p.values_group[2]), color="black", hjust=0, size=3.5) +
+  annotate("text", x=2, y=1.4, label=paste0("9-11YO vs. AD: p ", p.values_group[3]), color="black", hjust=0, size=3.5) +
+  annotate("text", x=2, y=1.6, label="trial 1 vs. 2-8: p < 0.001", color="black", hjust=0, size=3.5) +
+  annotate("text", x=2, y=1.6, label="trial 1 vs. 2-8: p < 0.001", color="black", hjust=0, size=3.5)
+# TBD 
+rm(p.values_group, p.values_session, p.values_condition)
 ## ----
 rm(plot.ms_all, model.ms_all)
 

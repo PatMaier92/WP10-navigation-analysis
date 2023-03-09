@@ -97,8 +97,8 @@ In training trials, the goal is visible, i.e. the trial is always completed succ
 *Memory accuracy*
 
 * **Memory score** 
-$$\text{Euclidean distance} = \sqrt{(x_{correct}-x_{remembered})^2 + (y_{correct}-y_{remembered})^2}$$
-$$\text{Memory score} = \text{percentile rank of the Euclidean distance value on random distribution}$$
+$$\text{Memory error (Euclidean distance)} = \sqrt{(x_{correct}-x_{remembered})^2 + (y_{correct}-y_{remembered})^2}$$
+$$\text{Memory score} = \text{percentile rank of memory error on random error distribution}$$
 
 *Navigation behavior*
 
