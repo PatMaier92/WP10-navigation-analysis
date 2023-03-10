@@ -15,6 +15,7 @@
 
 ## ---- load_analysis_packages
 library(readxl)
+library(rmatio)
 library(tidyverse)
 library(janitor)
 library(patchwork)
@@ -193,55 +194,47 @@ afex_lineplot_wrapper <- function(model, xv, tv, pv, ylabel, xlabel=l_session, y
   return(p)
 }
 
-scatter_plot_wrapper <- function(data, xv, yv, xlabel, ylabel){
+scatter_plot_wrapper <- function(data, xv, yv, xlabel, ylabel, xbreaks=waiver(), addcor=F) {
   p <- ggplot(data, aes(x=get(xv), y=get(yv), color=factor(group))) + 
     geom_point() + 
-    #geom_smooth(method=lm, se=F, size=0.3) + 
-    geom_smooth(method=lm, se=T, aes(colour=NULL), color="black", size=0.5) + 
-    stat_cor(aes(color=NULL), method="pearson", label.x=0.2, label.y=3.5, p.accuracy=0.001, r.accuracy=0.01, show.legend=F) + 
     scale_color_manual(values=group_colors_f, labels=group_labels) +
-    coord_cartesian(ylim=c(-4,4), xlim=c(0.2,1)) + 
-    theme_classic(base_size=14) + 
-    theme(legend.position="bottom", legend.justification=c(0,0),
+    scale_x_continuous(breaks=xbreaks, expand=expansion(0, 0)) +
+    scale_y_continuous(expand=expansion(0, 0)) +
+    theme_classic(base_size=10) + 
+    theme(legend.position="top", legend.justification=c(0, 0),
           legend.title=element_blank(),
           panel.grid=element_blank(),
           strip.background=element_rect(color=NA, fill=NA)) +
     labs(x=xlabel, y=ylabel)
   
-  return(p)
-}
-
-bar_plot_wrapper <- function(data, colors, colors_o, mylabels, mytitle, ymin=-11, ymax=11){
-  p <- ggplot(data, aes(x=name, y=value, fill=type, color=type)) + 
-    geom_bar(stat="identity", width=0.75) + 
-    geom_hline(yintercept=-1.96, color="red", linetype='dashed', size=0.5) +
-    geom_hline(yintercept=1.96, color="red", linetype='dashed', size=0.5) +
-    scale_fill_manual(values=colors) +
-    scale_color_manual(values=colors_o) +
-    scale_x_discrete(labels=mylabels) + 
-    coord_cartesian(ylim=c(ymin,ymax)) + 
-    theme_classic(base_size=14) + 
-    theme(legend.position="none", 
-          panel.grid.major.x=element_blank(),
-          axis.text.x=element_text(angle=90, hjust=1, vjust=0.5)) +
-    labs(subtitle=paste("Latent", mytitle, "profile"),
-         x=NULL, y="BSR")
+  if (addcor) {
+    p <- p +
+      geom_smooth(method=lm, se=T, aes(colour=NULL), color="black", size=0.5) + 
+      stat_cor(aes(color=NULL), method="pearson", label.x=0.42, label.y=3, p.accuracy=0.001, r.accuracy=0.01, show.legend=F) +
+      coord_cartesian(xlim=c(0.4,1), ylim=c(-6,4))
+  }
+  else p <- p + coord_cartesian(xlim=c(5,31), ylim=c(-6,4))
   
   return(p)
 }
 
-box_plot_wrapper <- function(data, colors, colors_o, ylabel, mylabels, ymin=-4, ymax=4){
-  p <- ggplot(data, aes(x=group, y=latent_profile_score, fill=group, color=group)) + 
-    geom_boxplot(width=0.75) + 
+bar_plot_wrapper <- function(data, colors, colors_o, mytitle, mysubtitle=NULL, xmin=-13, xmax=13){
+  p <- ggplot(data, aes(x=value, y=name, fill=type, color=type)) + 
+    geom_bar(stat="identity", width=0.75) + 
+    geom_vline(xintercept=-1.96, color="red", linetype='dashed', size=0.5) +
+    geom_vline(xintercept=1.96, color="red", linetype='dashed', size=0.5) +
+    geom_signif(textsize=3.5, xmin=c(0.75, 3.75), xmax=c(3.25, 7.25), y_position=c(xmax-3, xmax-3), 
+                annotation=c("post-tests", "navigation"), color="black", tip_length=0.025) + 
     scale_fill_manual(values=colors) +
     scale_color_manual(values=colors_o) +
-    scale_x_discrete(labels=mylabels) +
-    coord_cartesian(ylim=c(ymin, ymax)) + 
-    theme_classic(base_size=14) + 
-    theme(legend.position="none",
+    coord_cartesian(xlim=c(xmin, xmax)) + 
+    theme_classic(base_size=10) + 
+    theme(legend.position="none", 
           panel.grid.major.x=element_blank(),
-          axis.text.x=element_text(angle=90, hjust=1, vjust=0.5)) +
-    labs(x=NULL, y=ylabel)
+          axis.text=element_text(size=11)) +
+    labs(title=mytitle, 
+         subtitle=mysubtitle, 
+         x="BSR", y=NULL)
   
   return(p)
 }
@@ -252,55 +245,55 @@ box_plot_wrapper <- function(data, colors, colors_o, ylabel, mylabels, ymin=-4, 
 # options("contrasts")
 options(contrasts=c(unordered="contr.sum", ordered="contr.poly"))
 
-# function for statistical comparison of correlation coefficients with z-test
-cor.test.comparison <- function(plsc_data){
-  
-  # Pearson's correlations coefficients
-  r1 <- cor.test(~ memory_score + latent_profile_score, data=plsc_data, subset=(group=="YoungKids"), method="pearson") 
-  r2 <- cor.test(~ memory_score + latent_profile_score, data=plsc_data, subset=(group=="OldKids"), method="pearson") 
-  r3 <- cor.test(~ memory_score + latent_profile_score, data=plsc_data, subset=(group=="YoungAdults"), method="pearson") 
-  
-  # n (derived from df)
-  n_for_ztest <- function(r){
-    n <- (r$parameter %>% unname()) + 2
-    
-    return(n)
-  }
-  n1 <- n_for_ztest(r1)
-  n2 <- n_for_ztest(r2)
-  n3 <- n_for_ztest(r3)
-  
-  # Fisher's z transformation of coefficients
-  r_to_z <- function(r){
-    z <- 0.5 * log((1+r$estimate)/(1-r$estimate)) %>% 
-      unname()
-    
-    return(z)
-  }
-  Z1 <- r_to_z(r1)
-  Z2 <- r_to_z(r2)
-  Z3 <- r_to_z(r3)
-  
-  # z-test statistic (comparison of coefficients)
-  ztest <- function(za, zb, na, nb) {
-    Z <- (za - zb) / sqrt( 1 / (na - 3) + 1 / (nb - 3))
-    p <- round(2*pnorm(-abs(Z)), 4)
-    
-    return(p) 
-  }
-  ztest1 <- ztest(Z1, Z2, n1, n2)
-  ztest2 <- ztest(Z1, Z3, n1, n3)
-  ztest3 <- ztest(Z2, Z3, n2, n3)
-  
-  # summarize results 
-  r <- as.data.frame(cbind(r1$estimate, r2$estimate, r3$estimate), row.names="r")
-  colnames(r) <- c("6-8YO", "9-11YO", "AD")
-  p <- as.data.frame(cbind(ztest1, ztest2, ztest3), row.names="p")
-  colnames(p) <- c("6-8YO vs. 9-11YO", "6-8YO vs. AD", "9-11YO vs. AD")
-  results <- list(r=r, p=p)
-
-  return(results)
-}
+# # function for statistical comparison of correlation coefficients with z-test
+# cor.test.comparison <- function(plsc_data){
+#   
+#   # Pearson's correlations coefficients
+#   r1 <- cor.test(~ memory_score + latent_profile_score, data=plsc_data, subset=(group=="YoungKids"), method="pearson") 
+#   r2 <- cor.test(~ memory_score + latent_profile_score, data=plsc_data, subset=(group=="OldKids"), method="pearson") 
+#   r3 <- cor.test(~ memory_score + latent_profile_score, data=plsc_data, subset=(group=="YoungAdults"), method="pearson") 
+#   
+#   # n (derived from df)
+#   n_for_ztest <- function(r){
+#     n <- (r$parameter %>% unname()) + 2
+#     
+#     return(n)
+#   }
+#   n1 <- n_for_ztest(r1)
+#   n2 <- n_for_ztest(r2)
+#   n3 <- n_for_ztest(r3)
+#   
+#   # Fisher's z transformation of coefficients
+#   r_to_z <- function(r){
+#     z <- 0.5 * log((1+r$estimate)/(1-r$estimate)) %>% 
+#       unname()
+#     
+#     return(z)
+#   }
+#   Z1 <- r_to_z(r1)
+#   Z2 <- r_to_z(r2)
+#   Z3 <- r_to_z(r3)
+#   
+#   # z-test statistic (comparison of coefficients)
+#   ztest <- function(za, zb, na, nb) {
+#     Z <- (za - zb) / sqrt( 1 / (na - 3) + 1 / (nb - 3))
+#     p <- round(2*pnorm(-abs(Z)), 4)
+#     
+#     return(p) 
+#   }
+#   ztest1 <- ztest(Z1, Z2, n1, n2)
+#   ztest2 <- ztest(Z1, Z3, n1, n3)
+#   ztest3 <- ztest(Z2, Z3, n2, n3)
+#   
+#   # summarize results 
+#   r <- as.data.frame(cbind(r1$estimate, r2$estimate, r3$estimate), row.names="r")
+#   colnames(r) <- c("6-8YO", "9-11YO", "AD")
+#   p <- as.data.frame(cbind(ztest1, ztest2, ztest3), row.names="p")
+#   colnames(p) <- c("6-8YO vs. 9-11YO", "6-8YO vs. AD", "9-11YO vs. AD")
+#   results <- list(r=r, p=p)
+# 
+#   return(results)
+# }
 
 
 ## ---- papaja_output_helper
@@ -793,114 +786,67 @@ rm(temp_data, p.values)
 rm(plot.position, model.position, post.position)
 
 
-# # ------------------------------------------------------------------------------
-# # ::: MULTIVARIATE CORRELATION ANALYSIS (PLSC) ::: #
-# # ------------------------------------------------------------------------------
-# 
-# ## ---- model_plsc_ego
-# file_plsc_ego <-"../WP10_data/WP10_results/PLSC_LP_ego_2_by_1.txt"
-# plsc_ego <- read.table(file_plsc_ego, sep=",", header=T) %>% 
-#   mutate(group=factor(case_when(group=="1" ~ "YoungKids", group=="2" ~ "OldKids", T ~ "YoungAdults"), 
-#                       levels=c("YoungKids", "OldKids", "YoungAdults")))
-# rm(file_plsc_ego)
-# 
-# model.plsc_ego <- aov_ez("id", "latent_profile_score", plsc_ego, between=c("group"))
-# post.plsc_ego <- emmeans(model.plsc_ego, pairwise ~ group, adjust="bonferroni")$contrasts
-# 
-# cor.plsc_ego <- cor.test.comparison(plsc_ego)
-# ## ---- 
-# 
-# ## ---- plot_plsc_scatter_ego
-# plot.plsc_ego <- scatter_plot_wrapper(plsc_ego, "memory_score", "latent_profile_score", "egocentric long-delay memory", "E-LPS")
-# 
-# plot.plsc_ego_lps <- box_plot_wrapper(plsc_ego, group_colors_f, group_colors_c, "E-LPS", group_labels)
-# 
-# p.values <- post.plsc_ego %>% 
-#   as.data.frame() %>%
-#   add_significance(p.col="p.value", cutpoints = c(0, 0.001, 0.01, 0.05, 1), symbols = c("***", "**", "*", "ns")) %>% 
-#   pull(p.value.signif)
-# 
-# plot.plsc_ego_lps <- plot.plsc_ego_lps + 
-#   geom_signif(textsize=3, xmin=c(1, 2.2, 1), xmax=c(1.8, 3, 3), y_position=c(3.2, 3.2, 3.7), 
-#               annotation=c(p.values[1], p.values[2], p.values[3]), color="black", tip_length=0)
-# rm(p.values)
-# ## ----
-# 
-# ## ---- plot_plsc_lv_ego
-# file_plsc_ego <-"../WP10_data/WP10_results/PLSC_LV_ego_2_by_1.txt"
-# plsc_ego_lv <- read.table(file_plsc_ego, sep=",", header=T)
-# rm(file_plsc_ego)
-# 
-# weights_ego <- plsc_ego_lv %>% 
-#   slice(1) %>% 
-#   select(-LV) %>% 
-#   pivot_longer(cols=everything()) %>% 
-#   mutate(name=factor(name, levels=c("latency", "excess_path", "excess_distance", "rotation_velocity", "layout", "landmark", "position")),
-#          type=factor(case_when(name %in% c("latency", "excess_path", "excess_distance", "rotation_velocity") ~ "nav", T ~ "post")))
-# 
-# plot.plsc_lv_ego <- bar_plot_wrapper(weights_ego, plsc_colors, plsc_colors_o, plsc_labels, "egocentric")
-# ## ----
-# rm(plsc_ego, model.plsc_ego, post.plsc_ego, cor.plsc_ego, plsc_ego_lv, weights_ego)
-# 
-# 
-# ## ---- model_plsc_allo
-# file_plsc_allo <-"../WP10_data/WP10_results/PLSC_LP_allo_2_by_1.txt"
-# plsc_allo <- read.table(file_plsc_allo, sep=",", header=T) %>% 
-#   mutate(group=factor(case_when(group=="1" ~ "YoungKids", group=="2" ~ "OldKids", T ~ "YoungAdults"), 
-#                       levels=c("YoungKids", "OldKids", "YoungAdults")))
-# rm(file_plsc_allo)
-# 
-# model.plsc_allo <- aov_ez("id", "latent_profile_score", plsc_allo, between=c("group"))
-# post.plsc_allo <- emmeans(model.plsc_allo, pairwise ~ group, adjust="bonferroni")$contrasts
-# 
-# cor.plsc_allo <- cor.test.comparison(plsc_allo)
-# ## ---- 
-# 
-# ## ---- plot_plsc_scatter_allo
-# plot.plsc_allo <- scatter_plot_wrapper(plsc_allo, "memory_score", "latent_profile_score", "allocentric long-delay memory", "A-LPS")
-# 
-# plot.plsc_allo_lps <- box_plot_wrapper(plsc_allo, group_colors_f, group_colors_c, "A-LPS", group_labels)
-# 
-# p.values <- post.plsc_allo %>% 
-#   as.data.frame() %>%
-#   add_significance(p.col="p.value", cutpoints = c(0, 0.001, 0.01, 0.05, 1), symbols = c("***", "**", "*", "ns")) %>% 
-#   pull(p.value.signif)
-# 
-# plot.plsc_allo_lps <- plot.plsc_allo_lps + 
-#   geom_signif(textsize=3, xmin=c(1, 2.2, 1), xmax=c(1.8, 3, 3), y_position=c(3.2, 3.2, 3.7), 
-#               annotation=c(p.values[1], p.values[2], p.values[3]), color="black", tip_length=0)
-# rm(p.values)
-# ## ----
-# 
-# ## ---- plot_plsc_lv_allo
-# file_plsc_allo <-"../WP10_data/WP10_results/PLSC_LV_allo_2_by_1.txt"
-# plsc_allo_lv <- read.table(file_plsc_allo, sep=",", header=T)
-# rm(file_plsc_allo)
-# 
-# weights_allo <- plsc_allo_lv %>% 
-#   slice(1) %>% 
-#   select(-LV) %>% 
-#   pivot_longer(cols=everything()) %>% 
-#   mutate(name=factor(name, levels=c("latency", "excess_path", "excess_distance", "rotation_velocity", "layout", "landmark", "position")),
-#          type=factor(case_when(name %in% c("latency", "excess_path", "excess_distance", "rotation_velocity") ~ "nav", T ~ "post")))
-# 
-# plot.plsc_lv_allo <- bar_plot_wrapper(weights_allo, plsc_colors, plsc_colors_o, plsc_labels, "allocentric")
-# ## ----
-# rm(plsc_allo, model.plsc_allo, post.plsc_allo, cor.plsc_allo, plsc_allo_lv, weights_allo)
-# 
-# 
-# plot.plsc_lv_ego + 
-#   (plot.plsc_ego + theme(axis.title.x=element_text(margin=margin(t=-150, unit="pt")),
-#                          legend.direction="horizontal", legend.position=c(0,-0.5))) + 
-#   plot.plsc_ego_lps + 
-#   plot.plsc_lv_allo + 
-#   (plot.plsc_allo + theme(axis.title.x=element_text(margin=margin(t=-150, unit="pt")),
-#                           legend.direction="horizontal", legend.position=c(0,-0.5))) + 
-#   plot.plsc_allo_lps + 
-#   plot_annotation(tag_levels=list(c("A", "", "", "B", "", ""))) + 
-#   plot_layout(nrow=2, widths=c(0.325, 0.5, 0.175)) 
-# 
-# ggsave("plsc.jpeg", width=7.8, height=7.8, dpi=600)
+# ------------------------------------------------------------------------------
+# ::: MULTIVARIATE CORRELATION ANALYSIS (PLSC) ::: #
+# ------------------------------------------------------------------------------
+
+
+file_plsc <- "../WP10_data/WP10_results/PLSC_230301/PLSC_age_by_NlS1PT/results_m3_g1.mat"
+plsc_data <- read.mat(file_plsc)
+rm(file_plsc)
+
+
+## ---- plot_plsc_lv
+lv.p <- plsc_data$plsres$perm_result$sprob %>% as.numeric() %>% apa_p(add_equals=T)
+lv.cor <- plsc_data$plsres$boot_result$orig_corr %>% apa_num()
+lv.llcor <- plsc_data$plsres$boot_result$llcorr %>% apa_num()
+lv.ulcor <- plsc_data$plsres$boot_result$ulcorr %>% apa_num()
+lv.info <- paste0("Pearson's r = ", lv.cor, ", p ", lv.p, " (95%-CI [", lv.llcor, ", ", lv.ulcor, "])")
+             
+l_bsr <- c("latency", "excess path length", "excess distance to goal", "initial rotation", "layout score", "landmark score", "positioning score")
+bsr <- plsc_data$plsres$boot_result$compare_u %>% 
+  unlist() %>% enframe() %>% 
+  mutate(type=factor(case_when(name %in%  1:4 ~ "nav", T ~ "post"), levels=c("nav", "post")),
+         name=factor(l_bsr, levels=rev(l_bsr)))
+
+plot.bsr <- bar_plot_wrapper(bsr, plsc_colors_f, plsc_colors_o, mytitle="Latent profile for age", mysubtitle=lv.info)
+ggsave("../WP10_data/Plots/bsr.jpg", plot.bsr, width=4.7, height=3.2, dpi=600)
+## ---- 
+rm(l_bsr, bsr, plot.bsr, lv.p, lv.cor, lv.llcor, lv.ulcor)
+
+
+## ---- plot_plsc_age_x_lp
+lp <- plsc_data$plsres$usc %>% unlist()
+data_age <- data_l %>% select(id, group, age) %>% unique() %>% cbind(lp) # TBD: store age and group in plsres and extract from there (imputed values)! 
+rm(lp)
+
+plot.age_x_lp <- scatter_plot_wrapper(data_age, "age", "lp", "age", "latent profile score")
+ggsave("../WP10_data/Plots/age_x_lp.jpg", plot.age_x_lp, width=3, height=3, dpi=600)
+## ---- 
+rm(data_age, plot.age_x_lp)
+
+
+## ---- plot_plsc_lp_x_memory
+mem <- read.table("../WP10_data/WP10_results/wp10_plsc_memory.txt", sep=",", header=T) %>% select(-group)
+lp <- plsc_data$plsres$usc %>% unlist()
+data_memory <- data_l %>% select(id, group) %>% unique() %>% cbind(lp) %>% 
+  left_join(mem, by="id")
+rm(mem, lp)
+
+# tbd check why correlations differ in matlab and r! 
+
+plot.lp_x_avgmem <- scatter_plot_wrapper(data_memory, "memory.avg", "lp", "average memory", "latent profile score", xbreaks=c(0.4,0.5,0.6,0.7,0.8,0.9,1), addcor=T)
+plot.lp_x_memego1 <- scatter_plot_wrapper(data_memory, "memory.ego.1", "lp", "memory ego 1", "latent profile score", xbreaks=c(0.4,0.5,0.6,0.7,0.8,0.9,1), addcor=T)
+plot.lp_x_memego2 <- scatter_plot_wrapper(data_memory, "memory.ego.2", "lp", "memory ego 2", "latent profile score", xbreaks=c(0.4,0.5,0.6,0.7,0.8,0.9,1), addcor=T)
+plot.lp_x_memallo1 <- scatter_plot_wrapper(data_memory, "memory.allo.1", "lp", "memory allo 1", "latent profile score", xbreaks=c(0.4,0.5,0.6,0.7,0.8,0.9,1), addcor=T)
+plot.lp_x_memallo2 <- scatter_plot_wrapper(data_memory, "memory.allo.2", "lp", "memory allo 2", "latent profile score", xbreaks=c(0.4,0.5,0.6,0.7,0.8,0.9,1), addcor=T)
+
+plot.lp_x_mem <- plot.lp_x_memego1 + plot.lp_x_memego2 + plot.lp_x_memallo1 + plot.lp_x_memallo2 +
+  plot_layout(nrow=1, ncol=4, guides="collect") & theme(legend.position="none", legend.justification="left")
+ggsave("../WP10_data/Plots/lp_x_mem.jpg", plot.lp_x_mem, width=10, height=3, dpi=600)
+## ----
+rm(data_memory, plot.lp_x_avgmem, plot.lp_x_memego1, plot.lp_x_memego2, plot.lp_x_memallo1, plot.lp_x_memallo2, plot.lp_x_mem)
+rm(plsc_data)
 
 
 # ############################################################################ #
