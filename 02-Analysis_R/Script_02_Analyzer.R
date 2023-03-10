@@ -651,20 +651,20 @@ post.ms_all_condition <- emmeans(model.ms_all, pairwise ~ condition, lmer.df="sa
 rm(post.ms_all_group, post.ms_all_group_chance, post.ms_all_session, post.ms_all_condition)
 
 ## ---- plot_probe_ms_all
-p.values_group <- post.ms_all_group %>% as.data.frame() %>% pull(p.value) %>% apa_p(add_equals=T) %>% str_replace("= ", "")
-p.values_session <- post.ms_all_session %>% as.data.frame() %>% pull(p.value) %>% apa_p(add_equals=T) %>% str_replace("= ", "")
-p.values_condition <- post.ms_all_condition %>% as.data.frame() %>% pull(p.value) %>% apa_p(add_equals=T) %>% str_replace("= ", "")
+p.values_group <- post.ms_all_group %>% as.data.frame() %>% pull(p.value) %>% apa_p(add_equals=T) 
+p.values_session <- post.ms_all_session %>% as.data.frame() %>% pull(p.value) %>% apa_p(add_equals=T) 
+p.values_condition <- post.ms_all_condition %>% as.data.frame() %>% pull(p.value) %>% apa_p(add_equals=T) 
 
-# TBD 
-plot.ms_all <- afex_boxplot_wrapper(model.ms_all, "session", "group", "condition", l_memory_score, ymin=0, ymax=1, ybreaks=c(0,0.25,0.5,0.75,1))
+plot.ms_all <- afex_boxplot_wrapper(model.ms_all, "session", "group", "condition", l_memory_score, xlabel=NULL, ymin=0, ymax=1, ybreaks=c(0,0.25,0.5,0.75,1)) + 
+  facet_wrap(~condition, strip.position="bottom") + 
+  theme(strip.placement="outside", strip.switch.pad.wrap=unit(0, "cm")) + 
+  scale_y_continuous(expand=expansion(mult=c(0, 0.35))) + 
+  annotate("text", x=0.5, y=1.1, label=paste0("6-8YO vs. 9-11YO: p ", p.values_group[1]), color="black", hjust=0, size=3.5) + 
+  annotate("text", x=0.5, y=1.15, label=paste0("6-8YO vs. AD: p ", p.values_group[2]), color="black", hjust=0, size=3.5) +
+  annotate("text", x=0.5, y=1.2, label=paste0("9-11YO vs. AD: p ", p.values_group[3]), color="black", hjust=0, size=3.5) +
+  annotate("text", x=0.5, y=1.25, label=paste0("ego vs. allo: p ", p.values_condition[1]), color="black", hjust=0, size=3.5) +
+  annotate("text", x=0.5, y=1.3, label=paste0("session 1 vs. 2: p ", p.values_session[1]), color="black", hjust=0, size=3.5)
 
-plot <- plot.ms_all + 
-  annotate("text", x=2, y=1, label=paste0("6-8YO vs. 9-11YO: p ", p.values_group[1]), color="black", hjust=0, size=3.5) + 
-  annotate("text", x=2, y=1.2, label=paste0("6-8YO vs. AD: p ", p.values_group[2]), color="black", hjust=0, size=3.5) +
-  annotate("text", x=2, y=1.4, label=paste0("9-11YO vs. AD: p ", p.values_group[3]), color="black", hjust=0, size=3.5) +
-  annotate("text", x=2, y=1.6, label="trial 1 vs. 2-8: p < 0.001", color="black", hjust=0, size=3.5) +
-  annotate("text", x=2, y=1.6, label="trial 1 vs. 2-8: p < 0.001", color="black", hjust=0, size=3.5)
-# TBD 
 rm(p.values_group, p.values_session, p.values_condition)
 ## ----
 rm(plot.ms_all, model.ms_all)
@@ -685,6 +685,7 @@ post.layout <- pairwise_fisher_test(table(temp_data$score, temp_data$group), p.a
 ## ----
 
 ## ---- plot_post_layout
+p.values <- post.layout %>% pull(p.adj) %>% apa_p(add_equals=T) %>% str_replace("= ", "")
 plot.layout <- ggplot(temp_data, aes(x=group, y=score, fill=group, color=group)) + 
   stat_summary(fun=mean, na.rm=T, geom="bar", alpha=0.6, width=0.6, size=1, show.legend=F) + 
   scale_fill_manual(values=group_colors_f, labels=group_labels, name=NULL) + 
@@ -699,7 +700,8 @@ plot.layout <- ggplot(temp_data, aes(x=group, y=score, fill=group, color=group))
         axis.text.x=element_blank()) +
   labs(x=NULL, y="layout accuracy (%)") +
   geom_signif(textsize=3, xmin=c(1, 1, 2.1), xmax=c(1.9, 3, 3), y_position=c(0.94, 1, 0.94), 
-              annotation=c(post.layout$p.adj.signif[1], post.layout$p.adj.signif[2], post.layout$p.adj.signif[3]), color="black", tip_length=0) 
+              annotation=c(p.values[1], p.values[2], p.values[3]), color="black", tip_length=0) 
+rm(p.values)
 
 temp_data2 <- temp_data %>% 
   filter(!is.na(layout_obj_1)) %>% 
@@ -766,10 +768,7 @@ post.position <- emmeans(model.position, pairwise ~ group, adjust="bonferroni")
 ## ---- 
 
 ## ---- plot_post_position
-p.values <- post.position$contrast %>% as.data.frame() %>% 
-  add_significance(p.col="p.value", cutpoints = c(0, 0.001, 0.01, 0.05, 1), symbols = c("***", "**", "*", "ns")) %>% 
-  pull(p.value.signif)
-
+p.values <- post.position$contrast %>% as.data.frame() %>% pull(p.value) %>% apa_p(add_equals=T) %>% str_replace("= ", "")
 plot.position <- afex_plot(model.position, x="group", error="model",
                            mapping=c("shape", "color"),
                            factor_levels=list(group=group_labels),
@@ -1001,12 +1000,23 @@ post.ms_wl_group_session <- summary(rbind(pairs(emm.ms_wl_group_session, simple=
                                     infer=c(T,T), by=NULL, adjust="bonferroni")
 rm(emm.ms_wl_group_session)
 
-post.ms_wl_condition <- emmeans(model.ms_wl, pairwise ~ group * condition, lmer.df="satterthwaite")$contrasts
+post.ms_wl_condition <- emmeans(model.ms_wl, pairwise ~ condition, lmer.df="satterthwaite")$contrasts
 ## ----
 rm(post.ms_wl_group_session, post.ms_wl_condition)
 
 ## ---- plot_probe_ms_wl
-plot.ms_wl <- afex_boxplot_wrapper(model.ms_wl, "session", "group", "condition", l_memory_score, ymin=0, ymax=1, ybreaks=c(0,0.25,0.5,0.75,1))
+p.values_group_session <- post.ms_wl_group_session %>% pull(p.value) %>% apa_p(add_equals=T)
+p.values_condition <- post.ms_wl_condition %>% as.data.frame() %>% pull(p.value) %>% apa_p(add_equals=T) 
+
+plot.ms_wl <- afex_boxplot_wrapper(model.ms_wl, "session", "group", "condition", l_memory_score, xlabel=NULL, ymin=0, ymax=1, ybreaks=c(0,0.25,0.5,0.75,1)) + 
+  facet_wrap(~condition, strip.position="bottom") + 
+  theme(strip.placement="outside", strip.switch.pad.wrap=unit(0, "cm")) + 
+  scale_y_continuous(expand=expansion(mult=c(0, 0.35))) + 
+  annotate("text", x=0.5, y=1.1, label=paste0("6-8YO vs. AD in 2: p ", p.values_group_session[5]), color="black", hjust=0, size=3.5) +
+  annotate("text", x=0.5, y=1.15, label=paste0("9-11YO vs. AD in 2: p ", p.values_group_session[6]), color="black", hjust=0, size=3.5) +
+  annotate("text", x=0.5, y=1.2, label=paste0("ego vs. allo: p ", p.values_condition[1]), color="black", hjust=0, size=3.5)
+
+rm(p.values_group_session, p.values_condition)
 ## ----
 rm(plot.ms_wl)
 
@@ -1080,17 +1090,14 @@ rm(emm.latency_probe_group_condition)
 rm(emm.latency_probe_group_condition)
 
 ## ---- plot_probe_latency 
-p.values <- post.latency_probe_group_condition %>%
-  add_significance(p.col="p.value", cutpoints = c(0, 0.001, 0.01, 0.05, 1), symbols = c("***", "**", "*", "ns")) %>% 
-  pull(p.value.signif)
+p.values <- post.latency_probe_group_condition %>% pull(p.value) %>% apa_p(add_equals=T) %>% str_replace("= ", "")
 
 plot.latency_probe <- afex_boxplot_wrapper(model.latency_probe, "condition", "group", NULL, l_latency, xlabel=NULL, ymin=0, ymax=45, tracevis=0) + 
   geom_signif(textsize=3, xmin=c(0.75), xmax=c(1.25), y_position=c(44), 
               annotation=c(p.values[2]), color="black", tip_length=0) + 
   geom_signif(textsize=3, xmin=c(1.755), xmax=c(2.25), y_position=c(44), 
               annotation=c(p.values[5]), color="black", tip_length=0) + 
-  geom_signif(textsize=3, xmin=c(1), xmax=c(2), y_position=c(47), 
-              annotation=c(paste("ego vs allo: all p", p.values[7])), color="black", tip_length=0)
+  annotate("text", x=1.5, y=50, label=paste0("ego vs. allo: p ", p.values[7]), color="black", size=3)
 
 rm(p.values)
 ## ----
@@ -1133,17 +1140,14 @@ rm(emm.path_probe_group_condition)
 rm(post.path_probe_group_condition)
 
 ## ---- plot_probe_path
-p.values <- post.path_probe_group_condition %>%
-  add_significance(p.col="p.value", cutpoints = c(0, 0.001, 0.01, 0.05, 1), symbols = c("***", "**", "*", "ns")) %>% 
-  pull(p.value.signif)
+p.values <- post.path_probe_group_condition %>% pull(p.value) %>% apa_p(add_equals=T) %>% str_replace("= ", "")
 
 plot.path_probe <- afex_boxplot_wrapper(model.path_probe, "condition", "group", NULL, l_excess_path_length, xlabel=NULL, ymin=0, ymax=110, tracevis=0) +
-  geom_signif(textsize=3, xmin=c(0.75), xmax=c(1.25), y_position=c(110), 
+  geom_signif(textsize=3, xmin=c(0.75), xmax=c(1.25), y_position=c(105), 
               annotation=c(p.values[2]), color="black", tip_length=0) + 
-  geom_signif(textsize=3, xmin=c(1.755, 1.755, 2.05), xmax=c(1.95, 2.25, 2.25), y_position=c(110, 115, 110), 
+  geom_signif(textsize=3, xmin=c(1.755, 1.755, 2.05), xmax=c(1.95, 2.25, 2.25), y_position=c(105, 115, 105), 
               annotation=c(p.values[4], p.values[5], p.values[6]), color="black", tip_length=0) + 
-  geom_signif(textsize=3, xmin=c(1), xmax=c(2), y_position=c(122), 
-              annotation=c(paste("ego vs allo: all p", p.values[7])), color="black", tip_length=0)
+  annotate("text", x=1.5, y=125, label=paste0("ego vs. allo: p < ", p.values[9]), color="black", size=3)
 
 rm(p.values)
 ## ----
@@ -1187,19 +1191,12 @@ post.distance_probe_condition <- emmeans(model.distance_probe, pairwise ~ condit
 rm(post.distance_probe_group, post.distance_probe_condition)
 
 ## ---- plot_probe_distance
-p.values_g <- post.distance_probe_group %>% as.data.frame() %>% 
-  add_significance(p.col="p.value", cutpoints = c(0, 0.001, 0.01, 0.05, 1), symbols = c("***", "**", "*", "ns")) %>% 
-  pull(p.value.signif)
-
-p.values_c <- post.distance_probe_condition %>% as.data.frame() %>% 
-  add_significance(p.col="p.value", cutpoints = c(0, 0.001, 0.01, 0.05, 1), symbols = c("***", "**", "*", "ns")) %>% 
-  pull(p.value.signif)
+p.values_g <- post.distance_probe_group %>% as.data.frame() %>% pull(p.value) %>% apa_p(add_equals=T) %>% str_replace("= ", "")
+p.values_c <- post.distance_probe_condition %>% as.data.frame() %>% pull(p.value) %>% apa_p(add_equals=T) %>% str_replace("= ", "")
 
 plot.distance_probe <- afex_boxplot_wrapper(model.distance_probe, "condition", "group", NULL, l_excess_distance_goal, xlabel=NULL, ymin=-25, ymax=25, ybreaks=c(-20,-10,0,10,20,30), tracevis=0) + 
-  geom_signif(textsize=3, xmin=c(1), xmax=c(2), y_position=c(28), 
-              annotation=c(paste("ego vs allo: all p", p.values_c)), color="black", tip_length=0) + 
-  geom_signif(textsize=3, xmin=c(1), xmax=c(2), y_position=c(24), 
-              annotation=c(paste("age groups: all p", p.values_g[1])), color="black", tip_length=0)
+  annotate("text", x=1.5, y=28, label=paste0("ego vs. allo: p ", p.values_c[1]), color="black", size=3) + 
+  annotate("text", x=1.5, y=24, label=paste0("all age group comparisons: p ", p.values_g[1]), color="black", size=3)
 
 rm(p.values_g, p.values_c)
 ## ----
@@ -1239,13 +1236,10 @@ post.init_rot_probe_condition <- emmeans(model.initial_rotation_probe, pairwise 
 rm(post.init_rot_probe_condition)
 
 ## ---- plot_probe_initial_rotation
-p.values <- post.init_rot_probe_condition %>% as.data.frame() %>% 
-  add_significance(p.col="p.value", cutpoints = c(0, 0.001, 0.01, 0.05, 1), symbols = c("***", "**", "*", "ns")) %>% 
-  pull(p.value.signif)
+p.values <- post.init_rot_probe_condition %>% as.data.frame() %>% pull(p.value) %>% apa_p(add_equals=T) %>% str_replace("= ", "")
 
 plot.initial_rotation_probe <- afex_boxplot_wrapper(model.initial_rotation_probe, "condition", "group", NULL, l_initial_rotation, xlabel=NULL, ymin=0, ymax=4.5, tracevis=0) +
-  geom_signif(textsize=3, xmin=c(1), xmax=c(2), y_position=c(4.9), 
-              annotation=c(paste("ego vs allo: all p", p.values[1])), color="black", tip_length=0)
+  annotate("text", x=1.5, y=4.9, label=paste0("ego vs. allo: p ", p.values[1]), color="black", size=3)
 
 rm(p.values)
 ## ----
