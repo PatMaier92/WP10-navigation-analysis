@@ -492,17 +492,19 @@ rm(plot.layout, plot.landmark, plot.position)
 ```{r, plot_plsc_lv_learn, include=F}
 ```
 
-```{r, plot_plsc_age_x_lp_learn, include=F}
+```{r, plot_plsc_age_x_lp_nav_learn, include=F}
 ```
 
-```{r, model_plsc_lp_x_memory_learn, include=F}
+```{r, plot_plsc_age_x_lp_post_learn, include=F}
 ```
 
-```{r, plot_plsc_lp_x_memory_learn, include=F}
+```{r, plot_plsc_memory_x_lp_nav_learn, include=F}
+```
+
+```{r, plot_plsc_memory_x_lp_post_learn, include=F}
 ```
 
 ```{r apa_plsc_learn, include=F}
-
 # LV 
 apa_lv.p <- lv.p
 apa_lv.cor <- lv.cor
@@ -514,27 +516,61 @@ apa_bsr <- bsr %>%
   select(name, value) %>% 
   pivot_wider(names_from=name, values_from=value) %>% apa_num()
 
+rm(lv.p, lv.cor, lv.ulcor, lv.llcor)
+```
+
+```{r apa_plsc_nav_learn, include=F}
 # LP correlations
-apa_model.lp_ego_1 <- model.lp_ego_1 %>% apa_print()
-apa_model.lp_ego_2 <- model.lp_ego_2 %>% apa_print()
-apa_model.p_lp_ego <- model.comp_lp_ego$p %>% as.numeric() %>% apa_p(add_equals=T)
+apa_model.lp_n_ego_1 <- model.lp_n_ego_1 %>% apa_print()
+apa_model.lp_n_ego_2 <- model.lp_n_ego_2 %>% apa_print()
+apa_model.p_lp_n_ego <- model.comp_lp_n_ego$p %>% as.numeric() %>% apa_p(add_equals=T)
 
-apa_model.lp_allo_1 <- model.lp_allo_1 %>% apa_print()
-apa_model.lp_allo_2 <- model.lp_allo_2 %>% apa_print()
-apa_model.p_lp_allo <- model.comp_lp_allo$p %>% as.numeric() %>% apa_p(add_equals=T)
+apa_model.lp_n_allo_1 <- model.lp_n_allo_1 %>% apa_print()
+apa_model.lp_n_allo_2 <- model.lp_n_allo_2 %>% apa_print()
+apa_model.p_lp_n_allo <- model.comp_lp_n_allo$p %>% as.numeric() %>% apa_p(add_equals=T)
 
-rm(lv.p, lv.cor, lv.ulcor, lv.llcor, model.lp_ego_1, model.lp_ego_2, model.lp_allo_1, model.lp_allo_2, model.comp_lp_ego, model.comp_lp_allo)
+rm(lv.p, lv.cor, lv.ulcor, lv.llcor, model.lp_n_ego_1, model.lp_n_ego_2, model.lp_n_allo_1, model.lp_n_allo_2, model.comp_lp_n_ego, model.comp_lp_n_allo)
+```
+
+```{r apa_plsc_post_learn, include=F}
+# # LP correlations
+# apa_model.lp_n_ego_1 <- model.lp_n_ego_1 %>% apa_print()
+# apa_model.lp_n_ego_2 <- model.lp_n_ego_2 %>% apa_print()
+# apa_model.p_lp_n_ego <- model.comp_lp_n_ego$p %>% as.numeric() %>% apa_p(add_equals=T)
+# 
+# apa_model.lp_n_allo_1 <- model.lp_n_allo_1 %>% apa_print()
+# apa_model.lp_n_allo_2 <- model.lp_n_allo_2 %>% apa_print()
+# apa_model.p_lp_n_allo <- model.comp_lp_n_allo$p %>% as.numeric() %>% apa_p(add_equals=T)
+# 
+# rm(lv.p, lv.cor, lv.ulcor, lv.llcor, model.lp_n_ego_1, model.lp_n_ego_2, model.lp_n_allo_1, model.lp_n_allo_2, model.comp_lp_n_ego, model.comp_lp_n_allo)
 ```
 
 We applied PLSC to identify if age-related variations in navigation behavior during the initial training phase can predict spatial memory. We identified a single reliable LV ($p$ `r apa_lv.p`) that optimally represents associations between age and a profile of navigation indicators from training trials in the learning session ($r$ = `r apa_lv.cor`, 95% CI[`r apa_lv.llcor`, `r apa_lv.ulcor`]). We identified several stable components within the multivariate profile, paralleling our results from the LMMs. Higher age was associated with with shorter latency (BSR = `r apa_bsr$latency`), more direct navigation (excess path length; BSR = `r apa_bsr$"excess path length"`), and search near the goal (excess distance to goal; BSR = `r apa_bsr$"excess distance to goal"`) but not visual exploration at the first decision point (initial rotation; BSR = `r apa_bsr$"initial rotation"`). 
 
-As a second step, we computed the latent profile score (LPS) for each participant. A higher LPS indicates that an individual expressed the age-related profile more strongly, meaning that children with a higher LPS navigate more similar to adults. We then correlated the LPS with the immediate and long-delay memory scores for the egocentric and the allocentric condition. LPS correlated significantly with immediate egocentric (`r apa_model.lp_ego_1$full_result`) and long-delay egocentric memory (`r apa_model.lp_ego_2$full_result`). The correlation with immediate egocentric memory was significantly higher (p `r apa_model.p_lp_ego`). LPS correlated significantly with immediate allocentric (`r apa_model.lp_allo_1$full_result`) and long-delay allocentric memory (`r apa_model.lp_allo_2$full_result`). The correlations with immediate and long-delay allocentric memory were equally strong (p `r apa_model.p_lp_allo`). In conclusion, we found that participants with a more efficient, adult-like navigation behavior in the initial training phase of the learning session had better immediate and long-delay spatial memory.
+As a second step, we computed the latent profile score (LPS) for each participant. A higher LPS indicates that an individual expressed the age-related profile more strongly, meaning that children with a higher LPS navigate more similar to adults. We then correlated the LPS with the immediate and long-delay memory scores for the egocentric and the allocentric condition. LPS correlated significantly with immediate egocentric (`r apa_model.lp_n_ego_1$full_result`) and long-delay egocentric memory (`r apa_model.lp_n_ego_2$full_result`). The correlation with immediate egocentric memory was significantly higher (p `r apa_model.p_lp_n_ego`). LPS correlated significantly with immediate allocentric (`r apa_model.lp_n_allo_1$full_result`) and long-delay allocentric memory (`r apa_model.lp_n_allo_2$full_result`). The correlations with immediate and long-delay allocentric memory were equally strong (p `r apa_model.p_lp_n_allo`). In conclusion, we found that participants with a more efficient, adult-like navigation behavior in the initial training phase of the learning session had better immediate and long-delay spatial memory.
 
-We also wanted to know if age-related variations in spatial knowledge / post-navigational memory tests are correlated with immediate and long-delay spatial memory.
-TBD 
+We also wanted to know if age-related variations in spatial knowledge / post-navigational memory tests are correlated with immediate and long-delay spatial memory. We identified several stable components within the multivariate profile, paralleling our results from the previous tests. Higher age was associated with higher layout score (BSR = `r apa_bsr$"layout score"`) and positioning score (BSR = `r apa_bsr$"positioning score"`) but not landmarks score (BSR = `r apa_bsr$"landmark score"`). 
+
+TBD
 
 ```{r include=F}
-rm(apa_lv.p, apa_lv.cor, apa_lv.ulcor, apa_lv.llcor, apa_bsr, apa_model.lp_ego_1, apa_model.lp_ego_2, apa_model.lp_allo_1, apa_model.lp_allo_2, apa_model.p_lp_ego, apa_model.p_lp_allo)
+rm(apa_lv.p, apa_lv.cor, apa_lv.ulcor, apa_lv.llcor, apa_bsr, apa_model.lp_n_ego_1, apa_model.lp_n_ego_2, apa_model.lp_n_allo_1, apa_model.lp_n_allo_2, apa_model.p_lp_n_ego, apa_model.p_lp_n_allo)
+```
+
+```{r, include=F}
+ggsave("../WP10_data/Plots/bsr_learn.jpg", plot.bsr_learn, width=4.7, height=3.2, dpi=600)
+
+plot.age_x_lp_nav_learn <-  plot.age_x_lp_nav_learn + theme(legend.position="none")
+ggsave("../WP10_data/Plots/age_x_lp_nav_learn.jpg", plot.age_x_lp_nav_learn, width=3, height=3, dpi=600)
+
+plot.age_x_lp_post_learn <- plot.age_x_lp_post_learn + theme(legend.position="none")
+ggsave("../WP10_data/Plots/age_x_lp_post_learn.jpg", plot.age_x_lp_post_learn, width=3, height=3, dpi=600)
+
+ggsave("../WP10_data/Plots/mem_x_lp_nav_learn.jpg", plot.mem_x_lp_nav_learn, width=5.5, height=3.8, dpi=600)
+
+# TBD 
+
+rm(plot.bsr_learn, plot.age_x_lp_nav_learn, plot.age_x_lp_post_learn)
 ```
 
 \newpage

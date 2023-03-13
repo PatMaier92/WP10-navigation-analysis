@@ -237,14 +237,14 @@ scatter_plot_wrapper <- function(data, xv, yv, xlabel, ylabel, xbreaks=waiver())
   return(p)
 }
 
-line_plot_wrapper <- function(data, xv, yv, xlabel, ylabel, xbreaks=waiver(), addpoints=F) {
+line_plot_wrapper <- function(data, xv, yv, xlabel, ylabel, xbreaks=waiver(), addpoints=F, ymin=-6, ymax=6) {
   p <- ggplot(data, aes(x=get(xv), y=get(yv), linetype=factor(session))) + 
     geom_smooth(method=lm, se=T, size=0.5, color="black") + 
     stat_cor(method="pearson", label.x=c(0.7,0.42), label.y=c(-5,3), p.accuracy=0.001, r.accuracy=0.01, show.legend=F, size=3) +
     scale_x_continuous(breaks=xbreaks, expand=expansion(0, 0)) +
     scale_y_continuous(expand=expansion(0, 0)) +
     scale_linetype_manual(values=c(1, 2), labels=session_labels) +
-    coord_cartesian(xlim=c(0.4, 1), ylim=c(-6, 4)) + 
+    coord_cartesian(xlim=c(0.4, 1), ylim=c(ymin, ymax)) + 
     guides(color="none") + 
     theme_classic(base_size=10) + 
     theme(legend.position="top", legend.justification=c(0, 0),
@@ -817,64 +817,75 @@ bsr <- plsc_data_learn$plsres$boot_result$compare_u %>%
          name=factor(l_bsr, levels=rev(l_bsr)))
 
 plot.bsr_learn <- bar_plot_wrapper(bsr, plsc_colors_f, plsc_colors_o, mytitle=NULL, mysubtitle=lv.info)
-ggsave("../WP10_data/Plots/bsr_learn.jpg", plot.bsr_learn, width=4.7, height=3.2, dpi=600)
 ## ---- 
 rm(l_bsr, bsr, plot.bsr_learn, lv.p, lv.cor, lv.llcor, lv.ulcor, lv.info)
 
 
-# --- Scatter Age x Latent profile score --- #
-## ---- plot_plsc_age_x_lp_learn
-lp <- plsc_data_learn$plsres$usc %>% unlist()
+# --- Age x Latent profile score --- #
+## ---- plot_plsc_age_x_lp_nav_learn
+lp <- plsc_data_learn$plsres$usc_nav %>% unlist()
 age <- plsc_data_learn$plsres$data$age %>% unlist()
 group <- plsc_data_learn$plsres$data$group %>% unlist()
 data_age <- as.data.frame(cbind(group, lp, age))
 rm(lp, age, group)
 
-plot.age_x_lp_learn <- scatter_plot_wrapper(data_age, "age", "lp", "age", "latent profile score (LPS)") + theme(legend.position="none")
-ggsave("../WP10_data/Plots/age_x_lp_learn.jpg", plot.age_x_lp_learn, width=3, height=3, dpi=600)
+# model.age_lp_nav_learn <- cor.test(data_age$age, data_age$lp)
+
+plot.age_x_lp_nav_learn <- scatter_plot_wrapper(data_age, "age", "lp", "age", "latent profile score (LPS)") + theme(legend.position="none")
 ## ---- 
-rm(data_age, plot.age_x_lp_learn)
+rm(data_age, plot.age_x_lp_nav_learn, model.age_lp_nav_learn)
 
-
-# --- Scatter Memory x Latent profile score --- #
-## ---- model_plsc_lp_x_memory_learn
-lp <- plsc_data_learn$plsres$usc %>% unlist()
+## ---- plot_plsc_age_x_lp_post_learn
+lp <- plsc_data_learn$plsres$usc_post %>% unlist()
+age <- plsc_data_learn$plsres$data$age %>% unlist()
 group <- plsc_data_learn$plsres$data$group %>% unlist()
-memory_avg <- plsc_data_learn$plsres$data$memoryAvg %>% unlist()
+data_age <- as.data.frame(cbind(group, lp, age))
+rm(lp, age, group)
+
+# model.age_lp_post_learn <- cor.test(data_age$age, data_age$lp)
+
+plot.age_x_lp_post_learn <- scatter_plot_wrapper(data_age, "age", "lp", "age", "latent profile score (LPS)") + theme(legend.position="none")
+## ---- 
+rm(data_age, plot.age_x_lp_post_learn, model.age_lp_post_learn)
+
+
+# --- Memory x Latent profile score --- #
+## ---- plot_plsc_memory_x_lp_nav_learn
+lp <- plsc_data_learn$plsres$usc_nav %>% unlist()
+group <- plsc_data_learn$plsres$data$group %>% unlist()
 memory_ego_1 <- plsc_data_learn$plsres$data$memoryEgo1 %>% unlist()
 memory_ego_2 <- plsc_data_learn$plsres$data$memoryEgo2 %>% unlist()
 memory_allo_1 <- plsc_data_learn$plsres$data$memoryAllo1 %>% unlist()
 memory_allo_2 <- plsc_data_learn$plsres$data$memoryAllo2 %>% unlist()
-data_memory <- as.data.frame(cbind(group, lp, memory_avg, memory_ego_1, memory_ego_2, memory_allo_1, memory_allo_2)) 
-rm(lp, group, memory_avg, memory_ego_1, memory_ego_2, memory_allo_1, memory_allo_2)
+data_memory_nav <- as.data.frame(cbind(group, lp, memory_ego_1, memory_ego_2, memory_allo_1, memory_allo_2)) 
+rm(lp, group, memory_ego_1, memory_ego_2, memory_allo_1, memory_allo_2)
 
-model.lp_ego_1 <- cor.test(data_memory$memory_ego_1, data_memory$lp)
-model.lp_ego_2 <- cor.test(data_memory$memory_ego_2, data_memory$lp)
-model.comp_lp_ego <- cor.test.comparison(model.lp_ego_1, model.lp_ego_2)
+model.lp_n_ego_1 <- cor.test(data_memory_nav$memory_ego_1, data_memory_nav$lp)
+model.lp_n_ego_2 <- cor.test(data_memory_nav$memory_ego_2, data_memory_nav$lp)
+model.comp_lp_n_ego <- cor.test.comparison(model.lp_n_ego_1, model.lp_n_ego_2)
 
-model.lp_allo_1 <- cor.test(data_memory$memory_allo_1, data_memory$lp)
-model.lp_allo_2 <- cor.test(data_memory$memory_allo_2, data_memory$lp)
-model.comp_lp_allo <- cor.test.comparison(model.lp_allo_1, model.lp_allo_2)
-## ---- 
-rm(model.lp_ego_1, model.lp_ego_2, model.comp_lp_ego, model.lp_allo_1, model.lp_allo_2, model.comp_lp_allo)
+model.lp_n_allo_1 <- cor.test(data_memory_nav$memory_allo_1, data_memory_nav$lp)
+model.lp_n_allo_2 <- cor.test(data_memory_nav$memory_allo_2, data_memory_nav$lp)
+model.comp_lp_n_allo <- cor.test.comparison(model.lp_n_allo_1, model.lp_n_allo_2)
 
-
-## ---- plot_plsc_lp_x_memory_learn
-data_memory_long <- data_memory %>% 
-  select(-memory_avg) %>% 
+data_memory_nav_long <- data_memory_nav %>% 
   pivot_longer(cols=starts_with("memory"),
                names_to = c("condition", "session"),
                names_pattern = "_(.*)_(.*)")
 
-plot.lp_x_mem_ego_learn <- line_plot_wrapper(data_memory_long %>% filter(condition=="ego"), "value", "lp", "egocentric memory", "LPS", c(0.4,0.5,0.6,0.7,0.8,0.9,1))
-plot.lp_x_mem_allo_learn <- line_plot_wrapper(data_memory_long %>% filter(condition=="allo"), "value", "lp", "allocentric memory", "LPS", c(0.4,0.5,0.6,0.7,0.8,0.9,1))
-plot.lp_x_mem_learn <- plot.lp_x_mem_ego_learn + plot.lp_x_mem_allo_learn +
+plot.mem_x_lp_nav_ego_learn <- line_plot_wrapper(data_memory_nav_long %>% filter(condition=="ego"), "value", "lp", "egocentric memory", "LPS", c(0.4,0.5,0.6,0.7,0.8,0.9,1))
+plot.mem_x_lp_nav_allo_learn <- line_plot_wrapper(data_memory_nav_long %>% filter(condition=="allo"), "value", "lp", "allocentric memory", "LPS", c(0.4,0.5,0.6,0.7,0.8,0.9,1))
+plot.mem_x_lp_nav_learn <- plot.mem_x_lp_nav_ego_learn + plot.mem_x_lp_nav_allo_learn +
   plot_layout(nrow=1, ncol=2, guides="collect") & theme(legend.position="top", legend.justification="left")
-rm(plot.lp_x_mem_ego_learn, plot.lp_x_mem_allo_learn)
-ggsave("../WP10_data/Plots/lp_x_mem_learn.jpg", plot.lp_x_mem_learn, width=5.5, height=3.8, dpi=600)
-## ----
-rm(data_memory, data_memory_long, plot.lp_x_mem_learn)
-rm(plsc_data_learn)
+rm(plot.mem_x_lp_nav_ego_learn, plot.mem_x_lp_nav_allo_learn)
+## ---- 
+rm(model.lp_n_ego_1, model.lp_n_ego_2, model.comp_lp_n_ego, model.lp_n_allo_1, model.lp_n_allo_2, model.comp_lp_n_allo,
+   data_memory_nav, data_memory_nav_long, plot.mem_x_lp_nav_learn)
+
+
+## ---- plot_plsc_memory_x_lp_post_learn
+# TBD 
+## ---- 
 
 
 # ############################################################################ #
