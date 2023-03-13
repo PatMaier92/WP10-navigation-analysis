@@ -59,14 +59,6 @@ file_name <- "../WP10_data/WP10_results/PLSC_age_by_NlS1PT/results_m3_g1.mat"
 plsc_data_learn <- read.mat(file_name)
 rm(file_name)
 
-# file_name <- "../WP10_data/WP10_results/PLSC_age_by_NpS1PT/results_m3_g1.mat"
-# plsc_data_probe <- read.mat(file_name)
-# rm(file_name)
-
-# file_name <- "../WP10_data/WP10_results/PLSC_age_by_NpS1PT/results_m5_g1.mat"
-# plsc_data_probe2 <- read.mat(file_name)
-# rm(file_name)
-
 
 ## ---- data_prep
 # practise 
@@ -1251,73 +1243,6 @@ rm(post.path_edit_group_condition)
 plot.path_edit <- afex_boxplot_wrapper(model.path_edit, "condition", "group", NULL, "path edit distance", xlabel=NULL, ymin=0, ymax=6)
 ## ---- 
 rm(plot.path_edit, model.path_edit)
-
-
-# ------------------------------------------------------------------------------
-# ::: MULTIVARIATE CORRELATION ANALYSIS (PLSC) with probe navigation trials ::: #
-# ------------------------------------------------------------------------------
-
-# --- Brain Salience Ratios & general fit --- #
-## ---- plot_plsc_lv_probe
-lv.p <- plsc_data_probe$plsres$perm_result$sprob[[1]][1] %>% as.numeric() %>% apa_p(add_equals=T)
-lv.cor <- plsc_data_probe$plsres$boot_result$orig_corr[[1]][,1] %>% apa_num()
-lv.llcor <- plsc_data_probe$plsres$boot_result$llcorr[[1]][,1] %>% apa_num()
-lv.ulcor <- plsc_data_probe$plsres$boot_result$ulcorr[[1]][,1] %>% apa_num()
-lv.info <- paste0("p ", lv.p)
-# lv.cond <- c("navigation in egocentric", "navigation in allocentric")
-# lv.info <- paste0(lv.cond, ": Pearson's r = ", lv.cor, " (95%-CI [", lv.llcor, ", ", lv.ulcor, "])")
-# lv.info <- paste0(lv.info[1], "\n", lv.info[2])
-
-l_bsr <- c("latency", "excess path length", "excess distance to goal", "initial rotation", "layout score", "landmark score", "positioning score")
-bsr <- plsc_data_probe$plsres$boot_result$compare_u[[1]][,1] %>% 
-  unlist() %>% enframe() %>% 
-  mutate(type=factor(case_when(name %in%  1:4 ~ "nav", T ~ "post"), levels=c("nav", "post")),
-         name=factor(l_bsr, levels=rev(l_bsr)))
-
-plot.bsr_probe <- bar_plot_wrapper(bsr, plsc_colors_f, plsc_colors_o, mytitle="Latent profile for age", mysubtitle=lv.info)
-ggsave("../WP10_data/Plots/bsr_probe.jpg", plot.bsr_probe, width=4.7, height=3.2, dpi=600)
-## ---- 
-rm(l_bsr, bsr, plot.bsr_probe, lv.p, lv.cor, lv.llcor, lv.ulcor)
-
-
-# --- Scatter Age x Latent profile score --- #
-## ---- plot_plsc_age_x_lp_probe
-lp <- plsc_data_probe$plsres$usc[[1]][,1] %>% unlist()
-age <- plsc_data_probe$plsres$data$age %>% unlist()
-group <- plsc_data_probe$plsres$data$group %>% unlist()
-data_age <- as.data.frame(cbind(group, lp, age))
-rm(lp, age, group)
-
-plot.age_x_lp_probe <- scatter_plot_wrapper(data_age, "age", "lp", "age", "latent profile score") + theme(legend.position="none")
-ggsave("../WP10_data/Plots/age_x_lp_probe.jpg", plot.age_x_lp_probe, width=3, height=3, dpi=600)
-## ---- 
-rm(data_age, plot.age_x_lp_probe)
-
-
-# --- Scatter Memory x Latent profile score --- #
-## ---- plot_plsc_lp_x_memory_probe
-lp <- plsc_data_probe$plsres$usc[[1]][,1] %>% unlist()
-group <- plsc_data_probe$plsres$data$group %>% unlist()
-memory_avg <- plsc_data_probe$plsres$data$memoryAvg %>% unlist()
-memory_ego1 <- plsc_data_probe$plsres$data$memoryEgo1 %>% unlist()
-memory_ego2 <- plsc_data_probe$plsres$data$memoryEgo2 %>% unlist()
-memory_allo1 <- plsc_data_probe$plsres$data$memoryAllo1 %>% unlist()
-memory_allo2 <- plsc_data_probe$plsres$data$memoryAllo2 %>% unlist()
-data_memory <- as.data.frame(cbind(group, lp, memory_avg, memory_ego1, memory_ego2, memory_allo1, memory_allo2))
-rm(lp, group, memory_avg, memory_ego1, memory_ego2, memory_allo1, memory_allo2)
-
-plot.lp_x_avg_mem_probe <- scatter_plot_wrapper(data_memory, "memory_avg", "lp", "average memory", "latent profile score", xbreaks=c(0.4,0.5,0.6,0.7,0.8,0.9,1), addcor=T)
-plot.lp_x_mem_ego1_probe <- scatter_plot_wrapper(data_memory, "memory_ego1", "lp", "memory ego 1", "latent profile score", xbreaks=c(0.4,0.5,0.6,0.7,0.8,0.9,1), addcor=T)
-plot.lp_x_mem_ego2_probe <- scatter_plot_wrapper(data_memory, "memory_ego2", "lp", "memory ego 2", "latent profile score", xbreaks=c(0.4,0.5,0.6,0.7,0.8,0.9,1), addcor=T)
-plot.lp_x_mem_allo1_probe <- scatter_plot_wrapper(data_memory, "memory_allo1", "lp", "memory allo 1", "latent profile score", xbreaks=c(0.4,0.5,0.6,0.7,0.8,0.9,1), addcor=T)
-plot.lp_x_mem_allo2_probe <- scatter_plot_wrapper(data_memory, "memory_allo2", "lp", "memory allo 2", "latent profile score", xbreaks=c(0.4,0.5,0.6,0.7,0.8,0.9,1), addcor=T)
-
-plot.lp_x_mem_probe <- plot.lp_x_mem_ego1_probe + plot.lp_x_mem_ego2_probe + plot.lp_x_mem_allo1_probe + plot.lp_x_mem_allo2_probe +
-  plot_layout(nrow=1, ncol=4, guides="collect") & theme(legend.position="none", legend.justification="left")
-ggsave("../WP10_data/Plots/lp_x_mem_probe.jpg", plot.lp_x_mem_probe, width=10, height=3, dpi=600)
-## ----
-rm(data_memory, plot.lp_x_avg_mem_probe, plot.lp_x_mem_ego1_probe, plot.lp_x_mem_ego2_probe, plot.lp_x_mem_allo1_probe, plot.lp_x_mem_allo2_probe, plot.lp_x_mem_probe)
-rm(plsc_data_probe)
 
 
 # ------------------------------------------------------------------------------
