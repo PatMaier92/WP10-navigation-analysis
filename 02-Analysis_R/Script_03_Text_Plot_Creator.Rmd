@@ -245,16 +245,16 @@ rm(model.initial_rotation_train, R2, apa_lmm.train_initial_rotation, apa_post.tr
 
 ```{r, include=F}
 plot.latency_train <- plot.latency_train + theme(legend.position="none")
-ggsave("../WP10_data/Plots/latency_train.jpg", plot.latency_train, width=4.0, height=3.0, dpi=600)
+ggsave("../WP10_data/Plots/latency_train.jpg", plot.latency_train, width=3.7, height=3.0, dpi=600)
 
 plot.path_train <- plot.path_train + theme(legend.position="none")
-ggsave("../WP10_data/Plots/path_train.jpg", plot.path_train, width=4.0, height=3.0, dpi=600)
+ggsave("../WP10_data/Plots/path_train.jpg", plot.path_train, width=3.7, height=3.0, dpi=600)
 
 plot.distance_train <- plot.distance_train + theme(legend.position="none")
-ggsave("../WP10_data/Plots/distance_train.jpg", plot.distance_train, width=4.0, height=3.0, dpi=600)
+ggsave("../WP10_data/Plots/distance_train.jpg", plot.distance_train, width=3.7, height=3.0, dpi=600)
 
 plot.initial_rotation_train <- plot.initial_rotation_train + theme(legend.position="none")
-ggsave("../WP10_data/Plots/initial_rotation_train.jpg", plot.initial_rotation_train, width=4.0, height=3.0, dpi=600)
+ggsave("../WP10_data/Plots/initial_rotation_train.jpg", plot.initial_rotation_train, width=3.7, height=3.0, dpi=600)
 
 rm(plot.latency_train, plot.path_train, plot.distance_train, plot.initial_rotation_train)
 ```
@@ -322,7 +322,7 @@ The LMM with memory score had a significantly better fit when including the rand
 
 ```{r, include=F}
 plot.ms <- plot.ms + theme(legend.position="none")
-ggsave("../WP10_data/Plots/memory_probe_1.jpg", plot.ms, width=4.2, height=3.3, dpi=600)
+ggsave("../WP10_data/Plots/memory_probe_1.jpg", plot.ms, width=3.5, height=3, dpi=600)
 
 rm(plot.ms)
 ```
@@ -393,7 +393,7 @@ The LMM had a significantly better fit when including the random slope for sessi
 
 ```{r, include=F }
 plot.ms_all <- plot.ms_all + theme(legend.position="none")
-ggsave("../WP10_data/Plots/memory_probe_con.jpg", plot.ms_all, width=4.8, height=4, dpi=600)
+ggsave("../WP10_data/Plots/memory_probe_con.jpg", plot.ms_all, width=4.3, height=4, dpi=600)
 
 rm(plot.ms_all)
 ```

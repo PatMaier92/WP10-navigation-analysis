@@ -137,10 +137,10 @@ l_session <- "session"
 l_trial_in_block <- "trial (in block)"
 l_memory_score <- "memory score"
 l_correct_alley <- "alley accuracy (%)"
-l_latency <- "latency (seconds)"
+l_latency <- "latency"
 l_excess_path_length <- "excess path length"
 l_excess_distance_goal <- "excess distance to goal"
-l_initial_rotation <- "initial rotation (radians)"
+l_initial_rotation <- "initial rotation"
 
 # colors
 # scales::show_col()
@@ -163,7 +163,7 @@ afex_boxplot_wrapper <- function(model, xv, tv, pv, ylabel, xlabel=l_session, ym
                  error_arg=list(size=1.25, width=0)) + 
     scale_fill_manual(values=group_colors_f) + 
     scale_color_manual(values=group_colors_c) +
-    scale_y_continuous(breaks=ybreaks, expand=expansion(mult=c(0, 0.3))) + 
+    scale_y_continuous(breaks=ybreaks, expand=expansion(mult=c(0, 0.4))) + 
     coord_cartesian(ylim=c(ymin, ymax)) + 
     theme_classic(base_size=14) + 
     theme(legend.position="top", legend.justification=c(0,0),
@@ -651,7 +651,6 @@ p.values_condition <- post.ms_all_condition %>% as.data.frame() %>% pull(p.value
 plot.ms_all <- afex_boxplot_wrapper(model.ms_all, "session", "group", "condition", l_memory_score, xlabel=NULL, ymin=0, ymax=1, ybreaks=c(0,0.25,0.5,0.75,1)) + 
   facet_wrap(~condition, strip.position="bottom") + 
   theme(strip.placement="outside", strip.switch.pad.wrap=unit(0, "cm")) + 
-  scale_y_continuous(expand=expansion(mult=c(0, 0.35))) + 
   annotate("text", x=0.5, y=1.1, label=paste0("6-8YO vs. 9-11YO: p ", p.values_group[1]), color="black", hjust=0, size=3.5) + 
   annotate("text", x=0.5, y=1.15, label=paste0("6-8YO vs. AD: p ", p.values_group[2]), color="black", hjust=0, size=3.5) +
   annotate("text", x=0.5, y=1.2, label=paste0("9-11YO vs. AD: p ", p.values_group[3]), color="black", hjust=0, size=3.5) +
@@ -957,7 +956,6 @@ p.values_condition <- post.ms_wl_condition %>% as.data.frame() %>% pull(p.value)
 plot.ms_wl <- afex_boxplot_wrapper(model.ms_wl, "session", "group", "condition", l_memory_score, xlabel=NULL, ymin=0, ymax=1, ybreaks=c(0,0.25,0.5,0.75,1)) + 
   facet_wrap(~condition, strip.position="bottom") + 
   theme(strip.placement="outside", strip.switch.pad.wrap=unit(0, "cm")) + 
-  scale_y_continuous(expand=expansion(mult=c(0, 0.35))) + 
   annotate("text", x=0.5, y=1.1, label=paste0("6-8YO vs. AD in 2: p ", p.values_group_session[5]), color="black", hjust=0, size=3.5) +
   annotate("text", x=0.5, y=1.15, label=paste0("9-11YO vs. AD in 2: p ", p.values_group_session[6]), color="black", hjust=0, size=3.5) +
   annotate("text", x=0.5, y=1.2, label=paste0("ego vs. allo: p ", p.values_condition[1]), color="black", hjust=0, size=3.5)
