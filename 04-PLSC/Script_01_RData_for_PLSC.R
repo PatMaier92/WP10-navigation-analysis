@@ -113,7 +113,7 @@ data_for_plsc <- function(d_sm, d_pt, d_age, ms_session, ms_condition, nav_sessi
     left_join(d_nav) %>% 
     left_join(d_pt, by="id") %>% 
     relocate(group, .after=id) %>% 
-    left_join(d_age) %>% 
+    left_join(d_age, by="id") %>% 
     relocate(age, .before=time)
   
   # mean imputation 

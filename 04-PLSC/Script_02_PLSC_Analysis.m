@@ -89,58 +89,67 @@ for i=1:numel(data_cell)
     elseif by_group{i}==1
         plsres = pls_analysis({ datamat1_group1, datamat1_group2, datamat1_group3 }, n_subj, n_con, cfg.pls);
     end
+    
+    % add relevant input data to pls output 
+    plsres.data.group = data.group; 
+    plsres.data.age = data.age; 
+    plsres.data.memoryAvg = memory_table.memoryAvg; 
+    plsres.data.memoryEgo1 = memory_table.memoryEgo1; 
+    plsres.data.memoryEgo2 = memory_table.memoryEgo2; 
+    plsres.data.memoryAllo1 = memory_table.memoryAllo1; 
+    plsres.data.memoryAllo2 = memory_table.memoryAllo2; 
 
+    % save data file 
     save([path, '/PLSC_', file_name, '/results_m', int2str(cfg.pls.method), '_g', int2str(size(n_subj,1)), '.mat'],'plsres');
     
     clear n_con cfg datamat*; 
-    %--------------------------------------------------------------------------
-    %--------------------------------------------------------------------------
-    % DATA VIZUALIZATION
-    % -------------------------------------------------------------------------
-    for LV_n=1:numel(plsres.perm_result.sprob)
-        
-        % Latent variable (LV) significance (should be < than 0.05)
-        p=plsres.perm_result.sprob(LV_n);
-        
-        % Latent variable weights (LV weights)
-        % Bootstrap ratios (BSR) (should be < -1.96 or > +1.96)
-        % calculated as correlation/standard error (for method 3) 
-        % or salience u/se (for method 5)
-        BSR = plsres.boot_result.compare_u(:,LV_n);
-               
-        % Plot 
-        % BSR with threshold and LV correlations with 95%-CI
-        if p < 0.05
-            
-            fig = figure('visible','off'); subplot(1,2,1);
-            bar(BSR(:),'k'); hold on;
-            set(gca,'xticklabels',data.Properties.VariableNames(5:end)); 
-            box off; grid on;
-            lh = line([0,size(BSR,1)+1],[1.96,1.96]);
-            set(lh, 'color','r','linestyle','--');
-            lh = line([0,size(BSR,1)+1],[-1.96,-1.96]);
-            set(lh, 'color','r','linestyle','--');
-            % ylim([-12 12]);
-            title(['BSR for LV ', num2str(LV_n), ' with p-value=', num2str(round(p,3))]);
-            hold off;
-            
-            subplot(1,2,2);
-            n_dim = size(plsres.boot_result.orig_corr,1);
-            bar(1:n_dim, plsres.boot_result.orig_corr(:,LV_n),'k'); hold on;
-            box off; grid on; grid minor;
-            for nd = 1:n_dim
-                lh1 = line([nd,nd],[plsres.boot_result.llcorr_adj(nd,LV_n),plsres.boot_result.ulcorr_adj(nd,LV_n)]);
-                set(lh1, 'color','r');
-            end
-            xlim([0,n_dim+1]); ylim([-1,1]);
-            title(['Correlation [95%-CI] with memory for LV ', num2str(LV_n)]);
-            hold off;
-            clear n_dim nd lh*;
-            
-            saveas(fig,[path, '/PLSC_', file_name, '/Plot_LV_m', int2str(plsres.method), '_g', int2str(size(n_subj,1)), '_lv', int2str(LV_n), '.png']);
-        end 
-           
-%         % Optional plot
+%     %--------------------------------------------------------------------------
+%     %--------------------------------------------------------------------------
+%     % OPTIONAL DATA VIZUALIZATION
+%     % -------------------------------------------------------------------------
+%     for LV_n=1:numel(plsres.perm_result.sprob)
+%         
+%         % Latent variable (LV) significance (should be < than 0.05)
+%         p=plsres.perm_result.sprob(LV_n);
+%         
+%         % Latent variable weights (LV weights)
+%         % Bootstrap ratios (BSR) (should be < -1.96 or > +1.96)
+%         % calculated as correlation/standard error (for method 3) 
+%         % or salience u/se (for method 5)
+%         BSR = plsres.boot_result.compare_u(:,LV_n);
+%                
+%         % Plot 
+%         % BSR with threshold and LV correlations with 95%-CI
+%         if p < 0.05
+%             
+%             fig = figure('visible','off'); subplot(1,2,1);
+%             bar(BSR(:),'k'); hold on;
+%             set(gca,'xticklabels',data.Properties.VariableNames(5:end)); 
+%             box off; grid on;
+%             lh = line([0,size(BSR,1)+1],[1.96,1.96]);
+%             set(lh, 'color','r','linestyle','--');
+%             lh = line([0,size(BSR,1)+1],[-1.96,-1.96]);
+%             set(lh, 'color','r','linestyle','--');
+%             % ylim([-12 12]);
+%             title(['BSR for LV ', num2str(LV_n), ' with p-value=', num2str(round(p,3))]);
+%             hold off;
+%             
+%             subplot(1,2,2);
+%             n_dim = size(plsres.boot_result.orig_corr,1);
+%             bar(1:n_dim, plsres.boot_result.orig_corr(:,LV_n),'k'); hold on;
+%             box off; grid on; grid minor;
+%             for nd = 1:n_dim
+%                 lh1 = line([nd,nd],[plsres.boot_result.llcorr_adj(nd,LV_n),plsres.boot_result.ulcorr_adj(nd,LV_n)]);
+%                 set(lh1, 'color','r');
+%             end
+%             xlim([0,n_dim+1]); ylim([-1,1]);
+%             title(['Correlation [95%-CI] with memory for LV ', num2str(LV_n)]);
+%             hold off;
+%             clear n_dim nd lh*;
+%             
+%             saveas(fig,[path, '/PLSC_', file_name, '/Plot_LV_m', int2str(plsres.method), '_g', int2str(size(n_subj,1)), '_lv', int2str(LV_n), '.png']);
+%         end 
+%
 %         % LV weights correlations with CI based on standard error
 %         if plsres.method==3 && p < 0.05
 %             
@@ -164,40 +173,40 @@ for i=1:numel(data_cell)
 %             saveas(fig,[path, '/PLSC_', file_name, '/Plot_LV_CI_m', int2str(plsres.method), '_g', int2str(size(n_subj,1)), '_lv', int2str(LV_n),'.png']);
 %             
 %         end
-
-    clear BSR cor se; 
-    end 
-    
-    % Latent profile scores (LPS)
-    % indicates an individual's expression of the profile
-    if plsres.method==3 && numel(plsres.perm_result.sprob)==1 && p < 0.05
-        
-        % Plot
-        % LPS scatter (grouped) and general correlation
-        fig = figure('visible','off');
-        gscatter(data.age, plsres.usc(:,LV_n), data.group);
-        xlabel(upper('Age'),'fontweight','bold');
-        ylabel(upper('LV profile score'),'fontweight','bold');
-        [R,P]=corrcoef(plsres.usc(:,LV_n), data.age, 'rows', 'complete');
-        title(strcat('r=',num2str(R(2,1)),', p=',num2str(P(2,1))));
-        clear R P;
-        saveas(fig,[path, '/PLSC_', file_name, '/Plot_LP_AGE_m', int2str(plsres.method), '_g', int2str(size(n_subj,1)), '.png']);
-        
-        fig = figure('visible','off');
-        y_var = {'memoryAvg' 'memoryEgo1' 'memoryEgo2' 'memoryAllo1' 'memoryAllo2'};
-        for mp=1:5
-            subplot(2,3,mp);
-            gscatter(memory_table.(y_var{mp}), plsres.usc(:,LV_n), data.group);
-            xlabel(upper(y_var{mp}),'fontweight','bold');
-            ylabel(upper('LV profile score'),'fontweight','bold');
-            [R,P]=corrcoef(plsres.usc(:,LV_n), memory_table.(y_var{mp}), 'rows', 'complete');
-            title(strcat('r=',num2str(R(2,1)),', p=',num2str(P(2,1))));
-            xlim([0 1]);
-            clear R P;
-        end
-        saveas(fig,[path, '/PLSC_', file_name, '/Plot_LP_MEM_m', int2str(plsres.method), '_g', int2str(size(n_subj,1)), '.png']);
-    end
-    %--------------------------------------------------------------------------
+% 
+%     clear BSR cor se; 
+%     end 
+%     
+%     % Latent profile scores (LPS)
+%     % indicates an individual's expression of the profile
+%     if plsres.method==3 && numel(plsres.perm_result.sprob)==1 && p < 0.05
+%         
+%         % Plot
+%         % LPS scatter (grouped) and general correlation
+%         fig = figure('visible','off');
+%         gscatter(data.age, plsres.usc(:,LV_n), data.group);
+%         xlabel(upper('Age'),'fontweight','bold');
+%         ylabel(upper('LV profile score'),'fontweight','bold');
+%         [R,P]=corrcoef(plsres.usc(:,LV_n), data.age, 'rows', 'complete');
+%         title(strcat('r=',num2str(R(2,1)),', p=',num2str(P(2,1))));
+%         clear R P;
+%         saveas(fig,[path, '/PLSC_', file_name, '/Plot_LP_AGE_m', int2str(plsres.method), '_g', int2str(size(n_subj,1)), '.png']);
+%         
+%         fig = figure('visible','off');
+%         y_var = {'memoryAvg' 'memoryEgo1' 'memoryEgo2' 'memoryAllo1' 'memoryAllo2'};
+%         for mp=1:5
+%             subplot(2,3,mp);
+%             gscatter(memory_table.(y_var{mp}), plsres.usc(:,LV_n), data.group);
+%             xlabel(upper(y_var{mp}),'fontweight','bold');
+%             ylabel(upper('LV profile score'),'fontweight','bold');
+%             [R,P]=corrcoef(plsres.usc(:,LV_n), memory_table.(y_var{mp}), 'rows', 'complete');
+%             title(strcat('r=',num2str(R(2,1)),', p=',num2str(P(2,1))));
+%             xlim([0 1]);
+%             clear R P;
+%         end
+%         saveas(fig,[path, '/PLSC_', file_name, '/Plot_LP_MEM_m', int2str(plsres.method), '_g', int2str(size(n_subj,1)), '.png']);
+%     end
+%     %--------------------------------------------------------------------------
     clear p n_subj data file_name plsinput plsres;
 end
 

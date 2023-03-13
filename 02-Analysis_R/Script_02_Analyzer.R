@@ -55,6 +55,18 @@ file_name <- "../WP10_data/WP10_results/wp10_post_nav_data.RData"
 load(file_name)
 rm(file_name)
 
+file_name <- "../WP10_data/WP10_results/PLSC_age_by_NlS1PT/results_m3_g1.mat"
+plsc_data_learn <- read.mat(file_name)
+rm(file_name)
+
+# file_name <- "../WP10_data/WP10_results/PLSC_age_by_NpS1PT/results_m3_g1.mat"
+# plsc_data_probe <- read.mat(file_name)
+# rm(file_name)
+
+# file_name <- "../WP10_data/WP10_results/PLSC_age_by_NpS1PT/results_m5_g1.mat"
+# plsc_data_probe2 <- read.mat(file_name)
+# rm(file_name)
+
 
 ## ---- data_prep
 # practise 
@@ -128,6 +140,7 @@ rm(cov_data, cov_names, data, well_trained)
 ## ---- plot_settings
 # factor level labels 
 group_labels <- c("YoungKids"="6-8YO", "OldKids"="9-11YO", "YoungAdults"="AD")
+session_labels <- c("1"="SESSION 1", "2"="SESSION 2")
 condition_labels <- c("ego_ret"="egocentric", "allo_ret"="allocentric")
 plsc_labels <- c("latency"="latency", "excess_path"="exc. path length", "excess_distance"="exc. distance goal", 
                  "initial_rotation"="initial rotation", "layout"="layout score", "landmark"="landmark score", "position"="position score")
@@ -194,30 +207,6 @@ afex_lineplot_wrapper <- function(model, xv, tv, pv, ylabel, xlabel=l_session, y
   return(p)
 }
 
-scatter_plot_wrapper <- function(data, xv, yv, xlabel, ylabel, xbreaks=waiver(), addcor=F) {
-  p <- ggplot(data, aes(x=get(xv), y=get(yv), color=factor(group))) + 
-    geom_point() + 
-    scale_color_manual(values=group_colors_f, labels=group_labels) +
-    scale_x_continuous(breaks=xbreaks, expand=expansion(0, 0)) +
-    scale_y_continuous(expand=expansion(0, 0)) +
-    theme_classic(base_size=10) + 
-    theme(legend.position="top", legend.justification=c(0, 0),
-          legend.title=element_blank(),
-          panel.grid=element_blank(),
-          strip.background=element_rect(color=NA, fill=NA)) +
-    labs(x=xlabel, y=ylabel)
-  
-  if (addcor) {
-    p <- p +
-      geom_smooth(method=lm, se=T, aes(colour=NULL), color="black", size=0.5) + 
-      stat_cor(aes(color=NULL), method="pearson", label.x=0.42, label.y=3, p.accuracy=0.001, r.accuracy=0.01, show.legend=F) +
-      coord_cartesian(xlim=c(0.4,1), ylim=c(-6,4))
-  }
-  else p <- p + coord_cartesian(xlim=c(5,31), ylim=c(-6,4))
-  
-  return(p)
-}
-
 bar_plot_wrapper <- function(data, colors, colors_o, mytitle, mysubtitle=NULL, xmin=-13, xmax=13){
   p <- ggplot(data, aes(x=value, y=name, fill=type, color=type)) + 
     geom_bar(stat="identity", width=0.75) + 
@@ -238,6 +227,46 @@ bar_plot_wrapper <- function(data, colors, colors_o, mytitle, mysubtitle=NULL, x
   
   return(p)
 }
+
+scatter_plot_wrapper <- function(data, xv, yv, xlabel, ylabel, xbreaks=waiver()) {
+  p <- ggplot(data, aes(x=get(xv), y=get(yv), color=factor(group))) + 
+    geom_point() + 
+    scale_color_manual(values=group_colors_f, labels=group_labels) +
+    scale_x_continuous(breaks=xbreaks, expand=expansion(0, 0)) +
+    scale_y_continuous(expand=expansion(0, 0)) +
+    coord_cartesian(xlim=c(5,31), ylim=c(-6,4)) + 
+    theme_classic(base_size=10) + 
+    theme(legend.position="top", legend.justification=c(0, 0),
+          legend.title=element_blank(),
+          panel.grid=element_blank(),
+          strip.background=element_rect(color=NA, fill=NA)) +
+    labs(x=xlabel, y=ylabel)
+  
+  return(p)
+}
+
+line_plot_wrapper <- function(data, xv, yv, xlabel, ylabel, xbreaks=waiver(), addpoints=F) {
+  p <- ggplot(data, aes(x=get(xv), y=get(yv), linetype=factor(session))) + 
+    geom_smooth(method=lm, se=T, size=0.5, color="black") + 
+    stat_cor(method="pearson", label.x=c(0.7,0.42), label.y=c(-5,3), p.accuracy=0.001, r.accuracy=0.01, show.legend=F, size=3) +
+    scale_x_continuous(breaks=xbreaks, expand=expansion(0, 0)) +
+    scale_y_continuous(expand=expansion(0, 0)) +
+    scale_linetype_manual(values=c(1, 2), labels=session_labels) +
+    coord_cartesian(xlim=c(0.4, 1), ylim=c(-6, 4)) + 
+    guides(color="none") + 
+    theme_classic(base_size=10) + 
+    theme(legend.position="top", legend.justification=c(0, 0),
+          legend.title=element_blank(),
+          panel.grid=element_blank()) +
+    labs(x=xlabel, y=ylabel)
+  
+  if (addpoints) {
+    p <- p + geom_point(aes(color=factor(group))) + 
+      scale_color_manual(values=group_colors_f, labels=group_labels)
+  }
+  
+  return(p)
+}
 ## ---- 
 
 
@@ -245,55 +274,47 @@ bar_plot_wrapper <- function(data, colors, colors_o, mytitle, mysubtitle=NULL, x
 # options("contrasts")
 options(contrasts=c(unordered="contr.sum", ordered="contr.poly"))
 
-# # function for statistical comparison of correlation coefficients with z-test
-# cor.test.comparison <- function(plsc_data){
-#   
-#   # Pearson's correlations coefficients
-#   r1 <- cor.test(~ memory_score + latent_profile_score, data=plsc_data, subset=(group=="YoungKids"), method="pearson") 
-#   r2 <- cor.test(~ memory_score + latent_profile_score, data=plsc_data, subset=(group=="OldKids"), method="pearson") 
-#   r3 <- cor.test(~ memory_score + latent_profile_score, data=plsc_data, subset=(group=="YoungAdults"), method="pearson") 
-#   
-#   # n (derived from df)
-#   n_for_ztest <- function(r){
-#     n <- (r$parameter %>% unname()) + 2
-#     
-#     return(n)
-#   }
-#   n1 <- n_for_ztest(r1)
-#   n2 <- n_for_ztest(r2)
-#   n3 <- n_for_ztest(r3)
-#   
-#   # Fisher's z transformation of coefficients
-#   r_to_z <- function(r){
-#     z <- 0.5 * log((1+r$estimate)/(1-r$estimate)) %>% 
-#       unname()
-#     
-#     return(z)
-#   }
-#   Z1 <- r_to_z(r1)
-#   Z2 <- r_to_z(r2)
-#   Z3 <- r_to_z(r3)
-#   
-#   # z-test statistic (comparison of coefficients)
-#   ztest <- function(za, zb, na, nb) {
-#     Z <- (za - zb) / sqrt( 1 / (na - 3) + 1 / (nb - 3))
-#     p <- round(2*pnorm(-abs(Z)), 4)
-#     
-#     return(p) 
-#   }
-#   ztest1 <- ztest(Z1, Z2, n1, n2)
-#   ztest2 <- ztest(Z1, Z3, n1, n3)
-#   ztest3 <- ztest(Z2, Z3, n2, n3)
-#   
-#   # summarize results 
-#   r <- as.data.frame(cbind(r1$estimate, r2$estimate, r3$estimate), row.names="r")
-#   colnames(r) <- c("6-8YO", "9-11YO", "AD")
-#   p <- as.data.frame(cbind(ztest1, ztest2, ztest3), row.names="p")
-#   colnames(p) <- c("6-8YO vs. 9-11YO", "6-8YO vs. AD", "9-11YO vs. AD")
-#   results <- list(r=r, p=p)
-# 
-#   return(results)
-# }
+# function for statistical comparison of correlation coefficients with z-test
+cor.test.comparison <- function(r1, r2){
+  
+  # n (derived from df)
+  n_for_ztest <- function(r){
+    n <- (r$parameter %>% unname()) + 2
+    
+    return(n)
+  }
+  n1 <- n_for_ztest(r1)
+  n2 <- n_for_ztest(r2)
+  
+  # Fisher's z transformation of coefficients
+  r_to_z <- function(r){
+    z <- 0.5 * log((1+r$estimate)/(1-r$estimate)) %>%
+      unname()
+    
+    return(z)
+  }
+  Z1 <- r_to_z(r1)
+  Z2 <- r_to_z(r2)
+  
+  # z-test statistic (comparison of coefficients)
+  ztest <- function(za, zb, na, nb) {
+    Z <- (za - zb) / sqrt( 1 / (na - 3) + 1 / (nb - 3))
+    p <- round(2*pnorm(-abs(Z)), 4)
+    
+    return(p)
+  }
+  ztest1 <- ztest(Z1, Z2, n1, n2)
+  
+  # summarize results
+  r <- as.data.frame(cbind(r1$estimate, r2$estimate), row.names="r")
+  colnames(r) <- c("SESSION 1", "SESSION 2")
+  p <- as.data.frame(cbind(ztest1), row.names="p")
+  colnames(p) <- c("SESSION 1 vs. 2")
+  results <- list(r=r, p=p)
+  
+  return(results)
+}
+## ---- 
 
 
 ## ---- papaja_output_helper
@@ -789,63 +810,79 @@ rm(plot.position, model.position, post.position)
 # ::: MULTIVARIATE CORRELATION ANALYSIS (PLSC) ::: #
 # ------------------------------------------------------------------------------
 
-
-file_plsc <- "../WP10_data/WP10_results/PLSC_230301/PLSC_age_by_NlS1PT/results_m3_g1.mat"
-plsc_data <- read.mat(file_plsc)
-rm(file_plsc)
-
-
-## ---- plot_plsc_lv
-lv.p <- plsc_data$plsres$perm_result$sprob %>% as.numeric() %>% apa_p(add_equals=T)
-lv.cor <- plsc_data$plsres$boot_result$orig_corr %>% apa_num()
-lv.llcor <- plsc_data$plsres$boot_result$llcorr %>% apa_num()
-lv.ulcor <- plsc_data$plsres$boot_result$ulcorr %>% apa_num()
+# --- Brain Salience Ratios & general fit --- #
+## ---- plot_plsc_lv_learn
+lv.p <- plsc_data_learn$plsres$perm_result$sprob %>% as.numeric() %>% apa_p(add_equals=T)
+lv.cor <- plsc_data_learn$plsres$boot_result$orig_corr %>% as.numeric() %>% apa_p()
+lv.llcor <- plsc_data_learn$plsres$boot_result$llcorr %>% as.numeric() %>% apa_p()
+lv.ulcor <- plsc_data_learn$plsres$boot_result$ulcorr %>% as.numeric() %>% apa_p()
 lv.info <- paste0("Pearson's r = ", lv.cor, ", p ", lv.p, " (95%-CI [", lv.llcor, ", ", lv.ulcor, "])")
              
 l_bsr <- c("latency", "excess path length", "excess distance to goal", "initial rotation", "layout score", "landmark score", "positioning score")
-bsr <- plsc_data$plsres$boot_result$compare_u %>% 
+bsr <- plsc_data_learn$plsres$boot_result$compare_u %>% 
   unlist() %>% enframe() %>% 
   mutate(type=factor(case_when(name %in%  1:4 ~ "nav", T ~ "post"), levels=c("nav", "post")),
          name=factor(l_bsr, levels=rev(l_bsr)))
 
-plot.bsr <- bar_plot_wrapper(bsr, plsc_colors_f, plsc_colors_o, mytitle="Latent profile for age", mysubtitle=lv.info)
-ggsave("../WP10_data/Plots/bsr.jpg", plot.bsr, width=4.7, height=3.2, dpi=600)
+plot.bsr_learn <- bar_plot_wrapper(bsr, plsc_colors_f, plsc_colors_o, mytitle=NULL, mysubtitle=lv.info)
+ggsave("../WP10_data/Plots/bsr_learn.jpg", plot.bsr_learn, width=4.7, height=3.2, dpi=600)
 ## ---- 
-rm(l_bsr, bsr, plot.bsr, lv.p, lv.cor, lv.llcor, lv.ulcor)
+rm(l_bsr, bsr, plot.bsr_learn, lv.p, lv.cor, lv.llcor, lv.ulcor, lv.info)
 
 
-## ---- plot_plsc_age_x_lp
-lp <- plsc_data$plsres$usc %>% unlist()
-data_age <- data_l %>% select(id, group, age) %>% unique() %>% cbind(lp) # TBD: store age and group in plsres and extract from there (imputed values)! 
-rm(lp)
+# --- Scatter Age x Latent profile score --- #
+## ---- plot_plsc_age_x_lp_learn
+lp <- plsc_data_learn$plsres$usc %>% unlist()
+age <- plsc_data_learn$plsres$data$age %>% unlist()
+group <- plsc_data_learn$plsres$data$group %>% unlist()
+data_age <- as.data.frame(cbind(group, lp, age))
+rm(lp, age, group)
 
-plot.age_x_lp <- scatter_plot_wrapper(data_age, "age", "lp", "age", "latent profile score")
-ggsave("../WP10_data/Plots/age_x_lp.jpg", plot.age_x_lp, width=3, height=3, dpi=600)
+plot.age_x_lp_learn <- scatter_plot_wrapper(data_age, "age", "lp", "age", "latent profile score (LPS)") + theme(legend.position="none")
+ggsave("../WP10_data/Plots/age_x_lp_learn.jpg", plot.age_x_lp_learn, width=3, height=3, dpi=600)
 ## ---- 
-rm(data_age, plot.age_x_lp)
+rm(data_age, plot.age_x_lp_learn)
 
 
-## ---- plot_plsc_lp_x_memory
-mem <- read.table("../WP10_data/WP10_results/wp10_plsc_memory.txt", sep=",", header=T) %>% select(-group)
-lp <- plsc_data$plsres$usc %>% unlist()
-data_memory <- data_l %>% select(id, group) %>% unique() %>% cbind(lp) %>% 
-  left_join(mem, by="id")
-rm(mem, lp)
+# --- Scatter Memory x Latent profile score --- #
+## ---- model_plsc_lp_x_memory_learn
+lp <- plsc_data_learn$plsres$usc %>% unlist()
+group <- plsc_data_learn$plsres$data$group %>% unlist()
+memory_avg <- plsc_data_learn$plsres$data$memoryAvg %>% unlist()
+memory_ego_1 <- plsc_data_learn$plsres$data$memoryEgo1 %>% unlist()
+memory_ego_2 <- plsc_data_learn$plsres$data$memoryEgo2 %>% unlist()
+memory_allo_1 <- plsc_data_learn$plsres$data$memoryAllo1 %>% unlist()
+memory_allo_2 <- plsc_data_learn$plsres$data$memoryAllo2 %>% unlist()
+data_memory <- as.data.frame(cbind(group, lp, memory_avg, memory_ego_1, memory_ego_2, memory_allo_1, memory_allo_2)) 
+rm(lp, group, memory_avg, memory_ego_1, memory_ego_2, memory_allo_1, memory_allo_2)
 
-# tbd check why correlations differ in matlab and r! 
+model.lp_ego_1 <- cor.test(data_memory$memory_ego_1, data_memory$lp)
+model.lp_ego_2 <- cor.test(data_memory$memory_ego_2, data_memory$lp)
+model.comp_lp_ego <- cor.test.comparison(model.lp_ego_1, model.lp_ego_2)
 
-plot.lp_x_avgmem <- scatter_plot_wrapper(data_memory, "memory.avg", "lp", "average memory", "latent profile score", xbreaks=c(0.4,0.5,0.6,0.7,0.8,0.9,1), addcor=T)
-plot.lp_x_memego1 <- scatter_plot_wrapper(data_memory, "memory.ego.1", "lp", "memory ego 1", "latent profile score", xbreaks=c(0.4,0.5,0.6,0.7,0.8,0.9,1), addcor=T)
-plot.lp_x_memego2 <- scatter_plot_wrapper(data_memory, "memory.ego.2", "lp", "memory ego 2", "latent profile score", xbreaks=c(0.4,0.5,0.6,0.7,0.8,0.9,1), addcor=T)
-plot.lp_x_memallo1 <- scatter_plot_wrapper(data_memory, "memory.allo.1", "lp", "memory allo 1", "latent profile score", xbreaks=c(0.4,0.5,0.6,0.7,0.8,0.9,1), addcor=T)
-plot.lp_x_memallo2 <- scatter_plot_wrapper(data_memory, "memory.allo.2", "lp", "memory allo 2", "latent profile score", xbreaks=c(0.4,0.5,0.6,0.7,0.8,0.9,1), addcor=T)
+model.lp_allo_1 <- cor.test(data_memory$memory_allo_1, data_memory$lp)
+model.lp_allo_2 <- cor.test(data_memory$memory_allo_2, data_memory$lp)
+model.comp_lp_allo <- cor.test.comparison(model.lp_allo_1, model.lp_allo_2)
+## ---- 
+rm(model.lp_ego_1, model.lp_ego_2, model.comp_lp_ego, model.lp_allo_1, model.lp_allo_2, model.comp_lp_allo)
 
-plot.lp_x_mem <- plot.lp_x_memego1 + plot.lp_x_memego2 + plot.lp_x_memallo1 + plot.lp_x_memallo2 +
-  plot_layout(nrow=1, ncol=4, guides="collect") & theme(legend.position="none", legend.justification="left")
-ggsave("../WP10_data/Plots/lp_x_mem.jpg", plot.lp_x_mem, width=10, height=3, dpi=600)
+
+## ---- plot_plsc_lp_x_memory_learn
+data_memory_long <- data_memory %>% 
+  select(-memory_avg) %>% 
+  pivot_longer(cols=starts_with("memory"),
+               names_to = c("condition", "session"),
+               names_pattern = "_(.*)_(.*)")
+
+plot.lp_x_mem_ego_learn <- line_plot_wrapper(data_memory_long %>% filter(condition=="ego"), "value", "lp", "egocentric memory", "LPS", c(0.4,0.5,0.6,0.7,0.8,0.9,1))
+plot.lp_x_mem_allo_learn <- line_plot_wrapper(data_memory_long %>% filter(condition=="allo"), "value", "lp", "allocentric memory", "LPS", c(0.4,0.5,0.6,0.7,0.8,0.9,1))
+plot.lp_x_mem_learn <- plot.lp_x_mem_ego_learn + plot.lp_x_mem_allo_learn +
+  plot_layout(nrow=1, ncol=2, guides="collect") & theme(legend.position="top", legend.justification="left")
+rm(plot.lp_x_mem_ego_learn, plot.lp_x_mem_allo_learn)
+ggsave("../WP10_data/Plots/lp_x_mem_learn.jpg", plot.lp_x_mem_learn, width=5.5, height=3.8, dpi=600)
 ## ----
-rm(data_memory, plot.lp_x_avgmem, plot.lp_x_memego1, plot.lp_x_memego2, plot.lp_x_memallo1, plot.lp_x_memallo2, plot.lp_x_mem)
-rm(plsc_data)
+rm(data_memory, data_memory_long, plot.lp_x_mem_learn)
+rm(plsc_data_learn)
 
 
 # ############################################################################ #
@@ -1217,8 +1254,70 @@ rm(plot.path_edit, model.path_edit)
 
 
 # ------------------------------------------------------------------------------
-# ::: MULTIVARIATE CORRELATION ANALYSIS (PLSC) ::: #
+# ::: MULTIVARIATE CORRELATION ANALYSIS (PLSC) with probe navigation trials ::: #
 # ------------------------------------------------------------------------------
+
+# --- Brain Salience Ratios & general fit --- #
+## ---- plot_plsc_lv_probe
+lv.p <- plsc_data_probe$plsres$perm_result$sprob[[1]][1] %>% as.numeric() %>% apa_p(add_equals=T)
+lv.cor <- plsc_data_probe$plsres$boot_result$orig_corr[[1]][,1] %>% apa_num()
+lv.llcor <- plsc_data_probe$plsres$boot_result$llcorr[[1]][,1] %>% apa_num()
+lv.ulcor <- plsc_data_probe$plsres$boot_result$ulcorr[[1]][,1] %>% apa_num()
+lv.info <- paste0("p ", lv.p)
+# lv.cond <- c("navigation in egocentric", "navigation in allocentric")
+# lv.info <- paste0(lv.cond, ": Pearson's r = ", lv.cor, " (95%-CI [", lv.llcor, ", ", lv.ulcor, "])")
+# lv.info <- paste0(lv.info[1], "\n", lv.info[2])
+
+l_bsr <- c("latency", "excess path length", "excess distance to goal", "initial rotation", "layout score", "landmark score", "positioning score")
+bsr <- plsc_data_probe$plsres$boot_result$compare_u[[1]][,1] %>% 
+  unlist() %>% enframe() %>% 
+  mutate(type=factor(case_when(name %in%  1:4 ~ "nav", T ~ "post"), levels=c("nav", "post")),
+         name=factor(l_bsr, levels=rev(l_bsr)))
+
+plot.bsr_probe <- bar_plot_wrapper(bsr, plsc_colors_f, plsc_colors_o, mytitle="Latent profile for age", mysubtitle=lv.info)
+ggsave("../WP10_data/Plots/bsr_probe.jpg", plot.bsr_probe, width=4.7, height=3.2, dpi=600)
+## ---- 
+rm(l_bsr, bsr, plot.bsr_probe, lv.p, lv.cor, lv.llcor, lv.ulcor)
+
+
+# --- Scatter Age x Latent profile score --- #
+## ---- plot_plsc_age_x_lp_probe
+lp <- plsc_data_probe$plsres$usc[[1]][,1] %>% unlist()
+age <- plsc_data_probe$plsres$data$age %>% unlist()
+group <- plsc_data_probe$plsres$data$group %>% unlist()
+data_age <- as.data.frame(cbind(group, lp, age))
+rm(lp, age, group)
+
+plot.age_x_lp_probe <- scatter_plot_wrapper(data_age, "age", "lp", "age", "latent profile score") + theme(legend.position="none")
+ggsave("../WP10_data/Plots/age_x_lp_probe.jpg", plot.age_x_lp_probe, width=3, height=3, dpi=600)
+## ---- 
+rm(data_age, plot.age_x_lp_probe)
+
+
+# --- Scatter Memory x Latent profile score --- #
+## ---- plot_plsc_lp_x_memory_probe
+lp <- plsc_data_probe$plsres$usc[[1]][,1] %>% unlist()
+group <- plsc_data_probe$plsres$data$group %>% unlist()
+memory_avg <- plsc_data_probe$plsres$data$memoryAvg %>% unlist()
+memory_ego1 <- plsc_data_probe$plsres$data$memoryEgo1 %>% unlist()
+memory_ego2 <- plsc_data_probe$plsres$data$memoryEgo2 %>% unlist()
+memory_allo1 <- plsc_data_probe$plsres$data$memoryAllo1 %>% unlist()
+memory_allo2 <- plsc_data_probe$plsres$data$memoryAllo2 %>% unlist()
+data_memory <- as.data.frame(cbind(group, lp, memory_avg, memory_ego1, memory_ego2, memory_allo1, memory_allo2))
+rm(lp, group, memory_avg, memory_ego1, memory_ego2, memory_allo1, memory_allo2)
+
+plot.lp_x_avg_mem_probe <- scatter_plot_wrapper(data_memory, "memory_avg", "lp", "average memory", "latent profile score", xbreaks=c(0.4,0.5,0.6,0.7,0.8,0.9,1), addcor=T)
+plot.lp_x_mem_ego1_probe <- scatter_plot_wrapper(data_memory, "memory_ego1", "lp", "memory ego 1", "latent profile score", xbreaks=c(0.4,0.5,0.6,0.7,0.8,0.9,1), addcor=T)
+plot.lp_x_mem_ego2_probe <- scatter_plot_wrapper(data_memory, "memory_ego2", "lp", "memory ego 2", "latent profile score", xbreaks=c(0.4,0.5,0.6,0.7,0.8,0.9,1), addcor=T)
+plot.lp_x_mem_allo1_probe <- scatter_plot_wrapper(data_memory, "memory_allo1", "lp", "memory allo 1", "latent profile score", xbreaks=c(0.4,0.5,0.6,0.7,0.8,0.9,1), addcor=T)
+plot.lp_x_mem_allo2_probe <- scatter_plot_wrapper(data_memory, "memory_allo2", "lp", "memory allo 2", "latent profile score", xbreaks=c(0.4,0.5,0.6,0.7,0.8,0.9,1), addcor=T)
+
+plot.lp_x_mem_probe <- plot.lp_x_mem_ego1_probe + plot.lp_x_mem_ego2_probe + plot.lp_x_mem_allo1_probe + plot.lp_x_mem_allo2_probe +
+  plot_layout(nrow=1, ncol=4, guides="collect") & theme(legend.position="none", legend.justification="left")
+ggsave("../WP10_data/Plots/lp_x_mem_probe.jpg", plot.lp_x_mem_probe, width=10, height=3, dpi=600)
+## ----
+rm(data_memory, plot.lp_x_avg_mem_probe, plot.lp_x_mem_ego1_probe, plot.lp_x_mem_ego2_probe, plot.lp_x_mem_allo1_probe, plot.lp_x_mem_allo2_probe, plot.lp_x_mem_probe)
+rm(plsc_data_probe)
 
 
 # ------------------------------------------------------------------------------
