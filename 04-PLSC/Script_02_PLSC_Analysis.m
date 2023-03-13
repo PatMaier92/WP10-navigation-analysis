@@ -99,6 +99,10 @@ for i=1:numel(data_cell)
     plsres.data.memoryAllo1 = memory_table.memoryAllo1; 
     plsres.data.memoryAllo2 = memory_table.memoryAllo2; 
 
+    % calculate two variants of latent profile scores (usc)
+    plsres.usc_nav = datamat1_allgroups(:,1:4) * plsres.u(1:4); 
+    plsres.usc_post = datamat1_allgroups(:,5:end) * plsres.u(5:end);
+       
     % save data file 
     save([path, '/PLSC_', file_name, '/results_m', int2str(cfg.pls.method), '_g', int2str(size(n_subj,1)), '.mat'],'plsres');
     
