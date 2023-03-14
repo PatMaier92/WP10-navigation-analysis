@@ -220,13 +220,13 @@ bar_plot_wrapper <- function(data, colors, colors_o, mytitle, mysubtitle=NULL, x
   return(p)
 }
 
-scatter_plot_wrapper <- function(data, xv, yv, xlabel, ylabel, xbreaks=waiver()) {
+scatter_plot_wrapper <- function(data, xv, yv, xlabel, ylabel, xbreaks=waiver(), ymin=-6, ymax=4) {
   p <- ggplot(data, aes(x=get(xv), y=get(yv), color=factor(group))) + 
     geom_point() + 
     scale_color_manual(values=group_colors_f, labels=group_labels) +
     scale_x_continuous(breaks=xbreaks, expand=expansion(0, 0)) +
     scale_y_continuous(expand=expansion(0, 0)) +
-    coord_cartesian(xlim=c(5,31), ylim=c(-6,4)) + 
+    coord_cartesian(xlim=c(5, 31), ylim=c(ymin, ymax)) + 
     theme_classic(base_size=10) + 
     theme(legend.position="top", legend.justification=c(0, 0),
           legend.title=element_blank(),
@@ -237,10 +237,10 @@ scatter_plot_wrapper <- function(data, xv, yv, xlabel, ylabel, xbreaks=waiver())
   return(p)
 }
 
-line_plot_wrapper <- function(data, xv, yv, xlabel, ylabel, xbreaks=waiver(), addpoints=F, ymin=-6, ymax=6) {
+line_plot_wrapper <- function(data, xv, yv, xlabel, ylabel, xbreaks=waiver(), labelx=c(0,1), labely=c(1,0), addpoints=F, ymin=-6, ymax=6) {
   p <- ggplot(data, aes(x=get(xv), y=get(yv), linetype=factor(session))) + 
     geom_smooth(method=lm, se=T, size=0.5, color="black") + 
-    stat_cor(method="pearson", label.x=c(0.7,0.42), label.y=c(-5,3), p.accuracy=0.001, r.accuracy=0.01, show.legend=F, size=3) +
+    stat_cor(method="pearson", label.x=labelx, label.y=labely, p.accuracy=0.001, r.accuracy=0.01, show.legend=F, size=3) +
     scale_x_continuous(breaks=xbreaks, expand=expansion(0, 0)) +
     scale_y_continuous(expand=expansion(0, 0)) +
     scale_linetype_manual(values=c(1, 2), labels=session_labels) +
@@ -267,7 +267,7 @@ line_plot_wrapper <- function(data, xv, yv, xlabel, ylabel, xbreaks=waiver(), ad
 options(contrasts=c(unordered="contr.sum", ordered="contr.poly"))
 
 # function for statistical comparison of correlation coefficients with z-test
-cor.test.comparison <- function(r1, r2){
+cor.test.comparison <- function(r1, r2, bonferroni_n=1){
   
   # n (derived from df)
   n_for_ztest <- function(r){
@@ -291,17 +291,18 @@ cor.test.comparison <- function(r1, r2){
   # z-test statistic (comparison of coefficients)
   ztest <- function(za, zb, na, nb) {
     Z <- (za - zb) / sqrt( 1 / (na - 3) + 1 / (nb - 3))
-    p <- round(2*pnorm(-abs(Z)), 4)
+    p <- 2*pnorm(-abs(Z))
+    p_bonferroni <- ifelse(p*bonferroni_n > 1, 1, p*bonferroni_n)
     
-    return(p)
+    return(cbind(p, p_bonferroni))
   }
   ztest1 <- ztest(Z1, Z2, n1, n2)
   
   # summarize results
-  r <- as.data.frame(cbind(r1$estimate, r2$estimate), row.names="r")
+  r <- as.data.frame(cbind(r1$estimate, r2$estimate))
   colnames(r) <- c("SESSION 1", "SESSION 2")
-  p <- as.data.frame(cbind(ztest1), row.names="p")
-  colnames(p) <- c("SESSION 1 vs. 2")
+  p <- as.data.frame(cbind(ztest1), row.names=c("SESSION 1 vs. 2"))
+  colnames(p) <- c("p", paste0("p_bonf(", bonferroni_n, ")"))
   results <- list(r=r, p=p)
   
   return(results)
@@ -844,7 +845,7 @@ rm(lp, age, group)
 
 # model.age_lp_post_learn <- cor.test(data_age$age, data_age$lp)
 
-plot.age_x_lp_post_learn <- scatter_plot_wrapper(data_age, "age", "lp", "age", "latent profile score (LPS)") + theme(legend.position="none")
+plot.age_x_lp_post_learn <- scatter_plot_wrapper(data_age, "age", "lp", "age", "latent profile score (LPS)", ymin=-2, ymax=2) + theme(legend.position="none")
 ## ---- 
 rm(data_age, plot.age_x_lp_post_learn, model.age_lp_post_learn)
 
@@ -862,30 +863,64 @@ rm(lp, group, memory_ego_1, memory_ego_2, memory_allo_1, memory_allo_2)
 
 model.lp_n_ego_1 <- cor.test(data_memory_nav$memory_ego_1, data_memory_nav$lp)
 model.lp_n_ego_2 <- cor.test(data_memory_nav$memory_ego_2, data_memory_nav$lp)
-model.comp_lp_n_ego <- cor.test.comparison(model.lp_n_ego_1, model.lp_n_ego_2)
+model.comp_lp_n_ego <- cor.test.comparison(model.lp_n_ego_1, model.lp_n_ego_2, bonferroni_n=4)
 
 model.lp_n_allo_1 <- cor.test(data_memory_nav$memory_allo_1, data_memory_nav$lp)
 model.lp_n_allo_2 <- cor.test(data_memory_nav$memory_allo_2, data_memory_nav$lp)
-model.comp_lp_n_allo <- cor.test.comparison(model.lp_n_allo_1, model.lp_n_allo_2)
+model.comp_lp_n_allo <- cor.test.comparison(model.lp_n_allo_1, model.lp_n_allo_2, bonferroni_n=4)
+
+model.comp_lp_n_ego_allo_1 <- cor.test.comparison(model.lp_n_ego_1, model.lp_n_allo_1, bonferroni_n=4)
+model.comp_lp_n_ego_allo_2 <- cor.test.comparison(model.lp_n_ego_2, model.lp_n_allo_2, bonferroni_n=4)
 
 data_memory_nav_long <- data_memory_nav %>% 
   pivot_longer(cols=starts_with("memory"),
                names_to = c("condition", "session"),
                names_pattern = "_(.*)_(.*)")
 
-plot.mem_x_lp_nav_ego_learn <- line_plot_wrapper(data_memory_nav_long %>% filter(condition=="ego"), "value", "lp", "egocentric memory", "LPS", c(0.4,0.5,0.6,0.7,0.8,0.9,1))
-plot.mem_x_lp_nav_allo_learn <- line_plot_wrapper(data_memory_nav_long %>% filter(condition=="allo"), "value", "lp", "allocentric memory", "LPS", c(0.4,0.5,0.6,0.7,0.8,0.9,1))
+plot.mem_x_lp_nav_ego_learn <- line_plot_wrapper(data_memory_nav_long %>% filter(condition=="ego"), "value", "lp", "egocentric memory", "LPS", xbreaks=c(0.4,0.5,0.6,0.7,0.8,0.9,1), labelx=c(0.7,0.42), labely=c(-5,3))
+plot.mem_x_lp_nav_allo_learn <- line_plot_wrapper(data_memory_nav_long %>% filter(condition=="allo"), "value", "lp", "allocentric memory", "LPS", xbreaks=c(0.4,0.5,0.6,0.7,0.8,0.9,1), labelx=c(0.7,0.42), labely=c(-5,3))
 plot.mem_x_lp_nav_learn <- plot.mem_x_lp_nav_ego_learn + plot.mem_x_lp_nav_allo_learn +
   plot_layout(nrow=1, ncol=2, guides="collect") & theme(legend.position="top", legend.justification="left")
 rm(plot.mem_x_lp_nav_ego_learn, plot.mem_x_lp_nav_allo_learn)
 ## ---- 
 rm(model.lp_n_ego_1, model.lp_n_ego_2, model.comp_lp_n_ego, model.lp_n_allo_1, model.lp_n_allo_2, model.comp_lp_n_allo,
-   data_memory_nav, data_memory_nav_long, plot.mem_x_lp_nav_learn)
+   model.comp_lp_n_ego_allo_1, model.comp_lp_n_ego_allo_2, data_memory_nav, data_memory_nav_long, plot.mem_x_lp_nav_learn)
 
 
 ## ---- plot_plsc_memory_x_lp_post_learn
-# TBD 
+lp <- plsc_data_learn$plsres$usc_post %>% unlist()
+group <- plsc_data_learn$plsres$data$group %>% unlist()
+memory_ego_1 <- plsc_data_learn$plsres$data$memoryEgo1 %>% unlist()
+memory_ego_2 <- plsc_data_learn$plsres$data$memoryEgo2 %>% unlist()
+memory_allo_1 <- plsc_data_learn$plsres$data$memoryAllo1 %>% unlist()
+memory_allo_2 <- plsc_data_learn$plsres$data$memoryAllo2 %>% unlist()
+data_memory_post <- as.data.frame(cbind(group, lp, memory_ego_1, memory_ego_2, memory_allo_1, memory_allo_2)) 
+rm(lp, group, memory_ego_1, memory_ego_2, memory_allo_1, memory_allo_2)
+
+model.lp_p_ego_1 <- cor.test(data_memory_post$memory_ego_1, data_memory_post$lp)
+model.lp_p_ego_2 <- cor.test(data_memory_post$memory_ego_2, data_memory_post$lp)
+model.comp_lp_p_ego <- cor.test.comparison(model.lp_p_ego_1, model.lp_p_ego_2, bonferroni_n=4)
+
+model.lp_p_allo_1 <- cor.test(data_memory_post$memory_allo_1, data_memory_post$lp)
+model.lp_p_allo_2 <- cor.test(data_memory_post$memory_allo_2, data_memory_post$lp)
+model.comp_lp_p_allo <- cor.test.comparison(model.lp_p_allo_1, model.lp_p_allo_2, bonferroni_n=4)
+
+model.comp_lp_p_ego_allo_1 <- cor.test.comparison(model.lp_p_ego_1, model.lp_p_allo_1, bonferroni_n=4)
+model.comp_lp_p_ego_allo_2 <- cor.test.comparison(model.lp_p_ego_2, model.lp_p_allo_2, bonferroni_n=4)
+
+data_memory_post_long <- data_memory_post %>% 
+  pivot_longer(cols=starts_with("memory"),
+               names_to = c("condition", "session"),
+               names_pattern = "_(.*)_(.*)")
+
+plot.mem_x_lp_post_ego_learn <- line_plot_wrapper(data_memory_post_long %>% filter(condition=="ego"), "value", "lp", "egocentric memory", "LPS", xbreaks=c(0.4,0.5,0.6,0.7,0.8,0.9,1), labelx=c(0.7,0.42), labely=c(-1.5,1), ymin=-2, ymax=2)
+plot.mem_x_lp_post_allo_learn <- line_plot_wrapper(data_memory_post_long %>% filter(condition=="allo"), "value", "lp", "allocentric memory", "LPS", xbreaks=c(0.4,0.5,0.6,0.7,0.8,0.9,1), labelx=c(0.7,0.42), labely=c(-1.5,1), ymin=-2, ymax=2)
+plot.mem_x_lp_post_learn <- plot.mem_x_lp_post_ego_learn + plot.mem_x_lp_post_allo_learn +
+  plot_layout(nrow=1, ncol=2, guides="collect") & theme(legend.position="top", legend.justification="left")
+rm(plot.mem_x_lp_post_ego_learn, plot.mem_x_lp_post_allo_learn)
 ## ---- 
+rm(model.lp_p_ego_1, model.lp_p_ego_2, model.comp_lp_p_ego, model.lp_p_allo_1, model.lp_p_allo_2, model.comp_lp_p_allo,
+   data_memory_post, data_memory_post_long, plot.mem_x_lp_post_learn)
 
 
 # ############################################################################ #
