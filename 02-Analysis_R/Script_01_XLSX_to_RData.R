@@ -27,11 +27,10 @@ file_path <- paste("../WP10_data/WP10_results/wp10_navigation_data_", date, ".xl
 sm_data <- read_xlsx(file_path, col_names=T, na="999")
 
 # read-in covariate data 
-file_name <- "../WP10_data/WP10_results/covariates_starmaze.xlsx"
+file_name <- "../WP10_data/WP10_results/wp10_covariates.xlsx"
 cov <- read_xlsx(file_name, col_names=T, na="999") %>% 
-  select(-sex, -group) %>% 
-  mutate_all(as.numeric) %>% 
-  rename(IQ=GGX_T, fam_income=income)
+  select(id, age) %>% 
+  mutate_all(as.numeric) 
 
 
 # tidy data 

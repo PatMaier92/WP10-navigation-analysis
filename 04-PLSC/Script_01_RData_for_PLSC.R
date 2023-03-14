@@ -27,7 +27,7 @@ load(file_name)
 sm_data <- sm_data %>% filter(exclude_trial_matlab==0) 
 rm(file_name)
 
-# age data: mean imputation for missings
+# age data: mean imputation for two missing values 
 age_data <- sm_data %>% 
   select(id, group, age) %>% unique() %>% 
   group_by(group) %>% 
