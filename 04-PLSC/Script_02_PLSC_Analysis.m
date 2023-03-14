@@ -20,19 +20,26 @@ path = '../WP10_data/WP10_results/';
 % age by session 1 learning trials
 data_age_by_NlS1PT = readtable([path, 'wp10_plsc_age_by_NlS1PT.txt']); 
 
-% age by session 1 probe trials (supplemental analysis) 
-data_age_by_NpS1PT = readtable([path, 'wp10_plsc_age_by_NpS1PT.txt']); 
+% % age by session 1 probe trials (supplemental analysis) 
+% data_age_by_NpS1PT = readtable([path, 'wp10_plsc_age_by_NpS1PT.txt']); 
 
 % memory data 
 memory_table = readtable([path, 'wp10_plsc_memory.txt']); 
 
 % analysis settings 
-data_cell = { data_age_by_NlS1PT data_age_by_NpS1PT data_age_by_NpS1PT };
-data_names = { 'age_by_NlS1PT' 'age_by_NpS1PT' 'age_by_NpS1PT' }; 
-analysis_method = { 3 3 5 }; % 3=regular behavior PLS; 5=non-rotated behavior PLS
-n_conditions = { 1 2 2 }; % number of conditions 
-by_group = { 0 0 0 }; % 0=no; 1=yes; note: not required if age is outcome variable 
-design_contrasts = { [] [] [1 -1 ]' }; % rows=conditions x groups, sorted as condition in group; colums = desired contrasts
+% data_cell = { data_age_by_NlS1PT data_age_by_NpS1PT data_age_by_NpS1PT };
+% data_names = { 'age_by_NlS1PT' 'age_by_NpS1PT' 'age_by_NpS1PT' }; 
+% analysis_method = { 3 3 5 }; % 3=regular behavior PLS; 5=non-rotated behavior PLS
+% n_conditions = { 1 2 2 }; % number of conditions 
+% by_group = { 0 0 0 }; % 0=no; 1=yes; note: not required if age is outcome variable 
+% design_contrasts = { [] [] [1 -1 ]' }; % rows=conditions x groups, sorted as condition in group; colums = desired contrasts
+
+data_cell = { data_age_by_NlS1PT };
+data_names = { 'age_by_NlS1PT' }; 
+analysis_method = { 3 }; % 3=regular behavior PLS; 5=non-rotated behavior PLS
+n_conditions = { 1 }; % number of conditions 
+by_group = { 0 }; % 0=no; 1=yes; note: not required if age is outcome variable 
+design_contrasts = { [] }; % rows=conditions x groups, sorted as condition in group; colums = desired contrasts
 
 for i=1:numel(data_cell)
     %--------------------------------------------------------------------------
@@ -104,7 +111,7 @@ for i=1:numel(data_cell)
     plsres.usc_post = datamat1_allgroups(:,5:end) * plsres.u(5:end);
        
     % save data file 
-    save([path, '/PLSC_', file_name, '/results_m', int2str(cfg.pls.method), '_g', int2str(size(n_subj,1)), '.mat'],'plsres');
+    save([path, '/wp10_plsc_', file_name, '_results_m', int2str(cfg.pls.method), '_g', int2str(size(n_subj,1)), '.mat'],'plsres');
     
     clear n_con cfg datamat*; 
 %     %--------------------------------------------------------------------------
@@ -151,7 +158,7 @@ for i=1:numel(data_cell)
 %             hold off;
 %             clear n_dim nd lh*;
 %             
-%             saveas(fig,[path, '/PLSC_', file_name, '/Plot_LV_m', int2str(plsres.method), '_g', int2str(size(n_subj,1)), '_lv', int2str(LV_n), '.png']);
+%             saveas(fig,[path, '/wp10_plsc_', file_name, '_Plot_LV_m', int2str(plsres.method), '_g', int2str(size(n_subj,1)), '_lv', int2str(LV_n), '.png']);
 %         end 
 %
 %         % LV weights correlations with CI based on standard error
@@ -174,7 +181,7 @@ for i=1:numel(data_cell)
 %             hold off;
 %             clear n_dim lh*;
 %             
-%             saveas(fig,[path, '/PLSC_', file_name, '/Plot_LV_CI_m', int2str(plsres.method), '_g', int2str(size(n_subj,1)), '_lv', int2str(LV_n),'.png']);
+%             saveas(fig,[path, '/wp10_plsc_', file_name, '_Plot_LV_CI_m', int2str(plsres.method), '_g', int2str(size(n_subj,1)), '_lv', int2str(LV_n),'.png']);
 %             
 %         end
 % 
@@ -194,7 +201,7 @@ for i=1:numel(data_cell)
 %         [R,P]=corrcoef(plsres.usc(:,LV_n), data.age, 'rows', 'complete');
 %         title(strcat('r=',num2str(R(2,1)),', p=',num2str(P(2,1))));
 %         clear R P;
-%         saveas(fig,[path, '/PLSC_', file_name, '/Plot_LP_AGE_m', int2str(plsres.method), '_g', int2str(size(n_subj,1)), '.png']);
+%         saveas(fig,[path, '/wp10_plsc_', file_name, '_Plot_LP_AGE_m', int2str(plsres.method), '_g', int2str(size(n_subj,1)), '.png']);
 %         
 %         fig = figure('visible','off');
 %         y_var = {'memoryAvg' 'memoryEgo1' 'memoryEgo2' 'memoryAllo1' 'memoryAllo2'};
@@ -208,7 +215,7 @@ for i=1:numel(data_cell)
 %             xlim([0 1]);
 %             clear R P;
 %         end
-%         saveas(fig,[path, '/PLSC_', file_name, '/Plot_LP_MEM_m', int2str(plsres.method), '_g', int2str(size(n_subj,1)), '.png']);
+%         saveas(fig,[path, '/wp10_plsc_', file_name, '_Plot_LP_MEM_m', int2str(plsres.method), '_g', int2str(size(n_subj,1)), '.png']);
 %     end
 %     %--------------------------------------------------------------------------
     clear p n_subj data file_name plsinput plsres;

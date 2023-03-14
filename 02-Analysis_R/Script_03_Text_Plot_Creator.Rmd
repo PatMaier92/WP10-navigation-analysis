@@ -65,7 +65,7 @@ rm(n_group_post)
 ```
 
 ```{r, include=FALSE}
-file_name <- "../WP10_data/WP10_results/PLSC_age_by_NlS1PT/results_m3_g1.mat"
+file_name <- "../WP10_data/WP10_results/wp10_plsc_age_by_NlS1PT_results_m3_g1.mat"
 plsc_data_learn <- read.mat(file_name)
 rm(file_name)
 ```
