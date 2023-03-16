@@ -27,6 +27,12 @@ sm_data <- sm_data %>% filter(exclude_trial_matlab==0)
 rm(file_name)
 ```
 
+```{r, include=FALSE}
+file_name <- "../WP10_data/WP10_results/wp10_plsc_age_by_NlS1PT_results_m3_g1.mat"
+plsc_data_learn <- read.mat(file_name)
+rm(file_name)
+```
+
 ```{r, data_prep, include=FALSE}
 ```
 
@@ -204,6 +210,95 @@ rm(apa_ms_random)
 ```
 
 \newpage
+
+### PLSC amalysis: Correlations LPS with memory 
+
+
+```{r, plot_plsc_age_x_lp_nav_learn, include=F}
+```
+
+```{r, plot_plsc_age_x_lp_post_learn, include=F}
+```
+
+```{r, plot_plsc_memory_x_lp_nav_learn, include=F}
+```
+
+```{r, plot_plsc_memory_x_lp_post_learn, include=F}
+```
+
+```{r apa_plsc_nav_learn, include=F}
+p_bonferroni4 <- "$p_\\mathrm{Bonferroni(4)}$"
+
+# LP correlations
+apa_model.lp_n_ego_1 <- model.lp_n_ego_1 %>% apa_print()
+apa_model.lp_n_ego_2 <- model.lp_n_ego_2 %>% apa_print()
+apa_model.p_lp_n_ego <- model.comp_lp_n_ego$p$`p_bonf(4)` %>% as.numeric() %>% apa_p(add_equals=T)
+
+apa_model.lp_n_allo_1 <- model.lp_n_allo_1 %>% apa_print()
+apa_model.lp_n_allo_2 <- model.lp_n_allo_2 %>% apa_print()
+apa_model.p_lp_n_allo <- model.comp_lp_n_allo$p$`p_bonf(4)` %>% as.numeric() %>% apa_p(add_equals=T)
+
+apa_model.p_lp_n_ego_allo_1 <- model.comp_lp_n_ego_allo_1$p$`p_bonf(4)` %>% as.numeric() %>% apa_p(add_equals=T)
+apa_model.p_lp_n_ego_allo_2 <- model.comp_lp_n_ego_allo_2$p$`p_bonf(4)` %>% as.numeric() %>% apa_p(add_equals=T)
+
+rm(model.lp_n_ego_1, model.lp_n_ego_2, model.lp_n_allo_1, model.lp_n_allo_2, model.comp_lp_n_ego, model.comp_lp_n_allo, model.comp_lp_n_ego_allo_1, model.comp_lp_n_ego_allo_2)
+```
+
+```{r apa_table_plsc_nav_learn, echo=F}
+apa_table(
+  rbind(apa_model.lp_n_ego_1$table,
+        apa_model.lp_n_ego_2$table,
+        apa_model.lp_n_allo_1$table,
+        apa_model.lp_n_allo_2$table)
+  )
+
+rm(apa_model.lp_n_ego_1, apa_model.lp_n_ego_2, apa_model.lp_n_allo_1, apa_model.lp_n_allo_2)
+```
+
+ego 1 vs ego 2 (`r p_bonferroni4` `r apa_model.p_lp_n_ego`)
+allo 1 vs allo 2 (`r p_bonferroni4` `r apa_model.p_lp_n_allo`)
+ego 1 vs allo 1 (`r p_bonferroni4` `r apa_model.p_lp_n_ego_allo_1`)
+ego 2 vs allo 2 (`r p_bonferroni4` `r apa_model.p_lp_n_ego_allo_2`)
+
+```{r, include=F}
+rm(apa_model.p_lp_n_ego, apa_model.p_lp_n_allo, apa_model.p_lp_n_ego_allo_1, apa_model.p_lp_n_ego_allo_2)
+```
+
+```{r apa_plsc_post_learn, include=F}
+# LP correlations
+apa_model.lp_p_ego_1 <- model.lp_p_ego_1 %>% apa_print()
+apa_model.lp_p_ego_2 <- model.lp_p_ego_2 %>% apa_print()
+apa_model.p_lp_p_ego <- model.comp_lp_p_ego$p$`p_bonf(4)` %>% as.numeric() %>% apa_p(add_equals=T)
+
+apa_model.lp_p_allo_1 <- model.lp_p_allo_1 %>% apa_print()
+apa_model.lp_p_allo_2 <- model.lp_p_allo_2 %>% apa_print()
+apa_model.p_lp_p_allo <- model.comp_lp_p_allo$p$`p_bonf(4)` %>% as.numeric() %>% apa_p(add_equals=T)
+
+apa_model.p_lp_p_ego_allo_1 <- model.comp_lp_p_ego_allo_1$p$`p_bonf(4)` %>% as.numeric() %>% apa_p(add_equals=T)
+apa_model.p_lp_p_ego_allo_2 <- model.comp_lp_p_ego_allo_2$p$`p_bonf(4)` %>% as.numeric() %>% apa_p(add_equals=T)
+
+rm(model.age_lp_post_learn, model.lp_p_ego_1, model.lp_p_ego_2, model.lp_p_allo_1, model.lp_p_allo_2, model.comp_lp_p_ego, model.comp_lp_p_allo, model.comp_lp_p_ego_allo_1, model.comp_lp_p_ego_allo_2)
+```
+
+```{r apa_table_plsc_post_learn, echo=F}
+apa_table(
+  rbind(apa_model.lp_p_ego_1$table,
+        apa_model.lp_p_ego_2$table,
+        apa_model.lp_p_allo_1$table,
+        apa_model.lp_p_allo_2$table)
+  )
+
+rm(apa_model.lp_p_ego_1, apa_model.lp_p_ego_2, apa_model.lp_p_allo_1, apa_model.lp_p_allo_2)
+```
+
+ego 1 vs ego 2 (`r p_bonferroni4` `r apa_model.p_lp_p_ego`)
+allo 1 vs allo 2 (`r p_bonferroni4` `r apa_model.p_lp_p_allo`)
+ego 1 vs allo 1 (`r p_bonferroni4` `r apa_model.p_lp_p_ego_allo_1`)
+ego 2 vs allo 2 (`r p_bonferroni4` `r apa_model.p_lp_p_ego_allo_2`)
+
+```{r, include=F}
+rm(apa_model.p_lp_p_ego, apa_model.p_lp_p_allo, apa_model.p_lp_p_ego_allo_1, apa_model.p_lp_p_ego_allo_2)
+```
 
 ### Supplement 
 
