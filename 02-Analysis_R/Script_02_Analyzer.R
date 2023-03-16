@@ -830,7 +830,7 @@ group <- plsc_data_learn$plsres$data$group %>% unlist()
 data_age <- as.data.frame(cbind(group, lp, age))
 rm(lp, age, group)
 
-# model.age_lp_nav_learn <- cor.test(data_age$age, data_age$lp)
+model.age_lp_nav_learn <- cor.test(data_age$age, data_age$lp)
 
 plot.age_x_lp_nav_learn <- scatter_plot_wrapper(data_age, "age", "lp", "age", "latent profile score (LPS)") + theme(legend.position="none")
 ## ---- 
@@ -843,7 +843,7 @@ group <- plsc_data_learn$plsres$data$group %>% unlist()
 data_age <- as.data.frame(cbind(group, lp, age))
 rm(lp, age, group)
 
-# model.age_lp_post_learn <- cor.test(data_age$age, data_age$lp)
+model.age_lp_post_learn <- cor.test(data_age$age, data_age$lp)
 
 plot.age_x_lp_post_learn <- scatter_plot_wrapper(data_age, "age", "lp", "age", "latent profile score (LPS)", ymin=-2, ymax=2) + theme(legend.position="none")
 ## ---- 
