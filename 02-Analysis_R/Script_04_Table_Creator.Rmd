@@ -245,12 +245,17 @@ rm(model.lp_n_ego_1, model.lp_n_ego_2, model.lp_n_allo_1, model.lp_n_allo_2, mod
 ```
 
 ```{r apa_table_plsc_nav_learn, echo=F}
-apa_table(
+Correlation_LPS <- c("egocentric 1", "egocentric 2", "allocentric 1", "allocentric 2")
+s1_vs_s2 <- c(0, apa_model.p_lp_n_ego, 0, apa_model.p_lp_n_allo)
+ego_vs_allo <- c(apa_model.p_lp_n_ego_allo_1, apa_model.p_lp_n_ego_allo_2, 0, 0)
+apa_table(cbind(
+  Correlation_LPS,
   rbind(apa_model.lp_n_ego_1$table,
         apa_model.lp_n_ego_2$table,
         apa_model.lp_n_allo_1$table,
-        apa_model.lp_n_allo_2$table)
-  )
+        apa_model.lp_n_allo_2$table),
+  s1_vs_s2,
+  ego_vs_allo))
 
 rm(apa_model.lp_n_ego_1, apa_model.lp_n_ego_2, apa_model.lp_n_allo_1, apa_model.lp_n_allo_2)
 ```
@@ -281,14 +286,19 @@ rm(model.age_lp_post_learn, model.lp_p_ego_1, model.lp_p_ego_2, model.lp_p_allo_
 ```
 
 ```{r apa_table_plsc_post_learn, echo=F}
-apa_table(
+Correlation_LPS <- c("egocentric 1", "egocentric 2", "allocentric 1", "allocentric 2")
+s1_vs_s2 <- c(0, apa_model.p_lp_p_ego, 0, apa_model.p_lp_p_allo)
+ego_vs_allo <- c(apa_model.p_lp_p_ego_allo_1, apa_model.p_lp_p_ego_allo_2, 0, 0)
+apa_table(cbind(
+  Correlation_LPS,
   rbind(apa_model.lp_p_ego_1$table,
         apa_model.lp_p_ego_2$table,
         apa_model.lp_p_allo_1$table,
-        apa_model.lp_p_allo_2$table)
-  )
+        apa_model.lp_p_allo_2$table),
+  s1_vs_s2,
+  ego_vs_allo))
 
-rm(apa_model.lp_p_ego_1, apa_model.lp_p_ego_2, apa_model.lp_p_allo_1, apa_model.lp_p_allo_2)
+rm(apa_model.lp_p_ego_1, apa_model.lp_p_ego_2, apa_model.lp_p_allo_1, apa_model.lp_p_allo_2, Correlation_LPS, s1_vs_s2, ego_vs_allo)
 ```
 
 ego 1 vs ego 2 (`r p_bonferroni4` `r apa_model.p_lp_p_ego`)
