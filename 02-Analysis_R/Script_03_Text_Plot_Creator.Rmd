@@ -141,9 +141,9 @@ R2 <- r2beta(model.latency_train$full_model, method='nsj', partial=F) %>% mutate
 
 apa_lmm.train_latency <- apa_print(model.latency_train)
 
-apa_post.train_latency_group <- post.train_latency_group %>% apa_print() %>% bonferroni_fix()
+apa_post.train_latency_group <- post.train_latency_group %>% apa_print() %>% apa_bonferroni_fix()
 
-apa_post.train_latency_trial <- post.train_latency_trial %>% apa_print() %>% bonferroni_fix()
+apa_post.train_latency_trial <- post.train_latency_trial %>% apa_print() %>% apa_bonferroni_fix()
 
 rm(post.train_latency_group, post.train_latency_trial)
 ```
@@ -172,9 +172,9 @@ R2 <- r2beta(model.path_train$full_model, method='nsj', partial=F) %>% mutate_al
 
 apa_lmm.train_path <- apa_print(model.path_train)
 
-apa_post.train_path_group <- post.train_path_group %>% apa_print() %>% bonferroni_fix()
+apa_post.train_path_group <- post.train_path_group %>% apa_print() %>% apa_bonferroni_fix()
 
-apa_post.train_path_trial <- post.train_path_trial %>% apa_print() %>% bonferroni_fix()
+apa_post.train_path_trial <- post.train_path_trial %>% apa_print() %>% apa_bonferroni_fix()
 
 rm(post.train_path_group, post.train_path_trial)
 ```
@@ -203,9 +203,9 @@ R2 <- r2beta(model.distance_train$full_model, method='nsj', partial=F) %>% mutat
 
 apa_lmm.train_distance <- apa_print(model.distance_train)
 
-apa_post.train_distance_group <- post.train_distance_group %>% apa_print() %>% bonferroni_fix()
+apa_post.train_distance_group <- post.train_distance_group %>% apa_print() %>% apa_bonferroni_fix()
 
-apa_post.train_distance_trial <- post.train_distance_trial %>% apa_print() %>% bonferroni_fix()
+apa_post.train_distance_trial <- post.train_distance_trial %>% apa_print() %>% apa_bonferroni_fix()
 
 rm(post.train_distance_group, post.train_distance_trial)
 ```
@@ -236,7 +236,7 @@ R2 <- r2beta(model.initial_rotation_train$full_model, method='nsj', partial=F) %
 
 apa_lmm.train_initial_rotation <- apa_print(model.initial_rotation_train)
 
-apa_post.train_initial_rotation_group_trial <- post.train_initial_rotation_group_trial %>% apa_print() %>% bonferroni_fix()
+apa_post.train_initial_rotation_group_trial <- post.train_initial_rotation_group_trial %>% apa_print() %>% apa_bonferroni_fix()
 
 rm(post.train_initial_rotation_group_trial)
 ```
@@ -298,14 +298,14 @@ apa_lmm.ms <- apa_print(model.ms)
 apa_post.ms_omega_group_condition <- omega.ms %>% 
   filter(Parameter=="group:condition") %>% select(Omega2_partial) %>% apa_num()
 
-apa_post.ms_group_condition <- post.ms_group_condition %>% apa_print() %>% bonferroni_fix()
+apa_post.ms_group_condition <- post.ms_group_condition %>% apa_print() %>% apa_bonferroni_fix()
 
 # group 
 apa_post.ms_omega_group <- omega.ms %>% 
   filter(Parameter=="group") %>% select(Omega2_partial) %>% apa_num()
 
-apa_post.ms_group <- post.ms_group %>%  apa_print() %>% bonferroni_fix()
-apa_post.ms_group_chance <- post.ms_group_chance %>%  apa_print() %>% bonferroni_fix()
+apa_post.ms_group <- post.ms_group %>%  apa_print() %>% apa_bonferroni_fix()
+apa_post.ms_group_chance <- post.ms_group_chance %>%  apa_print() %>% apa_bonferroni_fix()
 
 # condition 
 apa_post.ms_omega_condition <- omega.ms %>% 
@@ -370,8 +370,8 @@ apa_lmm.ms_all <- apa_print(model.ms_all)
 apa_post.ms_all_omega_group <- omega.ms_all %>% 
   filter(Parameter=="group") %>% select(Omega2_partial) %>% apa_num()
 
-apa_post.ms_all_group <- post.ms_all_group %>%  apa_print() %>% bonferroni_fix()
-apa_post.ms_all_group_chance <- post.ms_all_group_chance %>%  apa_print() %>% bonferroni_fix()
+apa_post.ms_all_group <- post.ms_all_group %>%  apa_print() %>% apa_bonferroni_fix()
+apa_post.ms_all_group_chance <- post.ms_all_group_chance %>%  apa_print() %>% apa_bonferroni_fix()
 
 # condition 
 apa_post.ms_all_omega_condition <- omega.ms_all %>% 
@@ -462,7 +462,7 @@ rm(model.landmark, apa_aov.landmark)
 ```{r apa_position, include=F}
 apa_aov.position <- apa_print(model.position)
 
-apa_post.position <- post.position$contrasts %>% apa_print() %>% bonferroni_fix()
+apa_post.position <- post.position$contrasts %>% apa_print() %>% apa_bonferroni_fix()
 rm(post.position)
 ```
 
@@ -524,14 +524,14 @@ rm(lv.p, lv.cor, lv.ulcor, lv.llcor)
 p_bonferroni4 <- "$p_\\mathrm{Bonferroni(4)}$"
 
 # LP correlations
-apa_model.age_lp_n <- model.age_lp_nav_learn %>% apa_print()
+apa_model.age_lp_n <- model.age_lp_nav_learn %>% apa_print() %>% apa_correlation_fix()
 
-apa_model.lp_n_ego_1 <- model.lp_n_ego_1 %>% apa_print()
-apa_model.lp_n_ego_2 <- model.lp_n_ego_2 %>% apa_print()
+apa_model.lp_n_ego_1 <- model.lp_n_ego_1 %>% apa_print() %>% apa_correlation_fix(addp=F)
+apa_model.lp_n_ego_2 <- model.lp_n_ego_2 %>% apa_print() %>% apa_correlation_fix(addp=F)
 apa_model.p_lp_n_ego <- model.comp_lp_n_ego$p$`p_bonf(4)` %>% as.numeric() %>% apa_p(add_equals=T)
 
-apa_model.lp_n_allo_1 <- model.lp_n_allo_1 %>% apa_print()
-apa_model.lp_n_allo_2 <- model.lp_n_allo_2 %>% apa_print()
+apa_model.lp_n_allo_1 <- model.lp_n_allo_1 %>% apa_print() %>% apa_correlation_fix(addp=F)
+apa_model.lp_n_allo_2 <- model.lp_n_allo_2 %>% apa_print() %>% apa_correlation_fix(addp=F)
 apa_model.p_lp_n_allo <- model.comp_lp_n_allo$p$`p_bonf(4)` %>% as.numeric() %>% apa_p(add_equals=T)
 
 apa_model.p_lp_n_ego_allo_1 <- model.comp_lp_n_ego_allo_1$p$`p_bonf(4)` %>% as.numeric() %>% apa_p(add_equals=T)
@@ -542,14 +542,14 @@ rm(lv.p, lv.cor, lv.ulcor, lv.llcor, model.age_lp_nav_learn, model.lp_n_ego_1, m
 
 ```{r apa_plsc_post_learn, include=F}
 # LP correlations
-apa_model.age_lp_p <- model.age_lp_post_learn %>% apa_print()
+apa_model.age_lp_p <- model.age_lp_post_learn %>% apa_print() %>% apa_correlation_fix()
 
-apa_model.lp_p_ego_1 <- model.lp_p_ego_1 %>% apa_print()
-apa_model.lp_p_ego_2 <- model.lp_p_ego_2 %>% apa_print()
+apa_model.lp_p_ego_1 <- model.lp_p_ego_1 %>% apa_print() %>% apa_correlation_fix(addp=F)
+apa_model.lp_p_ego_2 <- model.lp_p_ego_2 %>% apa_print() %>% apa_correlation_fix(addp=F)
 apa_model.p_lp_p_ego <- model.comp_lp_p_ego$p$`p_bonf(4)` %>% as.numeric() %>% apa_p(add_equals=T)
 
-apa_model.lp_p_allo_1 <- model.lp_p_allo_1 %>% apa_print()
-apa_model.lp_p_allo_2 <- model.lp_p_allo_2 %>% apa_print()
+apa_model.lp_p_allo_1 <- model.lp_p_allo_1 %>% apa_print() %>% apa_correlation_fix(addp=F)
+apa_model.lp_p_allo_2 <- model.lp_p_allo_2 %>% apa_print() %>% apa_correlation_fix(addp=F)
 apa_model.p_lp_p_allo <- model.comp_lp_p_allo$p$`p_bonf(4)` %>% as.numeric() %>% apa_p(add_equals=T)
 
 apa_model.p_lp_p_ego_allo_1 <- model.comp_lp_p_ego_allo_1$p$`p_bonf(4)` %>% as.numeric() %>% apa_p(add_equals=T)
@@ -558,9 +558,9 @@ apa_model.p_lp_p_ego_allo_2 <- model.comp_lp_p_ego_allo_2$p$`p_bonf(4)` %>% as.n
 rm(lv.p, lv.cor, lv.ulcor, lv.llcor, model.age_lp_post_learn, model.lp_p_ego_1, model.lp_p_ego_2, model.lp_p_allo_1, model.lp_p_allo_2, model.comp_lp_p_ego, model.comp_lp_p_allo, model.comp_lp_p_ego_allo_1, model.comp_lp_p_ego_allo_2)
 ```
 
-Finally, we wanted to test if the age-related variations in 1) navigation behavior during the initial training phase and 2) spatial knowledge can predict spatial memory. We applied PLSC and identified a single reliable LV ($p$ `r apa_lv.p`; Figure 4) that optimally represents associations between age and a profile of navigation indicators from training trials in the learning session (`r apa_model.age_lp_n$full_result`) and spatial knowledge indicators from the post-navigational tests (`r apa_model.age_lp_p$full_result`). We identified several stable components within the multivariate profile, paralleling our previous results. Higher age was associated with a specific navigation pattern during the initial training phase i.e., shorter latency (BSR = `r apa_bsr$latency`), more direct navigation (excess path length; BSR = `r apa_bsr$"excess path length"`), and search near the goal (excess distance to goal; BSR = `r apa_bsr$"excess distance to goal"`) but not visual exploration at the first decision point (initial rotation; BSR = `r apa_bsr$"initial rotation"`). Higher age was also associated with specific pattern of spatial knowledge at the end of the experiment i.e., a higher layout score (BSR = `r apa_bsr$"layout score"`) and positioning score (BSR = `r apa_bsr$"positioning score"`) but not landmarks score (BSR = `r apa_bsr$"landmark score"`). 
+Finally, we wanted to test if the age-related variations in 1) navigation behavior during the initial training phase and 2) spatial knowledge can predict spatial memory. We applied PLSC and identified a single reliable LV ($p$ `r apa_lv.p`; Figure 4) that optimally represents associations between age and a profile of navigation indicators from training trials in the learning session (`r apa_model.age_lp_n$r_and_p`) and spatial knowledge indicators from the post-navigational tests (`r apa_model.age_lp_p$r_and_p`). We identified several stable components within the multivariate profile, paralleling our previous results. Higher age was associated with a specific navigation pattern during the initial training phase i.e., shorter latency (BSR = `r apa_bsr$latency`), more direct navigation (excess path length; BSR = `r apa_bsr$"excess path length"`), and search near the goal (excess distance to goal; BSR = `r apa_bsr$"excess distance to goal"`) but not visual exploration at the first decision point (initial rotation; BSR = `r apa_bsr$"initial rotation"`). Higher age was also associated with specific pattern of spatial knowledge at the end of the experiment i.e., a higher layout score (BSR = `r apa_bsr$"layout score"`) and positioning score (BSR = `r apa_bsr$"positioning score"`) but not landmarks score (BSR = `r apa_bsr$"landmark score"`). 
 
-As a second step, we computed two latent profile scores (LPS) for each participant, one for navigation and one for spatial knowledge. A more positive LPS indicates that an individual expressed the age-related profile more strongly, which means that children with a high LPS score expressed more adult-like behavior. We then correlated the LPS with immediate and long-delay egocentric and allocentric memory (Table X; Figure 4). The navigation LPS correlated significantly with immediate egocentric (`r apa_model.lp_n_ego_1$full_result`) and long-delay egocentric memory (`r apa_model.lp_n_ego_2$full_result`), and the former was significantly higher (`r p_bonferroni4` `r apa_model.p_lp_n_ego`). The navigation LPS also correlated significantly with immediate allocentric (`r apa_model.lp_n_allo_1$full_result`) and long-delay allocentric memory (`r apa_model.lp_n_allo_2$full_result`). The correlation with immediate egocentric memory was significantly higher than with immediate allocentric memory (`r p_bonferroni4` `r apa_model.p_lp_n_ego_allo_1`). In conclusion, we found that navigation behavior during training predicted later memory performance. Participants with a more more efficient, adult-like navigation during training had better immediate and long-delay spatial memory. There was a particularly strong association with immediate egocentric memory. The spatial knowledge LPS also correlated significantly with immediate egocentric (`r apa_model.lp_p_ego_1$full_result`), long-delay egocentric (`r apa_model.lp_p_ego_2$full_result`), immediate allocentric (`r apa_model.lp_p_allo_1$full_result`) and long-delay allocentric memory (`r apa_model.lp_p_allo_2$full_result`). Thus, participants with a better understanding of the geometrical maze layout and object-to-object positions  had better immediate and long-delay spatial memory. 
+As a second step, we computed two latent profile scores (LPS) for each participant, one for navigation and one for spatial knowledge. A more positive LPS indicates that an individual expressed the age-related profile more strongly, which means that children with a high LPS score expressed more adult-like behavior. We then correlated the LPS with immediate and long-delay egocentric and allocentric memory (Table 5; Figure 4). The navigation LPS correlated significantly with immediate egocentric (`r apa_model.lp_n_ego_1$r_and_p`) and long-delay egocentric memory (`r apa_model.lp_n_ego_2$r_and_p`), and the former was significantly higher (`r p_bonferroni4` `r apa_model.p_lp_n_ego`). The navigation LPS also correlated significantly with immediate allocentric (`r apa_model.lp_n_allo_1$r_and_p`) and long-delay allocentric memory (`r apa_model.lp_n_allo_2$r_and_p`). The correlation with immediate egocentric memory was significantly higher than with immediate allocentric memory (`r p_bonferroni4` `r apa_model.p_lp_n_ego_allo_1`). In conclusion, we found that navigation behavior during training predicted later memory performance. Participants with a more more efficient, adult-like navigation during training had better immediate and long-delay spatial memory. There was a particularly strong association with immediate egocentric memory. The spatial knowledge LPS also correlated significantly with immediate egocentric (`r apa_model.lp_p_ego_1$r_and_p`), long-delay egocentric (`r apa_model.lp_p_ego_2$r_and_p`), immediate allocentric (`r apa_model.lp_p_allo_1$r_and_p`) and long-delay allocentric memory (`r apa_model.lp_p_allo_2$r_and_p`). Thus, participants with a better understanding of the geometrical maze layout and object-to-object positions  had better immediate and long-delay spatial memory. 
 
 ```{r include=F}
 rm(apa_lv.p, apa_lv.cor, apa_lv.ulcor, apa_lv.llcor, apa_bsr, apa_model.age_lp_n, apa_model.age_lp_p, apa_model.lp_n_ego_1, apa_model.lp_n_ego_2, apa_model.lp_n_allo_1, apa_model.lp_n_allo_2, apa_model.p_lp_n_ego, apa_model.p_lp_n_allo, apa_model.lp_p_ego_1, apa_model.lp_p_ego_2, apa_model.lp_p_allo_1, apa_model.lp_p_allo_2, apa_model.p_lp_p_ego, apa_model.p_lp_p_allo, apa_model.p_lp_n_ego_allo_1, apa_model.p_lp_n_ego_allo_2, apa_model.p_lp_p_ego_allo_1, apa_model.p_lp_p_ego_allo_2)
@@ -624,11 +624,11 @@ rm(mc_latency, mc_excess_path, mc_plot)
 
 ```{r apa_motor_control, include=F}
 apa_aov.motor_latency <- apa_print(model.motor_latency)
-post_aov.motor_latency_group <- post.motor_latency %>% apa_print() %>% bonferroni_fix()
+post_aov.motor_latency_group <- post.motor_latency %>% apa_print() %>% apa_bonferroni_fix()
 rm(model.motor_latency, post.motor_latency)
 
 apa_aov.motor_path <- apa_print(model.motor_path)
-post_aov.motor_path_group <- post.motor_path %>% apa_print() %>% bonferroni_fix()
+post_aov.motor_path_group <- post.motor_path %>% apa_print() %>% apa_bonferroni_fix()
 rm(model.motor_path, post.motor_path)
 
 rm(practise)
@@ -712,7 +712,7 @@ apa_lmm.ms_wl <- apa_print(model.ms_wl)
 apa_post.ms_wl_omega_group_session <- omega.ms_wl %>% 
   filter(Parameter=="group:session") %>% select(Omega2_partial) %>% apa_num()
 
-apa_post.ms_wl_group_session <- post.ms_wl_group_session %>%  apa_print() %>% bonferroni_fix()
+apa_post.ms_wl_group_session <- post.ms_wl_group_session %>%  apa_print() %>% apa_bonferroni_fix()
 
 # group 
 apa_post.ms_wl_omega_group <- omega.ms_wl %>% 
@@ -791,7 +791,7 @@ apa_lmm.latency_probe  <- apa_print(model.latency_probe)
 apa_post.latency_probe_omega_group_condition <- omega.latency_probe %>% 
   filter(Parameter=="group:condition") %>% select(Omega2_partial) %>% apa_num()
 
-apa_post.latency_probe_group_condition <- post.latency_probe_group_condition %>% apa_print() %>% bonferroni_fix()
+apa_post.latency_probe_group_condition <- post.latency_probe_group_condition %>% apa_print() %>% apa_bonferroni_fix()
 
 # group 
 apa_post.latency_probe_omega_group <- omega.latency_probe %>% 
@@ -846,7 +846,7 @@ apa_lmm.path_probe <- apa_print(model.path_probe)
 apa_post.path_probe_omega_group_condition <- omega.path_probe %>% 
   filter(Parameter=="group:condition") %>% select(Omega2_partial) %>% apa_num()
 
-apa_post.path_probe_group_condition <- post.path_probe_group_condition %>% apa_print() %>% bonferroni_fix()
+apa_post.path_probe_group_condition <- post.path_probe_group_condition %>% apa_print() %>% apa_bonferroni_fix()
 
 # group
 apa_post.path_probe_omega_group <- omega.path_probe %>% 
@@ -901,7 +901,7 @@ apa_lmm.distance_probe <- apa_print(model.distance_probe)
 apa_post.distance_probe_omega_group <- omega.distance_probe %>% 
   filter(Parameter=="group") %>% select(Omega2_partial) %>% apa_num()
 
-apa_post.distance_probe_group <- post.distance_probe_group %>% apa_print() %>% bonferroni_fix()
+apa_post.distance_probe_group <- post.distance_probe_group %>% apa_print() %>% apa_bonferroni_fix()
 
 # condition
 apa_post.distance_probe_omega_condition <- omega.distance_probe %>% 

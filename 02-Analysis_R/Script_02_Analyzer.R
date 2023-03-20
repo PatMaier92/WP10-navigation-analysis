@@ -304,13 +304,38 @@ cor.test.comparison <- function(r1, r2, bonferroni_n=1){
   
   return(results)
 }
+
+bonferroni_correction <- function(list, n) {
+  list$p.value <- list$p.value * n
+  
+  return(list)
+}
 ## ---- 
 
 
 ## ---- papaja_output_helper
-# fix for latex/papaja bug in emmeans output when using Bonferroni correction
-bonferroni_fix <- function(list) {
+# fix for papaja bug in apa-style emmeans output when using Bonferroni correction
+apa_bonferroni_fix <- function(list) {
   list <- list %>% modify_depth(2, str_replace, pattern="\\\\scriptsize ", replacement="")
+  
+  return(list)
+}
+
+# add-on for papaja: apa-style simple correlation output
+# adds new list element with r and optional p-values (with optional text-adjustment for p-value correction)
+apa_correlation_fix <- function(list, addp=T, iscorrected=F, n=0) {
+  r <- list$estimate %>% str_replace(pattern=", 95.*", "")
+  
+  p <- list$statistic %>% str_replace(pattern=".*, ", "") 
+  if (iscorrected) {
+    p <- p %>% str_replace(pattern="p", replacement=paste0("p_\\\\mathrm{Bonferroni(", as.character(n), ")}"))
+  }
+  
+  if (addp) {
+    list$r_and_p <- paste0(r, ", ", p)
+  }
+  else list$r_and_p <- r
+  
   return(list)
 }
 
@@ -858,12 +883,12 @@ memory_allo_2 <- plsc_data_learn$plsres$data$memoryAllo2 %>% unlist()
 data_memory_nav <- as.data.frame(cbind(group, lp, memory_ego_1, memory_ego_2, memory_allo_1, memory_allo_2)) 
 rm(lp, group, memory_ego_1, memory_ego_2, memory_allo_1, memory_allo_2)
 
-model.lp_n_ego_1 <- cor.test(data_memory_nav$memory_ego_1, data_memory_nav$lp)
-model.lp_n_ego_2 <- cor.test(data_memory_nav$memory_ego_2, data_memory_nav$lp)
+model.lp_n_ego_1 <- cor.test(data_memory_nav$memory_ego_1, data_memory_nav$lp) %>% bonferroni_correction(n=4)
+model.lp_n_ego_2 <- cor.test(data_memory_nav$memory_ego_2, data_memory_nav$lp) %>% bonferroni_correction(n=4)
 model.comp_lp_n_ego <- cor.test.comparison(model.lp_n_ego_1, model.lp_n_ego_2, bonferroni_n=4)
 
-model.lp_n_allo_1 <- cor.test(data_memory_nav$memory_allo_1, data_memory_nav$lp)
-model.lp_n_allo_2 <- cor.test(data_memory_nav$memory_allo_2, data_memory_nav$lp)
+model.lp_n_allo_1 <- cor.test(data_memory_nav$memory_allo_1, data_memory_nav$lp) %>% bonferroni_correction(n=4)
+model.lp_n_allo_2 <- cor.test(data_memory_nav$memory_allo_2, data_memory_nav$lp) %>% bonferroni_correction(n=4)
 model.comp_lp_n_allo <- cor.test.comparison(model.lp_n_allo_1, model.lp_n_allo_2, bonferroni_n=4)
 
 model.comp_lp_n_ego_allo_1 <- cor.test.comparison(model.lp_n_ego_1, model.lp_n_allo_1, bonferroni_n=4)
@@ -894,12 +919,12 @@ memory_allo_2 <- plsc_data_learn$plsres$data$memoryAllo2 %>% unlist()
 data_memory_post <- as.data.frame(cbind(group, lp, memory_ego_1, memory_ego_2, memory_allo_1, memory_allo_2)) 
 rm(lp, group, memory_ego_1, memory_ego_2, memory_allo_1, memory_allo_2)
 
-model.lp_p_ego_1 <- cor.test(data_memory_post$memory_ego_1, data_memory_post$lp)
-model.lp_p_ego_2 <- cor.test(data_memory_post$memory_ego_2, data_memory_post$lp)
+model.lp_p_ego_1 <- cor.test(data_memory_post$memory_ego_1, data_memory_post$lp) %>% bonferroni_correction(n=4)
+model.lp_p_ego_2 <- cor.test(data_memory_post$memory_ego_2, data_memory_post$lp) %>% bonferroni_correction(n=4)
 model.comp_lp_p_ego <- cor.test.comparison(model.lp_p_ego_1, model.lp_p_ego_2, bonferroni_n=4)
 
-model.lp_p_allo_1 <- cor.test(data_memory_post$memory_allo_1, data_memory_post$lp)
-model.lp_p_allo_2 <- cor.test(data_memory_post$memory_allo_2, data_memory_post$lp)
+model.lp_p_allo_1 <- cor.test(data_memory_post$memory_allo_1, data_memory_post$lp) %>% bonferroni_correction(n=4)
+model.lp_p_allo_2 <- cor.test(data_memory_post$memory_allo_2, data_memory_post$lp) %>% bonferroni_correction(n=4)
 model.comp_lp_p_allo <- cor.test.comparison(model.lp_p_allo_1, model.lp_p_allo_2, bonferroni_n=4)
 
 model.comp_lp_p_ego_allo_1 <- cor.test.comparison(model.lp_p_ego_1, model.lp_p_allo_1, bonferroni_n=4)
