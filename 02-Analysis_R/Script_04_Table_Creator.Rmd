@@ -331,7 +331,7 @@ apa_LRT.latency_probe <- tibble("Grouping" = c("Id", "Id", "Id")) %>%
 apa_latency_probe_random <- apa_random_table(VarCorr(model.latency_probe$full_model), apa_LRT.latency_probe)
   
 
-rm(apa_lmm.latency_probe, omega.latency_probe, apa_omega.latency_probe, LRT.latency_probe, apa_LRT.latency, model.latency_probe)
+rm(apa_lmm.latency_probe, omega.latency_probe, apa_omega.latency_probe, LRT.latency_probe, apa_LRT.latency_probe, model.latency_probe)
 ```
 
 ```{r, model_probe_path, include=F  }
