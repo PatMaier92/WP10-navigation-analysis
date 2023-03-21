@@ -29,7 +29,7 @@ sm_data <- read_xlsx(file_path, col_names=T, na="999")
 # read-in covariate data 
 file_name <- "../WP10_data/WP10_results/wp10_covariates.xlsx"
 cov <- read_xlsx(file_name, col_names=T, na="999") %>% 
-  select(id, age) %>% 
+  select(id, age, income, GIX_T) %>% 
   mutate_all(as.numeric) 
 
 

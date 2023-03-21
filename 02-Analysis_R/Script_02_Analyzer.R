@@ -18,6 +18,8 @@ library(readxl)
 library(rmatio)
 library(tidyverse)
 library(janitor)
+library(gtsummary)
+library(flextable)
 library(patchwork)
 library(performance)
 library(rstatix)
@@ -58,6 +60,12 @@ rm(file_name)
 
 
 ## ---- data_prep
+# demographics
+demo_data <- sm_data %>% 
+  select(id, group, age, sex, GIX_T, income) %>% 
+  unique() %>% 
+  mutate(income=ifelse(group=="YoungAdults", NA, income))
+
 # practise 
 practise <- sm_data %>%
   filter(condition %in% c("practise")) %>%  
@@ -374,6 +382,29 @@ apa_random_table <- function(varcor, LRT=NULL) {
 # ############################################################################ #
 # ########################## DATA EXPLORATION ################################ #
 # ############################################################################ #
+
+
+# ------------------------------------------------------------------------------
+# ::: DEMOGRAPHICAL DATA ::: #
+# ------------------------------------------------------------------------------
+
+## ---- table_demo
+demo_table <- demo_data %>% 
+  select(-id) %>%  
+  tbl_summary(by=group, 
+              label=list(sex ~ "Sex (F/M)", 
+                         age ~ "Age", 
+                         GIX_T ~ "IQ Score", 
+                         income ~ "Socioeconomical Status (Income – Family‡)"),
+              type=list(sex ~ 'categorical',
+                        c("age", "GIX_T", "income") ~ 'continuous'),
+              statistic=list(all_continuous() ~ "{mean} {sd}",
+                             all_categorical() ~ "{n}"),
+              digits=list(all_continuous() ~ 2), 
+              missing="no") %>% 
+  add_p(test=list(all_continuous() ~ "aov", all_categorical() ~  "chisq.test")) 
+## ----
+rm(demo_table)
 
 
 # ------------------------------------------------------------------------------

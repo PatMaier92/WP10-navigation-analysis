@@ -45,6 +45,20 @@ rm(file_name)
 ```{r, papaja_output_helper, include=FALSE}
 ```
 
+# Demographics 
+
+```{r, table_demo, include=FALSE}
+```
+
+```{r, echo=F, message=F, warning=F }
+theme_gtsummary_mean_sd()
+demo_table
+
+rm(demo_table)
+```
+
+\newpage
+ 
 # Learning session
 
 ## Training trials 
