@@ -245,6 +245,8 @@ The model had a fit of $R2 = `r R2$Rsq`, [CI: `r R2$upper.CL`, `r R2$lower.CL`$]
 
 Initial rotation significantly decreased across training trials only in adults (linear change across trials: `r apa_post.train_initial_rotation_group_trial$statistic$YoungAdults_Linear`) but stayed at a constant level in both groups of children. This indicates that adults, but not children, adjusted their level of deliberation and visual exploration at the first decision point according to task demands. 
 
+In summary, participants from all age groups were able to significantly improve their navigation behavior across training trials (decrease in latency, excess path length and excess distance to goal). Additionally, older participants had a more efficient search and navigation behavior, which was characterized by quicker navigation (latency), more direct navigation (excess path length), more focused search near the goal location (excess distance to goal) and more visual exploration and deliberation at the beginning of the training phase (initial rotation). Navigation differences were pronounced between 6-8YO children in comparison with both 9-10YO children and adults, but less evident when comparing 9-10YO children to adults. An additional analysis of navigation behavior in probe trials showed similar results (supplement). 
+
 ```{r, include=F}
 rm(model.initial_rotation_train, R2, apa_lmm.train_initial_rotation, apa_post.train_initial_rotation_group_trial)
 ```
@@ -326,6 +328,8 @@ There was a gradual improvement of memory with increasing age (6-8YO vs. 9-11YO:
 
 The LMM with memory score had a significantly better fit when including the random slope for condition ($\chi^2$(`r apa_rs.condition$Df`) = `r apa_rs.condition$Chisq`, p `r apa_rs.condition$p`), meaning that there was substantial interindividual variation in how participants responded to the two conditions.
 
+In summary, we found pronounced age differences in memory performance during the learning session. Older participants were able to form more precise spatial memories in the egocentric and the allocentric condition. 
+
 ```{r, include=F}
 plot.ms <- plot.ms + theme(legend.position="none")
 ggsave("../WP10_data/Plots/memory_probe_1.jpg", plot.ms, width=3.5, height=3, dpi=600)
@@ -397,6 +401,8 @@ To test if spatial memory consolidation improves with increasing age, we created
 
 The LMM had a significantly better fit when including the random slope for session ($\chi^2$(`r apa_rs.session$Df`) = `r apa_rs.session$Chisq`, p `r apa_rs.session$p`), meaning that there was substantial interindividual variation in forgetting rates across the two-week delay period - irrespective of their age. Likewise, the model fit improved when including the random slope for condition ($\chi^2$(`r apa_rs.condition$Df`) = `r apa_rs.condition$Chisq`, p `r apa_rs.condition$p`). 
 
+In summary we found no evidence for an improved memory consolidation in adults compared to children. Age differences in long-delay memory after two weeks were largely driven by age differences in learning.
+
 ```{r, include=F }
 plot.ms_all <- plot.ms_all + theme(legend.position="none")
 ggsave("../WP10_data/Plots/memory_probe_con.jpg", plot.ms_all, width=4.3, height=4, dpi=600)
@@ -467,6 +473,8 @@ rm(post.position)
 ```
 
 Lastly, we did find significant age differences in the ability to correctly position the landmark and goal objects in a map (`r apa_aov.position$statistic$group`). Here, adults performed significantly better than both groups of children (6-8YO vs. AD: `r apa_post.position$statistic$YoungKids_YoungAdults`; 9-11YO vs. AD: `r apa_post.position$statistic$OldKids_YoungAdults`) but the children groups did not differ (6-8YO vs. 9-11YO: `r apa_post.position$statistic$YoungKids_OldKids`). 
+
+In summary, adults had a superior spatial knowledge at the end of the experiment, both regarding the geometrical structure of the maze and the object-to-object relations in the environment. On the other hand, both groups of children were as proficient as adults when simply identifying environmental landmarks. 
 
 ```{r, include=F}
 rm(model.position, apa_aov.position, apa_post.position)
@@ -969,6 +977,8 @@ The model had a fit of $R2 = `r R2$Rsq`, [CI: `r R2$upper.CL`, `r R2$lower.CL`$]
 The amount of initial rotation did not differ between age groups but was significantly higher in the allocentric than the egocentric condition.
 
 The LMM with initial rotation did have a significantly better fit when including the random slope for condition ($\chi^2$(`r apa_rs.condition$Df`) = `r apa_rs.condition$Chisq`, p `r apa_rs.condition$p`).
+
+In summary, we found pronounced age differences in navigation behavior during the learning session probe trials, paralleling the results for training trials. Older participants showed more efficient behavior which was characterized by quicker navigation (shorter latency), more direct navigation (shorter excess path length) and more focused search near the goal location (lower excess distance to goal). In addition, navigation was quicker, more direct, focused more on the goal location and involved less initial rotation in the egocentric compared to the allocentric condition. 
 
 ```{r, include=F}
 rm(model.initial_rotation_probe, apa_lmm.init_rot_probe, apa_post.init_rot_probe_condition, apa_post.initial_rotation_probe_omega_condition, apa_rs.condition)
