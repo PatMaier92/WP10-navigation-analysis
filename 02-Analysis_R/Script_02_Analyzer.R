@@ -137,21 +137,27 @@ rm(cov_data, cov_names, data, well_trained)
 ## ---- plot_settings
 # factor level labels 
 group_labels <- c("YoungKids"="6-8YO", "OldKids"="9-11YO", "YoungAdults"="AD")
-#session_labels <- c("1"="SESSION 1", "2"="SESSION 2")
-cond_session_labels <- c("ego_1"="EGO 1", "ego_2"="EGO 2", "allo_1"="ALLO 1", "allo_2"="ALLO 2")
-condition_labels <- c("ego_ret"="egocentric", "allo_ret"="allocentric")
-plsc_labels <- c("latency"="latency", "excess_path"="exc. path length", "excess_distance"="exc. distance goal", 
-                 "initial_rotation"="initial rotation", "layout"="layout score", "landmark"="landmark score", "position"="position score")
+session_labels <- c("1"="Session 1", "2"="Session 2")
+cond_session_labels <- c("ego_1"="EGO S1", "ego_2"="EGO S2", "allo_1"="ALLO S1", "allo_2"="ALLO S2")
+condition_labels <- c("ego_ret"="Egocentric", "allo_ret"="Allocentric")
+plsc_labels <- c("latency"="Latency [s]", "excess_path"="Excess Path Length [vu]", "excess_distance"="Excess Distance Goal [vu]", 
+                 "initial_rotation"="Initial Rotation [rad]", "layout"="Layout Score [%]", "landmark"="Landmark Score [%]", "position"="Position Score [%]")
 
 # variable labels 
-l_session <- "session"
-l_trial_in_block <- "trial (in block)"
-l_memory_score <- "memory score"
-l_correct_alley <- "alley accuracy (%)"
-l_latency <- "latency"
-l_excess_path_length <- "excess path length"
-l_excess_distance_goal <- "excess distance to goal"
-l_initial_rotation <- "initial rotation"
+l_session <- "Session"
+l_trial_in_block <- "Trial in Block"
+l_memory_score <- "Memory Score [%]"
+l_correct_alley <- "Alley Accuracy [%]"
+l_latency <- "Latency [s]"
+l_excess_path_length <- "Excess Path Length [vu]"
+l_excess_distance_goal <- "Excess Distance Goal [vu]"
+l_initial_rotation <- "Initial Rotation [rad]"
+l_layout <- "Layout Score [%]"
+l_landmark <- "Landmark Score [%]"
+l_position <- "Position Score [%]"
+l_age <- "Age [yrs]"
+l_navigation_LPS <- "Navigation LPS"
+l_knowledge_LPS <- "Knowledge LPS"
 
 # colors
 # scales::show_col()
@@ -206,13 +212,14 @@ afex_lineplot_wrapper <- function(model, xv, tv, pv, ylabel, xlabel=l_session, y
   return(p)
 }
 
-bar_plot_wrapper <- function(data, colors, colors_o, mytitle, mysubtitle=NULL, xmin=-13, xmax=13){
+bar_plot_wrapper <- function(data, colors, colors_o, ylabels, mytitle, mysubtitle=NULL, xmin=-13, xmax=13){
   p <- ggplot(data, aes(x=value, y=name, fill=type, color=type)) + 
     geom_bar(stat="identity", width=0.75) + 
     geom_vline(xintercept=-1.96, color="red", linetype='dashed', size=0.5) +
     geom_vline(xintercept=1.96, color="red", linetype='dashed', size=0.5) +
     geom_signif(textsize=3.5, xmin=c(0.75, 3.75), xmax=c(3.25, 7.25), y_position=c(xmax-3, xmax-3), 
-                annotation=c("knowledge", "navigation"), color="black", tip_length=0.025) + 
+                annotation=c("Knowledge", "Navigation"), color="black", tip_length=0.025) + 
+    scale_y_discrete(labels=ylabels) + 
     scale_fill_manual(values=colors) +
     scale_color_manual(values=colors_o) +
     coord_cartesian(xlim=c(xmin, xmax)) + 
@@ -439,10 +446,10 @@ dot_plots <- function(mydata, xvar, yvar, goalvar, goalx, goaly, mytitle,
 }
 
 dots_ego <- dot_plots(data_p %>% filter(condition=="ego_ret"), "x_n", "y_n", 
-                      "cov_location", "goal_x", "goal_y", "Egocentric trials", mylabels)
+                      "cov_location", "goal_x", "goal_y", "Egocentric", mylabels)
 
 dots_allo <- dot_plots(data_p %>% filter(condition=="allo_ret"), "x_n", "y_n", 
-                       "cov_location", "goal_x", "goal_y", "Allocentric trials", mylabels)
+                       "cov_location", "goal_x", "goal_y", "Allocentric", mylabels)
 
 rm(dot_plots)
 ## ----
@@ -716,6 +723,7 @@ p.values_session <- post.ms_all_session %>% as.data.frame() %>% pull(p.value) %>
 p.values_condition <- post.ms_all_condition %>% as.data.frame() %>% pull(p.value) %>% apa_p(add_equals=T) 
 
 plot.ms_all <- afex_boxplot_wrapper(model.ms_all, "session", "group", "condition", l_memory_score, xlabel=NULL, ymin=0, ymax=1, ybreaks=c(0,0.25,0.5,0.75,1)) + 
+  scale_x_discrete(labels=session_labels) + 
   facet_wrap(~condition, strip.position="bottom") + 
   theme(strip.placement="outside", strip.switch.pad.wrap=unit(0, "cm")) + 
   annotate("text", x=0.5, y=1.1, label=paste0("6-8YO vs. 9-11YO: p ", p.values_group[1]), color="black", hjust=0, size=3.5) + 
@@ -754,10 +762,8 @@ plot.layout <- ggplot(temp_data, aes(x=group, y=score, fill=group, color=group))
   coord_cartesian(ylim=c(0,1)) +
   theme_classic(base_size=14) + 
   theme(legend.position="top", legend.justification=c(0,0),
-        legend.title=NULL, 
-        axis.ticks.x=element_blank(),
-        axis.text.x=element_blank()) +
-  labs(x=NULL, y="layout accuracy (%)") +
+        legend.title=NULL, axis.text.x=element_text(size=8)) +
+  labs(x=NULL, y=l_layout) +
   geom_signif(textsize=3, xmin=c(1, 1, 2.1), xmax=c(1.9, 3, 3), y_position=c(0.94, 1, 0.94), 
               annotation=c(p.values[1], p.values[2], p.values[3]), color="black", tip_length=0) 
 rm(p.values)
@@ -778,7 +784,7 @@ plot.layout_detailed <- ggplot(temp_data2, aes(x=group, y=perc, fill=layout_obj_
   theme_classic(base_size=14) + 
   theme(legend.position="top", legend.justification=c(0,0),
         legend.title=NULL) +
-  labs(x=NULL, y="responses (%)")
+  labs(x=NULL, y="Responses [%]")
 rm(temp_data, temp_data2)
 ## ---- 
 rm(model.layout, post.layout, plot.layout, plot.layout_detailed)
@@ -808,9 +814,8 @@ plot.landmark <- afex_plot(model.landmark, x="group", error="model",
   coord_cartesian(ylim=c(0,1)) +
   theme_classic(base_size=14) + 
   theme(legend.position="top", legend.justification=c(0,0),
-        axis.text.x=element_blank(),
-        axis.ticks.x=element_blank()) +
-  labs(x=NULL, y="landmark score")
+        axis.text.x=element_text(size=8)) +
+  labs(x=NULL, y=l_landmark)
 rm(temp_data)
 ## ---- 
 rm(model.landmark, plot.landmark)
@@ -841,10 +846,9 @@ plot.position <- afex_plot(model.position, x="group", error="model",
   scale_y_continuous(breaks=c(0,0.25,0.5,0.75,1), expand=expansion(mult=c(0, 0.1))) + 
   coord_cartesian(ylim=c(0,1)) +
   theme_classic(base_size=14) + 
-  theme(legend.position="top", legend.justification=c(0,0),
-        axis.text.x=element_blank(),
-        axis.ticks.x=element_blank()) +
-  labs(x=NULL, y="positioning score") + 
+  theme(legend.position="top", legend.justification=c(0,0), 
+        axis.text.x=element_text(size=8)) +
+  labs(x=NULL, y=l_position) + 
   geom_signif(textsize=3, xmin=c(1, 2.1), xmax=c(3, 3), y_position=c(1, 0.94), 
               annotation=c(p.values[2], p.values[3]), color="black", tip_length=0) 
 rm(temp_data, p.values)
@@ -862,15 +866,16 @@ lv.p <- plsc_data_learn$plsres$perm_result$sprob %>% as.numeric() %>% apa_p(add_
 lv.cor <- plsc_data_learn$plsres$boot_result$orig_corr %>% as.numeric() %>% apa_p()
 lv.llcor <- plsc_data_learn$plsres$boot_result$llcorr %>% as.numeric() %>% apa_p()
 lv.ulcor <- plsc_data_learn$plsres$boot_result$ulcorr %>% as.numeric() %>% apa_p()
-lv.info <- paste0("R = ", lv.cor, ", p ", lv.p, " (95%-CI [", lv.llcor, ", ", lv.ulcor, "])")
+lv.info <- paste0("R = ", lv.cor, ", p ", lv.p)
+#lv.info <- paste0("R = ", lv.cor, ", p ", lv.p, " (95%-CI [", lv.llcor, ", ", lv.ulcor, "])")
              
-l_bsr <- c("latency", "excess path length", "excess distance to goal", "initial rotation", "layout score", "landmark score", "positioning score")
+l_bsr <- c("latency", "excess_path", "excess_distance", "initial_rotation", "layout", "landmark", "position")
 bsr <- plsc_data_learn$plsres$boot_result$compare_u %>% 
   unlist() %>% enframe() %>% 
   mutate(type=factor(case_when(name %in%  1:4 ~ "nav", T ~ "post"), levels=c("nav", "post")),
          name=factor(l_bsr, levels=rev(l_bsr)))
 
-plot.bsr_learn <- bar_plot_wrapper(bsr, plsc_colors_f, plsc_colors_o, mytitle=NULL, mysubtitle=lv.info)
+plot.bsr_learn <- bar_plot_wrapper(bsr, plsc_colors_f, plsc_colors_o, plsc_labels, mytitle=NULL, mysubtitle=lv.info)
 ## ---- 
 rm(l_bsr, bsr, plot.bsr_learn, lv.p, lv.cor, lv.llcor, lv.ulcor, lv.info)
 
@@ -885,7 +890,7 @@ rm(lp, age, group)
 
 model.age_lp_nav_learn <- cor.test(data_age$age, data_age$lp)
 
-plot.age_x_lp_nav_learn <- scatter_plot_wrapper(data_age, "age", "lp", "age", "navigation LPS") + theme(legend.position="none")
+plot.age_x_lp_nav_learn <- scatter_plot_wrapper(data_age, "age", "lp", l_age, l_navigation_LPS) + theme(legend.position="none")
 ## ---- 
 rm(data_age, plot.age_x_lp_nav_learn, model.age_lp_nav_learn)
 
@@ -898,7 +903,7 @@ rm(lp, age, group)
 
 model.age_lp_post_learn <- cor.test(data_age$age, data_age$lp)
 
-plot.age_x_lp_post_learn <- scatter_plot_wrapper(data_age, "age", "lp", "age", "knowledge LPS", ymin=-2, ymax=2) + theme(legend.position="none")
+plot.age_x_lp_post_learn <- scatter_plot_wrapper(data_age, "age", "lp", l_age, l_knowledge_LPS, ymin=-2, ymax=2) + theme(legend.position="none")
 ## ---- 
 rm(data_age, plot.age_x_lp_post_learn, model.age_lp_post_learn)
 
@@ -930,7 +935,7 @@ data_memory_nav_long <- data_memory_nav %>%
                names_to = c("cond_session"),
                names_pattern = "_(.*)")
 
-plot.mem_x_lp_nav_learn <- line_plot_wrapper(data_memory_nav_long, "value", "lp", "memory", "navigation LPS", xbreaks=c(0.4,0.5,0.6,0.7,0.8,0.9,1), labelx=c(0.68), labely=c(5.25, 4.25, 3, 2)) + 
+plot.mem_x_lp_nav_learn <- line_plot_wrapper(data_memory_nav_long, "value", "lp", l_memory_score, l_navigation_LPS, xbreaks=c(0.4,0.5,0.6,0.7,0.8,0.9,1), labelx=c(0.68), labely=c(5.25, 4.25, 3, 2)) + 
   annotate("text", x=0.84, y=4.25, label="p =.001", color="black", hjust=0, size=3) +
   annotate("text", x=0.86, y=2.5, label="p <.001", color="black", hjust=0, size=3) +
   annotate("segment", x=0.82, xend=0.82, y=5.3, yend=2.9, colour="black") +
@@ -966,7 +971,7 @@ data_memory_post_long <- data_memory_post %>%
                names_to = c("cond_session"),
                names_pattern = "_(.*)")
 
-plot.mem_x_lp_post_learn <- line_plot_wrapper(data_memory_post_long, "value", "lp", "memory", "knowledge LPS", xbreaks=c(0.4,0.5,0.6,0.7,0.8,0.9,1), labelx=c(0.68), labely=c(1.75, 1.4, 1.05, 0.7), ymin=-2, ymax=2)
+plot.mem_x_lp_post_learn <- line_plot_wrapper(data_memory_post_long, "value", "lp", l_memory_score, l_knowledge_LPS, xbreaks=c(0.4,0.5,0.6,0.7,0.8,0.9,1), labelx=c(0.68), labely=c(1.75, 1.4, 1.05, 0.7), ymin=-2, ymax=2)
 ## ---- 
 rm(model.lp_p_ego_1, model.lp_p_ego_2, model.comp_lp_p_ego, model.lp_p_allo_1, model.lp_p_allo_2, model.comp_lp_p_allo,
    data_memory_post, data_memory_post_long, plot.mem_x_lp_post_learn)
@@ -1078,6 +1083,7 @@ p.values_group_session <- post.ms_wl_group_session %>% pull(p.value) %>% apa_p(a
 p.values_condition <- post.ms_wl_condition %>% as.data.frame() %>% pull(p.value) %>% apa_p(add_equals=T) 
 
 plot.ms_wl <- afex_boxplot_wrapper(model.ms_wl, "session", "group", "condition", l_memory_score, xlabel=NULL, ymin=0, ymax=1, ybreaks=c(0,0.25,0.5,0.75,1)) + 
+  scale_x_discrete(labels=session_labels) + 
   facet_wrap(~condition, strip.position="bottom") + 
   theme(strip.placement="outside", strip.switch.pad.wrap=unit(0, "cm")) + 
   annotate("text", x=0.5, y=1.1, label=paste0("6-8YO vs. AD in 2: p ", p.values_group_session[5]), color="black", hjust=0, size=3.5) +

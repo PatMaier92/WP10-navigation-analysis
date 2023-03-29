@@ -757,7 +757,7 @@ The LMM had a significantly better fit when including the random slope for sessi
 
 ```{r,include=F}
 plot.ms_wl <- plot.ms_wl + theme(legend.position="none")
-ggsave("../WP10_data/Plots/memory_probe_con_wl.jpg", plot.ms_wl, width=4.8, height=4, dpi=600)
+ggsave("../WP10_data/Plots/memory_probe_con_wl.jpg", plot.ms_wl, width=4.6, height=4, dpi=600)
 
 rm(plot.ms_wl)
 ```
