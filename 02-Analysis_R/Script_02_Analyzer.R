@@ -785,7 +785,15 @@ plot.layout_detailed <- ggplot(temp_data2, aes(x=group, y=perc, fill=layout_obj_
   theme(legend.position="top", legend.justification=c(0,0),
         legend.title=NULL) +
   labs(x=NULL, y="Responses [%]")
-rm(temp_data, temp_data2)
+
+temp_data3 <- temp_data %>% 
+  filter(!is.na(layout_obj_1), group=="YoungKids") %>% 
+  select(id, layout_obj_1) %>% 
+  mutate(score_n=1) %>% 
+  complete(id, layout_obj_1, fill=list(score_n=0))
+fisher.test(table(temp_data3$score_n, temp_data3$layout_obj_1))
+pairwise_fisher_test(table(temp_data3$score_n, temp_data3$layout_obj_1))
+rm(temp_data, temp_data2, temp_data3)
 ## ---- 
 rm(model.layout, post.layout, plot.layout, plot.layout_detailed)
 
