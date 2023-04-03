@@ -442,13 +442,18 @@ apa_fisher.layout <- model.layout %>% pluck("p.value") %>% apa_p(add_equals=T)
 apa_post.layout_young_vs_old <- post.layout$p.adj[1] %>% apa_p(add_equals=T)
 apa_post.layout_young_vs_adult <- post.layout$p.adj[2] %>% apa_p(add_equals=T)
 apa_post.layout_old_vs_adult <- post.layout$p.adj[3] %>% apa_p(add_equals=T)
-rm(post.layout)
+
+apa_post.layout_change_young <- post.layout_change_young %>% apa_print()
+apa_post.layout_change_old <- post.layout_change_old %>% apa_print()
+apa_post.layout_change_adult <- post.layout_change_adult %>% apa_print()
+
+rm(post.layout, post.layout_change_young, post.layout_change_old, post.layout_change_adult)
 ```
 
-We found significant age differences in the ability to correctly identify the geometrical maze layout (Fisher's exact test $p$ `r apa_fisher.layout`) with a gradual performance increase with increasing age (6-8YO vs. 9-11YO: $p$ `r apa_post.layout_young_vs_old`; 6-8YO vs. AD: $p$ `r apa_post.layout_young_vs_adult`; 9-11YO vs. AD: $p$ `r apa_post.layout_old_vs_adult`).
+We found significant age differences in the ability to correctly identify the geometrical maze layout (Fisher's exact test $p$ `r apa_fisher.layout`) with a gradual performance increase with increasing age (6-8YO vs. 9-11YO: $p$ `r apa_post.layout_young_vs_old`; 6-8YO vs. AD: $p$ `r apa_post.layout_young_vs_adult`; 9-11YO vs. AD: $p$ `r apa_post.layout_old_vs_adult`). 6-8YO children were not better than chance (`r apa_post.layout_change_young$statistic`), in contrast to the other groups (9-11YO: `r apa_post.layout_change_old$statistic `; AD: `r apa_post.layout_change_adult$statistic`).
 
 ```{r, include=F}
-rm(model.layout, apa_fisher.layout, apa_post.layout_young_vs_old, apa_post.layout_young_vs_adult, apa_post.layout_old_vs_adult)
+rm(model.layout, apa_fisher.layout, apa_post.layout_young_vs_old, apa_post.layout_young_vs_adult, apa_post.layout_old_vs_adult, apa_post.layout_change_young, apa_post.layout_change_old, apa_post.layout_change_adult)
 ```
 
 ### **Landmarks**

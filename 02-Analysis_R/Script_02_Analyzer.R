@@ -749,6 +749,10 @@ temp_data <- pt_data %>%
 
 model.layout <- fisher.test(table(temp_data$score, temp_data$group))
 post.layout <- pairwise_fisher_test(table(temp_data$score, temp_data$group), p.adjust.method="bonferroni")
+
+post.layout_change_young <- t.test(temp_data %>% filter(group=="YoungKids") %>% select(score), mu=1/6)
+post.layout_change_old <- t.test(temp_data %>% filter(group=="OldKids") %>% select(score), mu=1/6)
+post.layout_change_adult <- t.test(temp_data %>% filter(group=="YoungAdults") %>% select(score), mu=1/6)
 ## ----
 
 ## ---- plot_post_layout
