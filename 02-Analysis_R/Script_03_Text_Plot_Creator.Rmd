@@ -450,7 +450,7 @@ apa_post.layout_change_adult <- post.layout_change_adult %>% apa_print()
 rm(post.layout, post.layout_change_young, post.layout_change_old, post.layout_change_adult)
 ```
 
-We found significant age differences in the ability to correctly identify the geometrical maze layout (Fisher's exact test $p$ `r apa_fisher.layout`) with a gradual performance increase with increasing age (6-8YO vs. 9-11YO: $p$ `r apa_post.layout_young_vs_old`; 6-8YO vs. AD: $p$ `r apa_post.layout_young_vs_adult`; 9-11YO vs. AD: $p$ `r apa_post.layout_old_vs_adult`). 6-8YO children were not better than chance (`r apa_post.layout_change_young$statistic`), in contrast to the other groups (9-11YO: `r apa_post.layout_change_old$statistic `; AD: `r apa_post.layout_change_adult$statistic`).
+We found significant age differences in the ability to correctly identify the geometrical maze layout (Fisher's exact test $p$ `r apa_fisher.layout`) with a gradual performance increase with increasing age (6-8YO vs. 9-11YO: $p$ `r apa_post.layout_young_vs_old`; 6-8YO vs. AD: $p$ `r apa_post.layout_young_vs_adult`; 9-11YO vs. AD: $p$ `r apa_post.layout_old_vs_adult`). 6-8YO children were not better than chance (`r apa_post.layout_change_young$statistic`) and chose randomly between the options (pairwise Fisher's exact test: no $p$ < .05). In contrast, almost half of the 9-11YO children (`r apa_post.layout_change_old$statistic`) and almost all of the adults (`r apa_post.layout_change_adult$statistic`) selected the correct layout. 
 
 ```{r, include=F}
 rm(model.layout, apa_fisher.layout, apa_post.layout_young_vs_old, apa_post.layout_young_vs_adult, apa_post.layout_old_vs_adult, apa_post.layout_change_young, apa_post.layout_change_old, apa_post.layout_change_adult)
