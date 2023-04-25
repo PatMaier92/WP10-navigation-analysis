@@ -828,9 +828,31 @@ plot.landmark <- afex_plot(model.landmark, x="group", error="model",
   theme(legend.position="top", legend.justification=c(0,0),
         axis.text.x=element_text(size=8)) +
   labs(x=NULL, y=l_landmark)
-rm(temp_data)
+
+temp_data2 <- temp_data %>% 
+  select(id, group, starts_with("landmarks_obj")) %>% 
+  pivot_longer(cols=starts_with("landmarks_obj"),
+               values_to="landmarks") %>% 
+  select(-name) %>% 
+  group_by(group) %>% 
+  count(landmarks) %>% 
+  complete(landmarks, fill=list(n=0)) %>% 
+  mutate(n_per_group=sum(n),
+         perc=n/n_per_group*100*5)
+
+plot.landmark_detailed <- ggplot(temp_data2, aes(x=perc, y=landmarks, fill=group, color=group)) + 
+  geom_col(position=position_dodge()) + 
+  geom_vline(xintercept=100, color="red", linetype="dashed") + 
+  scale_fill_manual(values=group_colors_f, name=NULL) + 
+  scale_color_manual(values=group_colors_c, name=NULL) + 
+  scale_y_discrete(limits=rev) + 
+  theme_classic() + 
+  labs(x="responses [%] ",
+       y=NULL) + 
+  theme(legend.position="top", legend.justification=c(0,0)) 
+rm(temp_data, temp_data2)
 ## ---- 
-rm(model.landmark, plot.landmark)
+rm(model.landmark, plot.landmark, plot.landmark_detailed)
 
 
 # --- LANDMARK AND GOAL POSITIONING (scored with GMDA; Gardony, 2016) --- # 
