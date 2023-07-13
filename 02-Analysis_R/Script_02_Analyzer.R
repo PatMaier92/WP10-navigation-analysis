@@ -141,7 +141,7 @@ session_labels <- c("1"="Session 1", "2"="Session 2")
 cond_session_labels <- c("ego_1"="EGO S1", "ego_2"="EGO S2", "allo_1"="ALLO S1", "allo_2"="ALLO S2")
 condition_labels <- c("ego_ret"="Egocentric", "allo_ret"="Allocentric")
 plsc_labels <- c("latency"="Latency [s]", "excess_path"="Excess Path Length [vu]", "excess_distance"="Excess Distance Goal [vu]", 
-                 "initial_rotation"="Initial Rotation [rad]", "layout"="Layout Score [%]", "landmark"="Landmark Score [%]", "position"="Position Score [%]")
+                 "initial_rotation"="Initial Rotation [rad]", "layout"="Boundary Score [%]", "landmark"="Landmark Identity Score [%]", "position"="Landmark Position Score [%]")
 
 # variable labels 
 l_session <- "Session"
@@ -152,9 +152,9 @@ l_latency <- "Latency [s]"
 l_excess_path_length <- "Excess Path Length [vu]"
 l_excess_distance_goal <- "Excess Distance Goal [vu]"
 l_initial_rotation <- "Initial Rotation [rad]"
-l_layout <- "Layout Score [%]"
-l_landmark <- "Landmark Score [%]"
-l_position <- "Position Score [%]"
+l_layout <- "Boundary Score [%]"
+l_landmark <- "Landmark Identity Score [%]"
+l_position <- "Landmark Position Score [%]"
 l_age <- "Age [yrs]"
 l_navigation_LPS <- "Navigation LPS"
 l_knowledge_LPS <- "Knowledge LPS"
@@ -660,12 +660,13 @@ rm(post.ms_group_condition, post.ms_group, post.ms_group_chance, post.ms_session
 p.values <- post.ms_group_condition %>% pull(p.value) %>% apa_p(add_equals=T) %>% str_replace("= ", "")
 
 plot.ms <- afex_boxplot_wrapper(model.ms, "condition", "group", NULL, l_memory_score, xlabel=NULL, ymin=0, ymax=1, ybreaks=c(0,0.25,0.5,0.75,1), tracevis=0) + 
+  geom_hline(yintercept=0.5, color="red", linetype="dotted") + 
   geom_signif(textsize=3, xmin=c(0.75, 0.75, 1.05), xmax=c(0.95, 1.25, 1.25), y_position=c(1.05, 1.15, 1.05), 
-              annotation=c(p.values[1], p.values[2], p.values[3]), color="black", tip_length=0) + 
+              annotation=c(p.values[1], p.values[2], p.values[3]), color="black", tip_length=0.05) + 
   geom_signif(textsize=3, xmin=c(1.75, 2.05), xmax=c(2.25, 2.25), y_position=c(1.15, 1.05), 
-              annotation=c(p.values[5], p.values[6]), color="black", tip_length=0) + 
+              annotation=c(p.values[5], p.values[6]), color="black", tip_length=0.05) + 
   geom_signif(textsize=3, xmin=1, xmax=2, y_position=1.25, 
-              annotation=c(p.values[8]), color="black", tip_length=0)
+              annotation=c(p.values[8]), color="black", tip_length=0.05)
 
 rm(p.values)
 ## ----
@@ -723,6 +724,7 @@ p.values_session <- post.ms_all_session %>% as.data.frame() %>% pull(p.value) %>
 p.values_condition <- post.ms_all_condition %>% as.data.frame() %>% pull(p.value) %>% apa_p(add_equals=T) 
 
 plot.ms_all <- afex_boxplot_wrapper(model.ms_all, "session", "group", "condition", l_memory_score, xlabel=NULL, ymin=0, ymax=1, ybreaks=c(0,0.25,0.5,0.75,1)) + 
+  geom_hline(yintercept=0.5, color="red", linetype="dotted") + 
   scale_x_discrete(labels=session_labels) + 
   facet_wrap(~condition, strip.position="bottom") + 
   theme(strip.placement="outside", strip.switch.pad.wrap=unit(0, "cm")) + 
@@ -754,6 +756,7 @@ post.layout_change_young <- t.test(temp_data %>% filter(group=="YoungKids") %>% 
 post.layout_change_old <- t.test(temp_data %>% filter(group=="OldKids") %>% select(score), mu=1/6)
 post.layout_change_adult <- t.test(temp_data %>% filter(group=="YoungAdults") %>% select(score), mu=1/6)
 ## ----
+rm(post.layout_change_young, post.layout_change_old, post.layout_change_adult)
 
 ## ---- plot_post_layout
 p.values <- post.layout %>% pull(p.adj) %>% apa_p(add_equals=T) %>% str_replace("= ", "")
@@ -769,7 +772,7 @@ plot.layout <- ggplot(temp_data, aes(x=group, y=score, fill=group, color=group))
         legend.title=NULL, axis.text.x=element_text(size=8)) +
   labs(x=NULL, y=l_layout) +
   geom_signif(textsize=3, xmin=c(1, 1, 2.1), xmax=c(1.9, 3, 3), y_position=c(0.94, 1, 0.94), 
-              annotation=c(p.values[1], p.values[2], p.values[3]), color="black", tip_length=0) 
+              annotation=c(p.values[1], p.values[2], p.values[3]), color="black", tip_length=0.05) 
 rm(p.values)
 
 temp_data2 <- temp_data %>% 
@@ -884,10 +887,10 @@ plot.position <- afex_plot(model.position, x="group", error="model",
         axis.text.x=element_text(size=8)) +
   labs(x=NULL, y=l_position) + 
   geom_signif(textsize=3, xmin=c(1, 2.1), xmax=c(3, 3), y_position=c(1, 0.94), 
-              annotation=c(p.values[2], p.values[3]), color="black", tip_length=0) 
+              annotation=c(p.values[2], p.values[3]), color="black", tip_length=0.05) 
 rm(temp_data, p.values)
 ## ---- 
-rm(plot.position, model.position, post.position)
+rm(plot.position, model.position, post.position, temp_data)
 
 
 # ------------------------------------------------------------------------------
@@ -1117,6 +1120,7 @@ p.values_group_session <- post.ms_wl_group_session %>% pull(p.value) %>% apa_p(a
 p.values_condition <- post.ms_wl_condition %>% as.data.frame() %>% pull(p.value) %>% apa_p(add_equals=T) 
 
 plot.ms_wl <- afex_boxplot_wrapper(model.ms_wl, "session", "group", "condition", l_memory_score, xlabel=NULL, ymin=0, ymax=1, ybreaks=c(0,0.25,0.5,0.75,1)) + 
+  geom_hline(yintercept=0.5, color="red", linetype="dotted") + 
   scale_x_discrete(labels=session_labels) + 
   facet_wrap(~condition, strip.position="bottom") + 
   theme(strip.placement="outside", strip.switch.pad.wrap=unit(0, "cm")) + 
@@ -1202,9 +1206,9 @@ p.values <- post.latency_probe_group_condition %>% pull(p.value) %>% apa_p(add_e
 
 plot.latency_probe <- afex_boxplot_wrapper(model.latency_probe, "condition", "group", NULL, l_latency, xlabel=NULL, ymin=0, ymax=45, tracevis=0) + 
   geom_signif(textsize=3, xmin=c(0.75), xmax=c(1.25), y_position=c(44), 
-              annotation=c(p.values[2]), color="black", tip_length=0) + 
+              annotation=c(p.values[2]), color="black", tip_length=0.05) + 
   geom_signif(textsize=3, xmin=c(1.755), xmax=c(2.25), y_position=c(44), 
-              annotation=c(p.values[5]), color="black", tip_length=0) + 
+              annotation=c(p.values[5]), color="black", tip_length=0.05) + 
   annotate("text", x=1.5, y=50, label=paste0("ego vs. allo: p ", p.values[7]), color="black", size=3)
 
 rm(p.values)
@@ -1252,9 +1256,9 @@ p.values <- post.path_probe_group_condition %>% pull(p.value) %>% apa_p(add_equa
 
 plot.path_probe <- afex_boxplot_wrapper(model.path_probe, "condition", "group", NULL, l_excess_path_length, xlabel=NULL, ymin=0, ymax=110, tracevis=0) +
   geom_signif(textsize=3, xmin=c(0.75), xmax=c(1.25), y_position=c(105), 
-              annotation=c(p.values[2]), color="black", tip_length=0) + 
+              annotation=c(p.values[2]), color="black", tip_length=0.05) + 
   geom_signif(textsize=3, xmin=c(1.755, 1.755, 2.05), xmax=c(1.95, 2.25, 2.25), y_position=c(105, 115, 105), 
-              annotation=c(p.values[4], p.values[5], p.values[6]), color="black", tip_length=0) + 
+              annotation=c(p.values[4], p.values[5], p.values[6]), color="black", tip_length=0.05) + 
   annotate("text", x=1.5, y=125, label=paste0("ego vs. allo: p < ", p.values[9]), color="black", size=3)
 
 rm(p.values)
